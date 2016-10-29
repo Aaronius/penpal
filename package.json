@@ -1,0 +1,53 @@
+{
+  "name": "penpal",
+  "version": "1.0.0",
+  "description": "A promise-based library for communicating with iframes via postMessage.",
+  "author": "Aaron Hardy <aaron@aaronhardy.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Aaronius/penpal/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aaronius/penpal.git"
+  },
+  "keywords": [
+    "iframe",
+    "postMessage",
+    "promise"
+  ],
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "./scripts/build.js",
+    "build:watch": "npm run build -- --watch",
+    "lint": "eslint src/**",
+    "test": "npm run build && ./scripts/test.js",
+    "test:watch": "npm run build && parallelshell 'npm run build:watch -- --skip-initial-run' './scripts/test.js --watch'",
+    "prepublish": "npm run build"
+  },
+  "files": [
+    "dist",
+    "lib"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "async": "^2.1.2",
+    "babel-core": "^6.18.0",
+    "babel-preset-es2015": "^6.16.0",
+    "connect": "^3.4.1",
+    "eslint": "^3.9.0",
+    "eslint-config-airbnb": "^9.0.1",
+    "eslint-config-airbnb-base": "^9.0.0",
+    "eslint-plugin-import": "^2.0.1",
+    "jasmine-core": "^2.5.2",
+    "karma": "^1.3.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-jasmine": "^1.0.2",
+    "mkdirp": "^0.5.1",
+    "parallelshell": "^2.0.0",
+    "rsvp": "^3.2.1",
+    "serve-static": "^1.11.1",
+    "uglify-js": "^2.7.4",
+    "yargs": "^6.3.0"
+  }
+}

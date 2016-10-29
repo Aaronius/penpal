@@ -1,0 +1,14 @@
+// Derived from https://github.com/umdjs/umd/blob/master/templates/amdWebGlobal.js
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    // AMD
+    define('penpal', ['exports'], factory);
+  } else {
+    // Browser global
+    factory((root.LoveNotes = {}));
+  }
+}(this, function (exports) {
+
+{{moduleCode}}
+
+}));

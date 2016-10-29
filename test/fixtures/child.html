@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Test Iframe</title>
+  </head>
+  <body>
+    Test Iframe
+
+    <script>
+      window.onerror = function () { console.log.apply(console, arguments); };
+    </script>
+    <script src="rsvp.min.js"></script>
+    <script type="text/javascript" src="penpal.js"></script>
+    <script type="text/javascript">
+      LoveNotes.setPromise(RSVP.Promise);
+
+      var parentAPI;
+      var parentReturnValue;
+
+      var methods = {
+        multiply: function(num1, num2) {
+          return num1 * num2;
+        },
+        multiplyAsync: function(num1, num2) {
+          return new RSVP.Promise(function(resolve) {
+            resolve(num1 * num2);
+          });
+        },
+        addUsingParent: function() {
+          parentAPI.add(3, 6).then(function(value) {
+            parentReturnValue = value;
+          });
+        },
+        getParentReturnValue: function() {
+          return parentReturnValue;
+        }
+      };
+
+      LoveNotes.connectToParent({
+        methods: methods
+      }).then(function(parent) {
+        parentAPI = parent;
+      });
+    </script>
+  </body>
+</html>
