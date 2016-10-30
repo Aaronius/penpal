@@ -2,18 +2,34 @@
 
 PenPal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
 
-The total size of the library is about 3 KB minified.
+The total size of the library is approximately 3 KB minified.
 
 ## Installation
 
+### Using npm
+
+Preferably, you'll be able to use PenPal from npm with a bundler like [Browserify](http://browserify.org/) or [webpack](https://webpack.github.io/). If you use npm for client package management, you can install PenPal with:
+
 `npm install penpal --save`
+
+And import PenPal into your code with something like:
+
+`import PenPal from 'penpal';`
+
+### Using a CDN
+
+If you don't want to use npm to manage client packages, PenPal also provides a UMD distribution in a `dist` folder which is hosted on a CDN:
+
+`<script src="https://unpkg.com/penpal/dist/penpal.min.js"></script>`
+
+PenPal will then be installed on `window.PenPal`.
 
 ## Usage
 
 ### Parent Window
 
 ```javascript
-const PenPal from 'penpal';
+import PenPal from 'penpal';
 
 PenPal.connectToChild({
   // URL of page to load into iframe.
@@ -35,7 +51,7 @@ PenPal.connectToChild({
 ### Child Iframe
 
 ```javascript
-const PenPal from 'penpal';
+import PenPal from 'penpal';
 
 PenPal.connectToParent({
   // Methods child is exposing to parent
