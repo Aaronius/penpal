@@ -13,9 +13,9 @@ The total size of the library is about 3 KB minified.
 ### Parent Window
 
 ```javascript
-const { connectToChild } from 'penpal';
+const PenPal from 'penpal';
 
-connectToChild({
+PenPal.connectToChild({
   // URL of page to load into iframe.
   url: 'http://example.com/iframe.html',
   // Container to which the iframe should be appended.
@@ -35,9 +35,9 @@ connectToChild({
 ### Child Iframe
 
 ```javascript
-const { connectToParent } from 'penpal';
+const PenPal from 'penpal';
 
-connectToParent({
+PenPal.connectToParent({
   // Methods child is exposing to parent
   methods: {
     multiply(num1, num2) {
@@ -89,13 +89,13 @@ The return value of `connectToChild` is a Promise which will be resolved once co
 
 The return value of `connectToParent` is a Promise which will be resolved once communication has been established. The promise will be resolved with a `parent` object containing the methods which the parent has exposed.
 
-### `setPromise(value:Constructor)`
+### `Promise`
 
-Provides a promise implementation that PenPal will use. If a promise implementation is not provided through this function, PenPal will attempt to use `window.Promise`.
+Setting `PenPal.Promise` to a Promise constructor provides PenPal with a promise implementation that it will use. If a promise implementation is not provided by the consumer, PenPal will attempt to use `window.Promise`.
 
-### `setDebug(value:boolean)`
+### `debug`
 
-Enables or disables debug logging. Debug logging is disabled by default.
+Setting `PenPal.debug` to `true` or `false` enables or disables debug logging. Debug logging is disabled by default.
 
 ## Inspiration
 

@@ -1,20 +1,21 @@
-/**
- * Whether debug messages should be logged.
- * @type {boolean}
- */
-let debug = false;
-
-/**
- * Promise implementation.
- * @type {Constructor}
- */
-let Promise = (() => {
-  try {
-    return window ? window.Promise : Promise;
-  } catch (e) {
-    return null;
-  }
-})();
+const PenPal = {
+  /**
+   * Promise implementation.
+   * @type {Constructor}
+   */
+  Promise: (() => {
+    try {
+      return window ? window.Promise : null;
+    } catch (e) {
+      return null;
+    }
+  })(),
+  /**
+   * Whether debug messages should be logged.
+   * @type {boolean}
+   */
+  debug: false
+};
 
 /**
  * @return {number} A unique ID (not universally unique)
@@ -29,7 +30,7 @@ const generateId = (() => {
  * @param {...*} args One or more items to log
  */
 function log(...args) {
-  if (debug) {
+  if (PenPal.debug) {
     console.log(...args); // eslint-disable-line no-console
   }
 }
@@ -61,7 +62,7 @@ function createCallSender(info, methodNames) {
   const createMethodProxy = (methodName) => {
     return (...args) => {
       log(`${localName}: Sending ${methodName}() call`);
-      return new Promise((resolve) => {
+      return new PenPal.Promise((resolve) => {
         const id = generateId();
         const handleMessage = (message) => {
           if (message.origin === remoteOrigin &&
@@ -113,7 +114,7 @@ function connectCallReceiver(info, methods) {
       log(`${localName}: Received ${methodName}() call`);
 
       if (methodName in methods) {
-        Promise.resolve(methods[methodName](...args)).then((returnValue) => {
+        PenPal.Promise.resolve(methods[methodName](...args)).then((returnValue) => {
           log(`${localName}: Sending ${methodName}() reply`);
 
           remote.postMessage({
@@ -144,14 +145,14 @@ function connectCallReceiver(info, methods) {
  * @param {Object} [options.methods] Methods that may be called by the iframe.
  * @type {Promise} A promise which will be resolved once a connection has been established.
  */
-export const connectToChild = ({ url, appendTo, methods = {} }) => {
+PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
   const parent = window;
   const frame = document.createElement('iframe');
   (appendTo || document.body).appendChild(frame);
   const child = frame.contentWindow || frame.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
 
-  return new Promise((resolve) => {
+  return new PenPal.Promise((resolve) => {
     const handleMessage = (message) => {
       if (message.origin === childOrigin &&
           message.data &&
@@ -207,11 +208,11 @@ export const connectToChild = ({ url, appendTo, methods = {} }) => {
  * @param {Object} [options.methods] Methods that may be called by the parent window.
  * @type {Promise} A promise which will be resolved once a connection has been established.
  */
-export const connectToParent = ({ parentOrigin, methods = {} }) => {
+PenPal.connectToParent = ({ parentOrigin, methods = {} }) => {
   const child = window;
   const parent = child.parent;
 
-  return new Promise((resolve) => {
+  return new PenPal.Promise((resolve) => {
     const handleMessage = (message) => {
       if ((!parentOrigin || message.origin === parentOrigin) &&
           message.data &&
@@ -244,19 +245,4 @@ export const connectToParent = ({ parentOrigin, methods = {} }) => {
   });
 };
 
-/**
- * Enabled or disables debugging. Debugging is disabled by default.
- * @param {boolean} value Whether debugging should be enabled.
- */
-export const setDebug = (value) => {
-  debug = value;
-};
-
-/**
- * Sets the promise implementation that should be used. If not called, the native implementation
- * will be used.
- * @param {Constructor} value The Promise implementation that should be used.
- */
-export const setPromise = (value) => {
-  Promise = value;
-};
+export default PenPal;

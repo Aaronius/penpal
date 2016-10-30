@@ -1,10 +1,10 @@
 describe('penpal', function() {
   beforeAll(function() {
-    LoveNotes.setPromise(RSVP.Promise);
+    PenPal.Promise = RSVP.Promise;
   });
 
   it('should complete a handshake', function (done) {
-    LoveNotes.connectToChild({
+    PenPal.connectToChild({
       url: 'http://localhost:9000/child.html'
     }).then(function (child) {
       child.destroy();
@@ -13,7 +13,7 @@ describe('penpal', function() {
   });
 
   it('should call a function on the child', function (done) {
-    LoveNotes.connectToChild({
+    PenPal.connectToChild({
       url: 'http://localhost:9000/child.html'
     }).then(function (child) {
       child.multiply(2, 5).then(function (value) {
@@ -25,7 +25,7 @@ describe('penpal', function() {
   });
 
   it('should call an asynchronous function on the child', function (done) {
-    LoveNotes.connectToChild({
+    PenPal.connectToChild({
       url: 'http://localhost:9000/child.html'
     }).then(function (child) {
       child.multiplyAsync(2, 5).then(function (value) {
@@ -37,7 +37,7 @@ describe('penpal', function() {
   });
 
   it('should call a function on the parent', function (done) {
-    LoveNotes.connectToChild({
+    PenPal.connectToChild({
       url: 'http://localhost:9000/child.html',
       methods: {
         add: function(num1, num2) {

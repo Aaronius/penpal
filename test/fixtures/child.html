@@ -12,7 +12,7 @@
     <script src="rsvp.min.js"></script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
-      LoveNotes.setPromise(RSVP.Promise);
+      PenPal.Promise = RSVP.Promise;
 
       var parentAPI;
       var parentReturnValue;
@@ -36,7 +36,7 @@
         }
       };
 
-      LoveNotes.connectToParent({
+      PenPal.connectToParent({
         methods: methods
       }).then(function(parent) {
         parentAPI = parent;

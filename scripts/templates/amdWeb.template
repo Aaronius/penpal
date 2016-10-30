@@ -1,11 +1,14 @@
 // Derived from https://github.com/umdjs/umd/blob/master/templates/amdWebGlobal.js
 (function (root, factory) {
+  var exports = {};
+  factory(exports);
+
   if (typeof define === 'function' && define.amd) {
     // AMD
-    define('penpal', ['exports'], factory);
+    define('PenPal', exports.default);
   } else {
     // Browser global
-    factory((root.LoveNotes = {}));
+    root.PenPal = exports.default;
   }
 }(this, function (exports) {
 
