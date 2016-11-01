@@ -147,9 +147,9 @@ function connectCallReceiver(info, methods) {
  */
 PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
   const parent = window;
-  const frame = document.createElement('iframe');
-  (appendTo || document.body).appendChild(frame);
-  const child = frame.contentWindow || frame.contentDocument.parentWindow;
+  const iframe = document.createElement('iframe');
+  (appendTo || document.body).appendChild(iframe);
+  const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
 
   return new PenPal.Promise((resolve) => {
@@ -172,11 +172,11 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
         const disconnectReceiver = connectCallReceiver(info, methods);
         const api = createCallSender(info, message.data.methodNames);
 
-        api.frame = frame;
+        api.iframe = iframe;
 
         api.destroy = () => {
           disconnectReceiver();
-          frame.parentNode.removeChild(frame);
+          iframe.parentNode.removeChild(iframe);
         };
 
         resolve(api);
@@ -185,7 +185,7 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
 
     parent.addEventListener('message', handleMessage);
 
-    frame.addEventListener('load', () => {
+    iframe.addEventListener('load', () => {
       log('Parent: Sending handshake');
 
       setTimeout(() => {
@@ -198,7 +198,7 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
 
     log('Parent: Loading frame');
 
-    frame.src = url;
+    iframe.src = url;
   });
 };
 
