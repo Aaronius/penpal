@@ -154,7 +154,8 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
 
   return new PenPal.Promise((resolve) => {
     const handleMessage = (message) => {
-      if (message.origin === childOrigin &&
+      if (message.source === child &&
+          message.origin === childOrigin &&
           message.data &&
           message.data.penpal === 'handshake-reply') {
         log('Parent: Received handshake reply from Child');
