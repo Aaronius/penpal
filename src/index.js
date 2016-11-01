@@ -31,7 +31,7 @@ const generateId = (() => {
  */
 function log(...args) {
   if (PenPal.debug) {
-    console.log(...args); // eslint-disable-line no-console
+    console.log('[PenPal]', ...args); // eslint-disable-line no-console
   }
 }
 
