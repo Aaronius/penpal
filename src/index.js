@@ -64,18 +64,18 @@ function createCallSender(info, methodNames) {
       log(`${localName}: Sending ${methodName}() call`);
       return new PenPal.Promise((resolve) => {
         const id = generateId();
-        const handleMessage = (message) => {
-          if (message.origin === remoteOrigin &&
-              message.data &&
-              message.data.penpal === 'reply' &&
-              message.data.id === id) {
+        const handleMessageEvent = (event) => {
+          if (event.source === remote &&
+              event.origin === remoteOrigin &&
+              event.data.penpal === 'reply' &&
+              event.data.id === id) {
             log(`${localName}: Received ${methodName}() reply`);
-            local.removeEventListener('message', handleMessage);
-            resolve(message.data.returnValue);
+            local.removeEventListener('message', handleMessageEvent);
+            resolve(event.data.returnValue);
           }
         };
 
-        local.addEventListener('message', handleMessage);
+        local.addEventListener('message', handleMessageEvent);
         remote.postMessage({
           penpal: 'call',
           id,
@@ -105,11 +105,11 @@ function connectCallReceiver(info, methods) {
 
   log(`${localName}: Connecting call receiver`);
 
-  const listener = (message) => {
-    if (message.origin === remoteOrigin &&
-        message.data &&
-        message.data.penpal === 'call') {
-      const { methodName, args, id } = message.data;
+  const handleMessageEvent = (event) => {
+    if (event.source === remote &&
+        event.origin === remoteOrigin &&
+        event.data.penpal === 'call') {
+      const { methodName, args, id } = event.data;
 
       log(`${localName}: Received ${methodName}() call`);
 
@@ -127,12 +127,12 @@ function connectCallReceiver(info, methods) {
     }
   };
 
-  local.addEventListener('message', listener);
+  local.addEventListener('message', handleMessageEvent);
 
   log(`${localName}: Awaiting calls...`);
 
   return () => {
-    local.removeEventListener('message', listener);
+    local.removeEventListener('message', handleMessageEvent);
   };
 }
 
@@ -153,24 +153,23 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
   const childOrigin = getOriginFromUrl(url);
 
   return new PenPal.Promise((resolve) => {
-    const handleMessage = (message) => {
-      if (message.source === child &&
-          message.origin === childOrigin &&
-          message.data &&
-          message.data.penpal === 'handshake-reply') {
+    const handleMessageEvent = (event) => {
+      if (event.source === child &&
+          event.origin === childOrigin &&
+          event.data.penpal === 'handshake-reply') {
         log('Parent: Received handshake reply from Child');
 
-        parent.removeEventListener('message', handleMessage);
+        parent.removeEventListener('message', handleMessageEvent);
 
         const info = {
           localName: 'Parent',
           local: parent,
           remote: child,
-          remoteOrigin: message.origin
+          remoteOrigin: event.origin
         };
 
         const disconnectReceiver = connectCallReceiver(info, methods);
-        const api = createCallSender(info, message.data.methodNames);
+        const api = createCallSender(info, event.data.methodNames);
 
         api.iframe = iframe;
 
@@ -183,7 +182,7 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
       }
     };
 
-    parent.addEventListener('message', handleMessage);
+    parent.addEventListener('message', handleMessageEvent);
 
     iframe.addEventListener('load', () => {
       log('Parent: Sending handshake');
@@ -196,7 +195,7 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
       });
     });
 
-    log('Parent: Loading frame');
+    log('Parent: Loading iframe');
 
     iframe.src = url;
   });
@@ -214,35 +213,34 @@ PenPal.connectToParent = ({ parentOrigin, methods = {} }) => {
   const parent = child.parent;
 
   return new PenPal.Promise((resolve) => {
-    const handleMessage = (message) => {
-      if ((!parentOrigin || message.origin === parentOrigin) &&
-          message.data &&
-          message.data.penpal === 'handshake') {
+    const handleMessageEvent = (event) => {
+      if ((!parentOrigin || event.origin === parentOrigin) &&
+          event.data.penpal === 'handshake') {
         log('Child: Received handshake from Parent');
 
-        child.removeEventListener('message', handleMessage);
+        child.removeEventListener('message', handleMessageEvent);
 
         log('Child: Sending handshake reply to Parent');
 
-        message.source.postMessage({
+        event.source.postMessage({
           penpal: 'handshake-reply',
           methodNames: Object.keys(methods)
-        }, message.origin);
+        }, event.origin);
 
         const info = {
           localName: 'Child',
           local: child,
           remote: parent,
-          remoteOrigin: message.origin
+          remoteOrigin: event.origin
         };
 
         connectCallReceiver(info, methods);
 
-        resolve(createCallSender(info, message.data.methodNames));
+        resolve(createCallSender(info, event.data.methodNames));
       }
     };
 
-    child.addEventListener('message', handleMessage);
+    child.addEventListener('message', handleMessageEvent);
   });
 };
 
