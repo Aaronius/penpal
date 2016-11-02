@@ -89,7 +89,13 @@ PenPal.connectToParent({
 
 #### Return value
 
-The return value of `connectToChild` is a Promise which will be resolved once communication has been established. The promise will be resolved with a `child` object containing the methods which the child has exposed. The `child` object will also contain two other special properties:
+The return value of `connectToChild` is a Promise which will be resolved once communication has been established. The promise will be resolved with a `child` object.
+
+##### The `child` object
+
+The child object will contain the methods which the child has exposed. Note that these aren't actual memory references to the methods the child defined, but instead proxy methods PenPal has created with the same names and signatures. When one of these methods is called, PenPal will immediately return a promise and then go to work sending a message to the child, calling the actual method within the child with the arguments you have passed, and then sending the return value back to the parent. The promise you received will then be resolved with the return value.
+
+The `child` object will also contain two other special properties:
 
 `child.iframe` The child iframe element.
 
@@ -105,7 +111,11 @@ The return value of `connectToChild` is a Promise which will be resolved once co
 
 #### Return value
 
-The return value of `connectToParent` is a Promise which will be resolved once communication has been established. The promise will be resolved with a `parent` object containing the methods which the parent has exposed.
+The return value of `connectToParent` is a Promise which will be resolved once communication has been established. The promise will be resolved with a `parent` object.
+
+##### The `parent` object
+
+The parent object will contain the methods which the parent has exposed. Note that these aren't actual memory references to the methods the parent defined, but instead proxy methods PenPal has created with the same names and signatures. When one of these methods is called, PenPal will immediately return a promise and then go to work sending a message to the parent, calling the actual method within the parent with the arguments you have passed, and then sending the return value back to the child. The promise you received will then be resolved with the return value.
 
 ### `Promise`
 
