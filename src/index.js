@@ -43,7 +43,8 @@ function log(...args) {
 function getOriginFromUrl(url) {
   const a = document.createElement('a');
   a.href = url;
-  return a.origin || `${a.protocol}//${a.hostname}`;
+  return a.origin ||
+    (a.protocol || document.location.protocol) + '//' + a.hostname + (a.port ? ':' + a.port : '');
 }
 
 /**
