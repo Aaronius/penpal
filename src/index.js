@@ -41,10 +41,12 @@ function log(...args) {
  * @return {string} The URL's origin
  */
 function getOriginFromUrl(url) {
+  const location = document.location;
   const a = document.createElement('a');
   a.href = url;
+
   return a.origin ||
-    (a.protocol || document.location.protocol) + '//' + a.hostname + (a.port ? ':' + a.port : '');
+    `${a.protocol || location.protocol}//${a.hostname || location.hostname}:${a.port || location.port}`;
 }
 
 /**
