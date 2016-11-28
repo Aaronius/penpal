@@ -54,4 +54,18 @@ describe('penpal', function() {
       }).catch(function(err) { done(err); });
     });
   });
+
+  it('should handle rejected promises', function (done) {
+    PenPal.connectToChild({
+      url: 'http://localhost:9000/child.html',
+    }).then(function (child) {
+      child.getRejectedPromise().then(
+        function() {},
+        function(error) {
+          expect(error).toBe('test error message');
+          done();
+        }
+      )
+    })
+  });
 });

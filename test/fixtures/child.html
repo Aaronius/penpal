@@ -33,6 +33,9 @@
         },
         getParentReturnValue: function() {
           return parentReturnValue;
+        },
+        getRejectedPromise: function() {
+          return Promise.reject('test error message');
         }
       };
 
