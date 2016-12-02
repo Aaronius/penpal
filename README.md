@@ -1,8 +1,8 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
-# PenPal
+# Penpal
 
-PenPal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
+Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
 
 The total size of the library is approximately 3 KB minified.
 
@@ -10,30 +10,30 @@ The total size of the library is approximately 3 KB minified.
 
 ### Using npm
 
-Preferably, you'll be able to use PenPal from npm with a bundler like [Browserify](http://browserify.org/) or [webpack](https://webpack.github.io/). If you use npm for client package management, you can install PenPal with:
+Preferably, you'll be able to use Penpal from npm with a bundler like [Browserify](http://browserify.org/) or [webpack](https://webpack.github.io/). If you use npm for client package management, you can install Penpal with:
 
 `npm install penpal --save`
 
-And import PenPal into your code with something like:
+And import Penpal into your code with something like:
 
-`import PenPal from 'penpal';`
+`import Penpal from 'penpal';`
 
 ### Using a CDN
 
-If you don't want to use npm to manage client packages, PenPal also provides a UMD distribution in a `dist` folder which is hosted on a CDN:
+If you don't want to use npm to manage client packages, Penpal also provides a UMD distribution in a `dist` folder which is hosted on a CDN:
 
 `<script src="https://unpkg.com/penpal/dist/penpal.min.js"></script>`
 
-PenPal will then be installed on `window.PenPal`.
+Penpal will then be installed on `window.Penpal`.
 
 ## Usage
 
 ### Parent Window
 
 ```javascript
-import PenPal from 'penpal';
+import Penpal from 'penpal';
 
-PenPal.connectToChild({
+const connection = Penpal.connectToChild({
   // URL of page to load into iframe.
   url: 'http://example.com/iframe.html',
   // Container to which the iframe should be appended.
@@ -44,7 +44,9 @@ PenPal.connectToChild({
       return num1 + num2;
     }
   }
-}).then(child => {
+});
+
+connection.promise.then(child => {
   child.multiply(2, 6).then(total => console.log(total));
   child.divide(12, 4).then(total => console.log(total));
 });
@@ -53,9 +55,9 @@ PenPal.connectToChild({
 ### Child Iframe
 
 ```javascript
-import PenPal from 'penpal';
+import Penpal from 'penpal';
 
-PenPal.connectToParent({
+const connection = Penpal.connectToParent({
   // Methods child is exposing to parent
   methods: {
     multiply(num1, num2) {
@@ -70,18 +72,20 @@ PenPal.connectToParent({
       });
     }
   }
-}).then(parent => {
+});
+
+connection.promise.then(parent => {
   parent.add(3, 1).then(total => console.log(total));
 });
 ```
 
 ## API
 
-### `connectToChild(options:Object) => Promise`
+### `connectToChild(options:Object) => Object`
 
 #### Parameters
 
-`options.url` (required) The URL of the webpage that should be loaded into the iframe that PenPal will create.
+`options.url` (required) The URL of the webpage that should be loaded into the iframe that Penpal will create.
 
 `options.appendTo` (optional) The element to which the created iframe should be appended. If not provided, the iframe will be appended to `document.body`.
 
@@ -89,19 +93,15 @@ PenPal.connectToParent({
 
 #### Return value
 
-The return value of `connectToChild` is a Promise which will be resolved once communication has been established. The promise will be resolved with a `child` object.
+The return value of `connectToChild` is a `connection` object with the following properties:
 
-##### The `child` object
+`connection.promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the child has exposed. Note that these aren't actual memory references to the methods the child exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the child, calling the actual method within the child with the arguments you have passed, and then sending the return value back to the parent. The promise you received will then be resolved with the return value.
 
-The child object will contain the methods which the child has exposed. Note that these aren't actual memory references to the methods the child defined, but instead proxy methods PenPal has created with the same names and signatures. When one of these methods is called, PenPal will immediately return a promise and then go to work sending a message to the child, calling the actual method within the child with the arguments you have passed, and then sending the return value back to the parent. The promise you received will then be resolved with the return value.
+`connnection.iframe` The child iframe element. The iframe will have already be appended as a child to the element defined in `options.appendTo`, but a reference to the iframe is provided in case you need to add CSS classes, etc.
 
-The `child` object will also contain two other special properties:
+`connection.destroy` A method that, when called, will remove the iframe element from the DOM and clean up event listeners. You may call this even before a connection has been established.
 
-`child.iframe` The child iframe element.
-
-`child.destroy` A method that, when called, will remove the iframe element from the DOM and clean up event listeners.
-
-### `connectToParent(options:Object) => Promise`
+### `connectToParent(options:Object) => Object`
 
 #### Parameters
 
@@ -111,19 +111,17 @@ The `child` object will also contain two other special properties:
 
 #### Return value
 
-The return value of `connectToParent` is a Promise which will be resolved once communication has been established. The promise will be resolved with a `parent` object.
+The return value of `connectToParent` is a `connection` object with the following property:
 
-##### The `parent` object
-
-The parent object will contain the methods which the parent has exposed. Note that these aren't actual memory references to the methods the parent defined, but instead proxy methods PenPal has created with the same names and signatures. When one of these methods is called, PenPal will immediately return a promise and then go to work sending a message to the parent, calling the actual method within the parent with the arguments you have passed, and then sending the return value back to the child. The promise you received will then be resolved with the return value.
+`connection.promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the parent has exposed. Note that these aren't actual memory references to the methods the parent exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the parent, calling the actual method within the parent with the arguments you have passed, and then sending the return value back to the child. The promise you received will then be resolved with the return value.
 
 ### `Promise`
 
-Setting `PenPal.Promise` to a Promise constructor provides PenPal with a promise implementation that it will use. If a promise implementation is not provided by the consumer, PenPal will attempt to use `window.Promise`.
+Setting `Penpal.Promise` to a Promise constructor provides Penpal with a promise implementation that it will use. If a promise implementation is not provided by the consumer, Penpal will attempt to use `window.Promise`.
 
 ### `debug`
 
-Setting `PenPal.debug` to `true` or `false` enables or disables debug logging. Debug logging is disabled by default.
+Setting `Penpal.debug` to `true` or `false` enables or disables debug logging. Debug logging is disabled by default.
 
 ## Inspiration
 

@@ -6,8 +6,9 @@ const CALL = 'call';
 const REPLY = 'reply';
 const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
+const MESSAGE = 'message';
 
-const PenPal = {
+const Penpal = {
   /**
    * Promise implementation.
    * @type {Constructor}
@@ -39,8 +40,8 @@ const generateId = (() => {
  * @param {...*} args One or more items to log
  */
 function log(...args) {
-  if (PenPal.debug) {
-    console.log('[PenPal]', ...args); // eslint-disable-line no-console
+  if (Penpal.debug) {
+    console.log('[Penpal]', ...args); // eslint-disable-line no-console
   }
 }
 
@@ -74,7 +75,7 @@ function createCallSender(info, methodNames) {
   const createMethodProxy = (methodName) => {
     return (...args) => {
       log(`${localName}: Sending ${methodName}() call`);
-      return new PenPal.Promise((resolve, reject) => {
+      return new Penpal.Promise((resolve, reject) => {
         const id = generateId();
         const handleMessageEvent = (event) => {
           if (event.source === remote &&
@@ -82,12 +83,12 @@ function createCallSender(info, methodNames) {
               event.data.penpal === REPLY &&
               event.data.id === id) {
             log(`${localName}: Received ${methodName}() reply`);
-            local.removeEventListener('message', handleMessageEvent);
+            local.removeEventListener(MESSAGE, handleMessageEvent);
             (event.data.resolution === FULFILLED ? resolve : reject)(event.data.returnValue);
           }
         };
 
-        local.addEventListener('message', handleMessageEvent);
+        local.addEventListener(MESSAGE, handleMessageEvent);
         remote.postMessage({
           penpal: CALL,
           id,
@@ -139,7 +140,7 @@ function connectCallReceiver(info, methods) {
           }
         };
 
-        PenPal.Promise.resolve(methods[methodName](...args)).then(
+        Penpal.Promise.resolve(methods[methodName](...args)).then(
           createPromiseHandler(FULFILLED),
           createPromiseHandler(REJECTED)
         );
@@ -147,14 +148,23 @@ function connectCallReceiver(info, methods) {
     }
   };
 
-  local.addEventListener('message', handleMessageEvent);
+  local.addEventListener(MESSAGE, handleMessageEvent);
 
   log(`${localName}: Awaiting calls...`);
 
   return () => {
-    local.removeEventListener('message', handleMessageEvent);
+    local.removeEventListener(MESSAGE, handleMessageEvent);
   };
 }
+
+/**
+ * @typedef {Object} Child
+ * @property {Promise} promise A promise which will be resolved once a connection has
+ * been established.
+ * @property {HTMLIframeElement} iframe The created iframe element.
+ * @property {Function} destroy A method that, when called, will remove the iframe element from
+ * the DOM and clean up event listeners.
+ */
 
 /**
  * Creates an iframe, loads a webpage into the URL, and attempts to establish communication with
@@ -163,23 +173,25 @@ function connectCallReceiver(info, methods) {
  * @param {string} options.url The URL of the webpage that should be loaded into the created iframe.
  * @param {HTMLElement} [options.appendTo] The container to which the iframe should be appended.
  * @param {Object} [options.methods] Methods that may be called by the iframe.
- * @type {Promise} A promise which will be resolved once a connection has been established.
+ * @return {Child}
  */
-PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
+Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
   const parent = window;
   const iframe = document.createElement('iframe');
   (appendTo || document.body).appendChild(iframe);
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
+  let handleMessageEvent;
+  let disconnectReceiver;
 
-  return new PenPal.Promise((resolve) => {
-    const handleMessageEvent = (event) => {
+  const promise = new Penpal.Promise((resolve) => {
+    handleMessageEvent = (event) => {
       if (event.source === child &&
           event.origin === childOrigin &&
           event.data.penpal === HANDSHAKE_REPLY) {
         log('Parent: Received handshake reply from Child');
 
-        parent.removeEventListener('message', handleMessageEvent);
+        parent.removeEventListener(MESSAGE, handleMessageEvent);
 
         const info = {
           localName: PARENT,
@@ -188,21 +200,12 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
           remoteOrigin: event.origin
         };
 
-        const disconnectReceiver = connectCallReceiver(info, methods);
-        const api = createCallSender(info, event.data.methodNames);
-
-        api.iframe = iframe;
-
-        api.destroy = () => {
-          disconnectReceiver();
-          iframe.parentNode.removeChild(iframe);
-        };
-
-        resolve(api);
+        disconnectReceiver = connectCallReceiver(info, methods);
+        resolve(createCallSender(info, event.data.methodNames));
       }
     };
 
-    parent.addEventListener('message', handleMessageEvent);
+    parent.addEventListener(MESSAGE, handleMessageEvent);
 
     iframe.addEventListener('load', () => {
       log('Parent: Sending handshake');
@@ -219,26 +222,50 @@ PenPal.connectToChild = ({ url, appendTo, methods = {} }) => {
 
     iframe.src = url;
   });
+
+  const destroy = () => {
+    parent.removeEventListener(MESSAGE, handleMessageEvent);
+
+    if (disconnectReceiver) {
+      disconnectReceiver();
+    }
+
+    if (iframe.parentNode) {
+      iframe.parentNode.removeChild(iframe);
+    }
+  };
+
+  return {
+    promise,
+    iframe,
+    destroy
+  };
 };
+
+/**
+ * @typedef {Object} Parent
+ * @property {Promise} promise A promise which will be resolved once a connection has
+ * been established.
+ */
 
 /**
  * Attempts to establish communication with the parent window.
  * @param {Object} options
  * @param {string} [options.parentOrigin] A parent origin used to restrict communication.
  * @param {Object} [options.methods] Methods that may be called by the parent window.
- * @type {Promise} A promise which will be resolved once a connection has been established.
+ * @return {Parent}
  */
-PenPal.connectToParent = ({ parentOrigin, methods = {} }) => {
+Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
   const child = window;
   const parent = child.parent;
 
-  return new PenPal.Promise((resolve) => {
+  const promise = new Penpal.Promise((resolve) => {
     const handleMessageEvent = (event) => {
       if ((!parentOrigin || event.origin === parentOrigin) &&
           event.data.penpal === HANDSHAKE) {
         log('Child: Received handshake from Parent');
 
-        child.removeEventListener('message', handleMessageEvent);
+        child.removeEventListener(MESSAGE, handleMessageEvent);
 
         log('Child: Sending handshake reply to Parent');
 
@@ -260,8 +287,12 @@ PenPal.connectToParent = ({ parentOrigin, methods = {} }) => {
       }
     };
 
-    child.addEventListener('message', handleMessageEvent);
+    child.addEventListener(MESSAGE, handleMessageEvent);
   });
+
+  return {
+    promise
+  };
 };
 
-export default PenPal;
+export default Penpal;

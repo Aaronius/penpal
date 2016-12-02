@@ -5,10 +5,10 @@
 
   if (typeof define === 'function' && define.amd) {
     // AMD
-    define('PenPal', exports.default);
+    define('Penpal', exports.default);
   } else {
     // Browser global
-    root.PenPal = exports.default;
+    root.Penpal = exports.default;
   }
 }(this, function (exports) {
 

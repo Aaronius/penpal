@@ -12,7 +12,8 @@
     <script src="rsvp.min.js"></script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
-      PenPal.Promise = RSVP.Promise;
+      Penpal.Promise = RSVP.Promise;
+//      Penpal.debug = true;
 
       var parentAPI;
       var parentReturnValue;
@@ -39,9 +40,9 @@
         }
       };
 
-      PenPal.connectToParent({
+      Penpal.connectToParent({
         methods: methods
-      }).then(function(parent) {
+      }).promise.then(function(parent) {
         parentAPI = parent;
       });
     </script>

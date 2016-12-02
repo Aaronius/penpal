@@ -1,68 +1,80 @@
-describe('penpal', function() {
+describe('Penpal', function() {
   beforeAll(function() {
-    PenPal.Promise = RSVP.Promise;
+    Penpal.Promise = RSVP.Promise;
+    // Penpal.debug = true;
   });
 
   it('should complete a handshake', function (done) {
-    PenPal.connectToChild({
+    const penpal = Penpal.connectToChild({
       url: 'http://localhost:9000/child.html'
-    }).then(function (child) {
-      child.destroy();
+    });
+
+    penpal.promise.then(() => {
+      penpal.destroy();
       done();
     });
   });
 
   it('should call a function on the child', function (done) {
-    PenPal.connectToChild({
+    const penpal = Penpal.connectToChild({
       url: 'http://localhost:9000/child.html'
-    }).then(function (child) {
+    });
+
+    penpal.promise.then(function (child) {
       child.multiply(2, 5).then(function (value) {
         expect(value).toEqual(10);
-        child.destroy();
+        penpal.destroy();
         done();
-      }).catch(function(err) { done(err); });
+      });
     });
   });
 
   it('should call an asynchronous function on the child', function (done) {
-    PenPal.connectToChild({
+    const penpal = Penpal.connectToChild({
       url: 'http://localhost:9000/child.html'
-    }).then(function (child) {
+    });
+
+    penpal.promise.then(function (child) {
       child.multiplyAsync(2, 5).then(function (value) {
         expect(value).toEqual(10);
-        child.destroy();
+        penpal.destroy();
         done();
-      }).catch(function(err) { done(err); });
+      });
     });
   });
 
   it('should call a function on the parent', function (done) {
-    PenPal.connectToChild({
+    const penpal = Penpal.connectToChild({
       url: 'http://localhost:9000/child.html',
       methods: {
         add: function(num1, num2) {
           return num1 + num2;
         }
       }
-    }).then(function (child) {
+    });
+
+    penpal.promise.then(function (child) {
       child.addUsingParent().then(function() {
         child.getParentReturnValue().then(function (value) {
           expect(value).toEqual(9);
-          child.destroy();
+          penpal.destroy();
           done();
-        }).catch(function(err) { done(err); });
-      }).catch(function(err) { done(err); });
+        });
+      });
     });
   });
 
   it('should handle rejected promises', function (done) {
-    PenPal.connectToChild({
+    const penpal = Penpal.connectToChild({
       url: 'http://localhost:9000/child.html',
-    }).then(function (child) {
+    });
+
+    penpal.promise.then(function (child) {
       child.getRejectedPromise().then(
         function() {},
         function(error) {
           expect(error).toBe('test error message');
+          penpal.destroy();
           done();
         }
       )
