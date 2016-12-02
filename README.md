@@ -4,7 +4,7 @@
 
 Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
 
-The total size of the library is approximately 3 KB minified.
+The total size of the library is approximately 4 KB minified.
 
 ## Installation
 
@@ -97,9 +97,9 @@ The return value of `connectToChild` is a `connection` object with the following
 
 `connection.promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the child has exposed. Note that these aren't actual memory references to the methods the child exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the child, calling the actual method within the child with the arguments you have passed, and then sending the return value back to the parent. The promise you received will then be resolved with the return value.
 
-`connnection.iframe` The child iframe element. The iframe will have already be appended as a child to the element defined in `options.appendTo`, but a reference to the iframe is provided in case you need to add CSS classes, etc.
+`connection.destroy` A method that, when called, will remove the iframe element from the DOM and disconnect any messaging channels. You may call this even before a connection has been established.
 
-`connection.destroy` A method that, when called, will remove the iframe element from the DOM and clean up event listeners. You may call this even before a connection has been established.
+`connnection.iframe` The child iframe element. The iframe will have already be appended as a child to the element defined in `options.appendTo`, but a reference to the iframe is provided in case you need to add CSS classes, etc.
 
 ### `connectToParent(options:Object) => Object`
 
@@ -114,6 +114,8 @@ The return value of `connectToChild` is a `connection` object with the following
 The return value of `connectToParent` is a `connection` object with the following property:
 
 `connection.promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the parent has exposed. Note that these aren't actual memory references to the methods the parent exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the parent, calling the actual method within the parent with the arguments you have passed, and then sending the return value back to the child. The promise you received will then be resolved with the return value.
+
+`connection.destroy` A method that, when called, will disconnect any messaging channels. You may call this even before a connection has been established.
 
 ### `Promise`
 

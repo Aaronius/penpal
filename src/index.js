@@ -7,6 +7,7 @@ const REPLY = 'reply';
 const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
 const MESSAGE = 'message';
+const LOAD = 'load';
 
 const Penpal = {
   /**
@@ -39,25 +40,25 @@ const generateId = (() => {
  * Logs a message.
  * @param {...*} args One or more items to log
  */
-function log(...args) {
+const log = (...args) => {
   if (Penpal.debug) {
     console.log('[Penpal]', ...args); // eslint-disable-line no-console
   }
-}
+};
 
 /**
  * Converts a URL into an origin.
  * @param {string} url
  * @return {string} The URL's origin
  */
-function getOriginFromUrl(url) {
+const getOriginFromUrl = (url) => {
   const location = document.location;
   const a = document.createElement('a');
   a.href = url;
 
   return a.origin ||
     `${a.protocol || location.protocol}//${a.hostname || location.hostname}:${a.port || location.port}`;
-}
+};
 
 /**
  * Creates an object with methods that match those defined by the remote. When these methods are
@@ -67,13 +68,19 @@ function getOriginFromUrl(url) {
  * @param {Array} methodNames Names of methods available to be called on the remote.
  * @returns {Object} An object with methods that may be called.
  */
-function createCallSender(info, methodNames) {
+const createCallSender = (info, methodNames, destructionPromise) => {
   const { localName, local, remote, remoteOrigin } = info;
+  let destroyed = false;
 
   log(`${localName}: Creating call sender`);
 
   const createMethodProxy = (methodName) => {
     return (...args) => {
+      if (destroyed) {
+        log(`${localName}: Unable to send ${methodName}() call due to destroyed connection`);
+        return;
+      }
+
       log(`${localName}: Sending ${methodName}() call`);
       return new Penpal.Promise((resolve, reject) => {
         const id = generateId();
@@ -99,11 +106,15 @@ function createCallSender(info, methodNames) {
     };
   };
 
+  destructionPromise.then(() => {
+    destroyed = true;
+  });
+
   return methodNames.reduce((api, methodName) => {
     api[methodName] = createMethodProxy(methodName);
     return api;
   }, {});
-}
+};
 
 /**
  * Listens for "call" messages coming from the remote, executes the corresponding method, and
@@ -113,8 +124,9 @@ function createCallSender(info, methodNames) {
  * while the values are the method functions.
  * @returns {Function} A function that may be called to disconnect the receiver.
  */
-function connectCallReceiver(info, methods) {
+const connectCallReceiver = (info, methods, destructionPromise) => {
   const { localName, local, remote, remoteOrigin } = info;
+  let destroyed = false;
 
   log(`${localName}: Connecting call receiver`);
 
@@ -129,6 +141,11 @@ function connectCallReceiver(info, methods) {
       if (methodName in methods) {
         const createPromiseHandler = (resolution) => {
           return (returnValue) => {
+            if (destroyed) {
+              log(`${localName}: Unable to send ${methodName}() reply due to destroyed connection`);
+              return;
+            }
+
             log(`${localName}: Sending ${methodName}() reply`);
 
             remote.postMessage({
@@ -150,12 +167,11 @@ function connectCallReceiver(info, methods) {
 
   local.addEventListener(MESSAGE, handleMessageEvent);
 
-  log(`${localName}: Awaiting calls...`);
-
-  return () => {
+  destructionPromise.then(() => {
+    destroyed = true;
     local.removeEventListener(MESSAGE, handleMessageEvent);
-  };
-}
+  });
+};
 
 /**
  * @typedef {Object} Child
@@ -176,22 +192,31 @@ function connectCallReceiver(info, methods) {
  * @return {Child}
  */
 Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
+  let destroy;
+  const destructionPromise = new Penpal.Promise(resolve => destroy = resolve);
+
   const parent = window;
   const iframe = document.createElement('iframe');
+
   (appendTo || document.body).appendChild(iframe);
+
+  destructionPromise.then(() => {
+    if (iframe.parentNode) {
+      iframe.parentNode.removeChild(iframe);
+    }
+  });
+
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
-  let handleMessageEvent;
-  let disconnectReceiver;
 
   const promise = new Penpal.Promise((resolve) => {
-    handleMessageEvent = (event) => {
+    const handleMessage = (event) => {
       if (event.source === child &&
           event.origin === childOrigin &&
           event.data.penpal === HANDSHAKE_REPLY) {
         log('Parent: Received handshake reply from Child');
 
-        parent.removeEventListener(MESSAGE, handleMessageEvent);
+        parent.removeEventListener(MESSAGE, handleMessage);
 
         const info = {
           localName: PARENT,
@@ -200,40 +225,36 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
           remoteOrigin: event.origin
         };
 
-        disconnectReceiver = connectCallReceiver(info, methods);
-        resolve(createCallSender(info, event.data.methodNames));
+        connectCallReceiver(info, methods, destructionPromise);
+        resolve(createCallSender(info, event.data.methodNames, destructionPromise));
       }
     };
 
-    parent.addEventListener(MESSAGE, handleMessageEvent);
-
-    iframe.addEventListener('load', () => {
+    const handleIframeLoaded = () => {
       log('Parent: Sending handshake');
 
-      setTimeout(() => {
-        child.postMessage({
-          penpal: HANDSHAKE,
-          methodNames: Object.keys(methods)
-        }, childOrigin);
+      parent.addEventListener(MESSAGE, handleMessage);
+
+      destructionPromise.then(() => {
+        parent.removeEventListener(MESSAGE, handleMessage);
       });
+
+      child.postMessage({
+        penpal: HANDSHAKE,
+        methodNames: Object.keys(methods)
+      }, childOrigin);
+    };
+
+    iframe.addEventListener(LOAD, handleIframeLoaded);
+
+    destructionPromise.then(() => {
+      iframe.removeEventListener(LOAD, handleIframeLoaded);
     });
 
     log('Parent: Loading iframe');
 
     iframe.src = url;
   });
-
-  const destroy = () => {
-    parent.removeEventListener(MESSAGE, handleMessageEvent);
-
-    if (disconnectReceiver) {
-      disconnectReceiver();
-    }
-
-    if (iframe.parentNode) {
-      iframe.parentNode.removeChild(iframe);
-    }
-  };
 
   return {
     promise,
@@ -256,6 +277,9 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
  * @return {Parent}
  */
 Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
+  let destroy;
+  const destructionPromise = new Penpal.Promise(resolve => destroy = resolve);
+
   const child = window;
   const parent = child.parent;
 
@@ -281,17 +305,21 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
           remoteOrigin: event.origin
         };
 
-        connectCallReceiver(info, methods);
-
-        resolve(createCallSender(info, event.data.methodNames));
+        connectCallReceiver(info, methods, destructionPromise);
+        resolve(createCallSender(info, event.data.methodNames, destructionPromise));
       }
     };
 
     child.addEventListener(MESSAGE, handleMessageEvent);
+
+    destructionPromise.then(() => {
+      child.removeEventListener(MESSAGE, handleMessageEvent);
+    })
   });
 
   return {
-    promise
+    promise,
+    destroy
   };
 };
 

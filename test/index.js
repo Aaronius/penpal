@@ -1,7 +1,7 @@
 describe('Penpal', function() {
   beforeAll(function() {
     Penpal.Promise = RSVP.Promise;
-    // Penpal.debug = true;
+    Penpal.debug = true;
   });
 
   it('should complete a handshake', function (done) {
