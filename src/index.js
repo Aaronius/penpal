@@ -61,11 +61,37 @@ const getOriginFromUrl = (url) => {
 };
 
 /**
+ * A simplified promise class only used internally for when destroy() is called. This is
+ * used to destroy connections synchronously while promises typically resolve asynchronously.
+ *
+ * @param {Function} executor
+ * @returns {Object}
+ * @constructor
+ */
+const DestructionPromise = (executor) => {
+  const handlers = [];
+
+  executor(() => {
+    handlers.forEach((handler) => {
+      handler();
+    })
+  });
+
+  return {
+    then(handler) {
+      handlers.push(handler);
+    }
+  }
+};
+
+/**
  * Creates an object with methods that match those defined by the remote. When these methods are
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
  * @param {Object} info Information about the local and remote windows.
  * @param {Array} methodNames Names of methods available to be called on the remote.
+ * @param {Promise} destructionPromise A promise resolved when destroy() is called on the penpal
+ * connection.
  * @returns {Object} An object with methods that may be called.
  */
 const createCallSender = (info, methodNames, destructionPromise) => {
@@ -76,13 +102,13 @@ const createCallSender = (info, methodNames, destructionPromise) => {
 
   const createMethodProxy = (methodName) => {
     return (...args) => {
-      if (destroyed) {
-        log(`${localName}: Unable to send ${methodName}() call due to destroyed connection`);
-        return;
-      }
-
       log(`${localName}: Sending ${methodName}() call`);
       return new Penpal.Promise((resolve, reject) => {
+        if (destroyed) {
+          reject(`Unable to send ${methodName}() call due to destroyed connection`);
+          return;
+        }
+
         const id = generateId();
         const handleMessageEvent = (event) => {
           if (event.source === remote &&
@@ -122,6 +148,8 @@ const createCallSender = (info, methodNames, destructionPromise) => {
  * @param {Object} info Information about the local and remote windows.
  * @param {Object} methods The keys are the names of the methods that can be called by the remote
  * while the values are the method functions.
+ * @param {Promise} destructionPromise A promise resolved when destroy() is called on the penpal
+ * connection.
  * @returns {Function} A function that may be called to disconnect the receiver.
  */
 const connectCallReceiver = (info, methods, destructionPromise) => {
@@ -141,8 +169,13 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
       if (methodName in methods) {
         const createPromiseHandler = (resolution) => {
           return (returnValue) => {
+            debugger;
             if (destroyed) {
-              log(`${localName}: Unable to send ${methodName}() reply due to destroyed connection`);
+              // We have to throw the error after a timeout otherwise we're just continuing
+              // the promise chain with a failed promise.
+              setTimeout(() => {
+                throw new Error(`Unable to send ${methodName}() reply due to destroyed connection`);
+              });
               return;
             }
 
@@ -193,7 +226,7 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
  */
 Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
   let destroy;
-  const destructionPromise = new Penpal.Promise(resolve => destroy = resolve);
+  const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
 
   const parent = window;
   const iframe = document.createElement('iframe');
@@ -278,7 +311,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
  */
 Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
   let destroy;
-  const destructionPromise = new Penpal.Promise(resolve => destroy = resolve);
+  const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
 
   const child = window;
   const parent = child.parent;
