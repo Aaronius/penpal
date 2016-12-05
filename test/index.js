@@ -1,3 +1,5 @@
+const HOST = 'localhost';
+
 describe('Penpal', () => {
   beforeAll(() => {
     Penpal.Promise = RSVP.Promise;
@@ -6,7 +8,7 @@ describe('Penpal', () => {
 
   it('should complete a handshake', (done) => {
     const connection = Penpal.connectToChild({
-      url: 'http://localhost:9000/child.html'
+      url: `http://${HOST}:9000/child.html`
     });
 
     connection.promise.then(() => {
@@ -17,11 +19,11 @@ describe('Penpal', () => {
 
   it('should create an iframe and add it to document.body', () => {
     const connection = Penpal.connectToChild({
-      url: 'http://localhost:9000/child.html'
+      url: `http://${HOST}:9000/child.html`
     });
 
     expect(connection.iframe).toBeDefined();
-    expect(connection.iframe.src).toBe('http://localhost:9000/child.html');
+    expect(connection.iframe.src).toBe(`http://${HOST}:9000/child.html`);
     expect(connection.iframe.parentNode).toBe(document.body);
   });
 
@@ -30,18 +32,18 @@ describe('Penpal', () => {
     document.body.appendChild(container);
 
     const connection = Penpal.connectToChild({
-      url: 'http://localhost:9000/child.html',
+      url: `http://${HOST}:9000/child.html`,
       appendTo: container
     });
 
     expect(connection.iframe).toBeDefined();
-    expect(connection.iframe.src).toBe('http://localhost:9000/child.html');
+    expect(connection.iframe.src).toBe(`http://${HOST}:9000/child.html`);
     expect(connection.iframe.parentNode).toBe(container);
   });
 
   it('should call a function on the child', (done) => {
     const connection = Penpal.connectToChild({
-      url: 'http://localhost:9000/child.html'
+      url: `http://${HOST}:9000/child.html`
     });
 
     connection.promise.then((child) => {
@@ -55,7 +57,7 @@ describe('Penpal', () => {
 
   it('should call an asynchronous function on the child', (done) => {
     const connection = Penpal.connectToChild({
-      url: 'http://localhost:9000/child.html'
+      url: `http://${HOST}:9000/child.html`
     });
 
     connection.promise.then((child) => {
@@ -69,7 +71,7 @@ describe('Penpal', () => {
 
   it('should call a function on the parent', (done) => {
     const connection = Penpal.connectToChild({
-      url: 'http://localhost:9000/child.html',
+      url: `http://${HOST}:9000/child.html`,
       methods: {
         add: (num1, num2) => {
           return num1 + num2;
@@ -90,7 +92,7 @@ describe('Penpal', () => {
 
   it('should handle rejected promises', (done) => {
     const connection = Penpal.connectToChild({
-      url: 'http://localhost:9000/child.html',
+      url: `http://${HOST}:9000/child.html`,
     });
 
     connection.promise.then((child) => {
@@ -107,7 +109,7 @@ describe('Penpal', () => {
 
   it('should not connect to iframe connecting to parent with different origin', (done) => {
     const connection = Penpal.connectToChild({
-      url: 'http://localhost:9000/childDiffOrigin.html'
+      url: `http://${HOST}:9000/childDiffOrigin.html`
     });
 
     const spy = jasmine.createSpy();
@@ -126,7 +128,7 @@ describe('Penpal', () => {
   describe('destroy', () => {
     it('should remove iframe from its parent', (done) => {
       const connection = Penpal.connectToChild({
-        url: 'http://localhost:9000/child.html'
+        url: `http://${HOST}:9000/child.html`
       });
 
       connection.destroy();
@@ -135,12 +137,15 @@ describe('Penpal', () => {
       done();
     });
 
+    // When this test runs in IE, we get an "Object Expected" error within the iframe due to the
+    // Array constructor not existing. It appears that when we call connection.destroy(), which
+    // removes the iframe, IE messes up the Array constructor within the detached iframe.
     it('should remove handshake message listener', (done) => {
       spyOn(window, 'addEventListener').and.callThrough();
       spyOn(window, 'removeEventListener').and.callThrough();
 
       const connection = Penpal.connectToChild({
-        url: 'http://localhost:9000/child.html'
+        url: `http://${HOST}:9000/child.html`
       });
 
 
@@ -148,7 +153,6 @@ describe('Penpal', () => {
       connection.iframe.addEventListener('load', () => {
         connection.destroy();
 
-        console.log(window.addEventListener.calls.count());
         window.addEventListener.calls.allArgs().forEach(args => {
           expect(window.removeEventListener).toHaveBeenCalledWith(...args);
         });
@@ -162,7 +166,7 @@ describe('Penpal', () => {
       spyOn(window, 'removeEventListener').and.callThrough();
 
       const connection = Penpal.connectToChild({
-        url: 'http://localhost:9000/child.html'
+        url: `http://${HOST}:9000/child.html`
       });
 
       // The method call message listener is set up after the connection has been established.
@@ -179,7 +183,7 @@ describe('Penpal', () => {
 
     it('should prevent method calls from being sent', (done) => {
       const connection = Penpal.connectToChild({
-        url: 'http://localhost:9000/child.html'
+        url: `http://${HOST}:9000/child.html`
       });
 
       // The method call message listener is set up after the connection has been established.
@@ -194,7 +198,7 @@ describe('Penpal', () => {
     });
 
     // Had trouble implementing this one.
-    xit('should prevent method replies from being sent', () => {
-    });
+    // it('should prevent method replies from being sent', () => {
+    // });
   });
 });

@@ -169,7 +169,6 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
       if (methodName in methods) {
         const createPromiseHandler = (resolution) => {
           return (returnValue) => {
-            debugger;
             if (destroyed) {
               // We have to throw the error after a timeout otherwise we're just continuing
               // the promise chain with a failed promise.
