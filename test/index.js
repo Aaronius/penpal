@@ -142,19 +142,15 @@ describe('Penpal', () => {
         url: `http://${HOST}:9000/child.html`
       });
 
-      const onRejected = jasmine.createSpy();
-
       connection.promise.then(
         () => {},
-        onRejected
+        (error) => {
+          expect(error).toBe('Parent: Connection destroyed');
+          done();
+        }
       );
 
       connection.destroy();
-
-      setTimeout(() => {
-        expect(onRejected).toHaveBeenCalledWith('Parent: Connection destroyed');
-        done();
-      });
     });
 
     // When this test runs in IE, we get an "Object Expected" error within the iframe due to the
