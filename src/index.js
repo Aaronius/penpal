@@ -241,7 +241,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
 
-  const promise = new Penpal.Promise((resolve) => {
+  const promise = new Penpal.Promise((resolve, reject) => {
     const handleMessage = (event) => {
       if (event.source === child &&
           event.origin === childOrigin &&
@@ -281,6 +281,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
 
     destructionPromise.then(() => {
       iframe.removeEventListener(LOAD, handleIframeLoaded);
+      reject('Parent: Connection destroyed');
     });
 
     log('Parent: Loading iframe');
@@ -315,7 +316,7 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
   const child = window;
   const parent = child.parent;
 
-  const promise = new Penpal.Promise((resolve) => {
+  const promise = new Penpal.Promise((resolve, reject) => {
     const handleMessageEvent = (event) => {
       if ((!parentOrigin || event.origin === parentOrigin) &&
           event.data.penpal === HANDSHAKE) {
@@ -346,6 +347,7 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
 
     destructionPromise.then(() => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
+      reject('Child: Connection destroyed');
     })
   });
 

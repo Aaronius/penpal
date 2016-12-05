@@ -137,6 +137,26 @@ describe('Penpal', () => {
       done();
     });
 
+    it('should reject promise', (done) => {
+      const connection = Penpal.connectToChild({
+        url: `http://${HOST}:9000/child.html`
+      });
+
+      const onRejected = jasmine.createSpy();
+
+      connection.promise.then(
+        () => {},
+        onRejected
+      );
+
+      connection.destroy();
+
+      setTimeout(() => {
+        expect(onRejected).toHaveBeenCalledWith('Parent: Connection destroyed');
+        done();
+      });
+    });
+
     // When this test runs in IE, we get an "Object Expected" error within the iframe due to the
     // Array constructor not existing. It appears that when we call connection.destroy(), which
     // removes the iframe, IE messes up the Array constructor within the detached iframe.
