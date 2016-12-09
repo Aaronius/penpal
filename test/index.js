@@ -104,7 +104,24 @@ describe('Penpal', () => {
           done();
         }
       )
-    })
+    });
+  });
+
+  it('should handle thrown errors', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `http://${HOST}:9000/child.html`,
+    });
+
+    connection.promise.then((child) => {
+      child.throwError().then(
+        () => {},
+        (error) => {
+          expect(error).toContain('Oh nos!');
+          connection.destroy();
+          done();
+        }
+      )
+    });
   });
 
   it('should not connect to iframe connecting to parent with different origin', (done) => {

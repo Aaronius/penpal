@@ -189,10 +189,19 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
           }
         };
 
-        Penpal.Promise.resolve(methods[methodName](...args)).then(
-          createPromiseHandler(FULFILLED),
-          createPromiseHandler(REJECTED)
-        );
+        new Penpal.Promise((resolve, reject) => {
+          try {
+            // The consumer's function may throw an error, return a raw return value, return
+            // a promise that resolves, or return a promise that gets rejected.
+            // In the case that it throws an error, we'll send the error stack as a reply
+            resolve(methods[methodName](...args));
+          } catch (err) {
+            reject(err.toString());
+            setTimeout(() => {
+              throw err;
+            });
+          }
+        }).then(createPromiseHandler(FULFILLED), createPromiseHandler(REJECTED));
       }
     }
   };

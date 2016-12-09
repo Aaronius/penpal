@@ -37,6 +37,9 @@
         },
         getRejectedPromise: function() {
           return RSVP.Promise.reject('test error message');
+        },
+        throwError: function() {
+          throw new Error('Oh nos!');
         }
       };
 

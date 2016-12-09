@@ -2,7 +2,7 @@ module.exports = function(config) {
   config.set({
     port: 9001,
     frameworks: ['jasmine'],
-    browsers: ['Chrome'],
+    browsers: ['Chrome', 'Firefox'],
     files: [
       require.resolve('rsvp/dist/rsvp.min.js'),
       'dist/penpal.js',
@@ -11,6 +11,7 @@ module.exports = function(config) {
     plugins: [
       'karma-jasmine',
       'karma-chrome-launcher',
+      'karma-firefox-launcher',
       'karma-babel-preprocessor'
     ],
     preprocessors: {
