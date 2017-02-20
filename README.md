@@ -125,6 +125,10 @@ Setting `Penpal.Promise` to a Promise constructor provides Penpal with a promise
 
 Setting `Penpal.debug` to `true` or `false` enables or disables debug logging. Debug logging is disabled by default.
 
+## Supported Browsers
+
+Penpal is designed to run successfully on Internet Explorer 10 and higher as well as recent versions of Chrome, Firefox, Safari, etc. It wouldn't take much to support Internet Explorer 9, but let's move the web forward.
+
 ## Inspiration
 
 This library is inspired by:
