@@ -9,6 +9,11 @@ const REJECTED = 'rejected';
 const MESSAGE = 'message';
 const LOAD = 'load';
 
+const DEFAULT_PORTS = {
+  'http:': '80',
+  'https:': '443'
+};
+
 const Penpal = {
   /**
    * Promise implementation.
@@ -56,8 +61,20 @@ const getOriginFromUrl = (url) => {
   const a = document.createElement('a');
   a.href = url;
 
-  return a.origin ||
-    `${a.protocol || location.protocol}//${a.hostname || location.hostname}:${a.port || location.port}`;
+  let origin;
+
+  if (a.origin) {
+    origin = a.origin;
+  } else {
+    const protocol = a.protocol || location.protocol;
+    const hostname = a.hostname || location.hostname;
+    const port = a.port || location.port;
+    // If the port is the default for the protocol, we don't want to add it to the origin string
+    // or it won't match the message's event.origin.
+    origin = protocol + '//' + hostname + (port !== DEFAULT_PORTS[protocol] ? ':' + port : '');
+  }
+
+  return origin;
 };
 
 /**
