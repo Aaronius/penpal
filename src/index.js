@@ -71,7 +71,8 @@ const getOriginFromUrl = (url) => {
     const port = a.port || location.port;
     // If the port is the default for the protocol, we don't want to add it to the origin string
     // or it won't match the message's event.origin.
-    origin = protocol + '//' + hostname + (port !== DEFAULT_PORTS[protocol] ? ':' + port : '');
+    origin = protocol + '//' + hostname +
+      (port && port !== DEFAULT_PORTS[protocol] ? ':' + port : '');
   }
 
   return origin;
