@@ -142,6 +142,24 @@ describe('Penpal', () => {
     });
   });
 
+  it('should not connect to iframe connecting to parent with different origin as array', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `http://${HOST}:9000/childDiffOriginArray.html`
+    });
+
+    const spy = jasmine.createSpy();
+
+    connection.promise.then(spy);
+
+    connection.iframe.addEventListener('load', function() {
+      // Give Penpal time to try to make a handshake.
+      setTimeout(() => {
+        expect(spy).not.toHaveBeenCalled();
+        done();
+      }, 100);
+    });
+  });
+
   describe('destroy', () => {
     it('should remove iframe from its parent', (done) => {
       const connection = Penpal.connectToChild({

@@ -333,6 +333,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
  * Attempts to establish communication with the parent window.
  * @param {Object} options
  * @param {string|Array} [options.parentOrigin] A parent origin used to restrict communication.
+ * An array of parent origin strings is also supported.
  * @param {Object} [options.methods] Methods that may be called by the parent window.
  * @return {Parent}
  */
@@ -343,9 +344,14 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
   const child = window;
   const parent = child.parent;
 
+  if (parentOrigin !== undefined && !Array.isArray(parentOrigin)) {
+    parentOrigin = [parentOrigin];
+  }
+
   const promise = new Penpal.Promise((resolve, reject) => {
     const handleMessageEvent = (event) => {
-      if ((!parentOrigin || parentOrigin.indexOf(event.origin) !== -1) &&
+      if ((parentOrigin === undefined ||
+          parentOrigin.indexOf(event.origin) !== -1) &&
           event.data.penpal === HANDSHAKE) {
         log('Child: Received handshake from Parent');
 

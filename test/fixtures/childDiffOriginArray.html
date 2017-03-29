@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Test Iframe</title>
+  </head>
+  <body>
+    Test Iframe
+
+    <script>
+      window.onerror = function () { console.log.apply(console, arguments); };
+    </script>
+    <script src="rsvp.min.js"></script>
+    <script type="text/javascript" src="penpal.js"></script>
+    <script type="text/javascript">
+      Penpal.Promise = RSVP.Promise;
+      Penpal.debug = true;
+
+      Penpal.connectToParent({
+        parentOrigin: ['http://example.com', 'http://example2.com']
+      }).promise.then(function(parent) {
+        parentAPI = parent;
+      });
+    </script>
+  </body>
+</html>
