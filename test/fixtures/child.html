@@ -40,6 +40,12 @@
         },
         throwError: function() {
           throw new Error('Oh nos!');
+        },
+        returnError: function() {
+          return new Error('OMG!');
+        },
+        getRejectedPromiseWithError: function() {
+          return RSVP.Promise.reject(new Error('rejected'));
         }
       };
 
