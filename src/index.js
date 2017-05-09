@@ -92,14 +92,14 @@ const DestructionPromise = (executor) => {
   executor(() => {
     handlers.forEach((handler) => {
       handler();
-    })
+    });
   });
 
   return {
     then(handler) {
       handlers.push(handler);
     }
-  }
+  };
 };
 
 /**
@@ -198,13 +198,20 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
 
             log(`${localName}: Sending ${methodName}() reply`);
 
+            if (returnValue instanceof Error) {
+              setTimeout(() => {
+                throw returnValue;
+              });
+              returnValue = returnValue.toString();
+            }
+
             remote.postMessage({
               penpal: REPLY,
               id,
               resolution,
               returnValue,
             }, remoteOrigin);
-          }
+          };
         };
 
         new Penpal.Promise((resolve, reject) => {
@@ -212,7 +219,12 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
             // The consumer's function may throw an error, return a raw return value, return
             // a promise that resolves, or return a promise that gets rejected.
             // In the case that it throws an error, we'll send the error stack as a reply
-            resolve(methods[methodName](...args));
+            const result = methods[methodName](...args);
+            if (result instanceof Error) {
+              throw result;
+            } else {
+              resolve(result);
+            }
           } catch (err) {
             reject(err.toString());
             setTimeout(() => {
@@ -381,7 +393,7 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
     destructionPromise.then(() => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
       reject('Child: Connection destroyed');
-    })
+    });
   });
 
   return {

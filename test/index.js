@@ -107,6 +107,23 @@ describe('Penpal', () => {
     });
   });
 
+  it('should handle rejected promises with Error objects', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `http://${HOST}:9000/child.html`,
+    });
+
+    connection.promise.then((child) => {
+      child.getRejectedPromiseWithError().then(
+        () => {},
+        (error) => {
+          expect(error).toBe('Error: rejected');
+          connection.destroy();
+          done();
+        }
+      )
+    });
+  });
+
   it('should handle thrown errors', (done) => {
     const connection = Penpal.connectToChild({
       url: `http://${HOST}:9000/child.html`,
@@ -117,6 +134,23 @@ describe('Penpal', () => {
         () => {},
         (error) => {
           expect(error).toContain('Oh nos!');
+          connection.destroy();
+          done();
+        }
+      )
+    });
+  });
+
+  it('should handle returned errors', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `http://${HOST}:9000/child.html`,
+    });
+
+    connection.promise.then((child) => {
+      child.returnError().then(
+        () => {},
+        (error) => {
+          expect(error).toContain('OMG!');
           connection.destroy();
           done();
         }
