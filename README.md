@@ -85,7 +85,7 @@ connection.promise.then(parent => {
 
 #### Parameters
 
-`options.url` (required) The URL of the webpage that should be loaded into the iframe that Penpal will create.
+`options.url` (required) The URL of the webpage that should be loaded into the iframe that Penpal will create. A relative path is also supported.
 
 `options.appendTo` (optional) The element to which the created iframe should be appended. If not provided, the iframe will be appended to `document.body`.
 
