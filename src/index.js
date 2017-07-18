@@ -272,15 +272,21 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
 
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
-
   const promise = new Penpal.Promise((resolve, reject) => {
     const handleMessage = (event) => {
       if (event.source === child &&
           event.origin === childOrigin &&
-          event.data.penpal === HANDSHAKE_REPLY) {
-        log('Parent: Received handshake reply from Child');
+          event.data.penpal === HANDSHAKE) {
+        log('Parent: Received handshake from Child');
 
         parent.removeEventListener(MESSAGE, handleMessage);
+
+        log('Parent: Sending handshake reply to Child');
+
+        event.source.postMessage({
+          penpal: HANDSHAKE_REPLY,
+          methodNames: Object.keys(methods)
+        }, event.origin);
 
         const info = {
           localName: PARENT,
@@ -294,30 +300,13 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
       }
     };
 
-    const handleIframeLoaded = () => {
-      log('Parent: Sending handshake');
-
-      parent.addEventListener(MESSAGE, handleMessage);
-
-      destructionPromise.then(() => {
-        parent.removeEventListener(MESSAGE, handleMessage);
-      });
-
-      child.postMessage({
-        penpal: HANDSHAKE,
-        methodNames: Object.keys(methods)
-      }, childOrigin);
-    };
-
-    iframe.addEventListener(LOAD, handleIframeLoaded);
-
+    parent.addEventListener(MESSAGE, handleMessage);
     destructionPromise.then(() => {
-      iframe.removeEventListener(LOAD, handleIframeLoaded);
+      parent.removeEventListener(MESSAGE, handleMessage);
       reject('Parent: Connection destroyed');
     });
 
     log('Parent: Loading iframe');
-
     iframe.src = url;
   });
 
@@ -357,17 +346,10 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
     const handleMessageEvent = (event) => {
       if ((parentOrigin === undefined ||
           parentOrigin.indexOf(event.origin) !== -1) &&
-          event.data.penpal === HANDSHAKE) {
-        log('Child: Received handshake from Parent');
+          event.data.penpal === HANDSHAKE_REPLY) {
+        log('Child: Received handshake reply from Parent');
 
         child.removeEventListener(MESSAGE, handleMessageEvent);
-
-        log('Child: Sending handshake reply to Parent');
-
-        event.source.postMessage({
-          penpal: HANDSHAKE_REPLY,
-          methodNames: Object.keys(methods)
-        }, event.origin);
 
         const info = {
           localName: CHILD,
@@ -387,8 +369,17 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
       reject('Child: Connection destroyed');
     })
-  });
 
+    const sendHandshakeMessage = function() {
+      parent.postMessage({
+	    penpal: HANDSHAKE,
+	    methodNames: Object.keys(methods),
+      }, document.referrer);
+    };
+
+    sendHandshakeMessage();
+  });
+ 
   return {
     promise,
     destroy
