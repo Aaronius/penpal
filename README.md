@@ -99,7 +99,7 @@ The return value of `connectToChild` is a `connection` object with the following
 
 `connection.destroy` A method that, when called, will remove the iframe element from the DOM and disconnect any messaging channels. You may call this even before a connection has been established.
 
-`connection.iframe` The child iframe element. The iframe will have already be appended as a child to the element defined in `options.appendTo`, but a reference to the iframe is provided in case you need to add CSS classes, etc.
+`connection.iframe` The child iframe element. The iframe will have already been appended as a child to the element defined in `options.appendTo`, but a reference to the iframe is provided in case you need to add CSS classes, etc.
 
 ### `connectToParent(options:Object) => Object`
 
