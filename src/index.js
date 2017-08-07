@@ -326,7 +326,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
 /**
  * Attempts to establish communication with the parent window.
  * @param {Object} options
- * @param {string|Array} [options.parentOrigin] A parent origin used to restrict communication.
+ * @param {string|Array} [options.parentOrigin] Valid parent origin used to restrict communication
  * An array of parent origin strings is also supported.
  * @param {Object} [options.methods] Methods that may be called by the parent window.
  * @return {Parent}
@@ -337,15 +337,22 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
 
   const child = window;
   const parent = child.parent;
+  const targetParentOrigin = getOriginFromUrl(document.referrer);
 
   if (parentOrigin !== undefined && !Array.isArray(parentOrigin)) {
     parentOrigin = [parentOrigin];
+  }
+
+  if (parentOrigin !== undefined && parentOrigin.indexOf(targetParentOrigin) === -1) {
+    log('Child: actual parent origin not in list of valid parent origins, Penpal connection not created');
+    return { };
   }
 
   const promise = new Penpal.Promise((resolve, reject) => {
     const handleMessageEvent = (event) => {
       if ((parentOrigin === undefined ||
           parentOrigin.indexOf(event.origin) !== -1) &&
+          event.source == parent &&  
           event.data.penpal === HANDSHAKE_REPLY) {
         log('Child: Received handshake reply from Parent');
 
@@ -368,18 +375,19 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
     destructionPromise.then(() => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
       reject('Child: Connection destroyed');
-    })
+    });
 
     const sendHandshakeMessage = function() {
+      log('Child: Sent handshake');
       parent.postMessage({
-	    penpal: HANDSHAKE,
-	    methodNames: Object.keys(methods),
-      }, document.referrer);
+        penpal: HANDSHAKE,
+        methodNames: Object.keys(methods),
+      }, targetParentOrigin);
     };
 
     sendHandshakeMessage();
   });
- 
+
   return {
     promise,
     destroy

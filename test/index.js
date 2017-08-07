@@ -4,6 +4,7 @@ describe('Penpal', () => {
   beforeAll(() => {
     Penpal.Promise = RSVP.Promise;
     Penpal.debug = true;
+    jasmine.getEnv().defaultTimeoutInterval=10000;
   });
 
   it('should complete a handshake', (done) => {
@@ -44,6 +45,34 @@ describe('Penpal', () => {
   it('should call a function on the child', (done) => {
     const connection = Penpal.connectToChild({
       url: `http://${HOST}:9000/child.html`
+    });
+
+    connection.promise.then((child) => {
+      child.multiply(2, 5).then((value) => {
+        expect(value).toEqual(10);
+        connection.destroy();
+        done();
+      });
+    });
+  });
+  
+  it('should call a function on the child with origin set', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `http://${HOST}:9000/childOrigin.html`
+    });
+
+    connection.promise.then((child) => {
+      child.multiply(2, 5).then((value) => {
+        expect(value).toEqual(10);
+        connection.destroy();
+        done();
+      });
+    });
+  });
+
+  it('should call a function on the child with origin array set', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `http://${HOST}:9000/childOriginArray.html`
     });
 
     connection.promise.then((child) => {
