@@ -4,7 +4,6 @@ describe('Penpal', () => {
   beforeAll(() => {
     Penpal.Promise = RSVP.Promise;
     Penpal.debug = true;
-    jasmine.getEnv().defaultTimeoutInterval=10000;
   });
 
   it('should complete a handshake', (done) => {
