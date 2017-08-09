@@ -277,11 +277,11 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
       if (event.source === child &&
           event.origin === childOrigin &&
           event.data.penpal === HANDSHAKE) {
-        log('Parent: Received handshake from Child');
+        log('Parent: Received handshake');
 
         parent.removeEventListener(MESSAGE, handleMessage);
 
-        log('Parent: Sending handshake reply to Child');
+        log('Parent: Sending handshake reply');
 
         event.source.postMessage({
           penpal: HANDSHAKE_REPLY,
@@ -344,17 +344,16 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
   }
 
   if (parentOrigin !== undefined && parentOrigin.indexOf(targetParentOrigin) === -1) {
-    log('Child: actual parent origin not in list of valid parent origins, Penpal connection not created');
-    return { };
+    throw new Error('Child: parent\'s origin not in list of valid parent origins')
   }
 
   const promise = new Penpal.Promise((resolve, reject) => {
     const handleMessageEvent = (event) => {
       if ((parentOrigin === undefined ||
           parentOrigin.indexOf(event.origin) !== -1) &&
-          event.source == parent &&  
+          event.source === parent &&
           event.data.penpal === HANDSHAKE_REPLY) {
-        log('Child: Received handshake reply from Parent');
+        log('Child: Received handshake reply');
 
         child.removeEventListener(MESSAGE, handleMessageEvent);
 
@@ -377,15 +376,12 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
       reject('Child: Connection destroyed');
     });
 
-    const sendHandshakeMessage = function() {
-      log('Child: Sent handshake');
-      parent.postMessage({
-        penpal: HANDSHAKE,
-        methodNames: Object.keys(methods),
-      }, targetParentOrigin);
-    };
+    log('Child: Sending handshake');
 
-    sendHandshakeMessage();
+    parent.postMessage({
+      penpal: HANDSHAKE,
+      methodNames: Object.keys(methods),
+    }, targetParentOrigin);
   });
 
   return {
