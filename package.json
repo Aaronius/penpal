@@ -17,6 +17,7 @@
     "promise"
   ],
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "./scripts/build.js",
     "build:watch": "npm run build -- --watch",

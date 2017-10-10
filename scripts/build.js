@@ -56,6 +56,8 @@ const build = () => {
       }
     ], () => { console.log('Build complete.')});
   });
+
+  fs.createReadStream('./src/index.d.ts').pipe(fs.createWriteStream('./lib/index.d.ts'));
 };
 
 if (argv.watch) {
