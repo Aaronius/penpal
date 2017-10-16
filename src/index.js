@@ -255,12 +255,16 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
  * @param {Object} [options.methods] Methods that may be called by the iframe.
  * @return {Child}
  */
-Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
+Penpal.connectToChild = ({ url, appendTo, methods = {}, sandboxOptions = [] }) => {
   let destroy;
   const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
 
   const parent = window;
   const iframe = document.createElement('iframe');
+
+  sandboxOptions.forEach((sandboxOption) => {
+    iframe.sandbox.add(sandboxOption);
+  });
 
   (appendTo || document.body).appendChild(iframe);
 

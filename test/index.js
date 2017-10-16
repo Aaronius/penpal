@@ -27,6 +27,18 @@ describe('Penpal', () => {
     expect(connection.iframe.parentNode).toBe(document.body);
   });
 
+  it('should create an iframe and allow sandbox properties to be configured', () => {
+    const connection = Penpal.connectToChild({
+      url: `http://${HOST}:9000/child.html`,
+      sandboxOptions: ['allow-scripts', 'allow-presentation']
+    });
+
+    expect(connection.iframe).toBeDefined();
+    expect(connection.iframe.src).toBe(`http://${HOST}:9000/child.html`);
+    expect(connection.iframe.parentNode).toBe(document.body);
+    expect(connection.iframe.sandbox.toString()).toEqual('allow-scripts allow-presentation');
+  })
+
   it('should create an iframe and add it to a specific element', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -54,7 +66,7 @@ describe('Penpal', () => {
       });
     });
   });
-  
+
   it('should call a function on the child with origin set', (done) => {
     const connection = Penpal.connectToChild({
       url: `http://${HOST}:9000/childOrigin.html`
