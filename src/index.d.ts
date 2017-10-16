@@ -20,6 +20,7 @@ declare namespace Penpal {
     interface IChildConnectionOptions extends IConnectionOptions {
         appendTo?: HTMLElement;
         url: string;
+        sandboxOptions: Array<string>;
     }
 
     interface IParentConnectionOptions extends IConnectionOptions {
