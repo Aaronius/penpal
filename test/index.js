@@ -33,11 +33,8 @@ describe('Penpal', () => {
       sandboxOptions: ['allow-scripts', 'allow-presentation']
     });
 
-    expect(connection.iframe).toBeDefined();
-    expect(connection.iframe.src).toBe(`http://${HOST}:9000/child.html`);
-    expect(connection.iframe.parentNode).toBe(document.body);
     expect(connection.iframe.sandbox.toString()).toEqual('allow-scripts allow-presentation');
-  })
+  });
 
   it('should create an iframe and add it to a specific element', () => {
     const container = document.createElement('div');
