@@ -7,7 +7,7 @@ const REPLY = 'reply';
 const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
 const MESSAGE = 'message';
-const LOAD = 'load';
+const DATA_CLONE_ERROR = 'DataCloneError';
 
 const DEFAULT_PORTS = {
   'http:': '80',
@@ -203,12 +203,25 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
 
             log(`${localName}: Sending ${methodName}() reply`);
 
-            remote.postMessage({
-              penpal: REPLY,
-              id,
-              resolution,
-              returnValue,
-            }, remoteOrigin);
+            try {
+              remote.postMessage({
+                penpal: REPLY,
+                id,
+                resolution,
+                returnValue,
+              }, remoteOrigin);
+            } catch (err) {
+              // If a consumer attempts to send an object that's not cloneable (e.g., window),
+              // we want to ensure the receiver's promise gets rejected.
+              if (err.name === DATA_CLONE_ERROR) {
+                remote.postMessage({
+                  penpal: REPLY,
+                  id,
+                  resolution: REJECTED,
+                  returnValue: err.toString()
+                }, remoteOrigin);
+              }
+            }
           }
         };
 

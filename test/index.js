@@ -1,4 +1,4 @@
-const HOST = 'localhost';
+const CHILD_SERVER = `http://${window.location.hostname}:9000`;
 
 describe('Penpal', () => {
   beforeAll(() => {
@@ -8,7 +8,7 @@ describe('Penpal', () => {
 
   it('should complete a handshake', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/child.html`
+      url: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(() => {
@@ -19,11 +19,11 @@ describe('Penpal', () => {
 
   it('should create an iframe and add it to document.body', () => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/child.html`
+      url: `${CHILD_SERVER}/child.html`
     });
 
     expect(connection.iframe).toBeDefined();
-    expect(connection.iframe.src).toBe(`http://${HOST}:9000/child.html`);
+    expect(connection.iframe.src).toBe(`${CHILD_SERVER}/child.html`);
     expect(connection.iframe.parentNode).toBe(document.body);
   });
 
@@ -32,18 +32,18 @@ describe('Penpal', () => {
     document.body.appendChild(container);
 
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/child.html`,
+      url: `${CHILD_SERVER}/child.html`,
       appendTo: container
     });
 
     expect(connection.iframe).toBeDefined();
-    expect(connection.iframe.src).toBe(`http://${HOST}:9000/child.html`);
+    expect(connection.iframe.src).toBe(`${CHILD_SERVER}/child.html`);
     expect(connection.iframe.parentNode).toBe(container);
   });
 
   it('should call a function on the child', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/child.html`
+      url: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then((child) => {
@@ -57,7 +57,7 @@ describe('Penpal', () => {
   
   it('should call a function on the child with origin set', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/childOrigin.html`
+      url: `${CHILD_SERVER}/childOrigin.html`
     });
 
     connection.promise.then((child) => {
@@ -71,7 +71,7 @@ describe('Penpal', () => {
 
   it('should call a function on the child with origin array set', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/childOriginArray.html`
+      url: `${CHILD_SERVER}/childOriginArray.html`
     });
 
     connection.promise.then((child) => {
@@ -85,7 +85,7 @@ describe('Penpal', () => {
 
   it('should call an asynchronous function on the child', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/child.html`
+      url: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then((child) => {
@@ -99,7 +99,7 @@ describe('Penpal', () => {
 
   it('should call a function on the parent', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/child.html`,
+      url: `${CHILD_SERVER}/child.html`,
       methods: {
         add: (num1, num2) => {
           return num1 + num2;
@@ -120,7 +120,7 @@ describe('Penpal', () => {
 
   it('should handle rejected promises', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/child.html`,
+      url: `${CHILD_SERVER}/child.html`,
     });
 
     connection.promise.then((child) => {
@@ -137,7 +137,7 @@ describe('Penpal', () => {
 
   it('should handle thrown errors', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/child.html`,
+      url: `${CHILD_SERVER}/child.html`,
     });
 
     connection.promise.then((child) => {
@@ -152,9 +152,26 @@ describe('Penpal', () => {
     });
   });
 
+  it('should handle unclonable values', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/child.html`,
+    });
+
+    connection.promise.then((child) => {
+      child.getUnclonableValue().then(
+        () => {},
+        (error) => {
+          expect(error).toContain('DataCloneError');
+          connection.destroy();
+          done();
+        }
+      )
+    });
+  });
+
   it('should not connect to iframe connecting to parent with different origin', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/childDiffOrigin.html`
+      url: `${CHILD_SERVER}/childDiffOrigin.html`
     });
 
     const spy = jasmine.createSpy();
@@ -172,7 +189,7 @@ describe('Penpal', () => {
 
   it('should not connect to iframe connecting to parent with different origin as array', (done) => {
     const connection = Penpal.connectToChild({
-      url: `http://${HOST}:9000/childDiffOriginArray.html`
+      url: `${CHILD_SERVER}/childDiffOriginArray.html`
     });
 
     const spy = jasmine.createSpy();
@@ -191,7 +208,7 @@ describe('Penpal', () => {
   describe('destroy', () => {
     it('should remove iframe from its parent', (done) => {
       const connection = Penpal.connectToChild({
-        url: `http://${HOST}:9000/child.html`
+        url: `${CHILD_SERVER}/child.html`
       });
 
       connection.destroy();
@@ -202,7 +219,7 @@ describe('Penpal', () => {
 
     it('should reject promise', (done) => {
       const connection = Penpal.connectToChild({
-        url: `http://${HOST}:9000/child.html`
+        url: `${CHILD_SERVER}/child.html`
       });
 
       connection.promise.then(
@@ -224,7 +241,7 @@ describe('Penpal', () => {
       spyOn(window, 'removeEventListener').and.callThrough();
 
       const connection = Penpal.connectToChild({
-        url: `http://${HOST}:9000/child.html`
+        url: `${CHILD_SERVER}/child.html`
       });
 
 
@@ -245,7 +262,7 @@ describe('Penpal', () => {
       spyOn(window, 'removeEventListener').and.callThrough();
 
       const connection = Penpal.connectToChild({
-        url: `http://${HOST}:9000/child.html`
+        url: `${CHILD_SERVER}/child.html`
       });
 
       // The method call message listener is set up after the connection has been established.
@@ -262,7 +279,7 @@ describe('Penpal', () => {
 
     it('should prevent method calls from being sent', (done) => {
       const connection = Penpal.connectToChild({
-        url: `http://${HOST}:9000/child.html`
+        url: `${CHILD_SERVER}/child.html`
       });
 
       // The method call message listener is set up after the connection has been established.

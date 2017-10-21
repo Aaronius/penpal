@@ -12,42 +12,21 @@
     <script src="rsvp.min.js"></script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
+      // A cheap way to get the parent origin for our tests.
+      var parentOrigin = document.referrer.substring(0, document.referrer.lastIndexOf('/'));
+
       Penpal.Promise = RSVP.Promise;
       Penpal.debug = true;
-
-      var parentAPI;
-      var parentReturnValue;
 
       var methods = {
         multiply: function(num1, num2) {
           return num1 * num2;
-        },
-        multiplyAsync: function(num1, num2) {
-          return new RSVP.Promise(function(resolve) {
-            resolve(num1 * num2);
-          });
-        },
-        addUsingParent: function() {
-          parentAPI.add(3, 6).then(function(value) {
-            parentReturnValue = value;
-          });
-        },
-        getParentReturnValue: function() {
-          return parentReturnValue;
-        },
-        getRejectedPromise: function() {
-          return RSVP.Promise.reject('test error message');
-        },
-        throwError: function() {
-          throw new Error('Oh nos!');
         }
       };
 
       Penpal.connectToParent({
-        parentOrigin: ['http://localhost:9001'],
+        parentOrigin: [parentOrigin],
         methods: methods
-      }).promise.then(function(parent) {
-        parentAPI = parent;
       });
     </script>
   </body>
