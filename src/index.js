@@ -221,6 +221,10 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
                   returnValue: err.toString()
                 }, remoteOrigin);
               }
+
+              setTimeout(() => {
+                throw err;
+              });
             }
           }
         };
