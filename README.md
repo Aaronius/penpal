@@ -1,5 +1,7 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
+[![Build Status](https://saucelabs.com/browser-matrix/Aaronius9erPenpalMaster.svg)](https://saucelabs.com/beta/builds/ad12f9ef17b04295a62064adc995283c)
+
 # Penpal
 
 Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
