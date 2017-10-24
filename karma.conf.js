@@ -8,7 +8,7 @@ module.exports = function(config) {
       base: 'SauceLabs',
       browserName: 'internet explorer',
       platform: 'Windows 10',
-      version: 'latest'
+      version: '11'
     },
     sl_edge: {
       base: 'SauceLabs',
@@ -33,7 +33,19 @@ module.exports = function(config) {
       browserName: 'safari',
       platform: 'OS X 10.11',
       version: 'latest'
-    }
+    },
+    sl_mac_chrome: {
+      base: 'SauceLabs',
+      browserName: 'chrome',
+      platform: 'OS X 10.11',
+      version: 'latest'
+    },
+    sl_mac_firefox: {
+      base: 'SauceLabs',
+      browserName: 'firefox',
+      platform: 'OS X 10.11',
+      version: 'latest'
+    },
   };
 
   var browsers = argv.sauce ? Object.keys(customLaunchers) : ['Chrome', 'Firefox'];

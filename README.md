@@ -127,7 +127,7 @@ Setting `Penpal.debug` to `true` or `false` enables or disables debug logging. D
 
 ## Supported Browsers
 
-Penpal is designed to run successfully on Internet Explorer 10 and higher as well as recent versions of Chrome, Firefox, Safari, etc. It wouldn't take much to support Internet Explorer 9, but let's move the web forward.
+Penpal is designed to run successfully on the most recent versions of Internet Explorer, Edge, Chrome, Firefox, and Safari.
 
 ## Inspiration
 
