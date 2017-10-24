@@ -24,6 +24,7 @@
     "lint": "eslint src/**",
     "test": "npm run build && ./scripts/test.js",
     "test:watch": "npm run build && parallelshell 'npm run build:watch -- --skip-initial-run' './scripts/test.js --watch'",
+    "test:sauce": "npm run build && ./scripts/test.js --sauce",
     "prepublish": "npm run build"
   },
   "files": [
@@ -46,6 +47,7 @@
     "karma-chrome-launcher": "^2.0.0",
     "karma-firefox-launcher": "^1.0.0",
     "karma-jasmine": "^1.0.2",
+    "karma-sauce-launcher": "^1.2.0",
     "mkdirp": "^0.5.1",
     "parallelshell": "^2.0.0",
     "rsvp": "^3.2.1",
