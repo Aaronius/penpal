@@ -46,47 +46,47 @@ module.exports = function(config) {
       platform: 'OS X 10.11',
       version: 'latest'
     },
-    sl_ios: {
-      base: 'SauceLabs',
-      browserName: 'iphone',
-      version: '9.3',
-      platform: 'macOS 10.12',
-    },
     sl_android: {
       base: 'SauceLabs',
-      browserName: 'chrome',
-      appiumVersion: '1.6.3',
-      platformVersion: '7.0',
+      deviceName: 'Android GoogleAPI Emulator',
+      appiumVersion: '1.7.1',
+      browserName: 'Chrome',
       platformName: 'Android',
-      deviceName: 'Android GoogleAPI Emulator'
+      platformVersion: '7.1'
+    },
+    sl_ios: {
+      base: 'SauceLabs',
+      deviceName: 'iPhone 8 Simulator',
+      appiumVersion: '1.7.1',
+      browserName: 'Safari',
+      platformName: 'iOS',
+      platformVersion: '11.0'
     }
   };
 
-  var browsers = argv.sauce ? Object.keys(customLaunchers) : ['Chrome', 'Firefox'];
+  var browsers = ['Chrome', 'Firefox'];
+  var reporters = ['dots'];
+  var startConnect = true;
+
+  if (argv.sauce) {
+    browsers = Object.keys(customLaunchers);
+    reporters = ['dots', 'saucelabs'];
+
+    if (process.env.TRAVIS) {
+      // ios testing from Travis doesn't work half the time. :/
+      delete browsers.sl_ios;
+      startConnect = false;
+    }
+  }
 
   config.set({
-
-    // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: '',
-
-
-    // frameworks to use
-    // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
     frameworks: ['jasmine'],
-
-
-    // list of files / patterns to load in the browser
     files: [
       require.resolve('rsvp/dist/rsvp.min.js'),
       'dist/penpal.js',
       'test/index.js',
     ],
-
-
-    // list of files to exclude
-    exclude: [
-    ],
-
     plugins: [
       'karma-jasmine',
       'karma-chrome-launcher',
@@ -94,55 +94,22 @@ module.exports = function(config) {
       'karma-babel-preprocessor',
       'karma-sauce-launcher'
     ],
-
-    // preprocess matching files before serving them to the browser
-    // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
       'test/**/*.js': ['babel']
     },
-
-    // test results reporter to use
-    // possible values: 'dots', 'progress'
-    // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress'],
-
-
-    // web server port
     port: 9001,
-
-
-    // enable / disable colors in the output (reporters and logs)
     colors: true,
-
-
-    // level of logging
-    // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
     logLevel: config.LOG_INFO,
-
-
-    // enable / disable watching file and executing tests whenever any file changes
     autoWatch: true,
-
     sauceLabs: {
       testName: 'Penpal Karma Test',
       tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER,
-      startConnect: false
+      startConnect: startConnect
     },
-
     customLaunchers: customLaunchers,
-
-    // start these browsers
-    // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: browsers,
-
-    reporters: ['dots', 'saucelabs'],
-
-    // Continuous Integration mode
-    // if true, Karma captures browsers, runs the tests and exits
+    reporters: reporters,
     singleRun: false,
-
-    // Concurrency level
-    // how many browser should be started simultaneous
     concurrency: Infinity,
   })
 };
