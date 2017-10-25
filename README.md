@@ -1,6 +1,6 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal) [![Build Status](https://travis-ci.org/Aaronius/penpal.svg?branch=master)](https://travis-ci.org/Aaronius/penpal)
 
-[![Build Status](https://saucelabs.com/browser-matrix/Aaronius9erPenpalMaster.svg)](https://saucelabs.com/beta/builds/ad12f9ef17b04295a62064adc995283c)
+[![Build Status](https://saucelabs.com/browser-matrix/Aaronius9erPenpalMaster.svg)](https://saucelabs.com/u/Aaronius9erPenpalMaster)
 
 # Penpal
 
