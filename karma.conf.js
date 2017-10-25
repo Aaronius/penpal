@@ -46,6 +46,20 @@ module.exports = function(config) {
       platform: 'OS X 10.11',
       version: 'latest'
     },
+    sl_ios: {
+      base: 'SauceLabs',
+      browserName: 'iphone',
+      version: '9.3',
+      platform: 'macOS 10.12',
+    },
+    sl_android: {
+      base: 'SauceLabs',
+      browserName: 'chrome',
+      appiumVersion: '1.6.3',
+      platformVersion: '7.0',
+      platformName: 'Android',
+      deviceName: 'Android GoogleAPI Emulator'
+    }
   };
 
   var browsers = argv.sauce ? Object.keys(customLaunchers) : ['Chrome', 'Firefox'];
