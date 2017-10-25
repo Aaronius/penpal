@@ -293,8 +293,28 @@ describe('Penpal', () => {
       });
     });
 
-    // Had trouble implementing this one.
-    // it('should prevent method replies from being sent', () => {
-    // });
+    it('should support multiple connections', (done) => {
+      const connection1 = Penpal.connectToChild({
+        url: `${CHILD_SERVER}/child.html`
+      });
+      const connection2 = Penpal.connectToChild({
+        url: `${CHILD_SERVER}/child.html`
+      });
+
+      RSVP.all([
+        connection1.promise.then((child) => {
+          return child.multiplyAsync(2, 5).then((value) => {
+            expect(value).toEqual(10);
+            connection1.destroy();
+          });
+        }),
+        connection2.promise.then((child) => {
+          return child.multiplyAsync(3, 5).then((value) => {
+            expect(value).toEqual(15);
+            connection2.destroy();
+          });
+        })
+      ]).then(done);
+    })
   });
 });
