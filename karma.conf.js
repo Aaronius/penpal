@@ -73,7 +73,8 @@ module.exports = function(config) {
     reporters = ['dots', 'saucelabs'];
 
     if (process.env.TRAVIS) {
-      // ios testing from Travis doesn't work half the time. :/
+      // ios and android testing from Travis doesn't work half the time. :/
+      delete browsers.sl_android;
       delete browsers.sl_ios;
       startConnect = false;
     }
