@@ -74,8 +74,7 @@ module.exports = function(config) {
 
     if (process.env.TRAVIS) {
       // ios and android testing from Travis doesn't work half the time. :/
-      delete browsers.sl_android;
-      delete browsers.sl_ios;
+      browsers.splice(browsers.indexOf('sl_ios'), 1);
       startConnect = false;
     }
   }
