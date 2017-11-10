@@ -108,20 +108,21 @@ const DestructionPromise = (executor) => {
 };
 
 /**
- * Creates an object with methods that match those defined by the remote. When these methods are
+ * Augments an object with methods that match those defined by the remote. When these methods are
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
+ * @param {Object} callSender Sender object that should be augmented with methods.
  * @param {Object} info Information about the local and remote windows.
  * @param {Array} methodNames Names of methods available to be called on the remote.
  * @param {Promise} destructionPromise A promise resolved when destroy() is called on the penpal
  * connection.
- * @returns {Object} An object with methods that may be called.
+ * @returns {Object} The call sender object with methods that may be called.
  */
-const createCallSender = (info, methodNames, destructionPromise) => {
+const connectCallSender = (callSender, info, methodNames, destructionPromise) => {
   const { localName, local, remote, remoteOrigin } = info;
   let destroyed = false;
 
-  log(`${localName}: Creating call sender`);
+  log(`${localName}: Connecting call sender`);
 
   const createMethodProxy = (methodName) => {
     return (...args) => {
@@ -159,10 +160,10 @@ const createCallSender = (info, methodNames, destructionPromise) => {
     destroyed = true;
   });
 
-  return methodNames.reduce((api, methodName) => {
+  methodNames.reduce((api, methodName) => {
     api[methodName] = createMethodProxy(methodName);
     return api;
-  }, {});
+  }, callSender);
 };
 
 /**
@@ -277,7 +278,7 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
  * @param {Object} options
  * @param {string} options.url The URL of the webpage that should be loaded into the created iframe.
  * @param {HTMLElement} [options.appendTo] The container to which the iframe should be appended.
- * @param {Object} [options.methods] Methods that may be called by the iframe.
+ * @param {Object} [options.methods={}] Methods that may be called by the iframe.
  * @return {Child}
  */
 Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
@@ -298,14 +299,17 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
   const promise = new Penpal.Promise((resolve, reject) => {
+    // We resolve the promise with the call sender. If the child reconnects (for example, after
+    // refreshing or navigating to another page that uses Penpal, we'll update the call sender
+    // with methods that match the latest provided by the child.
+    const callSender = {};
+    let methodNames;
+
     const handleMessage = (event) => {
       if (event.source === child &&
           event.origin === childOrigin &&
           event.data.penpal === HANDSHAKE) {
         log('Parent: Received handshake');
-
-        parent.removeEventListener(MESSAGE, handleMessage);
-
         log('Parent: Sending handshake reply');
 
         event.source.postMessage({
@@ -321,7 +325,19 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
         };
 
         connectCallReceiver(info, methods, destructionPromise);
-        resolve(createCallSender(info, event.data.methodNames, destructionPromise));
+
+        // If we're reconnecting, remove methods from the previous connection.
+        if (methodNames) {
+          methodNames.forEach((methodName) => {
+            delete callSender[methodName]
+          });
+        }
+
+        methodNames = event.data.methodNames;
+
+        connectCallSender(callSender, info, methodNames, destructionPromise);
+
+        resolve(callSender);
       }
     };
 
@@ -351,31 +367,21 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
 /**
  * Attempts to establish communication with the parent window.
  * @param {Object} options
- * @param {string|Array} [options.parentOrigin] Valid parent origin used to restrict communication
- * An array of parent origin strings is also supported.
- * @param {Object} [options.methods] Methods that may be called by the parent window.
+ * @param {string} [options.parentOrigin=*] Valid parent origin used to restrict communication.
+ * @param {Object} [options.methods={}] Methods that may be called by the parent window.
  * @return {Parent}
  */
-Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
+Penpal.connectToParent = ({ parentOrigin = '*', methods = {} }) => {
   let destroy;
   const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
 
   const child = window;
   const parent = child.parent;
-  const targetParentOrigin = getOriginFromUrl(document.referrer);
-
-  if (parentOrigin !== undefined && !Array.isArray(parentOrigin)) {
-    parentOrigin = [parentOrigin];
-  }
-
-  if (parentOrigin !== undefined && parentOrigin.indexOf(targetParentOrigin) === -1) {
-    throw new Error('Child: parent\'s origin not in list of valid parent origins')
-  }
 
   const promise = new Penpal.Promise((resolve, reject) => {
     const handleMessageEvent = (event) => {
-      if ((parentOrigin === undefined ||
-          parentOrigin.indexOf(event.origin) !== -1) &&
+      if ((parentOrigin === '*' ||
+          parentOrigin === event.origin) &&
           event.source === parent &&
           event.data.penpal === HANDSHAKE_REPLY) {
         log('Child: Received handshake reply');
@@ -389,8 +395,11 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
           remoteOrigin: event.origin
         };
 
+        const callSender = {};
+
         connectCallReceiver(info, methods, destructionPromise);
-        resolve(createCallSender(info, event.data.methodNames, destructionPromise));
+        connectCallSender(callSender, info, event.data.methodNames, destructionPromise)
+        resolve(callSender);
       }
     };
 
@@ -406,7 +415,7 @@ Penpal.connectToParent = ({ parentOrigin, methods = {} }) => {
     parent.postMessage({
       penpal: HANDSHAKE,
       methodNames: Object.keys(methods),
-    }, targetParentOrigin);
+    }, parentOrigin);
   });
 
   return {

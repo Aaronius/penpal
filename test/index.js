@@ -69,20 +69,6 @@ describe('Penpal', () => {
     });
   });
 
-  it('should call a function on the child with origin array set', (done) => {
-    const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/childOriginArray.html`
-    });
-
-    connection.promise.then((child) => {
-      child.multiply(2, 5).then((value) => {
-        expect(value).toEqual(10);
-        connection.destroy();
-        done();
-      });
-    });
-  });
-
   it('should call an asynchronous function on the child', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`
@@ -172,24 +158,6 @@ describe('Penpal', () => {
   it('should not connect to iframe connecting to parent with different origin', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/childDiffOrigin.html`
-    });
-
-    const spy = jasmine.createSpy();
-
-    connection.promise.then(spy);
-
-    connection.iframe.addEventListener('load', function() {
-      // Give Penpal time to try to make a handshake.
-      setTimeout(() => {
-        expect(spy).not.toHaveBeenCalled();
-        done();
-      }, 100);
-    });
-  });
-
-  it('should not connect to iframe connecting to parent with different origin as array', (done) => {
-    const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/childDiffOriginArray.html`
     });
 
     const spy = jasmine.createSpy();
@@ -315,6 +283,55 @@ describe('Penpal', () => {
           });
         })
       ]).then(done);
-    })
+    });
+
+    it('should reconnect after child reloads', (done) => {
+      const connection = Penpal.connectToChild({
+        url: `${CHILD_SERVER}/child.html`
+      });
+
+      connection.promise.then((child) => {
+        const previousMultiply = child.multiply;
+
+        const intervalId = setInterval(function() {
+
+          // Detect reconnection
+          if (child.multiply !== previousMultiply) {
+            clearInterval(intervalId);
+            child.multiply(2, 4).then((value) => {
+              expect(value).toEqual(8);
+              connection.destroy();
+              done();
+            });
+          }
+        }, 10);
+
+        child.reload();
+      });
+    });
+
+    it('should reconnect after child navigates to other page with different methods', (done) => {
+      const connection = Penpal.connectToChild({
+        url: `${CHILD_SERVER}/child.html`
+      });
+
+      connection.promise.then((child) => {
+        const intervalId = setInterval(function() {
+
+          // Detect reconnection
+          if (child.divide) {
+            clearInterval(intervalId);
+            expect(child.multiply).not.toBeDefined();
+            child.divide(6, 3).then((value) => {
+              expect(value).toEqual(2);
+              connection.destroy();
+              done();
+            });
+          }
+        }, 10);
+
+        child.navigate();
+      });
+    });
   });
 });
