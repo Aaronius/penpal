@@ -1,5 +1,3 @@
-const PARENT = 'parent';
-const CHILD = 'child';
 const HANDSHAKE = 'handshake';
 const HANDSHAKE_REPLY = 'handshake-reply';
 const CALL = 'call';
@@ -318,7 +316,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
         }, event.origin);
 
         const info = {
-          localName: PARENT,
+          localName: 'Parent',
           local: parent,
           remote: child,
           remoteOrigin: event.origin
@@ -389,7 +387,7 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {} }) => {
         child.removeEventListener(MESSAGE, handleMessageEvent);
 
         const info = {
-          localName: CHILD,
+          localName: 'Child',
           local: child,
           remote: parent,
           remoteOrigin: event.origin
