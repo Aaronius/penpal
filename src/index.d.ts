@@ -23,7 +23,7 @@ declare namespace Penpal {
     }
 
     interface IParentConnectionOptions extends IConnectionOptions {
-        parentOrigin?: string[] | string;
+        parentOrigin?: string;
     }
 
     interface PenpalStatic {
