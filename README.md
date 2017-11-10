@@ -142,7 +142,7 @@ Penpal is designed to run successfully on the most recent versions of Internet E
 This library is inspired by:
 
 * [Postmate](https://github.com/dollarshaveclub/postmate)
-* [JSChannel](https://ginthub.com/mozilla/jschannel)
+* [JSChannel](https://github.com/mozilla/jschannel)
 
 ## License
 
