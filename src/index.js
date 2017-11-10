@@ -6,7 +6,6 @@ const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
 const MESSAGE = 'message';
 const DATA_CLONE_ERROR = 'DataCloneError';
-const TIMEOUT_DEFAULT = 10000;
 
 const DEFAULT_PORTS = {
   'http:': '80',
@@ -278,11 +277,11 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
  * @param {string} options.url The URL of the webpage that should be loaded into the created iframe.
  * @param {HTMLElement} [options.appendTo] The container to which the iframe should be appended.
  * @param {Object} [options.methods={}] Methods that may be called by the iframe.
- * @param {Number} [options.timeout=10000] The amount of time, in milliseconds, Penpal should wait
+ * @param {Number} [options.timeout] The amount of time, in milliseconds, Penpal should wait
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout = TIMEOUT_DEFAULT }) => {
+Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
   let destroy;
   const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
 
@@ -300,10 +299,12 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout = TIMEOUT_DEFAUL
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
   const promise = new Penpal.Promise((resolve, reject) => {
-    setTimeout(() => {
-      reject(new Error('Connection to child timed out after ' + timeout + 'ms'));
-      destroy();
-    }, timeout);
+    if (timeout !== undefined) {
+      setTimeout(() => {
+        reject(new Error('Connection to child timed out after ' + timeout + 'ms'));
+        destroy();
+      }, timeout);
+    }
 
     // We resolve the promise with the call sender. If the child reconnects (for example, after
     // refreshing or navigating to another page that uses Penpal, we'll update the call sender
@@ -375,11 +376,11 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout = TIMEOUT_DEFAUL
  * @param {Object} options
  * @param {string} [options.parentOrigin=*] Valid parent origin used to restrict communication.
  * @param {Object} [options.methods={}] Methods that may be called by the parent window.
- * @param {Number} [options.timeout=10000] The amount of time, in milliseconds, Penpal should wait
+ * @param {Number} [options.timeout] The amount of time, in milliseconds, Penpal should wait
  * for the parent to respond before rejecting the connection promise.
  * @return {Parent}
  */
-Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout = TIMEOUT_DEFAULT }) => {
+Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout }) => {
   if (window === window.top) {
     throw new Error('connectToParent() must be called within an iframe');
   }
@@ -391,10 +392,12 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout = TIMEOUT_
   const parent = child.parent;
 
   const promise = new Penpal.Promise((resolve, reject) => {
-    setTimeout(() => {
-      reject(new Error('Connection to parent timed out after ' + timeout + 'ms'));
-      destroy();
-    }, timeout);
+    if (timeout !== undefined) {
+      setTimeout(() => {
+        reject(new Error('Connection to parent timed out after ' + timeout + 'ms'));
+        destroy();
+      }, timeout);
+    }
 
     const handleMessageEvent = (event) => {
       if ((parentOrigin === '*' ||

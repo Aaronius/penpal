@@ -6,7 +6,7 @@
 
 Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
 
-The total size of the library is approximately 4 KB minified.
+The total size of the library is approximately 5 KB minified and 2 KB gzipped.
 
 ## Installation
 
@@ -93,7 +93,7 @@ connection.promise.then(parent => {
 
 `options.methods` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
-`options.timeout` (optional) The amount of time, in milliseconds, Penpal should wait for the child to respond before rejecting the connection promise. The default is `10000` (10 seconds).
+`options.timeout` (optional) The amount of time, in milliseconds, Penpal should wait for the child to respond before rejecting the connection promise. There is no timeout by default.
 
 #### Return value
 
@@ -113,7 +113,7 @@ The return value of `connectToChild` is a `connection` object with the following
 
 `options.methods` (optional) An object containing methods which should be exposed for the parent window to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
-`options.timeout` (optional) The amount of time, in milliseconds, Penpal should wait for the parent to respond before rejecting the connection promise. The default is `10000` (10 seconds).
+`options.timeout` (optional) The amount of time, in milliseconds, Penpal should wait for the parent to respond before rejecting the connection promise. There is no timeout by default.
 
 #### Return value
 
