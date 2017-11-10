@@ -173,6 +173,86 @@ describe('Penpal', () => {
     });
   });
 
+  it('should reconnect after child reloads', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/child.html`
+    });
+
+    connection.promise.then((child) => {
+      const previousMultiply = child.multiply;
+
+      const intervalId = setInterval(function() {
+        // Detect reconnection
+        if (child.multiply !== previousMultiply) {
+          clearInterval(intervalId);
+          child.multiply(2, 4).then((value) => {
+            expect(value).toEqual(8);
+            connection.destroy();
+            done();
+          });
+        }
+      }, 10);
+
+      child.reload();
+    });
+  });
+
+  it('should reconnect after child navigates to other page with different methods', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/child.html`
+    });
+
+    connection.promise.then((child) => {
+      const intervalId = setInterval(function() {
+        // Detect reconnection
+        if (child.divide) {
+          clearInterval(intervalId);
+          expect(child.multiply).not.toBeDefined();
+          child.divide(6, 3).then((value) => {
+            expect(value).toEqual(2);
+            connection.destroy();
+            done();
+          });
+        }
+      }, 10);
+
+      child.navigate();
+    });
+  });
+
+  it('should reject promise if connectToChild times out', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/child.html`,
+      timeout: 0
+    });
+
+    connection.promise.catch((error) => {
+      expect(error).toEqual(jasmine.any(Error));
+      expect(error.message).toBe('Connection to child timed out after 0ms');
+      done();
+    });
+  });
+
+  it('should reject promise if connectToParent times out', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/childTimeout.html`
+    });
+
+    connection.promise.then((child) => {
+      // Detect reconnection
+      const intervalId = setInterval(function() {
+        if (child.getTimeoutErrorMessage) {
+          clearInterval(intervalId);
+          child.getTimeoutErrorMessage().then(function(errorMessage) {
+            expect(errorMessage).toBe('Connection to parent timed out after 0ms');
+            connection.destroy();
+            done();
+          })
+        }
+      }, 10);
+    });
+  });
+
   describe('destroy', () => {
     it('should remove iframe from its parent', (done) => {
       const connection = Penpal.connectToChild({
@@ -255,7 +335,8 @@ describe('Penpal', () => {
         connection.destroy();
 
         child.multiply().catch((error) => {
-          expect(error).toBe('Unable to send multiply() call due to destroyed connection');
+          expect(error).toEqual(jasmine.any(Error));
+          expect(error.message).toBe('Unable to send multiply() call due to destroyed connection');
           done();
         });
       });
@@ -283,55 +364,6 @@ describe('Penpal', () => {
           });
         })
       ]).then(done);
-    });
-
-    it('should reconnect after child reloads', (done) => {
-      const connection = Penpal.connectToChild({
-        url: `${CHILD_SERVER}/child.html`
-      });
-
-      connection.promise.then((child) => {
-        const previousMultiply = child.multiply;
-
-        const intervalId = setInterval(function() {
-
-          // Detect reconnection
-          if (child.multiply !== previousMultiply) {
-            clearInterval(intervalId);
-            child.multiply(2, 4).then((value) => {
-              expect(value).toEqual(8);
-              connection.destroy();
-              done();
-            });
-          }
-        }, 10);
-
-        child.reload();
-      });
-    });
-
-    it('should reconnect after child navigates to other page with different methods', (done) => {
-      const connection = Penpal.connectToChild({
-        url: `${CHILD_SERVER}/child.html`
-      });
-
-      connection.promise.then((child) => {
-        const intervalId = setInterval(function() {
-
-          // Detect reconnection
-          if (child.divide) {
-            clearInterval(intervalId);
-            expect(child.multiply).not.toBeDefined();
-            child.divide(6, 3).then((value) => {
-              expect(value).toEqual(2);
-              connection.destroy();
-              done();
-            });
-          }
-        }, 10);
-
-        child.navigate();
-      });
     });
   });
 });

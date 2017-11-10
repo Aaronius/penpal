@@ -6,6 +6,7 @@ const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
 const MESSAGE = 'message';
 const DATA_CLONE_ERROR = 'DataCloneError';
+const TIMEOUT_DEFAULT = 10000;
 
 const DEFAULT_PORTS = {
   'http:': '80',
@@ -127,7 +128,7 @@ const connectCallSender = (callSender, info, methodNames, destructionPromise) =>
       log(`${localName}: Sending ${methodName}() call`);
       return new Penpal.Promise((resolve, reject) => {
         if (destroyed) {
-          reject(`Unable to send ${methodName}() call due to destroyed connection`);
+          reject(new Error(`Unable to send ${methodName}() call due to destroyed connection`));
           return;
         }
 
@@ -277,9 +278,11 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
  * @param {string} options.url The URL of the webpage that should be loaded into the created iframe.
  * @param {HTMLElement} [options.appendTo] The container to which the iframe should be appended.
  * @param {Object} [options.methods={}] Methods that may be called by the iframe.
+ * @param {Number} [options.timeout=10000] The amount of time, in milliseconds, Penpal should wait
+ * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
+Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout = TIMEOUT_DEFAULT }) => {
   let destroy;
   const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
 
@@ -297,6 +300,11 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
   const promise = new Penpal.Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error('Connection to child timed out after ' + timeout + 'ms'));
+      destroy();
+    }, timeout);
+
     // We resolve the promise with the call sender. If the child reconnects (for example, after
     // refreshing or navigating to another page that uses Penpal, we'll update the call sender
     // with methods that match the latest provided by the child.
@@ -367,9 +375,11 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
  * @param {Object} options
  * @param {string} [options.parentOrigin=*] Valid parent origin used to restrict communication.
  * @param {Object} [options.methods={}] Methods that may be called by the parent window.
+ * @param {Number} [options.timeout=10000] The amount of time, in milliseconds, Penpal should wait
+ * for the parent to respond before rejecting the connection promise.
  * @return {Parent}
  */
-Penpal.connectToParent = ({ parentOrigin = '*', methods = {} }) => {
+Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout = TIMEOUT_DEFAULT }) => {
   if (window === window.top) {
     throw new Error('connectToParent() must be called within an iframe');
   }
@@ -381,6 +391,11 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {} }) => {
   const parent = child.parent;
 
   const promise = new Penpal.Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error('Connection to parent timed out after ' + timeout + 'ms'));
+      destroy();
+    }, timeout);
+
     const handleMessageEvent = (event) => {
       if ((parentOrigin === '*' ||
           parentOrigin === event.origin) &&
@@ -409,7 +424,7 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {} }) => {
 
     destructionPromise.then(() => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
-      reject('Child: Connection destroyed');
+      reject(new Error('Child: Connection destroyed'));
     });
 
     log('Child: Sending handshake');
