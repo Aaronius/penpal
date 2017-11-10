@@ -370,6 +370,10 @@ Penpal.connectToChild = ({ url, appendTo, methods = {} }) => {
  * @return {Parent}
  */
 Penpal.connectToParent = ({ parentOrigin = '*', methods = {} }) => {
+  if (window === window.top) {
+    throw new Error('connectToParent() must be called within an iframe');
+  }
+
   let destroy;
   const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
 
