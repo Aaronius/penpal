@@ -139,7 +139,16 @@ const connectCallSender = (callSender, info, methodNames, destructionPromise) =>
               event.data.id === id) {
             log(`${localName}: Received ${methodName}() reply`);
             local.removeEventListener(MESSAGE, handleMessageEvent);
-            (event.data.resolution === FULFILLED ? resolve : reject)(event.data.returnValue);
+
+            let returnValue = event.data.returnValue;
+
+            if (event.data.returnValueIsError) {
+              const deserializedError = new Error();
+              Object.keys(returnValue).forEach(key => deserializedError[key] = returnValue[key]);
+              returnValue = deserializedError;
+            }
+
+            (event.data.resolution === FULFILLED ? resolve : reject)(returnValue);
           }
         };
 
@@ -203,13 +212,25 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
 
             log(`${localName}: Sending ${methodName}() reply`);
 
+            const message = {
+              penpal: REPLY,
+              id,
+              resolution,
+              returnValue,
+            };
+
+            if (resolution === REJECTED && returnValue instanceof Error) {
+              message.returnValue = {
+                name: returnValue.name,
+                message: returnValue.message,
+                stack: returnValue.stack
+              };
+
+              message.returnValueIsError = true;
+            }
+
             try {
-              remote.postMessage({
-                penpal: REPLY,
-                id,
-                resolution,
-                returnValue,
-              }, remoteOrigin);
+              remote.postMessage(message, remoteOrigin);
             } catch (err) {
               // If a consumer attempts to send an object that's not cloneable (e.g., window),
               // we want to ensure the receiver's promise gets rejected.
@@ -232,23 +253,8 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
           }
         };
 
-        new Penpal.Promise((resolve, reject) => {
-          try {
-            // The consumer's function may throw an error, return a raw return value, return
-            // a promise that resolves, or return a promise that gets rejected.
-            // In the case that it throws an error, we'll send the error stack as a reply
-            resolve(methods[methodName](...args));
-          } catch (err) {
-            reject(err.toString());
-
-            // Some promise libraries, like RSVP, don't report uncaught errors without special
-            // handlers being added by the consumer. By throwing them asynchronously, they're
-            // guaranteed to hit the console. We may choose to change this behavior later.
-            setTimeout(() => {
-              throw err;
-            });
-          }
-        }).then(createPromiseHandler(FULFILLED), createPromiseHandler(REJECTED));
+        new Penpal.Promise(resolve => resolve(methods[methodName](...args)))
+          .then(createPromiseHandler(FULFILLED), createPromiseHandler(REJECTED));
       }
     }
   };

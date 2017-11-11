@@ -104,20 +104,34 @@ describe('Penpal', () => {
     });
   });
 
-  it('should handle rejected promises', (done) => {
+  it('should handle promises rejected with strings', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`,
     });
 
     connection.promise.then((child) => {
-      child.getRejectedPromise().then(
-        () => {},
-        (error) => {
-          expect(error).toBe('test error message');
-          connection.destroy();
-          done();
-        }
-      )
+      child.getRejectedPromiseString().catch((error) => {
+        expect(error).toBe('test error string');
+        connection.destroy();
+        done();
+      });
+    });
+  });
+
+  it('should handle promises rejected with error objects', (done) => {
+    const connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/child.html`,
+    });
+
+    connection.promise.then((child) => {
+      child.getRejectedPromiseError().catch((error) => {
+        expect(error).toEqual(jasmine.any(Error));
+        expect(error.name).toBe('TypeError');
+        expect(error.message).toBe('test error object');
+        expect(error.stack).toEqual(jasmine.any(String));
+        connection.destroy();
+        done();
+      });
     });
   });
 
@@ -127,14 +141,12 @@ describe('Penpal', () => {
     });
 
     connection.promise.then((child) => {
-      child.throwError().then(
-        () => {},
-        (error) => {
-          expect(error).toContain('Oh nos!');
-          connection.destroy();
-          done();
-        }
-      )
+      child.throwError().catch((error) => {
+        expect(error).toEqual(jasmine.any(Error));
+        expect(error.message).toBe('Oh nos!');
+        connection.destroy();
+        done();
+      });
     });
   });
 
@@ -144,14 +156,11 @@ describe('Penpal', () => {
     });
 
     connection.promise.then((child) => {
-      child.getUnclonableValue().then(
-        () => {},
-        (error) => {
-          expect(error).toContain('DataCloneError');
-          connection.destroy();
-          done();
-        }
-      )
+      child.getUnclonableValue().catch((error) => {
+        expect(error).toContain('DataCloneError');
+        connection.destroy();
+        done();
+      });
     });
   });
 

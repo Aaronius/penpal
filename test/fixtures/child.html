@@ -35,8 +35,12 @@
         getParentReturnValue: function() {
           return parentReturnValue;
         },
-        getRejectedPromise: function() {
-          return RSVP.Promise.reject('test error message');
+        getRejectedPromiseString: function() {
+          return RSVP.Promise.reject('test error string');
+        },
+        getRejectedPromiseError: function() {
+          // TypeError instead of Error just to make sure "name" transfers properly.
+          return RSVP.Promise.reject(new TypeError('test error object'))
         },
         throwError: function() {
           throw new Error('Oh nos!');
