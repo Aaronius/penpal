@@ -201,12 +201,7 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
         const createPromiseHandler = (resolution) => {
           return (returnValue) => {
             if (destroyed) {
-              // Some promise libraries, like RSVP, don't report uncaught errors without special
-              // handlers being added by the consumer. By throwing them asynchronously, they're
-              // guaranteed to hit the console. We may choose to change this behavior later.
-              setTimeout(() => {
-                throw new Error(`Unable to send ${methodName}() reply due to destroyed connection`);
-              });
+              throw new Error(`Unable to send ${methodName}() reply due to destroyed connection`);
               return;
             }
 
@@ -243,12 +238,7 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
                 }, remoteOrigin);
               }
 
-              // Some promise libraries, like RSVP, don't report uncaught errors without special
-              // handlers being added by the consumer. By throwing them asynchronously, they're
-              // guaranteed to hit the console. We may choose to change this behavior later.
-              setTimeout(() => {
-                throw err;
-              });
+              throw err;
             }
           }
         };
