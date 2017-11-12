@@ -159,7 +159,8 @@ describe('Penpal', () => {
 
     connection.promise.then((child) => {
       child.getUnclonableValue().catch((error) => {
-        expect(error).toContain('DataCloneError');
+        expect(error).toEqual(jasmine.any(Error));
+        expect(error.name).toBe('DataCloneError');
         connection.destroy();
         done();
       });

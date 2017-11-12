@@ -106,6 +106,24 @@ const DestructionPromise = (executor) => {
 };
 
 /**
+ * Converts an error object into a plain object.
+ * @param {Error} Error object.
+ * @returns {Object}
+ */
+const serializeError = ({ name, message, stack }) => ({ name, message, stack });
+
+/**
+ * Converts a plain object into an error object.
+ * @param {Object} Object with error properties.
+ * @returns {Error}
+ */
+const deserializeError = (obj) => {
+  const deserializedError = new Error();
+  Object.keys(obj).forEach(key => deserializedError[key] = obj[key]);
+  return deserializedError;
+};
+
+/**
  * Augments an object with methods that match those defined by the remote. When these methods are
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
@@ -143,9 +161,7 @@ const connectCallSender = (callSender, info, methodNames, destructionPromise) =>
             let returnValue = event.data.returnValue;
 
             if (event.data.returnValueIsError) {
-              const deserializedError = new Error();
-              Object.keys(returnValue).forEach(key => deserializedError[key] = returnValue[key]);
-              returnValue = deserializedError;
+              returnValue = deserializeError(returnValue);
             }
 
             (event.data.resolution === FULFILLED ? resolve : reject)(returnValue);
@@ -215,12 +231,7 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
             };
 
             if (resolution === REJECTED && returnValue instanceof Error) {
-              message.returnValue = {
-                name: returnValue.name,
-                message: returnValue.message,
-                stack: returnValue.stack
-              };
-
+              message.returnValue = serializeError(returnValue);
               message.returnValueIsError = true;
             }
 
@@ -234,7 +245,8 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
                   penpal: REPLY,
                   id,
                   resolution: REJECTED,
-                  returnValue: err.toString()
+                  returnValue: serializeError(err),
+                  returnValueIsError: true
                 }, remoteOrigin);
               }
 
