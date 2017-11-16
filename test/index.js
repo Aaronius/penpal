@@ -245,6 +245,40 @@ describe('Penpal', () => {
     });
   });
 
+  it('connectToChild should not destroy connection if connection succeeds then ' +
+    'timeout passes', (done) => {
+    jasmine.clock().install();
+
+    const connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/child.html`,
+      timeout: 100000
+    });
+
+    connection.promise.then(() => {
+      jasmine.clock().tick(100001);
+
+      expect(connection.iframe.parentNode).not.toBeNull();
+
+      jasmine.clock().uninstall();
+      connection.destroy();
+      done();
+    });
+  });
+
+  it('connectToParent should not destroy connection if connection succeeds then ' +
+    'timeout passes', (done) => {
+
+    var connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/childTimeoutAfterSucceeded.html`,
+      methods: {
+        reportStillConnected() {
+          connection.destroy();
+          done();
+        }
+      }
+    });
+  });
+
   it('should reject promise if connectToParent times out', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/childTimeout.html`

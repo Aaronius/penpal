@@ -307,8 +307,10 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
   const promise = new Penpal.Promise((resolve, reject) => {
+    var timeoutId;
+
     if (timeout !== undefined) {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         reject(new Error('Connection to child timed out after ' + timeout + 'ms'));
         destroy();
       }, timeout);
@@ -349,9 +351,8 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
         }
 
         methodNames = event.data.methodNames;
-
         connectCallSender(callSender, info, methodNames, destructionPromise);
-
+        clearTimeout(timeoutId);
         resolve(callSender);
       }
     };
@@ -400,8 +401,10 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout }) => {
   const parent = child.parent;
 
   const promise = new Penpal.Promise((resolve, reject) => {
+    var timeoutId;
+
     if (timeout !== undefined) {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         reject(new Error('Connection to parent timed out after ' + timeout + 'ms'));
         destroy();
       }, timeout);
@@ -427,6 +430,7 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout }) => {
 
         connectCallReceiver(info, methods, destructionPromise);
         connectCallSender(callSender, info, event.data.methodNames, destructionPromise)
+        clearTimeout(timeoutId);
         resolve(callSender);
       }
     };
