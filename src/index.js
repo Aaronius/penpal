@@ -151,15 +151,15 @@ const connectCallSender = (callSender, info, methodNames, destructionPromise) =>
   const createMethodProxy = (methodName) => {
     return (...args) => {
       log(`${localName}: Sending ${methodName}() call`);
-      return new Penpal.Promise((resolve, reject) => {
-        if (destroyed) {
-          const error = new Error(`Unable to send ${methodName}() call due ` +
-            `to destroyed connection`);
-          error.code = ERR_CONNECTION_DESTROYED;
-          reject(error);
-          return;
-        }
 
+      if (destroyed) {
+        const error = new Error(`Unable to send ${methodName}() call due ` +
+          `to destroyed connection`);
+        error.code = ERR_CONNECTION_DESTROYED;
+        throw error;
+      }
+
+      return new Penpal.Promise((resolve, reject) => {
         const id = generateId();
         const handleMessageEvent = (event) => {
           if (event.source === remote &&
@@ -227,14 +227,17 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
       if (methodName in methods) {
         const createPromiseHandler = (resolution) => {
           return (returnValue) => {
-            if (destroyed) {
-              const error = new Error(`Unable to send ${methodName}() reply due ` +
-                `to destroyed connection`);
-              error.code = ERR_CONNECTION_DESTROYED;
-              throw error;
-            }
-
             log(`${localName}: Sending ${methodName}() reply`);
+
+            if (destroyed) {
+              // It's possible to throw an error here, but it would need to be thrown asynchronously
+              // and would only be catchable using window.onerror. This is because the consumer
+              // is merely returning a value from their method and not calling any function
+              // that they could wrap in a try-catch. Even if the consumer were to catch the error,
+              // the value of doing so is questionable. Instead, we'll just log a message.
+              log(`${localName}: Unable to send ${methodName}() reply due to destroyed connection`);
+              return;
+            }
 
             const message = {
               penpal: REPLY,
@@ -341,8 +344,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
       if (event.source === child &&
           event.origin === childOrigin &&
           event.data.penpal === HANDSHAKE) {
-        log('Parent: Received handshake');
-        log('Parent: Sending handshake reply');
+        log('Parent: Received handshake, sending reply');
 
         event.source.postMessage({
           penpal: HANDSHAKE_REPLY,
@@ -375,7 +377,10 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
     parent.addEventListener(MESSAGE, handleMessage);
     destructionPromise.then(() => {
       parent.removeEventListener(MESSAGE, handleMessage);
-      reject('Parent: Connection destroyed');
+
+      var error = new Error('Connection destroyed');
+      error.code = ERR_CONNECTION_DESTROYED;
+      reject(error);
     });
 
     log('Parent: Loading iframe');
@@ -458,7 +463,8 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout } = {}) =>
 
     destructionPromise.then(() => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
-      const error = new Error('Child: Connection destroyed');
+
+      const error = new Error('Connection destroyed');
       error.code = ERR_CONNECTION_DESTROYED;
       reject(error);
     });

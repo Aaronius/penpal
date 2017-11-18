@@ -286,6 +286,7 @@ describe('Penpal', () => {
     });
 
     connection.promise.catch((error) => {
+      expect(error).toEqual(jasmine.any(Error));
       expect(error.message).toBe('Connection to parent timed out after 0ms');
       expect(error.code).toBe(Penpal.ERR_CONNECTION_TIMEOUT);
       connection.destroy();
@@ -310,13 +311,12 @@ describe('Penpal', () => {
         url: `${CHILD_SERVER}/child.html`
       });
 
-      connection.promise.then(
-        () => {},
-        (error) => {
-          expect(error).toBe('Parent: Connection destroyed');
-          done();
-        }
-      );
+      connection.promise.catch((error) => {
+        expect(error).toEqual(jasmine.any(Error));
+        expect(error.message).toBe('Connection destroyed');
+        expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
+        done();
+      });
 
       connection.destroy();
     });
@@ -374,12 +374,14 @@ describe('Penpal', () => {
       connection.promise.then((child) => {
         connection.destroy();
 
-        child.multiply().catch((error) => {
+        try {
+          child.multiply();
+        } catch (error) {
           expect(error).toEqual(jasmine.any(Error));
           expect(error.message).toBe('Unable to send multiply() call due to destroyed connection');
           expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
           done();
-        });
+        }
       });
     });
 
