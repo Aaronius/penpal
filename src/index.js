@@ -7,6 +7,10 @@ const REJECTED = 'rejected';
 const MESSAGE = 'message';
 const DATA_CLONE_ERROR = 'DataCloneError';
 
+const ERR_CONNECTION_DESTROYED = 'ConnectionDestroyed';
+const ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
+const ERR_NOT_IN_IFRAME = 'NotInIframe';
+
 const DEFAULT_PORTS = {
   'http:': '80',
   'https:': '443'
@@ -15,6 +19,10 @@ const DEFAULT_PORTS = {
 const URL_REGEX = /^(https?:)?\/\/([^\/:]+)(:(\d+))?/;
 
 const Penpal = {
+  ERR_CONNECTION_DESTROYED,
+  ERR_CONNECTION_TIMEOUT,
+  ERR_NOT_IN_IFRAME,
+
   /**
    * Promise implementation.
    * @type {Constructor}
@@ -145,7 +153,10 @@ const connectCallSender = (callSender, info, methodNames, destructionPromise) =>
       log(`${localName}: Sending ${methodName}() call`);
       return new Penpal.Promise((resolve, reject) => {
         if (destroyed) {
-          reject(new Error(`Unable to send ${methodName}() call due to destroyed connection`));
+          const error = new Error(`Unable to send ${methodName}() call due ` +
+            `to destroyed connection`);
+          error.code = ERR_CONNECTION_DESTROYED;
+          reject(error);
           return;
         }
 
@@ -217,8 +228,10 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
         const createPromiseHandler = (resolution) => {
           return (returnValue) => {
             if (destroyed) {
-              throw new Error(`Unable to send ${methodName}() reply due to destroyed connection`);
-              return;
+              const error = new Error(`Unable to send ${methodName}() reply due ` +
+                `to destroyed connection`);
+              error.code = ERR_CONNECTION_DESTROYED;
+              throw error;
             }
 
             log(`${localName}: Sending ${methodName}() reply`);
@@ -311,7 +324,9 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
 
     if (timeout !== undefined) {
       timeoutId = setTimeout(() => {
-        reject(new Error('Connection to child timed out after ' + timeout + 'ms'));
+        const error = new Error('Connection to child timed out after ' + timeout + 'ms');
+        error.code = ERR_CONNECTION_TIMEOUT;
+        reject(error);
         destroy();
       }, timeout);
     }
@@ -391,7 +406,9 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
  */
 Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout }) => {
   if (window === window.top) {
-    throw new Error('connectToParent() must be called within an iframe');
+    const error = new Error('connectToParent() must be called within an iframe');
+    error.code = ERR_NOT_IN_IFRAME;
+    throw error;
   }
 
   let destroy;
@@ -405,7 +422,9 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout }) => {
 
     if (timeout !== undefined) {
       timeoutId = setTimeout(() => {
-        reject(new Error('Connection to parent timed out after ' + timeout + 'ms'));
+        const error = new Error('Connection to parent timed out after ' + timeout + 'ms');
+        error.code = ERR_CONNECTION_TIMEOUT;
+        reject(error);
         destroy();
       }, timeout);
     }
@@ -439,7 +458,9 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout }) => {
 
     destructionPromise.then(() => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
-      reject(new Error('Child: Connection destroyed'));
+      const error = new Error('Child: Connection destroyed');
+      error.code = ERR_CONNECTION_DESTROYED;
+      reject(error);
     });
 
     log('Child: Sending handshake');

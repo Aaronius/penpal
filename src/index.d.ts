@@ -32,6 +32,9 @@ declare namespace Penpal {
     connectToParent(options?: IParentConnectionOptions): IConnectionObject;
     Promise: typeof Promise;
     debug: boolean;
+    ERR_CONNECTION_DESTROYED: string;
+    ERR_CONNECTION_TIMEOUT: string;
+    ERR_NOT_IN_IFRAME: string;
   }
 }
 

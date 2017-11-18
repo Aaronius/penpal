@@ -137,6 +137,14 @@ If the child iframe attempts to reconnect with the parent, the parent will accep
 
 NOTE: Currently there is no API to notify consumers of a reconnection. If this is important for you, please file an issue and explain why it would be beneficial to you.
 
+## Errors
+
+Penpal will throw (or reject promises with) errors in certain situations. Each error will have a `code` property which may be used for programmatic decisioning (e.g., do something if the error was due to a connection timing out) along with a `message` describing the problem. Errors with the following codes may be thrown:
+
+* `Penpal.ERR_CONNECTION_DESTROYED` - Thrown when calling a method or responding to a method call and the connection was previously destroyed. It will also be thrown when a connection is destroyed while attempting to connect.
+* `Penpal.ERR_CONNECTION_TIMEOUT` - Thrown after the `timeout` duration has elapsed and a connection has not been established.
+* `Penpal.ERR_NOT_IN_IFRAME` - Thrown when attempting to call `Penpal.connectToParent()` from outside of an iframe context.
+
 ## Supported Browsers
 
 Penpal is designed to run successfully on the most recent versions of Internet Explorer, Edge, Chrome, Firefox, and Safari.
