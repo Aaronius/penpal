@@ -404,7 +404,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
  * for the parent to respond before rejecting the connection promise.
  * @return {Parent}
  */
-Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout }) => {
+Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout } = {}) => {
   if (window === window.top) {
     const error = new Error('connectToParent() must be called within an iframe');
     error.code = ERR_NOT_IN_IFRAME;
