@@ -7,9 +7,9 @@ const REJECTED = 'rejected';
 const MESSAGE = 'message';
 const DATA_CLONE_ERROR = 'DataCloneError';
 
-const ERR_CONNECTION_DESTROYED = 'ConnectionDestroyed';
-const ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
-const ERR_NOT_IN_IFRAME = 'NotInIframe';
+export const ERR_CONNECTION_DESTROYED = 'ConnectionDestroyed';
+export const ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
+export const ERR_NOT_IN_IFRAME = 'NotInIframe';
 
 const DEFAULT_PORTS = {
   'http:': '80',
