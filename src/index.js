@@ -271,7 +271,7 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
           }
         };
 
-        new Penpal.Promise(resolve => resolve(methods[methodName](...args)))
+        new Penpal.Promise(resolve => resolve(methods[methodName].apply(methods, args)))
           .then(createPromiseHandler(FULFILLED), createPromiseHandler(REJECTED));
       }
     }
