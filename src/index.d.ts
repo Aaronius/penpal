@@ -41,4 +41,7 @@ declare namespace Penpal {
 declare module 'penpal' {
   const Penpal: Penpal.PenpalStatic;
   export = Penpal;
+  export var ERR_CONNECTION_DESTROYED: string;
+  export var ERR_CONNECTION_Timeout: string;
+  export var ERR_CONNECTION_DESTROYED: string;
 }
