@@ -149,6 +149,18 @@ Penpal will throw (or reject promises with) errors in certain situations. Each e
 * `Penpal.ERR_NOT_IN_IFRAME`
   * This error will be thrown when attempting to call `Penpal.connectToParent()` from outside of an iframe context.
 
+While these error codes are on the Penpal object itself, they are also named exports. You may import them as follows:
+
+```
+import {
+  ERR_CONNECTION_DESTROYED,
+  ERR_CONNECTION_TIMEOUT,
+  ERR_NOT_IN_IFRAME
+} from 'penpal';
+```
+
+This provides an opportunity for build optimization (using tools like Webpack or Rollup) in cases where code only needs access to the error constants and not the rest of Penpal.
+
 ## Supported Browsers
 
 Penpal is designed to run successfully on the most recent versions of Internet Explorer, Edge, Chrome, Firefox, and Safari.
