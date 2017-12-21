@@ -20,6 +20,16 @@ And import Penpal into your code with something like:
 
 `import Penpal from 'penpal';`
 
+#### TypeScript
+
+Penpal provides a `types` file for usage with TypeScript; importing is simply the same as above:
+
+`import Penpal from 'penpal';`
+
+If importing with the error codes you will need to do something like:
+
+`import { default as Penpal, ERR_CONNECTION_DESTROYED } from 'penpal';`
+
 ### Using a CDN
 
 If you don't want to use npm to manage client packages, Penpal also provides a UMD distribution in a `dist` folder which is hosted on a CDN:
