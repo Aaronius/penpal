@@ -22,13 +22,7 @@ And import Penpal into your code with something like:
 
 #### TypeScript
 
-Penpal provides a `types` file for usage with TypeScript; importing is simply the same as above:
-
-`import Penpal from 'penpal';`
-
-If importing with the error codes you will need to do something like:
-
-`import { default as Penpal, ERR_CONNECTION_DESTROYED } from 'penpal';`
+Penpal provides a `types` file for usage with TypeScript; importing is simply the same as above.
 
 ### Using a CDN
 
