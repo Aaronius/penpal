@@ -13,6 +13,10 @@ declare namespace Penpal {
     [P in keyof T]: () => Promise<any>;
   };
 
+  type ERR_CONNECTION_DESTROYED = 'ConnectionDestroyed';
+  type ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
+  type ERR_NOT_IN_IFRAME = 'NotInIframe';
+
   interface IConnectionOptions {
     methods?: ConnectionMethods<{}>;
     timeout?: number;
@@ -32,16 +36,16 @@ declare namespace Penpal {
     connectToParent(options?: IParentConnectionOptions): IConnectionObject;
     Promise: typeof Promise;
     debug: boolean;
-    ERR_CONNECTION_DESTROYED: string;
-    ERR_CONNECTION_TIMEOUT: string;
-    ERR_NOT_IN_IFRAME: string;
+    ERR_CONNECTION_DESTROYED: ERR_CONNECTION_DESTROYED;
+    ERR_CONNECTION_TIMEOUT: ERR_CONNECTION_TIMEOUT;
+    ERR_NOT_IN_IFRAME: ERR_NOT_IN_IFRAME;
   }
 }
 
 declare module 'penpal' {
   const Penpal: Penpal.PenpalStatic;
-  export = Penpal;
-  export var ERR_CONNECTION_DESTROYED: string;
-  export var ERR_CONNECTION_Timeout: string;
-  export var ERR_CONNECTION_DESTROYED: string;
+  export default Penpal;
+  export const ERR_CONNECTION_DESTROYED: Penpal.ERR_CONNECTION_DESTROYED;
+  export const ERR_CONNECTION_TIMEOUT: Penpal.ERR_CONNECTION_TIMEOUT;
+  export const ERR_NOT_IN_IFRAME: Penpal.ERR_NOT_IN_IFRAME;
 }
