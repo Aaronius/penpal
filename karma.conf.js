@@ -80,7 +80,6 @@ module.exports = function(config) {
   }
 
   config.set({
-    basePath: '',
     frameworks: ['jasmine'],
     files: [
       require.resolve('rsvp/dist/rsvp.min.js'),
@@ -111,5 +110,9 @@ module.exports = function(config) {
     reporters: reporters,
     singleRun: false,
     concurrency: Infinity,
-  })
+    // Travis + SauceLabs is super flaky. This attempts to solve the issue:
+    // https://github.com/jasmine/jasmine/issues/1327#issuecomment-332939551
+    browserDisconnectTolerance: 2,
+    browserNoActivityTimeout: 50000
+  });
 };
