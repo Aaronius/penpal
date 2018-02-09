@@ -6,7 +6,7 @@ describe('Penpal', () => {
     Penpal.debug = false; // Set to true when debugging tests.
   });
 
-  it('should complete a handshake', (done) => {
+  it('completes a handshake', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`
     });
@@ -17,7 +17,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should create an iframe and add it to document.body', () => {
+  it('creates an iframe and add it to document.body', () => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`
     });
@@ -27,7 +27,7 @@ describe('Penpal', () => {
     expect(connection.iframe.parentNode).toBe(document.body);
   });
 
-  it('should create an iframe and add it to a specific element', () => {
+  it('creates an iframe and add it to a specific element', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
@@ -41,7 +41,7 @@ describe('Penpal', () => {
     expect(connection.iframe.parentNode).toBe(container);
   });
 
-  it('should call a function on the child', (done) => {
+  it('calls a function on the child', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`
     });
@@ -55,7 +55,7 @@ describe('Penpal', () => {
     });
   });
   
-  it('should call a function on the child with origin set', (done) => {
+  it('calls a function on the child with origin set', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/childOrigin.html`
     });
@@ -69,7 +69,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should call an asynchronous function on the child', (done) => {
+  it('calls an asynchronous function on the child', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`
     });
@@ -83,7 +83,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should call a function on the parent', (done) => {
+  it('calls a function on the parent', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`,
       methods: {
@@ -104,7 +104,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should handle promises rejected with strings', (done) => {
+  it('handles promises rejected with strings', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`,
     });
@@ -118,7 +118,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should handle promises rejected with error objects', (done) => {
+  it('handles promises rejected with error objects', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`,
     });
@@ -137,7 +137,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should handle thrown errors', (done) => {
+  it('handles thrown errors', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`,
     });
@@ -152,7 +152,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should handle unclonable values', (done) => {
+  it('handles unclonable values', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`,
     });
@@ -167,7 +167,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should not connect to iframe connecting to parent with different origin', (done) => {
+  it('doesn\'t connect to iframe connecting to parent with different origin', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/childDiffOrigin.html`
     });
@@ -185,7 +185,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should reconnect after child reloads', (done) => {
+  it('reconnects after child reloads', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`
     });
@@ -209,7 +209,39 @@ describe('Penpal', () => {
     });
   });
 
-  it('should reconnect after child navigates to other page with different methods', (done) => {
+  // Issue #18
+  it('properly disconnects previous call receiver upon reconnection', (done) => {
+    const add = jasmine.createSpy().and.callFake((num1, num2) => {
+      return num1 + num2;
+    });
+
+    const connection = Penpal.connectToChild({
+      url: `${CHILD_SERVER}/child.html`,
+      methods: {
+        add
+      }
+    });
+
+    connection.promise.then((child) => {
+      const previousAddUsingParent = child.addUsingParent;
+
+      const intervalId = setInterval(function() {
+        // Detect reconnection
+        if (child.addUsingParent !== previousAddUsingParent) {
+          clearInterval(intervalId);
+          child.addUsingParent().then(() => {
+            expect(add.calls.count()).toEqual(1);
+            connection.destroy();
+            done();
+          });
+        }
+      }, 10);
+
+      child.reload();
+    });
+  });
+
+  it('reconnects after child navigates to other page with different methods', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`
     });
@@ -232,7 +264,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should reject promise if connectToChild times out', (done) => {
+  it('rejects promise if connectToChild times out', (done) => {
     const connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/child.html`,
       timeout: 0
@@ -246,8 +278,8 @@ describe('Penpal', () => {
     });
   });
 
-  it('connectToChild should not destroy connection if connection succeeds then ' +
-    'timeout passes', (done) => {
+  it('doesn\'t destroy connection if connection succeeds then ' +
+    'timeout passes (connectToChild)', (done) => {
     jasmine.clock().install();
 
     const connection = Penpal.connectToChild({
@@ -266,8 +298,8 @@ describe('Penpal', () => {
     });
   });
 
-  it('connectToParent should not destroy connection if connection succeeds then ' +
-    'timeout passes', (done) => {
+  it('doesn\'t destroy connection if connection succeeds then ' +
+    'timeout passes (connectToParent)', (done) => {
 
     var connection = Penpal.connectToChild({
       url: `${CHILD_SERVER}/childTimeoutAfterSucceeded.html`,
@@ -280,7 +312,7 @@ describe('Penpal', () => {
     });
   });
 
-  it('should reject promise if connectToParent times out', (done) => {
+  it('rejects promise if connectToParent times out', (done) => {
     const connection = Penpal.connectToParent({
       timeout: 0
     });
@@ -295,7 +327,7 @@ describe('Penpal', () => {
   });
 
   describe('destroy', () => {
-    it('should remove iframe from its parent', (done) => {
+    it('removes iframe from its parent', (done) => {
       const connection = Penpal.connectToChild({
         url: `${CHILD_SERVER}/child.html`
       });
@@ -306,7 +338,7 @@ describe('Penpal', () => {
       done();
     });
 
-    it('should reject promise', (done) => {
+    it('rejects promise', (done) => {
       const connection = Penpal.connectToChild({
         url: `${CHILD_SERVER}/child.html`
       });
@@ -324,7 +356,7 @@ describe('Penpal', () => {
     // When this test runs in IE, we get an "Object Expected" error within the iframe due to the
     // Array constructor not existing. It appears that when we call connection.destroy(), which
     // removes the iframe, IE messes up the Array constructor within the detached iframe.
-    it('should remove handshake message listener', (done) => {
+    it('removes handshake message listener', (done) => {
       spyOn(window, 'addEventListener').and.callThrough();
       spyOn(window, 'removeEventListener').and.callThrough();
 
@@ -345,7 +377,7 @@ describe('Penpal', () => {
       });
     });
 
-    it('should remove method call message listeners', (done) => {
+    it('removes method call message listeners', (done) => {
       spyOn(window, 'addEventListener').and.callThrough();
       spyOn(window, 'removeEventListener').and.callThrough();
 
@@ -365,7 +397,7 @@ describe('Penpal', () => {
       });
     });
 
-    it('should prevent method calls from being sent', (done) => {
+    it('prevents method calls from being sent', (done) => {
       const connection = Penpal.connectToChild({
         url: `${CHILD_SERVER}/child.html`
       });
@@ -385,7 +417,7 @@ describe('Penpal', () => {
       });
     });
 
-    it('should support multiple connections', (done) => {
+    it('supports multiple connections', (done) => {
       const connection1 = Penpal.connectToChild({
         url: `${CHILD_SERVER}/child.html`
       });

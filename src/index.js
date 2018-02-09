@@ -85,8 +85,8 @@ const getOriginFromUrl = (url) => {
 
   // If the port is the default for the protocol, we don't want to add it to the origin string
   // or it won't match the message's event.origin.
-  return protocol + '//' + hostname +
-    (port && port !== DEFAULT_PORTS[protocol] ? ':' + port : '');
+  const portSuffix = (port && port !== DEFAULT_PORTS[protocol] ? `:${port}` : '');
+  return `${protocol}//${hostname}${portSuffix}`;
 };
 
 /**
@@ -103,14 +103,14 @@ const DestructionPromise = (executor) => {
   executor(() => {
     handlers.forEach((handler) => {
       handler();
-    })
+    });
   });
 
   return {
     then(handler) {
       handlers.push(handler);
     }
-  }
+  };
 };
 
 /**
@@ -268,7 +268,7 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
 
               throw err;
             }
-          }
+          };
         };
 
         new Penpal.Promise(resolve => resolve(methods[methodName].apply(methods, args)))
@@ -307,14 +307,18 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
  */
 Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
   let destroy;
-  const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
+  const connectionDestructionPromise = new DestructionPromise(
+    (resolveConnectionDestructionPromise) => {
+      destroy = resolveConnectionDestructionPromise;
+    }
+  );
 
   const parent = window;
   const iframe = document.createElement('iframe');
 
   (appendTo || document.body).appendChild(iframe);
 
-  destructionPromise.then(() => {
+  connectionDestructionPromise.then(() => {
     if (iframe.parentNode) {
       iframe.parentNode.removeChild(iframe);
     }
@@ -322,12 +326,12 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
 
   const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
-  const promise = new Penpal.Promise((resolve, reject) => {
-    var timeoutId;
+  const promise = new Penpal.Promise((resolveConnectionPromise, reject) => {
+    let connectionTimeoutId;
 
     if (timeout !== undefined) {
-      timeoutId = setTimeout(() => {
-        const error = new Error('Connection to child timed out after ' + timeout + 'ms');
+      connectionTimeoutId = setTimeout(() => {
+        const error = new Error(`Connection to child timed out after ${timeout}ms`);
         error.code = ERR_CONNECTION_TIMEOUT;
         reject(error);
         destroy();
@@ -338,7 +342,9 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
     // refreshing or navigating to another page that uses Penpal, we'll update the call sender
     // with methods that match the latest provided by the child.
     const callSender = {};
-    let methodNames;
+    let receiverMethodNames;
+
+    let destroyCallReceiver;
 
     const handleMessage = (event) => {
       if (event.source === child &&
@@ -358,27 +364,43 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
           remoteOrigin: event.origin
         };
 
-        connectCallReceiver(info, methods, destructionPromise);
+        // If the child reconnected, we need to destroy the previous call receiver before setting
+        // up a new one.
+        if (destroyCallReceiver) {
+          destroyCallReceiver();
+        }
 
-        // If we're reconnecting, remove methods from the previous connection.
-        if (methodNames) {
-          methodNames.forEach((methodName) => {
-            delete callSender[methodName]
+        // When this promise is resolved, it will destroy the call receiver (stop listening to
+        // method calls from the child) and delete its methods off the call sender.
+        const callReceiverDestructionPromise = new DestructionPromise(
+          (resolveCallReceiverDestructionPromise) => {
+            connectionDestructionPromise.then(resolveCallReceiverDestructionPromise);
+            destroyCallReceiver = resolveCallReceiverDestructionPromise;
+          }
+        );
+
+        connectCallReceiver(info, methods, callReceiverDestructionPromise);
+
+        // If the child reconnected, we need to remove the methods from the previous call receiver
+        // off the sender.
+        if (receiverMethodNames) {
+          receiverMethodNames.forEach((receiverMethodName) => {
+            delete callSender[receiverMethodName];
           });
         }
 
-        methodNames = event.data.methodNames;
-        connectCallSender(callSender, info, methodNames, destructionPromise);
-        clearTimeout(timeoutId);
-        resolve(callSender);
+        receiverMethodNames = event.data.methodNames;
+        connectCallSender(callSender, info, receiverMethodNames, connectionDestructionPromise);
+        clearTimeout(connectionTimeoutId);
+        resolveConnectionPromise(callSender);
       }
     };
 
     parent.addEventListener(MESSAGE, handleMessage);
-    destructionPromise.then(() => {
+    connectionDestructionPromise.then(() => {
       parent.removeEventListener(MESSAGE, handleMessage);
 
-      var error = new Error('Connection destroyed');
+      const error = new Error('Connection destroyed');
       error.code = ERR_CONNECTION_DESTROYED;
       reject(error);
     });
@@ -417,17 +439,21 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout } = {}) =>
   }
 
   let destroy;
-  const destructionPromise = new DestructionPromise(resolve => destroy = resolve);
+  const connectionDestructionPromise = new DestructionPromise(
+    (resolveConnectionDestructionPromise) => {
+      destroy = resolveConnectionDestructionPromise;
+    }
+  );
 
   const child = window;
   const parent = child.parent;
 
-  const promise = new Penpal.Promise((resolve, reject) => {
-    var timeoutId;
+  const promise = new Penpal.Promise((resolveConnectionPromise, reject) => {
+    let connectionTimeoutId;
 
     if (timeout !== undefined) {
-      timeoutId = setTimeout(() => {
-        const error = new Error('Connection to parent timed out after ' + timeout + 'ms');
+      connectionTimeoutId = setTimeout(() => {
+        const error = new Error(`Connection to parent timed out after ${timeout}ms`);
         error.code = ERR_CONNECTION_TIMEOUT;
         reject(error);
         destroy();
@@ -452,16 +478,16 @@ Penpal.connectToParent = ({ parentOrigin = '*', methods = {}, timeout } = {}) =>
 
         const callSender = {};
 
-        connectCallReceiver(info, methods, destructionPromise);
-        connectCallSender(callSender, info, event.data.methodNames, destructionPromise)
-        clearTimeout(timeoutId);
-        resolve(callSender);
+        connectCallReceiver(info, methods, connectionDestructionPromise);
+        connectCallSender(callSender, info, event.data.methodNames, connectionDestructionPromise)
+        clearTimeout(connectionTimeoutId);
+        resolveConnectionPromise(callSender);
       }
     };
 
     child.addEventListener(MESSAGE, handleMessageEvent);
 
-    destructionPromise.then(() => {
+    connectionDestructionPromise.then(() => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
 
       const error = new Error('Connection destroyed');
