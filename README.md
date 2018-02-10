@@ -6,7 +6,7 @@
 
 Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
 
-The total size of the library is approximately 5 KB minified and 2 KB gzipped.
+The total size of the library is approximately 5 KB minified and 2 KB gzipped. It has no dependencies.
 
 ## Installation
 
