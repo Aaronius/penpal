@@ -6,7 +6,7 @@ declare namespace Penpal {
   }
 
   interface IChildConnectionObject extends IConnectionObject {
-    iframe: HTMLElement;
+    iframe: HTMLIFrameElement;
   }
 
   type ConnectionMethods<T> = {
