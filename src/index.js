@@ -324,7 +324,6 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
     }
   });
 
-  const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
   const promise = new Penpal.Promise((resolveConnectionPromise, reject) => {
     let connectionTimeoutId;
@@ -347,6 +346,8 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
     let destroyCallReceiver;
 
     const handleMessage = (event) => {
+      const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
+      
       if (event.source === child &&
           event.origin === childOrigin &&
           event.data.penpal === HANDSHAKE) {
