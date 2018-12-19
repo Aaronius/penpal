@@ -1,11 +1,11 @@
 declare namespace Penpal {
 
-  interface IConnectionObject {
-    promise: Promise<any>;
+  interface IConnectionObject<Methods extends ConnectionMethods> {
+    promise: Promise<Methods>;
     destroy: () => {};
   }
 
-  interface IChildConnectionObject extends IConnectionObject {
+  interface IChildConnectionObject<Methods extends ConnectionMethods> extends IConnectionObject<Methods> {
     iframe: HTMLIFrameElement;
   }
 
@@ -32,8 +32,8 @@ declare namespace Penpal {
   }
 
   interface PenpalStatic {
-    connectToChild(options: IChildConnectionOptions): IChildConnectionObject;
-    connectToParent(options?: IParentConnectionOptions): IConnectionObject;
+    connectToChild<Methods extends ConnectionMethods = any>(options: IChildConnectionOptions): IChildConnectionObject<Methods>;
+    connectToParent<Methods extends ConnectionMethods = any>(options?: IParentConnectionOptions): IConnectionObject<Methods>;
     Promise: typeof Promise;
     debug: boolean;
     ERR_CONNECTION_DESTROYED: ERR_CONNECTION_DESTROYED;
