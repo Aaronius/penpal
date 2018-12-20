@@ -56,7 +56,7 @@ const build = () => {
       },
       (callback) => {
         fs.createReadStream('./src/index.d.ts')
-          .pipe(fs.createWriteStream('./lib/index.d.ts'))
+          .pipe(fs.createWriteStream('./types/index.d.ts'))
           .on('finish', callback);
       }
     ], () => { console.log('Build complete.')});
