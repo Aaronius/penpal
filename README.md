@@ -12,7 +12,7 @@ The total size of the library is approximately 5 KB minified and 2 KB gzipped. I
 
 ### Using npm
 
-Preferably, you'll be able to use Penpal from npm with a bundler like [Browserify](http://browserify.org/) or [webpack](https://webpack.github.io/). If you use npm for client package management, you can install Penpal with:
+Preferably, you'll be able to use Penpal from npm with a bundler like [Webpack](https://webpack.github.io/) or [Parcel](https://parceljs.org/). If you use npm for client package management, you can install Penpal with:
 
 `npm install penpal --save`
 
