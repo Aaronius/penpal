@@ -18,6 +18,7 @@
  * const x: AsyncMethodReturns<User> ...;  # {
  *                                         #   login(): Promise<boolean>,
  *                                         #   resetPassword(): Promise<string>
+ *                                         #   sendEmail(body: string): Promise<boolean>;
  *                                         # }
  * ```
  *
