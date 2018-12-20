@@ -30,37 +30,37 @@ export type AsyncMethodReturns<T, K extends keyof T = keyof T> = {
     : T[KK]
 };
 
-interface IConnectionObject<Methods extends ConnectionMethods> {
+export interface IConnectionObject<Methods extends ConnectionMethods> {
   promise: Promise<AsyncMethodReturns<Methods>>;
   destroy: () => {};
 }
 
-interface IChildConnectionObject<Methods extends ConnectionMethods>
+export interface IChildConnectionObject<Methods extends ConnectionMethods>
   extends IConnectionObject<Methods> {
   iframe: HTMLIFrameElement;
 }
 
-type ConnectionMethods<T = {}> = { [P in keyof T]: () => Promise<any> };
+export type ConnectionMethods<T = {}> = { [P in keyof T]: () => Promise<any> };
 
 type ERR_CONNECTION_DESTROYED = 'ConnectionDestroyed';
 type ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
 type ERR_NOT_IN_IFRAME = 'NotInIframe';
 
-interface IConnectionOptions {
+export interface IConnectionOptions {
   methods?: ConnectionMethods;
   timeout?: number;
 }
 
-interface IChildConnectionOptions extends IConnectionOptions {
+export interface IChildConnectionOptions extends IConnectionOptions {
   url: string;
   appendTo?: HTMLElement;
 }
 
-interface IParentConnectionOptions extends IConnectionOptions {
+export interface IParentConnectionOptions extends IConnectionOptions {
   parentOrigin?: string;
 }
 
-interface PenpalStatic {
+export interface PenpalStatic {
   connectToChild<Methods extends ConnectionMethods = any>(
     options: IChildConnectionOptions
   ): // tslint:disable-next-line: no-unnecessary-generics
