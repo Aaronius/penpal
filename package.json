@@ -17,7 +17,7 @@
     "promise"
   ],
   "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "types": "types/index.d.ts",
   "scripts": {
     "build": "./scripts/build.js",
     "build:watch": "npm run build -- --watch",
@@ -25,7 +25,8 @@
     "test": "npm run build && ./scripts/test.js",
     "test:watch": "npm run build && parallelshell 'npm run build:watch -- --skip-initial-run' './scripts/test.js --watch'",
     "test:sauce": "npm run build && ./scripts/test.js --sauce",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "dtslint": "dtslint types"
   },
   "files": [
     "dist",
@@ -37,6 +38,7 @@
     "babel-core": "^6.18.0",
     "babel-preset-es2015": "^6.16.0",
     "connect": "^3.4.1",
+    "dtslint": "^0.4.2",
     "eslint": "^3.9.0",
     "eslint-config-airbnb": "^9.0.1",
     "eslint-config-airbnb-base": "^9.0.0",

@@ -55,7 +55,7 @@ const build = () => {
         });
       },
       (callback) => {
-        fs.createReadStream('./src/index.d.ts')
+        fs.createReadStream('./types/index.d.ts')
           .pipe(fs.createWriteStream('./lib/index.d.ts'))
           .on('finish', callback);
       }
