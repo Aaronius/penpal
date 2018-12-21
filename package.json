@@ -35,27 +35,34 @@
   ],
   "dependencies": {},
   "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
     "async": "^2.6.1",
-    "babel-core": "^6.26.3",
-    "babel-preset-es2015": "^6.24.1",
+    "babel-plugin-add-module-exports": "^1.0.0",
     "connect": "^3.6.6",
     "dtslint": "^0.4.2",
     "eslint": "^5.10.0",
-    "eslint-config-airbnb": "^17.1.0",
-    "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.14.0",
     "jasmine-core": "^3.3.0",
     "karma": "^3.1.4",
-    "karma-babel-preprocessor": "^7.0.0",
+    "karma-babel-preprocessor": "^8.0.0-beta.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-firefox-launcher": "^1.1.0",
     "karma-jasmine": "^2.0.1",
     "karma-sauce-launcher": "^2.0.2",
     "mkdirp": "^0.5.1",
     "npm-run-all": "^4.1.5",
+    "prettier": "1.15.3",
     "rsvp": "^4.8.4",
     "serve-static": "^1.13.2",
     "terser": "^3.13.1",
     "yargs": "^12.0.5"
-  }
+  },
+  "browserslist": [
+    "last 1 IE version",
+    "last 1 Chrome version",
+    "last 1 Firefox version",
+    "last 1 Safari version",
+    "last 1 Edge version"
+  ]
 }
