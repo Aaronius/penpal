@@ -2,7 +2,7 @@
 'use strict';
 
 const babel = require('babel-core');
-const uglifyJS = require('uglify-js');
+const Terser = require('terser');
 const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');
@@ -35,10 +35,10 @@ const build = () => {
         });
       },
       (callback) => {
-        fs.readFile(path.join(templateDir, 'amdWeb.template'), 'utf8', function(err, template) {
+        fs.readFile(path.join(templateDir, 'amdWeb.template'), 'utf8', (err, template) => {
           exitIfError(err);
           const umdWrappedCode = template.replace('{{moduleCode}}', result.code);
-          const uglifiedCode = uglifyJS.minify(umdWrappedCode, { fromString: true }).code;
+          const uglifiedCode = Terser.minify(umdWrappedCode).code;
 
           mkdirp.mkdirp(distDir, (err) => {
             exitIfError(err);
