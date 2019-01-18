@@ -16,7 +16,7 @@ const DEFAULT_PORTS = {
   'https:': '443'
 };
 
-const URL_REGEX = /^(https?:)?\/\/([^/:]+)(:(\d+))?/;
+const URL_REGEX = /^(https?:|file:)?\/\/([^/:]+)?(:(\d+))?/;
 
 const Penpal = {
   ERR_CONNECTION_DESTROYED,
@@ -83,6 +83,14 @@ const getOriginFromUrl = url => {
     protocol = location.protocol;
     hostname = location.hostname;
     port = location.port;
+  }
+
+  // If the protocol is file, the origin is "null"
+  // The origin of a document with file protocol is an opaque origin
+  // and its serialization "null" [1]
+  // [1] https://html.spec.whatwg.org/multipage/origin.html#origin
+  if (protocol === "file:") {
+    return "null";
   }
 
   // If the port is the default for the protocol, we don't want to add it to the origin string
@@ -379,19 +387,24 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
       ) {
         log('Parent: Received handshake, sending reply');
 
+        // If event.origin is "null", the remote protocol is file: 
+        // and we must post messages with "*" as targetOrigin [1]
+        // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
+        const remoteOrigin = event.origin === "null" ? "*" : event.origin;
+
         event.source.postMessage(
           {
             penpal: HANDSHAKE_REPLY,
             methodNames: Object.keys(methods)
           },
-          event.origin
+          remoteOrigin
         );
 
         const info = {
           localName: 'Parent',
           local: parent,
           remote: child,
-          remoteOrigin: event.origin
+          remoteOrigin: remoteOrigin
         };
 
         // If the child reconnected, we need to destroy the previous call receiver before setting
