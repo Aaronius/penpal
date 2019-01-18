@@ -27,11 +27,16 @@ const childMethods = {
 const parentContainer = document.getElementById('iframeContainer');
 if (!parentContainer) throw new Error('Parent container not found');
 
+const iframeToUse = document.createElement('iframe');
+if (!iframeToUse) throw new Error('Parent iframe element has not been created');
+
 const permissiveParentConnection = Penpal.connectToChild({
   // URL of page to load into iframe.
   url: 'http://example.com/iframe.html',
   // Container to which the iframe should be appended.
   appendTo: parentContainer,
+  // iframe to use
+  iframe: iframeToUse,
   // Methods parent is exposing to child
   methods: parentMethods
 });
@@ -46,6 +51,8 @@ const strictParentConnection = Penpal.connectToChild<typeof childMethods>({
   url: 'http://example.com/iframe.html',
   // Container to which the iframe should be appended.
   appendTo: parentContainer,
+  // iframe to use
+  iframe: iframeToUse,
   // Methods parent is exposing to child
   methods: parentMethods
 });
