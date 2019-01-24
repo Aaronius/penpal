@@ -95,7 +95,7 @@ connection.promise.then(parent => {
 
 `options.appendTo` (optional) The element to which the created iframe should be appended. If not provided, the iframe will be appended to `document.body`.
 
-`options.iframe` (optional) The iframe element that Penpal will use instead of creating the iframe element itself. This iframe element must not be already attached to the DOM as it will be appended by Penpal. This option is useful if you need to set attributes to the iframe element before it is appended to the DOM, for example the sandbox attribute. Note that the src attribute will be set by Penpal with the `options.url` value, even if already set.
+`options.iframe` (optional) The iframe element that Penpal should use instead of creating an iframe element itself. This iframe element must not be already appended to the DOM; it will be appended by Penpal. This option is useful if you need to set properties on the iframe element before it is appended to the DOM (for example, if you need to set the `sandbox` property). Note that the `src` property of the iframe will be set by Penpal using the `options.url` value, even if `src` has been set previously.
 
 `options.methods` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
@@ -169,8 +169,7 @@ This provides an opportunity for build optimization (using tools like Webpack or
 
 ## Security Note
 
-Penpal does not set the sandbox attribute on the iframe element it creates. If you need to sandbox the iframe, you must, in the parent, create the iframe element, set its sandbox attribute and call the connectToChild API with the created iframe. Here is an example setting the sandbox attribute in the parent window :
-
+Penpal does not set the [`sandbox` property](https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/) on the iframe element it creates. If you need to sandbox the iframe, you must, in the parent, create the iframe element, set its `sandbox` property, then pass the iframe to the `connectToChild` method. Failing to set the `sandbox` property on the iframe prior to Penpal adding the iframe to the DOM can fail to properly enforce security. The following example demonstrates setting the `sandbox` property on the iframe from the parent window:
 
 ```javascript
 import Penpal from 'penpal';
@@ -198,7 +197,6 @@ connection.promise.then(child => {
   child.divide(12, 4).then(total => console.log(total));
 });
 ```
-
 
 ## Supported Browsers
 
