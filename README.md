@@ -95,6 +95,8 @@ connection.promise.then(parent => {
 
 `options.appendTo` (optional) The element to which the created iframe should be appended. If not provided, the iframe will be appended to `document.body`.
 
+`options.iframe` (optional) The iframe element that Penpal will use instead of creating the iframe element itself. This iframe element must not be already attached to the DOM as it will be appended by Penpal. This option is useful if you need to set attributes to the iframe element before it is appended to the DOM, for example the sandbox attribute. Note that the src attribute will be set by Penpal with the `options.url` value, even if already set.
+
 `options.methods` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
 `options.timeout` (optional) The amount of time, in milliseconds, Penpal should wait for the child to respond before rejecting the connection promise. There is no timeout by default.
@@ -164,6 +166,39 @@ import {
 ```
 
 This provides an opportunity for build optimization (using tools like Webpack or Rollup) in cases where code only needs access to the error constants and not the rest of Penpal.
+
+## Security Note
+
+Penpal does not set the sandbox attribute on the iframe element it creates. If you need to sandbox the iframe, you must, in the parent, create the iframe element, set its sandbox attribute and call the connectToChild API with the created iframe. Here is an example setting the sandbox attribute in the parent window :
+
+
+```javascript
+import Penpal from 'penpal';
+
+const iframe = document.createElement('iframe');
+iframe.sandbox = 'allow-scripts';
+
+const connection = Penpal.connectToChild({
+  // URL of page to load into iframe.
+  url: 'http://example.com/iframe.html',
+  // Container to which the iframe should be appended.
+  appendTo: document.getElementById('iframeContainer'),
+  // The iframe element to use
+  iframe: iframe,
+  // Methods parent is exposing to child
+  methods: {
+    add(num1, num2) {
+      return num1 + num2;
+    }
+  }
+});
+
+connection.promise.then(child => {
+  child.multiply(2, 6).then(total => console.log(total));
+  child.divide(12, 4).then(total => console.log(total));
+});
+```
+
 
 ## Supported Browsers
 

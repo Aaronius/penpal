@@ -10,6 +10,7 @@ const DATA_CLONE_ERROR = 'DataCloneError';
 export const ERR_CONNECTION_DESTROYED = 'ConnectionDestroyed';
 export const ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
 export const ERR_NOT_IN_IFRAME = 'NotInIframe';
+export const ERR_IFRAME_ALREADY_ATTACHED_TO_DOM = 'IframeAlreadyAttachedToDom';
 
 const DEFAULT_PORTS = {
   'http:': '80',
@@ -22,6 +23,7 @@ const Penpal = {
   ERR_CONNECTION_DESTROYED,
   ERR_CONNECTION_TIMEOUT,
   ERR_NOT_IN_IFRAME,
+  ERR_IFRAME_ALREADY_ATTACHED_TO_DOM,
 
   /**
    * Promise implementation.
@@ -336,8 +338,17 @@ const connectCallReceiver = (info, methods, destructionPromise) => {
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
+Penpal.connectToChild = ({ url, appendTo, iframe, methods = {}, timeout }) => {
+  if (iframe && iframe.parentNode) {
+    const error = new Error(
+      'connectToChild() must not be called with an iframe already attached to DOM'
+    );
+    error.code = ERR_IFRAME_ALREADY_ATTACHED_TO_DOM;
+    throw error;
+  }
+
   let destroy;
+
   const connectionDestructionPromise = new DestructionPromise(
     resolveConnectionDestructionPromise => {
       destroy = resolveConnectionDestructionPromise;
@@ -345,9 +356,8 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
   );
 
   const parent = window;
-  const iframe = document.createElement('iframe');
-
-  (appendTo || document.body).appendChild(iframe);
+  iframe = iframe || document.createElement('iframe');
+  iframe.src = url;
 
   connectionDestructionPromise.then(() => {
     if (iframe.parentNode) {
@@ -355,7 +365,6 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
     }
   });
 
-  const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
   const childOrigin = getOriginFromUrl(url);
   const promise = new Penpal.Promise((resolveConnectionPromise, reject) => {
     let connectionTimeoutId;
@@ -380,6 +389,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
     let destroyCallReceiver;
 
     const handleMessage = event => {
+      const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
       if (
         event.source === child &&
         event.origin === childOrigin &&
@@ -456,7 +466,7 @@ Penpal.connectToChild = ({ url, appendTo, methods = {}, timeout }) => {
     });
 
     log('Parent: Loading iframe');
-    iframe.src = url;
+    (appendTo || document.body).appendChild(iframe);
   });
 
   return {
