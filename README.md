@@ -154,6 +154,8 @@ Penpal will throw (or reject promises with) errors in certain situations. Each e
   * `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.
 * `Penpal.ERR_NOT_IN_IFRAME`
   * This error will be thrown when attempting to call `Penpal.connectToParent()` from outside of an iframe context.
+* `Penpal.ERR_IFRAME_ALREADY_ATTACHED_TO_DOM`
+  * This error will be thrown when an iframe already attached to the DOM is passed to `Penpal.connectToChild()`.
 
 While these error codes are on the Penpal object itself, they are also named exports. You may import them as follows:
 
@@ -161,7 +163,8 @@ While these error codes are on the Penpal object itself, they are also named exp
 import {
   ERR_CONNECTION_DESTROYED,
   ERR_CONNECTION_TIMEOUT,
-  ERR_NOT_IN_IFRAME
+  ERR_NOT_IN_IFRAME,
+  ERR_IFRAME_ALREADY_ATTACHED_TO_DOM
 } from 'penpal';
 ```
 
