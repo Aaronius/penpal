@@ -389,6 +389,13 @@ Penpal.connectToChild = ({ url, appendTo, iframe, methods = {}, timeout }) => {
     let destroyCallReceiver;
 
     const handleMessage = event => {
+      //if the DOM no longer contains the iframe
+      //remove the listner from the parentWindow
+      //this ensures handleMessage isn't being called on non-existent iframes
+      if( !iframe || !document.contains(iframe) ){
+        return parent.removeEventListener(handleMessage);
+      }
+
       const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
       if (
         event.source === child &&
