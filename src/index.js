@@ -389,7 +389,7 @@ Penpal.connectToChild = ({ url, appendTo, iframe, methods = {}, timeout }) => {
     let destroyCallReceiver;
 
     const handleMessage = event => {
-      const child = iframe.contentWindow || iframe.contentDocument.parentWindow;
+      const child = iframe.contentWindow;
       if (
         event.source === child &&
         event.origin === childOrigin &&
@@ -397,7 +397,7 @@ Penpal.connectToChild = ({ url, appendTo, iframe, methods = {}, timeout }) => {
       ) {
         log('Parent: Received handshake, sending reply');
 
-        // If event.origin is "null", the remote protocol is file: 
+        // If event.origin is "null", the remote protocol is file:
         // and we must post messages with "*" as targetOrigin [1]
         // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
         const remoteOrigin = event.origin === "null" ? "*" : event.origin;
