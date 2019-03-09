@@ -158,6 +158,7 @@ const connectCallSender = (
   callSender,
   info,
   methodNames,
+  destroy,
   destructionPromise
 ) => {
   const { localName, local, remote, remoteOrigin } = info;
@@ -168,6 +169,16 @@ const connectCallSender = (
   const createMethodProxy = methodName => {
     return (...args) => {
       log(`${localName}: Sending ${methodName}() call`);
+
+      // This handles the case where the iframe has been removed from the DOM
+      // (and therefore its window closed), the consumer has not yet
+      // called destroy(), and the user calls a method exposed by
+      // the remote. We detect the iframe has been removed and force
+      // a destroy() so that the consumer sees the error saying the
+      // connection has been destroyed.
+      if (remote.closed) {
+        destroy();
+      }
 
       if (destroyed) {
         const error = new Error(
@@ -449,6 +460,7 @@ Penpal.connectToChild = ({ url, appendTo, iframe, methods = {}, timeout }) => {
           callSender,
           info,
           receiverMethodNames,
+          destroy,
           connectionDestructionPromise
         );
         clearTimeout(connectionTimeoutId);
@@ -552,6 +564,7 @@ Penpal.connectToParent = ({
           callSender,
           info,
           event.data.methodNames,
+          destroy,
           connectionDestructionPromise
         );
         clearTimeout(connectionTimeoutId);

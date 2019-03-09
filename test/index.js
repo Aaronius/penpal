@@ -405,6 +405,29 @@ describe('Penpal', () => {
         done();
       });
     });
+
+    it('destroys connection if iframe has been removed from DOM ' +
+      'and method is called', (done) => {
+      var connection = Penpal.connectToChild({
+        url: `${CHILD_SERVER}/child.html`,
+        appendTo: document.body
+      });
+
+      connection.promise.then((child) => {
+        document.body.removeChild(connection.iframe);
+
+        let error;
+        try {
+          child.multiply(2, 3)
+        } catch (err) {
+          error = err;
+        }
+
+        expect(error).toBeDefined();
+        expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
+        done();
+      });
+    });
   });
 
   describe('destroy', () => {
