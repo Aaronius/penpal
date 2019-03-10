@@ -12,6 +12,8 @@ export const ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
 export const ERR_NOT_IN_IFRAME = 'NotInIframe';
 export const ERR_IFRAME_ALREADY_ATTACHED_TO_DOM = 'IframeAlreadyAttachedToDom';
 
+const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
+
 const DEFAULT_PORTS = {
   'http:': '80',
   'https:': '443'
@@ -174,8 +176,8 @@ const connectCallSender = (
       // (and therefore its window closed), the consumer has not yet
       // called destroy(), and the user calls a method exposed by
       // the remote. We detect the iframe has been removed and force
-      // a destroy() so that the consumer sees the error saying the
-      // connection has been destroyed.
+      // a destroy() immediately so that the consumer sees the error saying
+      // the connection has been destroyed.
       if (remote.closed) {
         destroy();
       }
@@ -370,12 +372,6 @@ Penpal.connectToChild = ({ url, appendTo, iframe, methods = {}, timeout }) => {
   iframe = iframe || document.createElement('iframe');
   iframe.src = url;
 
-  connectionDestructionPromise.then(() => {
-    if (iframe.parentNode) {
-      iframe.parentNode.removeChild(iframe);
-    }
-  });
-
   const childOrigin = getOriginFromUrl(url);
   const promise = new Penpal.Promise((resolveConnectionPromise, reject) => {
     let connectionTimeoutId;
@@ -469,16 +465,35 @@ Penpal.connectToChild = ({ url, appendTo, iframe, methods = {}, timeout }) => {
     };
 
     parent.addEventListener(MESSAGE, handleMessage);
+
+    log('Parent: Loading iframe');
+    (appendTo || document.body).appendChild(iframe);
+
+    // This is to prevent memory leaks when the iframe is removed
+    // from the document and the consumer hasn't called destroy().
+    // Without this, event listeners attached to the window would
+    // stick around and since the event handlers have a reference
+    // to the iframe in their closures, the iframe would stick around
+    // too.
+    var checkIframeInDocIntervalId = setInterval(() => {
+      if (!document.contains(iframe)) {
+        clearInterval(checkIframeInDocIntervalId);
+        destroy();
+      }
+    }, CHECK_IFRAME_IN_DOC_INTERVAL);
+
     connectionDestructionPromise.then(() => {
+      if (iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+
       parent.removeEventListener(MESSAGE, handleMessage);
+      clearInterval(checkIframeInDocIntervalId);
 
       const error = new Error('Connection destroyed');
       error.code = ERR_CONNECTION_DESTROYED;
       reject(error);
     });
-
-    log('Parent: Loading iframe');
-    (appendTo || document.body).appendChild(iframe);
   });
 
   return {
