@@ -20,7 +20,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist lib",
-    "minify": "terser dist/penpal.js -o dist/penpal.min.js -m --mangle-props --source-map",
+    "minify": "terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
     "build": "rollup --config",
     "build:prod": "npm-run-all clean build minify copy-types && ls -lh dist/penpal.min.js",
     "build:watch": "rollup --config --watch",

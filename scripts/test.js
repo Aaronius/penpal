@@ -37,15 +37,21 @@ const build = () => {
   watcher.on('event', event => {
     // Wait until the first bundle is created before
     // running tests.
-    if (event.code === 'BUNDLE_END') {
-      if (!testsRunning) {
-        runTests();
-        testsRunning = true;
-      }
+    switch (event.code) {
+      case 'END':
+        if (!testsRunning) {
+          runTests();
+          testsRunning = true;
+        }
 
-      if (!argv.watch) {
-        watcher.close();
-      }
+        if (!argv.watch) {
+          watcher.close();
+        }
+        break;
+      case 'ERROR':
+      case 'FATAL':
+        console.error(event.error);
+        break;
     }
   });
 };

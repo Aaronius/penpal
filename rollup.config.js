@@ -14,8 +14,6 @@ module.exports = {
     }
   ],
   plugins: [
-    babel(),
-    // resolve(),
-    // commonjs()
+    babel()
   ]
 };
