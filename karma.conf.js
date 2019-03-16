@@ -64,7 +64,7 @@ module.exports = function(config) {
     }
   };
 
-  var browsers = ['Chrome', 'Firefox'];
+  var browsers = ['Chrome'];
   var reporters = ['dots'];
   var startConnect = true;
 
@@ -84,7 +84,7 @@ module.exports = function(config) {
     files: [
       require.resolve('rsvp/dist/rsvp.min.js'),
       'dist/penpal.js',
-      'test/index.js',
+      'test/index.js'
     ],
     plugins: [
       'karma-jasmine',

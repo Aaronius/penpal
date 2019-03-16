@@ -82,7 +82,3 @@ export interface PenpalStatic {
 
 declare const Penpal: PenpalStatic;
 export default Penpal;
-export const ERR_CONNECTION_DESTROYED: ERR_CONNECTION_DESTROYED;
-export const ERR_CONNECTION_TIMEOUT: ERR_CONNECTION_TIMEOUT;
-export const ERR_NOT_IN_IFRAME: ERR_NOT_IN_IFRAME;
-export const ERR_IFRAME_ALREADY_ATTACHED_TO_DOM: ERR_IFRAME_ALREADY_ATTACHED_TO_DOM;

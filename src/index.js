@@ -7,10 +7,10 @@ const REJECTED = 'rejected';
 const MESSAGE = 'message';
 const DATA_CLONE_ERROR = 'DataCloneError';
 
-export const ERR_CONNECTION_DESTROYED = 'ConnectionDestroyed';
-export const ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
-export const ERR_NOT_IN_IFRAME = 'NotInIframe';
-export const ERR_IFRAME_ALREADY_ATTACHED_TO_DOM = 'IframeAlreadyAttachedToDom';
+const ERR_CONNECTION_DESTROYED = 'ConnectionDestroyed';
+const ERR_CONNECTION_TIMEOUT = 'ConnectionTimeout';
+const ERR_NOT_IN_IFRAME = 'NotInIframe';
+const ERR_IFRAME_ALREADY_ATTACHED_TO_DOM = 'IframeAlreadyAttachedToDom';
 
 const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
 
