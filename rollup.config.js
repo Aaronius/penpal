@@ -6,11 +6,7 @@ module.exports = {
     {
       file: "dist/penpal.js",
       format: "iife",
-      name: 'Penpal'
-    },
-    {
-      file: "lib/index.js",
-      format: "cjs"
+      name: "Penpal"
     }
   ],
   plugins: [

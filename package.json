@@ -20,19 +20,22 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist lib",
-    "minify": "terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
-    "build": "rollup --config",
-    "build:prod": "npm-run-all clean build minify copy-types && ls -lh dist/penpal.min.js",
-    "build:watch": "rollup --config --watch",
-    "copy-types": "cp types/index.d.ts lib",
-    "lint": "eslint src/**",
+    "build:lib": "babel ./src --out-dir ./lib && cp types/index.d.ts lib",
+    "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
+    "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
+    "lint": "eslint src/** && dtslint types",
+    "format": "prettier --write \"{src,test}/**/*.js\"",
     "test": "npm-run-all clean run-tests",
     "test:watch": "npm-run-all clean run-tests:watch",
     "test:sauce": "npm-run-all build 'run-tests -- --sauce'",
     "run-tests": "./scripts/test.js",
     "run-tests:watch": "npm run run-tests -- --watch",
-    "prepublish": "npm-run-all test dtslint build:prod",
-    "dtslint": "dtslint types"
+    "prepublish": "npm-run-all test lint build"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run test && npm run lint"
+    }
   },
   "files": [
     "dist",
@@ -47,6 +50,7 @@
     "connect": "^3.6.6",
     "dtslint": "^0.4.2",
     "eslint": "^5.10.0",
+    "eslint-config-prettier": "^4.1.0",
     "eslint-plugin-import": "^2.14.0",
     "jasmine-core": "^3.3.0",
     "karma": "^3.1.4",

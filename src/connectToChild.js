@@ -1,15 +1,16 @@
 import {
-  ERR_CONNECTION_DESTROYED,
-  ERR_CONNECTION_TIMEOUT,
-  ERR_IFRAME_ALREADY_ATTACHED_TO_DOM,
   HANDSHAKE,
   HANDSHAKE_REPLY,
   MESSAGE
 } from './constants';
+import {
+  ERR_CONNECTION_DESTROYED,
+  ERR_CONNECTION_TIMEOUT,
+  ERR_IFRAME_ALREADY_ATTACHED_TO_DOM
+} from './errorCodes';
 import DestructionPromise from './destructionPromise';
 import getOriginFromUrl from './getOriginFromUrl';
-import { log } from './logger';
-import { getPromise } from './promise';
+import createLogger from './createLogger';
 import connectCallReceiver from './connectCallReceiver';
 import connectCallSender from './connectCallSender';
 
@@ -35,7 +36,9 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-export default ({ url, appendTo, iframe, methods = {}, timeout }) => {
+export default ({ url, appendTo, iframe, methods = {}, timeout, debug, Promise = window.Promise }) => {
+  const log = createLogger(debug);
+
   if (iframe && iframe.parentNode) {
     const error = new Error(
       'connectToChild() must not be called with an iframe already attached to DOM'
@@ -57,8 +60,6 @@ export default ({ url, appendTo, iframe, methods = {}, timeout }) => {
   iframe.src = url;
 
   const childOrigin = getOriginFromUrl(url);
-
-  const Promise = getPromise();
 
   const promise = new Promise((resolveConnectionPromise, reject) => {
     let connectionTimeoutId;
@@ -128,7 +129,7 @@ export default ({ url, appendTo, iframe, methods = {}, timeout }) => {
           }
         );
 
-        connectCallReceiver(info, methods, callReceiverDestructionPromise);
+        connectCallReceiver(info, methods, callReceiverDestructionPromise, log);
 
         // If the child reconnected, we need to remove the methods from the previous call receiver
         // off the sender.
@@ -144,7 +145,8 @@ export default ({ url, appendTo, iframe, methods = {}, timeout }) => {
           info,
           receiverMethodNames,
           destroy,
-          connectionDestructionPromise
+          connectionDestructionPromise,
+          log
         );
         clearTimeout(connectionTimeoutId);
         resolveConnectionPromise(callSender);

@@ -1,5 +1,5 @@
-import { log } from './logger';
-import { CALL, ERR_CONNECTION_DESTROYED, FULFILLED, MESSAGE, REPLY } from './constants';
+import { CALL, FULFILLED, MESSAGE, REPLY } from './constants';
+import { ERR_CONNECTION_DESTROYED } from './errorCodes';
 import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
 import { getPromise } from './promise';
@@ -20,7 +20,8 @@ export default (
   info,
   methodNames,
   destroy,
-  destructionPromise
+  destructionPromise,
+  log
 ) => {
   const { localName, local, remote, remoteOrigin } = info;
   let destroyed = false;

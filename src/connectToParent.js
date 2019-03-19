@@ -1,15 +1,17 @@
 import {
-  ERR_CONNECTION_DESTROYED,
-  ERR_CONNECTION_TIMEOUT,
-  ERR_NOT_IN_IFRAME, HANDSHAKE,
+  HANDSHAKE,
   HANDSHAKE_REPLY,
   MESSAGE
 } from './constants';
+import {
+  ERR_CONNECTION_DESTROYED,
+  ERR_CONNECTION_TIMEOUT,
+  ERR_NOT_IN_IFRAME
+} from './errorCodes';
 import DestructionPromise from './destructionPromise';
-import { log } from './logger';
-import { getPromise } from './promise';
 import connectCallReceiver from './connectCallReceiver';
 import connectCallSender from './connectCallSender';
+import createLogger from './createLogger';
 
 /**
  * @typedef {Object} Parent
@@ -29,8 +31,12 @@ import connectCallSender from './connectCallSender';
 export default ({
   parentOrigin = '*',
   methods = {},
-  timeout
+  timeout,
+  debug,
+  Promise = window.Promise
 } = {}) => {
+  const log = createLogger(debug);
+
   if (window === window.top) {
     const error = new Error(
       'connectToParent() must be called within an iframe'
@@ -48,7 +54,6 @@ export default ({
 
   const child = window;
   const parent = child.parent;
-  const Promise = getPromise();
 
   const promise = new Promise((resolveConnectionPromise, reject) => {
     let connectionTimeoutId;
@@ -83,13 +88,14 @@ export default ({
 
         const callSender = {};
 
-        connectCallReceiver(info, methods, connectionDestructionPromise);
+        connectCallReceiver(info, methods, connectionDestructionPromise, log);
         connectCallSender(
           callSender,
           info,
           event.data.methodNames,
           destroy,
-          connectionDestructionPromise
+          connectionDestructionPromise,
+          log
         );
         clearTimeout(connectionTimeoutId);
         resolveConnectionPromise(callSender);

@@ -1,6 +1,7 @@
 {
-  "extends": "eslint:recommended",
+  "extends": ["eslint:recommended", "prettier"],
   "env": {
+    "commonjs": true,
     "browser": true,
     "mocha": true
   },
