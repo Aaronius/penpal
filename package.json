@@ -17,13 +17,12 @@
     "promise"
   ],
   "main": "lib/index.js",
-  "types": "lib/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist lib",
-    "build:lib": "babel ./src --out-dir ./lib && cp types/index.d.ts lib",
+    "build:lib": "babel ./src --out-dir ./lib",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
     "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
-    "lint": "eslint src/** && dtslint types",
+    "lint": "eslint src/**",
     "format": "prettier --write \"{src,test}/**/*.js\"",
     "test": "npm-run-all clean run-tests",
     "test:watch": "npm-run-all clean run-tests:watch",
@@ -48,7 +47,6 @@
     "@babel/preset-env": "^7.3.4",
     "babel-plugin-add-module-exports": "^1.0.0",
     "connect": "^3.6.6",
-    "dtslint": "^0.4.2",
     "eslint": "^5.10.0",
     "eslint-config-prettier": "^4.1.0",
     "eslint-plugin-import": "^2.14.0",
