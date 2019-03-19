@@ -22,14 +22,14 @@
     "build:lib": "babel ./src --out-dir ./lib",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
     "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
-    "lint": "eslint src/**/*.js test/**/*.js scripts/**/*.js",
-    "format": "prettier --write \"{src,test}/**/*.js\"",
-    "test": "npm-run-all clean run-tests",
-    "test:watch": "npm-run-all clean run-tests:watch",
-    "test:sauce": "npm-run-all build 'run-tests -- --sauce'",
-    "run-tests": "./scripts/test.js",
-    "run-tests:watch": "npm run run-tests -- --watch",
-    "prepublish": "npm-run-all format lint test build"
+    "lint": "eslint **/*.js",
+    "format": "prettier --write \"**/*.{json,js,md,html,babelrc,eslintrc}\"",
+    "test": "npm-run-all clean runTests",
+    "test:watch": "npm-run-all clean runTests:watch",
+    "test:sauce": "npm-run-all build 'runTests -- --sauce'",
+    "runTests": "./scripts/test.js",
+    "runTests:watch": "npm run runTests -- --watch",
+    "prepublishOnly": "npm-run-all format lint test build"
   },
   "husky": {
     "hooks": {

@@ -133,7 +133,13 @@ export default ({
           }
         );
 
-        connectCallReceiver(info, methods, callReceiverDestructionPromise, Promise, log);
+        connectCallReceiver(
+          info,
+          methods,
+          callReceiverDestructionPromise,
+          Promise,
+          log
+        );
 
         // If the child reconnected, we need to remove the methods from the previous call receiver
         // off the sender.

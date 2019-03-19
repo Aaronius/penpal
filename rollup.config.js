@@ -1,15 +1,14 @@
-const babel = require('rollup-plugin-babel');
+// const babel = require('rollup-plugin-babel');
+import babel from 'rollup-plugin-babel';
 
-module.exports = {
-  input: "src/index.js",
+export default {
+  input: 'src/index.js',
   output: [
     {
-      file: "dist/penpal.js",
-      format: "iife",
-      name: "Penpal"
+      file: 'dist/penpal.js',
+      format: 'iife',
+      name: 'Penpal'
     }
   ],
-  plugins: [
-    babel()
-  ]
+  plugins: [babel()]
 };

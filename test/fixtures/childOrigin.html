@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>Test Iframe</title>
@@ -8,7 +8,9 @@
 
     <script src="rsvp.min.js"></script>
     <script>
-      window.onerror = function () { console.log.apply(console, arguments); };
+      window.onerror = function() {
+        console.log.apply(console, arguments);
+      };
       RSVP.on('error', function(event) {
         console.error(event);
       });
@@ -16,7 +18,10 @@
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
       // A cheap way to get the parent origin for our tests.
-      var parentOrigin = document.referrer.substring(0, document.referrer.lastIndexOf('/'));
+      var parentOrigin = document.referrer.substring(
+        0,
+        document.referrer.lastIndexOf('/')
+      );
 
       Penpal.Promise = RSVP.Promise;
       Penpal.debug = true;

@@ -147,15 +147,15 @@ NOTE: Currently there is no API to notify consumers of a reconnection. If this i
 
 Penpal will throw (or reject promises with) errors in certain situations. Each error will have a `code` property which may be used for programmatic decisioning (e.g., do something if the error was due to a connection timing out) along with a `message` describing the problem. Errors may be thrown with the following codes:
 
-* `Penpal.ERR_CONNECTION_DESTROYED`
-  * `connection.promise` will be rejected with this error if the connection is destroyed (by calling `connection.destroy()`) while Penpal is attempting to establish the connection.
-  * This error will be thrown when attempting to call a method on `child` or `parent` objects and the connection was previously destroyed.
-* `Penpal.ERR_CONNECTION_TIMEOUT`
-  * `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.
-* `Penpal.ERR_NOT_IN_IFRAME`
-  * This error will be thrown when attempting to call `Penpal.connectToParent()` from outside of an iframe context.
-* `Penpal.ERR_IFRAME_ALREADY_ATTACHED_TO_DOM`
-  * This error will be thrown when an iframe already attached to the DOM is passed to `Penpal.connectToChild()`.
+- `Penpal.ERR_CONNECTION_DESTROYED`
+  - `connection.promise` will be rejected with this error if the connection is destroyed (by calling `connection.destroy()`) while Penpal is attempting to establish the connection.
+  - This error will be thrown when attempting to call a method on `child` or `parent` objects and the connection was previously destroyed.
+- `Penpal.ERR_CONNECTION_TIMEOUT`
+  - `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.
+- `Penpal.ERR_NOT_IN_IFRAME`
+  - This error will be thrown when attempting to call `Penpal.connectToParent()` from outside of an iframe context.
+- `Penpal.ERR_IFRAME_ALREADY_ATTACHED_TO_DOM`
+  - This error will be thrown when an iframe already attached to the DOM is passed to `Penpal.connectToChild()`.
 
 While these error codes are on the Penpal object itself, they are also named exports. You may import them as follows:
 
@@ -209,8 +209,8 @@ Penpal is designed to run successfully on the most recent versions of Internet E
 
 This library is inspired by:
 
-* [Postmate](https://github.com/dollarshaveclub/postmate)
-* [JSChannel](https://github.com/mozilla/jschannel)
+- [Postmate](https://github.com/dollarshaveclub/postmate)
+- [JSChannel](https://github.com/mozilla/jschannel)
 
 ## License
 

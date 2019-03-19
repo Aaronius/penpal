@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>Test Iframe</title>
@@ -8,7 +8,9 @@
 
     <script src="rsvp.min.js"></script>
     <script>
-      window.onerror = function () { console.log.apply(console, arguments); };
+      window.onerror = function() {
+        console.log.apply(console, arguments);
+      };
       RSVP.on('error', function(event) {
         console.error(event);
       });

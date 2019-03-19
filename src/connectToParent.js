@@ -84,7 +84,13 @@ export default ({
 
         const callSender = {};
 
-        connectCallReceiver(info, methods, connectionDestructionPromise, Promise, log);
+        connectCallReceiver(
+          info,
+          methods,
+          connectionDestructionPromise,
+          Promise,
+          log
+        );
         connectCallSender(
           callSender,
           info,

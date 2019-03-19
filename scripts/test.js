@@ -24,7 +24,7 @@ const serveChildViews = () => {
 const runTests = () => {
   new KarmaServer({
     configFile: path.resolve(__dirname, '../karma.conf.js'),
-    singleRun: !argv.watch,
+    singleRun: !argv.watch
     // logLevel: 'debug'
   }).start();
 };
@@ -58,8 +58,3 @@ const build = () => {
 
 serveChildViews();
 build();
-
-
-
-
-
