@@ -22,26 +22,19 @@
     "build:lib": "babel ./src --out-dir ./lib",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
     "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
-    "lint": "eslint **/*.js",
+    "lint": "eslint .",
     "format": "prettier --write \"**/*.{json,js,md,html,babelrc,eslintrc}\"",
     "test": "npm-run-all clean runTests",
     "test:watch": "npm-run-all clean runTests:watch",
     "test:sauce": "npm-run-all build 'runTests -- --sauce'",
-    "runTests": "./scripts/test.js",
+    "runTests": "node ./scripts/test.js",
     "runTests:watch": "npm run runTests -- --watch",
     "prepublishOnly": "npm-run-all format lint test build"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged"
+      "pre-commit": "npm-run-all format lint test && git add ."
     }
-  },
-  "lint-staged": {
-    "*.js": [
-      "eslint --fix",
-      "prettier --write",
-      "git add"
-    ]
   },
   "browserslist": [
     "last 1 IE version",
@@ -72,7 +65,6 @@
     "karma-firefox-launcher": "^1.1.0",
     "karma-jasmine": "^2.0.1",
     "karma-sauce-launcher": "^2.0.2",
-    "lint-staged": "^8.1.5",
     "npm-run-all": "^4.1.5",
     "prettier": "1.15.3",
     "rollup": "^1.6.0",

@@ -1,6 +1,6 @@
-var argv = require('yargs').argv;
+const argv = require('yargs').argv;
 
-module.exports = function(config) {
+module.exports = config => {
   // Example set of browsers to run on Sauce Labs
   // Check out https://saucelabs.com/platforms for all browser/platform combos
   var customLaunchers = {
