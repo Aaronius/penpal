@@ -4,7 +4,7 @@ let debugEnabled = false;
  * Whether debug messages should be logged.
  * @type {boolean}
  */
-export const setDebugEnabled = (value) => {
+export const setDebugEnabled = value => {
   debugEnabled = value;
 };
 

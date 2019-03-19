@@ -11,4 +11,4 @@ try {
  * @type {Constructor}
  */
 export const getPromise = () => Promise;
-export const setPromise = value => Promise = value;
+export const setPromise = value => (Promise = value);

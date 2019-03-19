@@ -1,8 +1,4 @@
-import {
-  HANDSHAKE,
-  HANDSHAKE_REPLY,
-  MESSAGE
-} from './constants';
+import { HANDSHAKE, HANDSHAKE_REPLY, MESSAGE } from './constants';
 import {
   ERR_CONNECTION_DESTROYED,
   ERR_CONNECTION_TIMEOUT,

@@ -1,8 +1,4 @@
-import {
-  HANDSHAKE,
-  HANDSHAKE_REPLY,
-  MESSAGE
-} from './constants';
+import { HANDSHAKE, HANDSHAKE_REPLY, MESSAGE } from './constants';
 import {
   ERR_CONNECTION_DESTROYED,
   ERR_CONNECTION_TIMEOUT,
@@ -36,7 +32,15 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-export default ({ url, appendTo, iframe, methods = {}, timeout, debug, Promise = window.Promise }) => {
+export default ({
+  url,
+  appendTo,
+  iframe,
+  methods = {},
+  timeout,
+  debug,
+  Promise = window.Promise
+}) => {
   const log = createLogger(debug);
 
   if (iframe && iframe.parentNode) {
@@ -95,7 +99,7 @@ export default ({ url, appendTo, iframe, methods = {}, timeout, debug, Promise =
         // If event.origin is "null", the remote protocol is file:
         // and we must post messages with "*" as targetOrigin [1]
         // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
-        const remoteOrigin = event.origin === "null" ? "*" : event.origin;
+        const remoteOrigin = event.origin === 'null' ? '*' : event.origin;
 
         event.source.postMessage(
           {

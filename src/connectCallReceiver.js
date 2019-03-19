@@ -1,4 +1,11 @@
-import { CALL, DATA_CLONE_ERROR, FULFILLED, MESSAGE, REJECTED, REPLY } from './constants';
+import {
+  CALL,
+  DATA_CLONE_ERROR,
+  FULFILLED,
+  MESSAGE,
+  REJECTED,
+  REPLY
+} from './constants';
 import { serializeError } from './errorSerialization';
 import { getPromise } from './promise';
 

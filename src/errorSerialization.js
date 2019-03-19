@@ -3,7 +3,11 @@
  * @param {Error} Error object.
  * @returns {Object}
  */
-export const serializeError = ({ name, message, stack }) => ({ name, message, stack });
+export const serializeError = ({ name, message, stack }) => ({
+  name,
+  message,
+  stack
+});
 
 /**
  * Converts a plain object into an error object.
