@@ -29,11 +29,11 @@
     "test:sauce": "npm-run-all build 'run-tests -- --sauce'",
     "run-tests": "./scripts/test.js",
     "run-tests:watch": "npm run run-tests -- --watch",
-    "prepublish": "npm-run-all test lint build"
+    "prepublish": "npm-run-all format lint test build"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run test && npm run lint && npm run format"
+      "pre-commit": "npm-run-all format lint test"
     }
   },
   "files": [
