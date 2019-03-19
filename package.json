@@ -22,7 +22,7 @@
     "build:lib": "babel ./src --out-dir ./lib",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
     "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
-    "lint": "eslint src/**",
+    "lint": "eslint src/**/*.js test/**/*.js scripts/**/*.js",
     "format": "prettier --write \"{src,test}/**/*.js\"",
     "test": "npm-run-all clean run-tests",
     "test:watch": "npm-run-all clean run-tests:watch",

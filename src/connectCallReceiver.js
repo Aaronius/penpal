@@ -7,7 +7,6 @@ import {
   REPLY
 } from './constants';
 import { serializeError } from './errorSerialization';
-import { getPromise } from './promise';
 
 /**
  * Listens for "call" messages coming from the remote, executes the corresponding method, and
@@ -19,7 +18,7 @@ import { getPromise } from './promise';
  * connection.
  * @returns {Function} A function that may be called to disconnect the receiver.
  */
-export default (info, methods, destructionPromise, log) => {
+export default (info, methods, destructionPromise, Promise, log) => {
   const { localName, local, remote, remoteOrigin } = info;
   let destroyed = false;
 
@@ -86,8 +85,6 @@ export default (info, methods, destructionPromise, log) => {
             }
           };
         };
-
-        const Promise = getPromise();
 
         new Promise(resolve =>
           resolve(methods[methodName].apply(methods, args))

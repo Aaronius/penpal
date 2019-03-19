@@ -2,7 +2,6 @@ import { CALL, FULFILLED, MESSAGE, REPLY } from './constants';
 import { ERR_CONNECTION_DESTROYED } from './errorCodes';
 import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
-import { getPromise } from './promise';
 
 /**
  * Augments an object with methods that match those defined by the remote. When these methods are
@@ -21,6 +20,7 @@ export default (
   methodNames,
   destroy,
   destructionPromise,
+  Promise,
   log
 ) => {
   const { localName, local, remote, remoteOrigin } = info;
@@ -49,8 +49,6 @@ export default (
         error.code = ERR_CONNECTION_DESTROYED;
         throw error;
       }
-
-      const Promise = getPromise();
 
       return new Promise((resolve, reject) => {
         const id = generateId();

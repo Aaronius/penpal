@@ -84,13 +84,14 @@ export default ({
 
         const callSender = {};
 
-        connectCallReceiver(info, methods, connectionDestructionPromise, log);
+        connectCallReceiver(info, methods, connectionDestructionPromise, Promise, log);
         connectCallSender(
           callSender,
           info,
           event.data.methodNames,
           destroy,
           connectionDestructionPromise,
+          Promise,
           log
         );
         clearTimeout(connectionTimeoutId);
