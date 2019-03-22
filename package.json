@@ -37,11 +37,10 @@
     }
   },
   "browserslist": [
-    "last 1 IE version",
-    "last 1 Chrome version",
-    "last 1 Firefox version",
-    "last 1 Safari version",
-    "last 1 Edge version"
+    "last 2 Chrome version",
+    "last 2 Firefox version",
+    "last 2 Safari version",
+    "last 2 Edge version"
   ],
   "files": [
     "dist",
@@ -69,7 +68,6 @@
     "prettier": "1.15.3",
     "rollup": "^1.6.0",
     "rollup-plugin-babel": "^4.3.2",
-    "rsvp": "^4.8.4",
     "serve-static": "^1.13.2",
     "terser": "^3.13.1",
     "yargs": "^12.0.5"

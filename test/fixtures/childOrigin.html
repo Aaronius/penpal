@@ -6,14 +6,10 @@
   <body>
     Test Iframe
 
-    <script src="rsvp.min.js"></script>
     <script>
       window.onerror = function() {
         console.log.apply(console, arguments);
       };
-      RSVP.on('error', function(event) {
-        console.error(event);
-      });
     </script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
@@ -22,9 +18,6 @@
         0,
         document.referrer.lastIndexOf('/')
       );
-
-      Penpal.Promise = RSVP.Promise;
-      Penpal.debug = true;
 
       var methods = {
         multiply: function(num1, num2) {

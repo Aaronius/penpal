@@ -6,20 +6,13 @@
   <body>
     Test Iframe
 
-    <script src="rsvp.min.js"></script>
     <script>
       window.onerror = function() {
         console.log.apply(console, arguments);
       };
-      RSVP.on('error', function(event) {
-        console.error(event);
-      });
     </script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
-      Penpal.Promise = RSVP.Promise;
-      Penpal.debug = true;
-
       var parentAPI;
       var parentReturnValue;
 
@@ -28,7 +21,7 @@
           return num1 * num2;
         },
         multiplyAsync: function(num1, num2) {
-          return new RSVP.Promise(function(resolve) {
+          return new Promise(function(resolve) {
             resolve(num1 * num2);
           });
         },
@@ -41,11 +34,11 @@
           return parentReturnValue;
         },
         getRejectedPromiseString: function() {
-          return RSVP.Promise.reject('test error string');
+          return Promise.reject('test error string');
         },
         getRejectedPromiseError: function() {
           // TypeError instead of Error just to make sure "name" transfers properly.
-          return RSVP.Promise.reject(new TypeError('test error object'));
+          return Promise.reject(new TypeError('test error object'));
         },
         throwError: function() {
           throw new Error('Oh nos!');

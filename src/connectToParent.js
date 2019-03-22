@@ -4,7 +4,7 @@ import {
   ERR_CONNECTION_TIMEOUT,
   ERR_NOT_IN_IFRAME
 } from './errorCodes';
-import DestructionPromise from './destructionPromise';
+import createDestructor from './createDestructor';
 import connectCallReceiver from './connectCallReceiver';
 import connectCallSender from './connectCallSender';
 import createLogger from './createLogger';
@@ -24,13 +24,7 @@ import createLogger from './createLogger';
  * for the parent to respond before rejecting the connection promise.
  * @return {Parent}
  */
-export default ({
-  parentOrigin = '*',
-  methods = {},
-  timeout,
-  debug,
-  Promise = window.Promise
-} = {}) => {
+export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
   const log = createLogger(debug);
 
   if (window === window.top) {
@@ -41,12 +35,7 @@ export default ({
     throw error;
   }
 
-  let destroy;
-  const connectionDestructionPromise = new DestructionPromise(
-    resolveConnectionDestructionPromise => {
-      destroy = resolveConnectionDestructionPromise;
-    }
-  );
+  const { destroy, onDestroy } = createDestructor();
 
   const child = window;
   const parent = child.parent;
@@ -84,22 +73,20 @@ export default ({
 
         const callSender = {};
 
-        connectCallReceiver(
-          info,
-          methods,
-          connectionDestructionPromise,
-          Promise,
-          log
-        );
-        connectCallSender(
+        const destroyCallReceiver = connectCallReceiver(info, methods, log);
+
+        onDestroy(destroyCallReceiver);
+
+        const destroyCallSender = connectCallSender(
           callSender,
           info,
           event.data.methodNames,
           destroy,
-          connectionDestructionPromise,
-          Promise,
           log
         );
+
+        onDestroy(destroyCallSender);
+
         clearTimeout(connectionTimeoutId);
         resolveConnectionPromise(callSender);
       }
@@ -107,7 +94,7 @@ export default ({
 
     child.addEventListener(MESSAGE, handleMessageEvent);
 
-    connectionDestructionPromise.then(() => {
+    onDestroy(() => {
       child.removeEventListener(MESSAGE, handleMessageEvent);
 
       const error = new Error('Connection destroyed');

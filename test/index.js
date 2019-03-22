@@ -1,11 +1,6 @@
 const CHILD_SERVER = `http://${window.location.hostname}:9000`;
 
 describe('Penpal', () => {
-  beforeAll(() => {
-    Penpal.Promise = RSVP.Promise;
-    Penpal.debug = false; // Set to true when debugging tests.
-  });
-
   describe('connectToChild without iframe', () => {
     it('completes a handshake', done => {
       const connection = Penpal.connectToChild({
@@ -562,7 +557,7 @@ describe('Penpal', () => {
         url: `${CHILD_SERVER}/child.html`
       });
 
-      RSVP.all([
+      Promise.all([
         connection1.promise.then(child => {
           return child.multiplyAsync(2, 5).then(value => {
             expect(value).toEqual(10);

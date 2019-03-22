@@ -14,7 +14,6 @@ const serveChildViews = () => {
   // We'll run the child iframe on a different port from karma to
   // to properly test cross-domain iframe communication
   const childViewsApp = connect()
-    .use(serveStatic(path.join(__dirname, '../node_modules/rsvp/dist')))
     .use(serveStatic('dist'))
     .use(serveStatic('test/fixtures'));
 

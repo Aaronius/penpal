@@ -14,15 +14,7 @@ import { deserializeError } from './errorSerialization';
  * connection.
  * @returns {Object} The call sender object with methods that may be called.
  */
-export default (
-  callSender,
-  info,
-  methodNames,
-  destroy,
-  destructionPromise,
-  Promise,
-  log
-) => {
+export default (callSender, info, methodNames, destroyConnection, log) => {
   const { localName, local, remote, remoteOrigin } = info;
   let destroyed = false;
 
@@ -39,7 +31,7 @@ export default (
       // a destroy() immediately so that the consumer sees the error saying
       // the connection has been destroyed.
       if (remote.closed) {
-        destroy();
+        destroyConnection();
       }
 
       if (destroyed) {
@@ -88,12 +80,12 @@ export default (
     };
   };
 
-  destructionPromise.then(() => {
-    destroyed = true;
-  });
-
   methodNames.reduce((api, methodName) => {
     api[methodName] = createMethodProxy(methodName);
     return api;
   }, callSender);
+
+  return () => {
+    destroyed = true;
+  };
 };

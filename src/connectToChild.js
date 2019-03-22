@@ -4,7 +4,7 @@ import {
   ERR_CONNECTION_TIMEOUT,
   ERR_IFRAME_ALREADY_ATTACHED_TO_DOM
 } from './errorCodes';
-import DestructionPromise from './destructionPromise';
+import createDestructor from './createDestructor';
 import getOriginFromUrl from './getOriginFromUrl';
 import createLogger from './createLogger';
 import connectCallReceiver from './connectCallReceiver';
@@ -32,15 +32,7 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-export default ({
-  url,
-  appendTo,
-  iframe,
-  methods = {},
-  timeout,
-  debug,
-  Promise = window.Promise
-}) => {
+export default ({ url, appendTo, iframe, methods = {}, timeout, debug }) => {
   const log = createLogger(debug);
 
   if (iframe && iframe.parentNode) {
@@ -51,13 +43,7 @@ export default ({
     throw error;
   }
 
-  let destroy;
-
-  const connectionDestructionPromise = new DestructionPromise(
-    resolveConnectionDestructionPromise => {
-      destroy = resolveConnectionDestructionPromise;
-    }
-  );
+  const { destroy, onDestroy } = createDestructor();
 
   const parent = window;
   iframe = iframe || document.createElement('iframe');
@@ -95,7 +81,6 @@ export default ({
         event.data.penpal === HANDSHAKE
       ) {
         log('Parent: Received handshake, sending reply');
-
         // If event.origin is "null", the remote protocol is file:
         // and we must post messages with "*" as targetOrigin [1]
         // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
@@ -122,24 +107,9 @@ export default ({
           destroyCallReceiver();
         }
 
-        // When this promise is resolved, it will destroy the call receiver (stop listening to
-        // method calls from the child) and delete its methods off the call sender.
-        const callReceiverDestructionPromise = new DestructionPromise(
-          resolveCallReceiverDestructionPromise => {
-            connectionDestructionPromise.then(
-              resolveCallReceiverDestructionPromise
-            );
-            destroyCallReceiver = resolveCallReceiverDestructionPromise;
-          }
-        );
+        destroyCallReceiver = connectCallReceiver(info, methods, log);
 
-        connectCallReceiver(
-          info,
-          methods,
-          callReceiverDestructionPromise,
-          Promise,
-          log
-        );
+        onDestroy(destroyCallReceiver);
 
         // If the child reconnected, we need to remove the methods from the previous call receiver
         // off the sender.
@@ -150,15 +120,16 @@ export default ({
         }
 
         receiverMethodNames = event.data.methodNames;
-        connectCallSender(
+        const destroyCallSender = connectCallSender(
           callSender,
           info,
           receiverMethodNames,
           destroy,
-          connectionDestructionPromise,
-          Promise,
           log
         );
+
+        onDestroy(destroyCallSender);
+
         clearTimeout(connectionTimeoutId);
         resolveConnectionPromise(callSender);
       }
@@ -182,7 +153,7 @@ export default ({
       }
     }, CHECK_IFRAME_IN_DOC_INTERVAL);
 
-    connectionDestructionPromise.then(() => {
+    onDestroy(() => {
       if (iframe.parentNode) {
         iframe.parentNode.removeChild(iframe);
       }

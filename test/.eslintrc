@@ -4,7 +4,6 @@
     "browser": true
   },
   "globals": {
-    "Penpal": "readonly",
-    "RSVP": "readonly"
+    "Penpal": "readonly"
   }
 }

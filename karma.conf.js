@@ -81,11 +81,7 @@ module.exports = config => {
 
   config.set({
     frameworks: ['jasmine'],
-    files: [
-      require.resolve('rsvp/dist/rsvp.min.js'),
-      'dist/penpal.js',
-      'test/index.js'
-    ],
+    files: ['dist/penpal.js', 'test/index.js'],
     plugins: [
       'karma-jasmine',
       'karma-chrome-launcher',

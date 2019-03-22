@@ -18,7 +18,7 @@ import { serializeError } from './errorSerialization';
  * connection.
  * @returns {Function} A function that may be called to disconnect the receiver.
  */
-export default (info, methods, destructionPromise, Promise, log) => {
+export default (info, methods, log) => {
   const { localName, local, remote, remoteOrigin } = info;
   let destroyed = false;
 
@@ -95,8 +95,8 @@ export default (info, methods, destructionPromise, Promise, log) => {
 
   local.addEventListener(MESSAGE, handleMessageEvent);
 
-  destructionPromise.then(() => {
+  return () => {
     destroyed = true;
     local.removeEventListener(MESSAGE, handleMessageEvent);
-  });
+  };
 };

@@ -6,20 +6,13 @@
   <body>
     Test Iframe
 
-    <script src="rsvp.min.js"></script>
     <script>
       window.onerror = function() {
         console.log.apply(console, arguments);
       };
-      RSVP.on('error', function(event) {
-        console.error(event);
-      });
     </script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
-      Penpal.Promise = RSVP.Promise;
-      Penpal.debug = true;
-
       Penpal.connectToParent({
         timeout: 30
       }).promise.then(function(parent) {
