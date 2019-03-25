@@ -1,3 +1,4 @@
+const babel = require('rollup-plugin-babel');
 const argv = require('yargs').argv;
 
 module.exports = config => {
@@ -81,8 +82,9 @@ module.exports = config => {
 
   config.set({
     frameworks: ['jasmine'],
-    files: ['dist/penpal.js', 'test/index.js'],
+    files: ['dist/penpal.js', 'test/**/*.spec.js'],
     plugins: [
+      '@metahub/karma-rollup-preprocessor',
       'karma-jasmine',
       'karma-chrome-launcher',
       'karma-firefox-launcher',
@@ -90,7 +92,18 @@ module.exports = config => {
       'karma-sauce-launcher'
     ],
     preprocessors: {
-      'test/**/*.js': ['babel']
+      'test/**/*.js': ['rollup']
+    },
+    rollupPreprocessor: {
+      options: {
+        output: {
+          // To include inlined sourcemaps as data URIs
+          sourcemap: true,
+          format: 'iife'
+        },
+        // To compile with babel using es2015 preset
+        plugins: [babel()]
+      }
     },
     port: 9001,
     colors: true,
