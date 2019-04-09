@@ -169,7 +169,7 @@ import {
 
 ## Security Note
 
-Penpal does not set the [`sandbox` property](https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/) on the iframe element it creates. If you need to sandbox the iframe, you must, in the parent, create the iframe element, set its `sandbox` property, then pass the iframe to the `connectToChild` method. Failing to set the `sandbox` property on the iframe prior to Penpal adding the iframe to the DOM [can fail to properly enforce security](https://bugzilla.mozilla.org/show_bug.cgi?id=1522702). The following example demonstrates setting the `sandbox` property on the iframe from the parent window:
+Penpal does not set the [`sandbox` property](https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/) on the iframe element it creates. If you would like to sandbox the iframe, you must, in the parent, create the iframe element, set its `sandbox` property, then pass the iframe to the `connectToChild` method. Failing to set the `sandbox` property on the iframe prior to Penpal adding the iframe to the DOM [can fail to properly enforce sandbox security](https://bugzilla.mozilla.org/show_bug.cgi?id=1522702). The following example demonstrates setting the `sandbox` property on the iframe from the parent window:
 
 ```javascript
 import Penpal from 'penpal';
