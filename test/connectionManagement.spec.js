@@ -1,16 +1,19 @@
 import { CHILD_SERVER } from './constants';
+import { createAndAddIframe } from './utils';
 
 describe('connection management', () => {
   it("doesn't connect to iframe connecting to parent with different origin", done => {
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/childDiffOrigin.html`);
+
     const connection = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/childDiffOrigin.html`
+      iframe
     });
 
     const spy = jasmine.createSpy();
 
     connection.promise.then(spy);
 
-    connection.iframe.addEventListener('load', function() {
+    iframe.addEventListener('load', function() {
       // Give Penpal time to try to make a handshake.
       setTimeout(() => {
         expect(spy).not.toHaveBeenCalled();
@@ -21,7 +24,7 @@ describe('connection management', () => {
 
   it('reconnects after child reloads', done => {
     const connection = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
     connection.promise.then(child => {
@@ -50,7 +53,7 @@ describe('connection management', () => {
     });
 
     const connection = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`,
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`),
       methods: {
         add
       }
@@ -77,7 +80,7 @@ describe('connection management', () => {
 
   it('reconnects after child navigates to other page with different methods', done => {
     const connection = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
     connection.promise.then(child => {
@@ -100,7 +103,9 @@ describe('connection management', () => {
 
   it('rejects promise if connectToChild times out', done => {
     const connection = Penpal.connectToChild({
-      src: `http://www.fakeresponse.com/api/?sleep=10000`,
+      iframe: createAndAddIframe(
+        'http://www.fakeresponse.com/api/?sleep=10000'
+      ),
       timeout: 0
     });
 
@@ -118,15 +123,17 @@ describe('connection management', () => {
     done => {
       jasmine.clock().install();
 
+      const iframe = createAndAddIframe(`${CHILD_SERVER}/child.html`);
+
       const connection = Penpal.connectToChild({
-        src: `${CHILD_SERVER}/child.html`,
+        iframe,
         timeout: 100000
       });
 
       connection.promise.then(() => {
         jasmine.clock().tick(100001);
 
-        expect(connection.iframe.parentNode).not.toBeNull();
+        expect(iframe.parentNode).not.toBeNull();
 
         jasmine.clock().uninstall();
         connection.destroy();
@@ -140,7 +147,9 @@ describe('connection management', () => {
       'timeout passes (connectToParent)',
     done => {
       var connection = Penpal.connectToChild({
-        src: `${CHILD_SERVER}/childTimeoutAfterSucceeded.html`,
+        iframe: createAndAddIframe(
+          `${CHILD_SERVER}/childTimeoutAfterSucceeded.html`
+        ),
         methods: {
           reportStillConnected() {
             connection.destroy();
@@ -151,31 +160,19 @@ describe('connection management', () => {
     }
   );
 
-  it('rejects promise if connectToParent times out', done => {
-    const connection = Penpal.connectToParent({
-      timeout: 0
-    });
-
-    connection.promise.catch(error => {
-      expect(error).toEqual(jasmine.any(Error));
-      expect(error.message).toBe('Connection to parent timed out after 0ms');
-      expect(error.code).toBe(Penpal.ERR_CONNECTION_TIMEOUT);
-      connection.destroy();
-      done();
-    });
-  });
-
   it(
     'destroys connection if iframe has been removed from DOM ' +
       'and method is called',
     done => {
+      const iframe = createAndAddIframe(`${CHILD_SERVER}/child.html`);
+
       var connection = Penpal.connectToChild({
-        src: `${CHILD_SERVER}/child.html`,
+        iframe,
         appendTo: document.body
       });
 
       connection.promise.then(child => {
-        document.body.removeChild(connection.iframe);
+        document.body.removeChild(iframe);
 
         let error;
         try {
@@ -195,13 +192,15 @@ describe('connection management', () => {
     'destroys connection if iframe has been removed from DOM ' +
       'and method is called',
     done => {
+      const iframe = createAndAddIframe(`${CHILD_SERVER}/child.html`);
+
       var connection = Penpal.connectToChild({
-        src: `${CHILD_SERVER}/child.html`,
+        iframe,
         appendTo: document.body
       });
 
       connection.promise.then(child => {
-        document.body.removeChild(connection.iframe);
+        document.body.removeChild(iframe);
 
         let error;
         try {

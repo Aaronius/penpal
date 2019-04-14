@@ -2,7 +2,7 @@ import { HANDSHAKE, HANDSHAKE_REPLY, MESSAGE } from './constants';
 import {
   ERR_CONNECTION_DESTROYED,
   ERR_CONNECTION_TIMEOUT,
-  ERR_IFRAME_ALREADY_ATTACHED_TO_DOM
+  ERR_NO_IFRAME_SRC
 } from './errorCodes';
 import createDestructor from './createDestructor';
 import getOriginFromSrc from './getOriginFromSrc';
@@ -25,46 +25,24 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * Creates an iframe, loads a webpage into the URL, and attempts to establish communication with
  * the iframe.
  * @param {Object} options
- * @param {string} options.url The URL of the webpage that should be loaded into the created iframe.
- * @param {HTMLElement} [options.appendTo] The container to which the iframe should be appended.
+ * @param {HTMLIframeElement} options.iframe The iframe to connect to.
  * @param {Object} [options.methods={}] Methods that may be called by the iframe.
  * @param {Number} [options.timeout] The amount of time, in milliseconds, Penpal should wait
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-export default ({
-  src,
-  srcdoc,
-  appendTo,
-  iframe,
-  methods = {},
-  timeout,
-  debug
-}) => {
+export default ({ iframe, methods = {}, timeout, debug }) => {
   const log = createLogger(debug);
+  const parent = window;
+  const { destroy, onDestroy } = createDestructor();
 
-  if (iframe && iframe.parentNode) {
-    const error = new Error(
-      'connectToChild() must not be called with an iframe already attached to DOM'
-    );
-    error.code = ERR_IFRAME_ALREADY_ATTACHED_TO_DOM;
+  if (!iframe.src && !iframe.srcdoc) {
+    const error = new Error('Iframe must have src or srcdoc property defined.');
+    error.code = ERR_NO_IFRAME_SRC;
     throw error;
   }
 
-  const { destroy, onDestroy } = createDestructor();
-
-  const parent = window;
-  iframe = iframe || document.createElement('iframe');
-
-  let childOrigin;
-
-  if (srcdoc) {
-    iframe.srcdoc = srcdoc;
-    childOrigin = getOriginFromSrc();
-  } else {
-    iframe.src = src;
-    childOrigin = getOriginFromSrc(src);
-  }
+  const childOrigin = getOriginFromSrc(iframe.src);
 
   // If event.origin is "null", the remote protocol is
   // file:, data:, and we must post messages with "*" as targetOrigin
@@ -163,8 +141,7 @@ export default ({
 
     parent.addEventListener(MESSAGE, handleMessage);
 
-    log('Parent: Loading iframe');
-    (appendTo || document.body).appendChild(iframe);
+    log('Parent: Awaiting handshake');
 
     // This is to prevent memory leaks when the iframe is removed
     // from the document and the consumer hasn't called destroy().
@@ -180,10 +157,6 @@ export default ({
     }, CHECK_IFRAME_IN_DOC_INTERVAL);
 
     onDestroy(() => {
-      if (iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe);
-      }
-
       parent.removeEventListener(MESSAGE, handleMessage);
       clearInterval(checkIframeInDocIntervalId);
 
@@ -195,7 +168,6 @@ export default ({
 
   return {
     promise,
-    iframe,
     destroy
   };
 };

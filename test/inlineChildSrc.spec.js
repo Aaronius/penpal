@@ -31,8 +31,12 @@ const htmlSrcRedirect = `
 
 describe('data URI support', () => {
   it('connects and calls a function on the child', done => {
+    const iframe = document.createElement('iframe');
+    iframe.src = `data:text/html,${htmlSrc}`;
+    document.body.appendChild(iframe);
+
     const connection = Penpal.connectToChild({
-      src: `data:text/html,${htmlSrc}`
+      iframe
     });
 
     connection.promise.then(child => {
@@ -45,8 +49,12 @@ describe('data URI support', () => {
   });
 
   it('does not connect if child redirects to non-opaque origin', done => {
+    const iframe = document.createElement('iframe');
+    iframe.src = `data:text/html,${htmlSrcRedirect}`;
+    document.body.appendChild(iframe);
+
     const connection = Penpal.connectToChild({
-      src: `data:text/html,${htmlSrcRedirect}`
+      iframe
     });
 
     const connectionResolved = jasmine.createSpy().and.callFake(() => {
@@ -67,8 +75,12 @@ var supportsSrcDoc = !!('srcdoc' in document.createElement('iframe'));
 if (supportsSrcDoc) {
   describe('srcdoc support', () => {
     it('connects and calls a function on the child', done => {
+      const iframe = document.createElement('iframe');
+      iframe.srcdoc = htmlSrc;
+      document.body.appendChild(iframe);
+
       const connection = Penpal.connectToChild({
-        srcdoc: htmlSrc
+        iframe
       });
 
       connection.promise.then(child => {
@@ -84,8 +96,12 @@ if (supportsSrcDoc) {
     });
 
     it('does not connect if child redirects to non-opaque origin', done => {
+      const iframe = document.createElement('iframe');
+      iframe.srcdoc = htmlSrcRedirect;
+      document.body.appendChild(iframe);
+
       const connection = Penpal.connectToChild({
-        srcdoc: htmlSrcRedirect
+        iframe
       });
 
       const connectionResolved = jasmine.createSpy().and.callFake(() => {

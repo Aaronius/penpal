@@ -1,20 +1,10 @@
 import { CHILD_SERVER } from './constants';
+import { createAndAddIframe } from './utils';
 
 describe('destroy', () => {
-  it('removes iframe from its parent', done => {
-    const connection = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`
-    });
-
-    connection.destroy();
-
-    expect(connection.iframe.parentNode).toBeNull();
-    done();
-  });
-
   it('rejects promise', done => {
     const connection = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
     connection.promise.catch(error => {
@@ -34,7 +24,7 @@ describe('destroy', () => {
   //   spyOn(window, 'removeEventListener').and.callThrough();
   //
   //   const connection = Penpal.connectToChild({
-  //     src: `${CHILD_SERVER}/child.html`
+  //     iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
   //   });
   //
   //   // The handshake message listener is set up immediately after the iframe has loaded.
@@ -54,7 +44,7 @@ describe('destroy', () => {
     spyOn(window, 'removeEventListener').and.callThrough();
 
     const connection = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
     // The method call message listener is set up after the connection has been established.
@@ -71,7 +61,7 @@ describe('destroy', () => {
 
   it('prevents method calls from being sent', done => {
     const connection = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
     // The method call message listener is set up after the connection has been established.
@@ -93,10 +83,10 @@ describe('destroy', () => {
 
   it('supports multiple connections', done => {
     const connection1 = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
     const connection2 = Penpal.connectToChild({
-      src: `${CHILD_SERVER}/child.html`
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
     Promise.all([

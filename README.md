@@ -28,7 +28,7 @@ Penpal will then be installed on `window.Penpal`. `window.Penpal` will contain t
 Penpal.ERR_CONNECTION_DESTROYED
 Penpal.ERR_CONNECTION_TIMEOUT
 Penpal.ERR_NOT_IN_IFRAME
-Penpal.ERR_IFRAME_ALREADY_ATTACHED_TO_DOM
+Penpal.ERR_NO_IFRAME_SRC
 Penpal.connectToChild
 Penpal.connectToParent
 ```
@@ -42,12 +42,13 @@ Usage is similar to if you were using a bundler, which is documented below, but 
 ```javascript
 import connectToChild from 'penpal/lib/connectToChild';
 
+const iframe = document.createElement('iframe');
+iframe.src = 'http://example.com/iframe.html';
+document.body.appendChild(iframe);
+
 const connection = connectToChild({
-  // URL of page to load into iframe.
-  url: 'http://example.com/iframe.html',
-  // Container to which the iframe should be appended.
-  appendTo: document.getElementById('iframeContainer'),
-  // Methods parent is exposing to child
+  iframe,
+  // Methods the parent is exposing to the child
   methods: {
     add(num1, num2) {
       return num1 + num2;
@@ -94,11 +95,7 @@ connection.promise.then(parent => {
 
 #### Parameters
 
-`options.url` (required) The URL of the webpage that should be loaded into the iframe that Penpal will create. A relative path is also supported.
-
-`options.appendTo` (optional) The element to which the created iframe should be appended. If not provided, the iframe will be appended to `document.body`.
-
-`options.iframe` (optional) The iframe element that Penpal should use instead of creating an iframe element itself. This iframe element must not be already appended to the DOM; it will be appended by Penpal. This option is useful if you need to set properties on the iframe element before it is appended to the DOM (for example, if you need to set the `sandbox` property). Note that the `src` property of the iframe will be set by Penpal using the `options.url` value, even if `src` has been set previously.
+`options.iframe` (optional) The iframe element to which Penpal should connect. You will need to have set either the `src` or `srcdoc` property on the iframe prior to calling `connectToChild`. You will also need to ensure that the iframe's content has not loaded by the time `connectToChild` is called. As shown in the example above, it is safe to set the `src` or `srcdoc` property of the iframe and append the iframe to the document before calling `connectToChild` as long as it's done in the same ["event loop"](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop). If that makes you uncomfortable, feel free to append the iframe to the document _after_ calling `connectToChild` instead of _before_.
 
 `options.methods` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
@@ -113,8 +110,6 @@ The return value of `connectToChild` is a `connection` object with the following
 `connection.promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the child has exposed. Note that these aren't actual memory references to the methods the child exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the child, calling the actual method within the child with the arguments you have passed, and then sending the return value back to the parent. The promise you received will then be resolved with the return value.
 
 `connection.destroy` A method that, when called, will remove the iframe element from the DOM and disconnect any messaging channels. You may call this even before a connection has been established.
-
-`connection.iframe` The child iframe element. The iframe will have already been appended as a child to the element defined in `options.appendTo`, but a reference to the iframe is provided in case you need to add CSS classes, etc.
 
 ### `connectToParent([options:Object]) => Object`
 
@@ -152,9 +147,9 @@ Penpal will throw (or reject promises with) errors in certain situations. Each e
 - `ConnectionTimeout`
   - `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.
 - `NotInIframe`
-  - This error will be thrown when attempting to call `Penpal.connectToParent()` from outside of an iframe context.
-- `IframeAlreadyAttachedToDom`
-  - This error will be thrown when an iframe already attached to the DOM is passed to `Penpal.connectToChild()`.
+  - This error will be thrown when attempting to call `connectToParent()` from outside of an iframe context.
+- `NoIframeSrc`
+  - This error will be thrown when the iframe passed into `connectToChild` does not have `src` or `srcdoc` set.
 
 For your convenience, these error codes are exported as constants that can be imported as follows:
 
@@ -163,44 +158,13 @@ import {
   ERR_CONNECTION_DESTROYED,
   ERR_CONNECTION_TIMEOUT,
   ERR_NOT_IN_IFRAME,
-  ERR_IFRAME_ALREADY_ATTACHED_TO_DOM
+  ERR_NO_IFRAME_SRC
 } from 'penpal/lib/errorCodes';
-```
-
-## Security Note
-
-Penpal does not set the [`sandbox` property](https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/) on the iframe element it creates. If you would like to sandbox the iframe, you must, in the parent, create the iframe element, set its `sandbox` property, then pass the iframe to the `connectToChild` method. Failing to set the `sandbox` property on the iframe prior to Penpal adding the iframe to the DOM [can fail to properly enforce sandbox security](https://bugzilla.mozilla.org/show_bug.cgi?id=1522702). The following example demonstrates setting the `sandbox` property on the iframe from the parent window:
-
-```javascript
-import Penpal from 'penpal';
-
-const iframe = document.createElement('iframe');
-iframe.sandbox = 'allow-scripts';
-
-const connection = Penpal.connectToChild({
-  // URL of page to load into iframe.
-  url: 'http://example.com/iframe.html',
-  // Container to which the iframe should be appended.
-  appendTo: document.getElementById('iframeContainer'),
-  // The iframe element to use
-  iframe: iframe,
-  // Methods parent is exposing to child
-  methods: {
-    add(num1, num2) {
-      return num1 + num2;
-    }
-  }
-});
-
-connection.promise.then(child => {
-  child.multiply(2, 6).then(total => console.log(total));
-  child.divide(12, 4).then(total => console.log(total));
-});
 ```
 
 ## Supported Browsers
 
-Penpal is designed to run successfully on the most recent versions of Edge, Chrome, Firefox, and Safari.
+Penpal is designed to run successfully on the most recent versions of Chrome, Firefox, Safari, and Edge.
 
 ## Inspiration
 
