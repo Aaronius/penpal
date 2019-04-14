@@ -5,7 +5,7 @@ import {
   ERR_IFRAME_ALREADY_ATTACHED_TO_DOM
 } from './errorCodes';
 import createDestructor from './createDestructor';
-import getOriginFromUrl from './getOriginFromUrl';
+import getOriginFromSrc from './getOriginFromSrc';
 import createLogger from './createLogger';
 import connectCallReceiver from './connectCallReceiver';
 import connectCallSender from './connectCallSender';
@@ -32,7 +32,15 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-export default ({ url, appendTo, iframe, methods = {}, timeout, debug }) => {
+export default ({
+  src,
+  srcdoc,
+  appendTo,
+  iframe,
+  methods = {},
+  timeout,
+  debug
+}) => {
   const log = createLogger(debug);
 
   if (iframe && iframe.parentNode) {
@@ -47,9 +55,22 @@ export default ({ url, appendTo, iframe, methods = {}, timeout, debug }) => {
 
   const parent = window;
   iframe = iframe || document.createElement('iframe');
-  iframe.src = url;
 
-  const childOrigin = getOriginFromUrl(url);
+  let childOrigin;
+
+  if (srcdoc) {
+    iframe.srcdoc = srcdoc;
+    childOrigin = getOriginFromSrc();
+  } else {
+    iframe.src = src;
+    childOrigin = getOriginFromSrc(src);
+  }
+
+  // If event.origin is "null", the remote protocol is
+  // file:, data:, and we must post messages with "*" as targetOrigin
+  // when sending and allow
+  // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
+  const originForSending = childOrigin === 'null' ? '*' : childOrigin;
 
   const promise = new Promise((resolveConnectionPromise, reject) => {
     let connectionTimeoutId;
@@ -75,64 +96,69 @@ export default ({ url, appendTo, iframe, methods = {}, timeout, debug }) => {
 
     const handleMessage = event => {
       const child = iframe.contentWindow;
-      if (
-        event.source === child &&
-        event.origin === childOrigin &&
-        event.data.penpal === HANDSHAKE
-      ) {
-        log('Parent: Received handshake, sending reply');
-        // If event.origin is "null", the remote protocol is file:
-        // and we must post messages with "*" as targetOrigin [1]
-        // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
-        const remoteOrigin = event.origin === 'null' ? '*' : event.origin;
 
-        event.source.postMessage(
-          {
-            penpal: HANDSHAKE_REPLY,
-            methodNames: Object.keys(methods)
-          },
-          remoteOrigin
-        );
-
-        const info = {
-          localName: 'Parent',
-          local: parent,
-          remote: child,
-          remoteOrigin: remoteOrigin
-        };
-
-        // If the child reconnected, we need to destroy the previous call receiver before setting
-        // up a new one.
-        if (destroyCallReceiver) {
-          destroyCallReceiver();
-        }
-
-        destroyCallReceiver = connectCallReceiver(info, methods, log);
-
-        onDestroy(destroyCallReceiver);
-
-        // If the child reconnected, we need to remove the methods from the previous call receiver
-        // off the sender.
-        if (receiverMethodNames) {
-          receiverMethodNames.forEach(receiverMethodName => {
-            delete callSender[receiverMethodName];
-          });
-        }
-
-        receiverMethodNames = event.data.methodNames;
-        const destroyCallSender = connectCallSender(
-          callSender,
-          info,
-          receiverMethodNames,
-          destroy,
-          log
-        );
-
-        onDestroy(destroyCallSender);
-
-        clearTimeout(connectionTimeoutId);
-        resolveConnectionPromise(callSender);
+      if (event.source !== child || event.data.penpal !== HANDSHAKE) {
+        return;
       }
+
+      if (event.origin !== childOrigin) {
+        log(
+          `Parent received handshake from origin ${
+            event.origin
+          } which did not match expected origin ${childOrigin}`
+        );
+        return;
+      }
+
+      log('Parent: Received handshake, sending reply');
+
+      event.source.postMessage(
+        {
+          penpal: HANDSHAKE_REPLY,
+          methodNames: Object.keys(methods)
+        },
+        originForSending
+      );
+
+      const info = {
+        localName: 'Parent',
+        local: parent,
+        remote: child,
+        originForSending: originForSending,
+        originForReceiving: childOrigin
+      };
+
+      // If the child reconnected, we need to destroy the previous call receiver before setting
+      // up a new one.
+      if (destroyCallReceiver) {
+        destroyCallReceiver();
+      }
+
+      destroyCallReceiver = connectCallReceiver(info, methods, log);
+
+      onDestroy(destroyCallReceiver);
+
+      // If the child reconnected, we need to remove the methods from the previous call receiver
+      // off the sender.
+      if (receiverMethodNames) {
+        receiverMethodNames.forEach(receiverMethodName => {
+          delete callSender[receiverMethodName];
+        });
+      }
+
+      receiverMethodNames = event.data.methodNames;
+      const destroyCallSender = connectCallSender(
+        callSender,
+        info,
+        receiverMethodNames,
+        destroy,
+        log
+      );
+
+      onDestroy(destroyCallSender);
+
+      clearTimeout(connectionTimeoutId);
+      resolveConnectionPromise(callSender);
     };
 
     parent.addEventListener(MESSAGE, handleMessage);

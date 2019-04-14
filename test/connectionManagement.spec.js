@@ -3,7 +3,7 @@ import { CHILD_SERVER } from './constants';
 describe('connection management', () => {
   it("doesn't connect to iframe connecting to parent with different origin", done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/childDiffOrigin.html`
+      src: `${CHILD_SERVER}/childDiffOrigin.html`
     });
 
     const spy = jasmine.createSpy();
@@ -21,7 +21,7 @@ describe('connection management', () => {
 
   it('reconnects after child reloads', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(child => {
@@ -50,7 +50,7 @@ describe('connection management', () => {
     });
 
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`,
+      src: `${CHILD_SERVER}/child.html`,
       methods: {
         add
       }
@@ -77,7 +77,7 @@ describe('connection management', () => {
 
   it('reconnects after child navigates to other page with different methods', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(child => {
@@ -100,7 +100,7 @@ describe('connection management', () => {
 
   it('rejects promise if connectToChild times out', done => {
     const connection = Penpal.connectToChild({
-      url: `http://www.fakeresponse.com/api/?sleep=10000`,
+      src: `http://www.fakeresponse.com/api/?sleep=10000`,
       timeout: 0
     });
 
@@ -119,7 +119,7 @@ describe('connection management', () => {
       jasmine.clock().install();
 
       const connection = Penpal.connectToChild({
-        url: `${CHILD_SERVER}/child.html`,
+        src: `${CHILD_SERVER}/child.html`,
         timeout: 100000
       });
 
@@ -140,7 +140,7 @@ describe('connection management', () => {
       'timeout passes (connectToParent)',
     done => {
       var connection = Penpal.connectToChild({
-        url: `${CHILD_SERVER}/childTimeoutAfterSucceeded.html`,
+        src: `${CHILD_SERVER}/childTimeoutAfterSucceeded.html`,
         methods: {
           reportStillConnected() {
             connection.destroy();
@@ -170,7 +170,7 @@ describe('connection management', () => {
       'and method is called',
     done => {
       var connection = Penpal.connectToChild({
-        url: `${CHILD_SERVER}/child.html`,
+        src: `${CHILD_SERVER}/child.html`,
         appendTo: document.body
       });
 
@@ -196,7 +196,7 @@ describe('connection management', () => {
       'and method is called',
     done => {
       var connection = Penpal.connectToChild({
-        url: `${CHILD_SERVER}/child.html`,
+        src: `${CHILD_SERVER}/child.html`,
         appendTo: document.body
       });
 

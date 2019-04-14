@@ -15,7 +15,13 @@ import { deserializeError } from './errorSerialization';
  * @returns {Object} The call sender object with methods that may be called.
  */
 export default (callSender, info, methodNames, destroyConnection, log) => {
-  const { localName, local, remote, remoteOrigin } = info;
+  const {
+    localName,
+    local,
+    remote,
+    originForSending,
+    originForReceiving
+  } = info;
   let destroyed = false;
 
   log(`${localName}: Connecting call sender`);
@@ -58,24 +64,32 @@ export default (callSender, info, methodNames, destroyConnection, log) => {
         const id = generateId();
         const handleMessageEvent = event => {
           if (
-            event.source === remote &&
-            event.origin === remoteOrigin &&
-            event.data.penpal === REPLY &&
-            event.data.id === id
+            event.source !== remote ||
+            event.data.penpal !== REPLY ||
+            event.data.id !== id
           ) {
-            log(`${localName}: Received ${methodName}() reply`);
-            local.removeEventListener(MESSAGE, handleMessageEvent);
-
-            let returnValue = event.data.returnValue;
-
-            if (event.data.returnValueIsError) {
-              returnValue = deserializeError(returnValue);
-            }
-
-            (event.data.resolution === FULFILLED ? resolve : reject)(
-              returnValue
-            );
+            return;
           }
+
+          if (event.origin !== originForReceiving) {
+            log(
+              `${localName} received message from origin ${
+                event.origin
+              } which did not match expected origin ${originForReceiving}`
+            );
+            return;
+          }
+
+          log(`${localName}: Received ${methodName}() reply`);
+          local.removeEventListener(MESSAGE, handleMessageEvent);
+
+          let returnValue = event.data.returnValue;
+
+          if (event.data.returnValueIsError) {
+            returnValue = deserializeError(returnValue);
+          }
+
+          (event.data.resolution === FULFILLED ? resolve : reject)(returnValue);
         };
 
         local.addEventListener(MESSAGE, handleMessageEvent);
@@ -86,7 +100,7 @@ export default (callSender, info, methodNames, destroyConnection, log) => {
             methodName,
             args
           },
-          remoteOrigin
+          originForSending
         );
       });
     };

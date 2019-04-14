@@ -3,7 +3,7 @@ import { CHILD_SERVER } from './constants';
 describe('communication between parent and child', () => {
   it('calls a function on the child', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(child => {
@@ -17,7 +17,7 @@ describe('communication between parent and child', () => {
 
   it('calls a function on the child with origin set', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/childOrigin.html`
+      src: `${CHILD_SERVER}/childOrigin.html`
     });
 
     connection.promise.then(child => {
@@ -31,7 +31,7 @@ describe('communication between parent and child', () => {
 
   it('calls an asynchronous function on the child', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(child => {
@@ -45,7 +45,7 @@ describe('communication between parent and child', () => {
 
   it('calls a function on the parent', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`,
+      src: `${CHILD_SERVER}/child.html`,
       methods: {
         add: (num1, num2) => {
           return num1 + num2;
@@ -66,7 +66,7 @@ describe('communication between parent and child', () => {
 
   it('handles promises rejected with strings', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(child => {
@@ -80,7 +80,7 @@ describe('communication between parent and child', () => {
 
   it('handles promises rejected with error objects', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(child => {
@@ -99,7 +99,7 @@ describe('communication between parent and child', () => {
 
   it('handles thrown errors', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(child => {
@@ -114,7 +114,7 @@ describe('communication between parent and child', () => {
 
   it('handles unclonable values', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(child => {

@@ -19,78 +19,89 @@ import { serializeError } from './errorSerialization';
  * @returns {Function} A function that may be called to disconnect the receiver.
  */
 export default (info, methods, log) => {
-  const { localName, local, remote, remoteOrigin } = info;
+  const {
+    localName,
+    local,
+    remote,
+    originForSending,
+    originForReceiving
+  } = info;
   let destroyed = false;
 
   log(`${localName}: Connecting call receiver`);
 
   const handleMessageEvent = event => {
-    if (
-      event.source === remote &&
-      event.origin === remoteOrigin &&
-      event.data.penpal === CALL
-    ) {
-      const { methodName, args, id } = event.data;
+    if (event.source !== remote || event.data.penpal !== CALL) {
+      return;
+    }
 
-      log(`${localName}: Received ${methodName}() call`);
+    if (event.origin !== originForReceiving) {
+      log(
+        `${localName} received message from origin ${
+          event.origin
+        } which did not match expected origin ${originForReceiving}`
+      );
+      return;
+    }
 
-      if (methodName in methods) {
-        const createPromiseHandler = resolution => {
-          return returnValue => {
-            log(`${localName}: Sending ${methodName}() reply`);
+    const { methodName, args, id } = event.data;
 
-            if (destroyed) {
-              // It's possible to throw an error here, but it would need to be thrown asynchronously
-              // and would only be catchable using window.onerror. This is because the consumer
-              // is merely returning a value from their method and not calling any function
-              // that they could wrap in a try-catch. Even if the consumer were to catch the error,
-              // the value of doing so is questionable. Instead, we'll just log a message.
-              log(
-                `${localName}: Unable to send ${methodName}() reply due to destroyed connection`
-              );
-              return;
-            }
+    log(`${localName}: Received ${methodName}() call`);
 
-            const message = {
-              penpal: REPLY,
-              id,
-              resolution,
-              returnValue
-            };
+    const createPromiseHandler = resolution => {
+      return returnValue => {
+        log(`${localName}: Sending ${methodName}() reply`);
 
-            if (resolution === REJECTED && returnValue instanceof Error) {
-              message.returnValue = serializeError(returnValue);
-              message.returnValueIsError = true;
-            }
+        if (destroyed) {
+          // It's possible to throw an error here, but it would need to be thrown asynchronously
+          // and would only be catchable using window.onerror. This is because the consumer
+          // is merely returning a value from their method and not calling any function
+          // that they could wrap in a try-catch. Even if the consumer were to catch the error,
+          // the value of doing so is questionable. Instead, we'll just log a message.
+          log(
+            `${localName}: Unable to send ${methodName}() reply due to destroyed connection`
+          );
+          return;
+        }
 
-            try {
-              remote.postMessage(message, remoteOrigin);
-            } catch (err) {
-              // If a consumer attempts to send an object that's not cloneable (e.g., window),
-              // we want to ensure the receiver's promise gets rejected.
-              if (err.name === DATA_CLONE_ERROR) {
-                remote.postMessage(
-                  {
-                    penpal: REPLY,
-                    id,
-                    resolution: REJECTED,
-                    returnValue: serializeError(err),
-                    returnValueIsError: true
-                  },
-                  remoteOrigin
-                );
-              }
-
-              throw err;
-            }
-          };
+        const message = {
+          penpal: REPLY,
+          id,
+          resolution,
+          returnValue
         };
 
-        new Promise(resolve =>
-          resolve(methods[methodName].apply(methods, args))
-        ).then(createPromiseHandler(FULFILLED), createPromiseHandler(REJECTED));
-      }
-    }
+        if (resolution === REJECTED && returnValue instanceof Error) {
+          message.returnValue = serializeError(returnValue);
+          message.returnValueIsError = true;
+        }
+
+        try {
+          remote.postMessage(message, originForSending);
+        } catch (err) {
+          // If a consumer attempts to send an object that's not cloneable (e.g., window),
+          // we want to ensure the receiver's promise gets rejected.
+          if (err.name === DATA_CLONE_ERROR) {
+            remote.postMessage(
+              {
+                penpal: REPLY,
+                id,
+                resolution: REJECTED,
+                returnValue: serializeError(err),
+                returnValueIsError: true
+              },
+              originForSending
+            );
+          }
+
+          throw err;
+        }
+      };
+    };
+
+    new Promise(resolve =>
+      resolve(methods[methodName].apply(methods, args))
+    ).then(createPromiseHandler(FULFILLED), createPromiseHandler(REJECTED));
   };
 
   local.addEventListener(MESSAGE, handleMessageEvent);

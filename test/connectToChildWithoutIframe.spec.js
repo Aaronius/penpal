@@ -3,7 +3,7 @@ import { CHILD_SERVER } from './constants';
 describe('connectToChild without iframe', () => {
   it('completes a handshake', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     connection.promise.then(() => {
@@ -14,7 +14,7 @@ describe('connectToChild without iframe', () => {
 
   it('creates an iframe and adds it to document.body', () => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`
+      src: `${CHILD_SERVER}/child.html`
     });
 
     expect(connection.iframe).toBeDefined();
@@ -27,7 +27,7 @@ describe('connectToChild without iframe', () => {
     document.body.appendChild(container);
 
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`,
+      src: `${CHILD_SERVER}/child.html`,
       appendTo: container
     });
 

@@ -4,7 +4,7 @@ describe('connectToChild with iframe', () => {
   it('completes a handshake', done => {
     const iframeToUse = document.createElement('iframe');
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`,
+      src: `${CHILD_SERVER}/child.html`,
       iframe: iframeToUse
     });
 
@@ -17,7 +17,7 @@ describe('connectToChild with iframe', () => {
   it('adds the iframe to document.body', () => {
     const iframeToUse = document.createElement('iframe');
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`,
+      src: `${CHILD_SERVER}/child.html`,
       iframe: iframeToUse
     });
 
@@ -30,7 +30,7 @@ describe('connectToChild with iframe', () => {
     const iframeToUse = document.createElement('iframe');
     iframeToUse.src = './to_be_override.html';
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`,
+      src: `${CHILD_SERVER}/child.html`,
       iframe: iframeToUse
     });
 
@@ -44,7 +44,7 @@ describe('connectToChild with iframe', () => {
     document.body.appendChild(container);
 
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`,
+      src: `${CHILD_SERVER}/child.html`,
       appendTo: container,
       iframe: iframeToUse
     });
@@ -61,7 +61,7 @@ describe('connectToChild with iframe', () => {
     let error;
     try {
       Penpal.connectToChild({
-        url: `${CHILD_SERVER}/child.html`,
+        src: `${CHILD_SERVER}/child.html`,
         iframe: iframeToUse
       });
     } catch (err) {

@@ -5,15 +5,25 @@ const DEFAULT_PORTS = {
 
 const URL_REGEX = /^(https?:|file:)?\/\/([^/:]+)?(:(\d+))?/;
 
+const opaqueOriginSchemes = ['file:', 'data:'];
+
 /**
- * Converts a URL into an origin.
- * @param {string} url
+ * Converts a src value into an origin.
+ * @param {string} src
  * @return {string} The URL's origin
  */
-export default url => {
+export default src => {
+  if (src && opaqueOriginSchemes.find(scheme => src.startsWith(scheme))) {
+    return 'null';
+  }
+
+  // Note that if src is undefined, then srcdoc is being used instead of src
+  // and we can follow this same logic below to get the right origin
+  // we need to use.
+
   const location = document.location;
 
-  const regexResult = URL_REGEX.exec(url);
+  const regexResult = URL_REGEX.exec(src);
   let protocol;
   let hostname;
   let port;
@@ -35,9 +45,9 @@ export default url => {
   // The origin of a document with file protocol is an opaque origin
   // and its serialization "null" [1]
   // [1] https://html.spec.whatwg.org/multipage/origin.html#origin
-  if (protocol === 'file:') {
-    return 'null';
-  }
+  // if (protocol === 'file:') {
+  //   return 'null';
+  // }
 
   // If the port is the default for the protocol, we don't want to add it to the origin string
   // or it won't match the message's event.origin.

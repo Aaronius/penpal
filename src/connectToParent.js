@@ -68,41 +68,49 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
         return;
       }
 
-      if (
-        (parentOrigin === '*' || parentOrigin === event.origin) &&
-        event.source === parent &&
-        event.data.penpal === HANDSHAKE_REPLY
-      ) {
-        log('Child: Received handshake reply');
-
-        child.removeEventListener(MESSAGE, handleMessageEvent);
-
-        const info = {
-          localName: 'Child',
-          local: child,
-          remote: parent,
-          remoteOrigin: event.origin
-        };
-
-        const callSender = {};
-
-        const destroyCallReceiver = connectCallReceiver(info, methods, log);
-
-        onDestroy(destroyCallReceiver);
-
-        const destroyCallSender = connectCallSender(
-          callSender,
-          info,
-          event.data.methodNames,
-          destroy,
-          log
-        );
-
-        onDestroy(destroyCallSender);
-
-        clearTimeout(connectionTimeoutId);
-        resolveConnectionPromise(callSender);
+      if (event.source !== parent || event.data.penpal !== HANDSHAKE_REPLY) {
+        return;
       }
+
+      if (parentOrigin !== '*' && parentOrigin !== event.origin) {
+        log(
+          `Child received handshake reply from origin ${
+            event.origin
+          } which did not match expected origin ${parentOrigin}`
+        );
+        return;
+      }
+
+      log('Child: Received handshake reply');
+
+      child.removeEventListener(MESSAGE, handleMessageEvent);
+
+      const info = {
+        localName: 'Child',
+        local: child,
+        remote: parent,
+        originForSending: event.origin === 'null' ? '*' : event.origin,
+        originForReceiving: event.origin
+      };
+
+      const callSender = {};
+
+      const destroyCallReceiver = connectCallReceiver(info, methods, log);
+
+      onDestroy(destroyCallReceiver);
+
+      const destroyCallSender = connectCallSender(
+        callSender,
+        info,
+        event.data.methodNames,
+        destroy,
+        log
+      );
+
+      onDestroy(destroyCallSender);
+
+      clearTimeout(connectionTimeoutId);
+      resolveConnectionPromise(callSender);
     };
 
     child.addEventListener(MESSAGE, handleMessageEvent);
