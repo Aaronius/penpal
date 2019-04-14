@@ -29,8 +29,20 @@ export default (callSender, info, methodNames, destroyConnection, log) => {
       // called destroy(), and the user calls a method exposed by
       // the remote. We detect the iframe has been removed and force
       // a destroy() immediately so that the consumer sees the error saying
-      // the connection has been destroyed.
-      if (remote.closed) {
+      // the connection has been destroyed. We wrap this check in a try catch
+      // because Edge throws an "Object expected" error when accessing
+      // contentWindow.closed on a contentWindow from an iframe that's been
+      // removed from the DOM.
+      let iframeRemoved;
+      try {
+        if (remote.closed) {
+          iframeRemoved = true;
+        }
+      } catch (e) {
+        iframeRemoved = true;
+      }
+
+      if (iframeRemoved) {
         destroyConnection();
       }
 

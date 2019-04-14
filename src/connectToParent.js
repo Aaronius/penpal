@@ -55,6 +55,19 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
     }
 
     const handleMessageEvent = event => {
+      // Under niche scenarios, we get into this function after
+      // the iframe has been removed from the DOM. In Edge, this
+      // results in "Object expected" errors being thrown when we
+      // try to access properties on window (global properties).
+      // For this reason, we try to access a global up front (clearTimeout)
+      // and if it fails we can assume the iframe has been removed
+      // and we ignore the message event.
+      try {
+        clearTimeout();
+      } catch (e) {
+        return;
+      }
+
       if (
         (parentOrigin === '*' || parentOrigin === event.origin) &&
         event.source === parent &&

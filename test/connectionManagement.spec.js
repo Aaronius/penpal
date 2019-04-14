@@ -100,7 +100,7 @@ describe('connection management', () => {
 
   it('rejects promise if connectToChild times out', done => {
     const connection = Penpal.connectToChild({
-      url: `${CHILD_SERVER}/child.html`,
+      url: `http://www.fakeresponse.com/api/?sleep=10000`,
       timeout: 0
     });
 
