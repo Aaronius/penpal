@@ -14,12 +14,15 @@ const opaqueOriginSchemes = ['file:', 'data:'];
  */
 export default src => {
   if (src && opaqueOriginSchemes.find(scheme => src.startsWith(scheme))) {
+    // The origin of the child document is an opaque origin and its
+    // serialization is "null"
+    // https://html.spec.whatwg.org/multipage/origin.html#origin
     return 'null';
   }
 
   // Note that if src is undefined, then srcdoc is being used instead of src
-  // and we can follow this same logic below to get the right origin
-  // we need to use.
+  // and we can follow this same logic below to get the origin of the parent,
+  // which is the origin that we will need to use.
 
   const location = document.location;
 
