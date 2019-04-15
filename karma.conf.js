@@ -5,12 +5,6 @@ module.exports = config => {
   // Example set of browsers to run on Sauce Labs
   // Check out https://saucelabs.com/platforms for all browser/platform combos
   var customLaunchers = {
-    sl_ie11: {
-      base: 'SauceLabs',
-      browserName: 'internet explorer',
-      platform: 'Windows 10',
-      version: '11'
-    },
     sl_edge: {
       base: 'SauceLabs',
       browserName: 'microsoftedge',
