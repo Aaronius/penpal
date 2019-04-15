@@ -95,7 +95,9 @@ connection.promise.then(parent => {
 
 #### Parameters
 
-`options.iframe` (required) The iframe element to which Penpal should connect. You will need to have set either the `src` or `srcdoc` property on the iframe prior to calling `connectToChild`. You will also need to ensure that `connectToChild` is called before the iframe has called `connectToParent`. As shown in the example above, it is safe to set the `src` or `srcdoc` property of the iframe and append the iframe to the document before calling `connectToChild` as long as it's done in the same [JavaScript event loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop). If that makes you uncomfortable, feel free to append the iframe to the document _after_ calling `connectToChild` instead of _before_.
+`options.iframe` (required) The iframe element to which Penpal should connect. You will need to have set either the `src` or `srcdoc` property on the iframe prior to calling `connectToChild`. In addition to regular URLs, [data URIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) and [file URIs](https://en.wikipedia.org/wiki/File_URI_scheme) are also supported.
+
+You need to ensure that `connectToChild` is called before the iframe has called `connectToParent`. As shown in the example above, it is safe to set the `src` or `srcdoc` property of the iframe and append the iframe to the document before calling `connectToChild` as long as they are both done in the same [JavaScript event loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop). Alternatively, you can always append the iframe to the document _after_ calling `connectToChild` instead of _before_.
 
 `options.methods` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
@@ -164,7 +166,7 @@ import {
 
 ## Supported Browsers
 
-Penpal is designed to run successfully on the most recent versions of Chrome, Firefox, Safari, and Edge.
+Penpal is designed to run successfully on the most recent versions of Chrome, Firefox, Safari, and Edge. If you need to support Internet Explorer 11, feel free to use version 3.x of Penpal. See the [3.x README](https://github.com/Aaronius/penpal/tree/3.x) for documentation.
 
 ## Inspiration
 
