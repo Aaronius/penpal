@@ -47,6 +47,7 @@ iframe.src = 'http://example.com/iframe.html';
 document.body.appendChild(iframe);
 
 const connection = connectToChild({
+  // The iframe to which a connection should be made
   iframe,
   // Methods the parent is exposing to the child
   methods: {
