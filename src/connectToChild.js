@@ -16,8 +16,8 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * @typedef {Object} Child
  * @property {Promise} promise A promise which will be resolved once a connection has
  * been established.
- * @property {Function} destroy A method that, when called, will remove the iframe element from
- * the DOM and clean up event listeners.
+ * @property {Function} destroy A method that, when called, will disconnect any
+ * messaging channels. You may call this even before a connection has been established.
  */
 
 /**

@@ -13,6 +13,8 @@ import createLogger from './createLogger';
  * @typedef {Object} Parent
  * @property {Promise} promise A promise which will be resolved once a connection has
  * been established.
+ * @property {Function} destroy A method that, when called, will disconnect any
+ * messaging channels. You may call this even before a connection has been established.
  */
 
 /**

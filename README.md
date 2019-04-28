@@ -112,7 +112,7 @@ The return value of `connectToChild` is a `connection` object with the following
 
 `connection.promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the child has exposed. Note that these aren't actual memory references to the methods the child exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the child, calling the actual method within the child with the arguments you have passed, and then sending the return value back to the parent. The promise you received will then be resolved with the return value.
 
-`connection.destroy` A method that, when called, will remove the iframe element from the DOM and disconnect any messaging channels. You may call this even before a connection has been established.
+`connection.destroy` A method that, when called, will disconnect any messaging channels. You may call this even before a connection has been established.
 
 ### `connectToParent([options:Object]) => Object`
 
