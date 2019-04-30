@@ -44,14 +44,6 @@ export default src => {
     port = location.port;
   }
 
-  // If the protocol is file, the origin is "null"
-  // The origin of a document with file protocol is an opaque origin
-  // and its serialization "null" [1]
-  // [1] https://html.spec.whatwg.org/multipage/origin.html#origin
-  // if (protocol === 'file:') {
-  //   return 'null';
-  // }
-
   // If the port is the default for the protocol, we don't want to add it to the origin string
   // or it won't match the message's event.origin.
   const portSuffix = port && port !== DEFAULT_PORTS[protocol] ? `:${port}` : '';
