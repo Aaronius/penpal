@@ -3,7 +3,7 @@ const DEFAULT_PORTS = {
   'https:': '443'
 };
 
-const URL_REGEX = /^(https?:|file:)?\/\/([^/:]+)?(:(\d+))?/;
+const URL_REGEX = /^(https?:)?\/\/([^/:]+)?(:(\d+))?/;
 
 const opaqueOriginSchemes = ['file:', 'data:'];
 
