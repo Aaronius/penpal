@@ -26,22 +26,28 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * @param {Object} options
  * @param {HTMLIframeElement} options.iframe The iframe to connect to.
  * @param {Object} [options.methods={}] Methods that may be called by the iframe.
+ * @param {String} [options.childOrigin] The child origin to use to secure communication. If
+ * not provided, the child origin will be derived from the iframe's src or srcdoc value.
  * @param {Number} [options.timeout] The amount of time, in milliseconds, Penpal should wait
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-export default ({ iframe, methods = {}, timeout, debug }) => {
+export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
   const log = createLogger(debug);
   const parent = window;
   const { destroy, onDestroy } = createDestructor();
 
-  if (!iframe.src && !iframe.srcdoc) {
-    const error = new Error('Iframe must have src or srcdoc property defined.');
-    error.code = ERR_NO_IFRAME_SRC;
-    throw error;
-  }
+  if (!childOrigin) {
+    if (!iframe.src && !iframe.srcdoc) {
+      const error = new Error(
+        'Iframe must have src or srcdoc property defined.'
+      );
+      error.code = ERR_NO_IFRAME_SRC;
+      throw error;
+    }
 
-  const childOrigin = getOriginFromSrc(iframe.src);
+    childOrigin = getOriginFromSrc(iframe.src);
+  }
 
   // If event.origin is "null", the remote protocol is
   // file:, data:, and we must post messages with "*" as targetOrigin

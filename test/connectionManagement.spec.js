@@ -2,6 +2,52 @@ import { CHILD_SERVER } from './constants';
 import { createAndAddIframe } from './utils';
 
 describe('connection management', () => {
+  it('connects to iframe when correct child origin provided', () => {
+    const iframe = createAndAddIframe();
+
+    const connection = Penpal.connectToChild({
+      debug: true,
+      iframe,
+      childOrigin: CHILD_SERVER
+    });
+
+    // We're setting src after calling connectToChild to ensure
+    // that we don't throw an error in such a case. src is only
+    // needed when childOrigin is not passed.
+    iframe.src = `${CHILD_SERVER}/child.html`;
+
+    return connection.promise;
+  });
+
+  it("doesn't connect to iframe when incorrect child origin provided", done => {
+    const iframe = createAndAddIframe();
+
+    const connection = Penpal.connectToChild({
+      debug: true,
+      iframe,
+      childOrigin: 'http://bogus.com'
+    });
+
+    // We're setting src after calling connectToChild to ensure
+    // that we don't throw an error in such a case. src is only
+    // needed when childOrigin is not passed.
+    iframe.src = `${CHILD_SERVER}/child.html`;
+
+    const spy = jasmine.createSpy();
+
+    connection.promise.then(spy);
+
+    iframe.addEventListener('load', function() {
+      // Give Penpal time to try to make a handshake.
+      setTimeout(() => {
+        expect(spy).not.toHaveBeenCalled();
+        done();
+      }, 100);
+    });
+
+    return connection.promise;
+  });
+
   it("doesn't connect to iframe connecting to parent with different origin", done => {
     const iframe = createAndAddIframe(`${CHILD_SERVER}/childDiffOrigin.html`);
 
