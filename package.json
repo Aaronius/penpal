@@ -1,6 +1,6 @@
 {
   "name": "penpal",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "A promise-based library for communicating with iframes via postMessage.",
   "author": "Aaron Hardy <aaron@aaronhardy.com>",
   "license": "MIT",
