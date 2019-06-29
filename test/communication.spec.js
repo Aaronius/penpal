@@ -2,49 +2,52 @@ import { CHILD_SERVER } from './constants';
 import { createAndAddIframe } from './utils';
 
 describe('communication between parent and child', () => {
-  it('calls a function on the child', done => {
+  it('calls a function on the child', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
-    connection.promise.then(child => {
-      child.multiply(2, 5).then(value => {
+    return connection.promise
+      .then(child => {
+        return child.multiply(2, 5);
+      })
+      .then(value => {
         expect(value).toEqual(10);
         connection.destroy();
-        done();
       });
-    });
   });
 
-  it('calls a function on the child with origin set', done => {
+  it('calls a function on the child with origin set', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/childOrigin.html`)
     });
 
-    connection.promise.then(child => {
-      child.multiply(2, 5).then(value => {
+    return connection.promise
+      .then(child => {
+        return child.multiply(2, 5);
+      })
+      .then(value => {
         expect(value).toEqual(10);
         connection.destroy();
-        done();
       });
-    });
   });
 
-  it('calls an asynchronous function on the child', done => {
+  it('calls an asynchronous function on the child', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
-    connection.promise.then(child => {
-      child.multiplyAsync(2, 5).then(value => {
+    return connection.promise
+      .then(child => {
+        return child.multiplyAsync(2, 5);
+      })
+      .then(value => {
         expect(value).toEqual(10);
         connection.destroy();
-        done();
       });
-    });
   });
 
-  it('calls a function on the parent', done => {
+  it('calls a function on the parent', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`),
       methods: {
@@ -54,38 +57,44 @@ describe('communication between parent and child', () => {
       }
     });
 
-    connection.promise.then(child => {
-      child.addUsingParent().then(() => {
-        child.getParentReturnValue().then(value => {
+    return connection.promise.then(child => {
+      return child
+        .addUsingParent()
+        .then(() => {
+          return child.getParentReturnValue();
+        })
+        .then(value => {
           expect(value).toEqual(9);
           connection.destroy();
-          done();
         });
-      });
     });
   });
 
-  it('handles promises rejected with strings', done => {
+  it('handles promises rejected with strings', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
-    connection.promise.then(child => {
-      child.getRejectedPromiseString().catch(error => {
+    return connection.promise
+      .then(child => {
+        return child.getRejectedPromiseString();
+      })
+      .catch(error => {
         expect(error).toBe('test error string');
         connection.destroy();
-        done();
       });
-    });
   });
 
-  it('handles promises rejected with error objects', done => {
+  it('handles promises rejected with error objects', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
-    connection.promise.then(child => {
-      child.getRejectedPromiseError().catch(error => {
+    return connection.promise
+      .then(child => {
+        return child.getRejectedPromiseError();
+      })
+      .catch(error => {
         expect(error).toEqual(jasmine.any(Error));
         expect(error.name).toBe('TypeError');
         expect(error.message).toBe('test error object');
@@ -93,38 +102,38 @@ describe('communication between parent and child', () => {
         // promise rejected with the error and never raised, so no stack.
         // expect(error.stack).toEqual(jasmine.any(String));
         connection.destroy();
-        done();
       });
-    });
   });
 
-  it('handles thrown errors', done => {
+  it('handles thrown errors', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
-    connection.promise.then(child => {
-      child.throwError().catch(error => {
+    return connection.promise
+      .then(child => {
+        return child.throwError();
+      })
+      .catch(error => {
         expect(error).toEqual(jasmine.any(Error));
         expect(error.message).toBe('Oh nos!');
         connection.destroy();
-        done();
       });
-    });
   });
 
-  it('handles unclonable values', done => {
+  it('handles unclonable values', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
-    connection.promise.then(child => {
-      child.getUnclonableValue().catch(error => {
+    return connection.promise
+      .then(child => {
+        return child.getUnclonableValue();
+      })
+      .catch(error => {
         expect(error).toEqual(jasmine.any(Error));
         expect(error.name).toBe('DataCloneError');
         connection.destroy();
-        done();
       });
-    });
   });
 });

@@ -30,7 +30,7 @@ const htmlSrcRedirect = `
 `;
 
 describe('data URI support', () => {
-  it('connects and calls a function on the child', done => {
+  it('connects and calls a function on the child', () => {
     const iframe = document.createElement('iframe');
     iframe.src = `data:text/html,${htmlSrc}`;
     document.body.appendChild(iframe);
@@ -39,13 +39,14 @@ describe('data URI support', () => {
       iframe
     });
 
-    connection.promise.then(child => {
-      child.multiply(2, 5).then(value => {
+    return connection.promise
+      .then(child => {
+        return child.multiply(2, 5);
+      })
+      .then(value => {
         expect(value).toEqual(10);
         connection.destroy();
-        done();
       });
-    });
   });
 
   it('does not connect if child redirects to non-opaque origin', done => {

@@ -39,7 +39,7 @@ describe('destroy', () => {
   //   });
   // });
 
-  it('removes method call message listeners', done => {
+  it('removes method call message listeners', () => {
     spyOn(window, 'addEventListener').and.callThrough();
     spyOn(window, 'removeEventListener').and.callThrough();
 
@@ -48,14 +48,12 @@ describe('destroy', () => {
     });
 
     // The method call message listener is set up after the connection has been established.
-    connection.promise.then(() => {
+    return connection.promise.then(() => {
       connection.destroy();
 
       window.addEventListener.calls.allArgs().forEach(args => {
         expect(window.removeEventListener).toHaveBeenCalledWith(...args);
       });
-
-      done();
     });
   });
 
@@ -81,7 +79,7 @@ describe('destroy', () => {
     });
   });
 
-  it('supports multiple connections', done => {
+  it('supports multiple connections', () => {
     const connection1 = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
@@ -89,7 +87,7 @@ describe('destroy', () => {
       iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
     });
 
-    Promise.all([
+    return Promise.all([
       connection1.promise.then(child => {
         return child.multiplyAsync(2, 5).then(value => {
           expect(value).toEqual(10);
@@ -102,6 +100,6 @@ describe('destroy', () => {
           connection2.destroy();
         });
       })
-    ]).then(done);
+    ]);
   });
 });

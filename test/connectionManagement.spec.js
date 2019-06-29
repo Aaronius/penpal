@@ -147,7 +147,7 @@ describe('connection management', () => {
     });
   });
 
-  it('rejects promise if connectToChild times out', done => {
+  it('rejects promise if connectToChild times out', () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(
         'http://www.fakeresponse.com/api/?sleep=10000'
@@ -155,18 +155,17 @@ describe('connection management', () => {
       timeout: 0
     });
 
-    connection.promise.catch(error => {
+    return connection.promise.catch(error => {
       expect(error).toEqual(jasmine.any(Error));
       expect(error.message).toBe('Connection to child timed out after 0ms');
       expect(error.code).toBe(Penpal.ERR_CONNECTION_TIMEOUT);
-      done();
     });
   });
 
   it(
     "doesn't destroy connection if connection succeeds then " +
       'timeout passes (connectToChild)',
-    done => {
+    () => {
       jasmine.clock().install();
 
       const iframe = createAndAddIframe(`${CHILD_SERVER}/child.html`);
@@ -176,14 +175,13 @@ describe('connection management', () => {
         timeout: 100000
       });
 
-      connection.promise.then(() => {
+      return connection.promise.then(() => {
         jasmine.clock().tick(100001);
 
         expect(iframe.parentNode).not.toBeNull();
 
         jasmine.clock().uninstall();
         connection.destroy();
-        done();
       });
     }
   );
@@ -209,7 +207,7 @@ describe('connection management', () => {
   it(
     'destroys connection if iframe has been removed from DOM ' +
       'and method is called',
-    done => {
+    () => {
       const iframe = createAndAddIframe(`${CHILD_SERVER}/child.html`);
 
       var connection = Penpal.connectToChild({
@@ -217,7 +215,7 @@ describe('connection management', () => {
         appendTo: document.body
       });
 
-      connection.promise.then(child => {
+      return connection.promise.then(child => {
         document.body.removeChild(iframe);
 
         let error;
@@ -229,7 +227,6 @@ describe('connection management', () => {
 
         expect(error).toBeDefined();
         expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
-        done();
       });
     }
   );
@@ -237,7 +234,7 @@ describe('connection management', () => {
   it(
     'destroys connection if iframe has been removed from DOM ' +
       'and method is called',
-    done => {
+    () => {
       const iframe = createAndAddIframe(`${CHILD_SERVER}/child.html`);
 
       var connection = Penpal.connectToChild({
@@ -245,7 +242,7 @@ describe('connection management', () => {
         appendTo: document.body
       });
 
-      connection.promise.then(child => {
+      return connection.promise.then(child => {
         document.body.removeChild(iframe);
 
         let error;
@@ -257,7 +254,6 @@ describe('connection management', () => {
 
         expect(error).toBeDefined();
         expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
-        done();
       });
     }
   );
