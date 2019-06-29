@@ -44,7 +44,7 @@ module.exports = config => {
     sl_android: {
       base: 'SauceLabs',
       deviceName: 'Android GoogleAPI Emulator',
-      appiumVersion: '1.7.1',
+      appiumVersion: '1.13.0',
       browserName: 'Chrome',
       platformName: 'Android',
       platformVersion: '7.1'
@@ -52,7 +52,7 @@ module.exports = config => {
     sl_ios: {
       base: 'SauceLabs',
       deviceName: 'iPhone 8 Simulator',
-      appiumVersion: '1.7.1',
+      appiumVersion: '1.9.1',
       browserName: 'Safari',
       platformName: 'iOS',
       platformVersion: '11.0'
