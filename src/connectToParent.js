@@ -42,6 +42,11 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
   const child = window;
   const parent = child.parent;
 
+  let parentOriginResolve;
+  const parentOriginPromise = new Promise(
+    resolve => (parentOriginResolve = resolve)
+  );
+
   const promise = new Promise((resolveConnectionPromise, reject) => {
     let connectionTimeoutId;
 
@@ -113,6 +118,7 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
 
       clearTimeout(connectionTimeoutId);
       resolveConnectionPromise(callSender);
+      parentOriginResolve(event.origin);
     };
 
     child.addEventListener(MESSAGE, handleMessageEvent);
@@ -138,6 +144,7 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
 
   return {
     promise,
+    parentOriginPromise,
     destroy
   };
 };
