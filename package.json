@@ -17,10 +17,12 @@
     "promise"
   ],
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "clean": "rm -rf dist lib",
     "build:lib": "babel ./src --out-dir ./lib",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
+    "build:types": "tsc",
     "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{json,js,md,html,babelrc,eslintrc}\"",
@@ -71,6 +73,7 @@
     "rollup-plugin-babel": "^4.3.2",
     "serve-static": "^1.13.2",
     "terser": "^3.13.1",
+    "typescript": "^3.8.3",
     "yargs": "^12.0.5"
   }
 }
