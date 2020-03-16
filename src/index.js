@@ -476,7 +476,7 @@ Penpal.connectToChild = ({ url, appendTo, iframe, methods = {}, timeout }) => {
     // to the iframe in their closures, the iframe would stick around
     // too.
     var checkIframeInDocIntervalId = setInterval(() => {
-      if (!document.contains(iframe)) {
+      if (!document.body.contains(iframe)) {
         clearInterval(checkIframeInDocIntervalId);
         destroy();
       }
