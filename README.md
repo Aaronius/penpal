@@ -44,7 +44,15 @@ import connectToChild from 'penpal/lib/connectToChild';
 
 const iframe = document.createElement('iframe');
 iframe.src = 'http://example.com/iframe.html';
-document.body.appendChild(iframe);
+if (document.readyState === "complete"
+  || document.readyState === "loaded"
+  || document.readyState === "interactive") {
+  document.body.appendChild(iframe);
+} else {
+  document.addEventListener("DOMContentLoaded", () => {
+    document.body.appendChild(iframe);
+  }); 
+}  
 
 const connection = connectToChild({
   // The iframe to which a connection should be made
