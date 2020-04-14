@@ -16,12 +16,14 @@
     "postMessage",
     "promise"
   ],
-  "main": "lib/index.js",
+  "main": "es5/index.js",
+  "module": "es6/index.js",
   "scripts": {
-    "clean": "rm -rf dist lib",
-    "build:lib": "babel ./src --out-dir ./lib",
+    "clean": "rm -rf es6 es5 dist",
+    "build:es5": "babel ./src --out-dir ./es5 --extensions '.ts'",
+    "build:es6": "tsc --outDir es6",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
-    "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
+    "build": "npm-run-all clean build:es6 build:es5 build:dist && ls -lh dist/penpal.min.js",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{json,js,md,html,babelrc,eslintrc}\"",
     "test": "npm-run-all clean runTests",
@@ -51,7 +53,9 @@
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.3.4",
     "@babel/preset-env": "^7.3.4",
+    "@babel/preset-typescript": "^7.8.3",
     "@metahub/karma-rollup-preprocessor": "^4.1.0",
+    "@rollup/plugin-typescript": "^4.0.0",
     "babel-plugin-add-module-exports": "^1.0.0",
     "connect": "^3.6.6",
     "eslint": "^5.10.0",
@@ -69,8 +73,10 @@
     "prettier": "1.15.3",
     "rollup": "^1.7.0",
     "rollup-plugin-babel": "^4.3.2",
+    "rollup-plugin-typescript": "^1.0.1",
     "serve-static": "^1.13.2",
     "terser": "^3.13.1",
+    "typescript": "^3.8.3",
     "yargs": "^12.0.5"
   }
 }

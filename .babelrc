@@ -1,4 +1,4 @@
 {
-  "presets": ["@babel/env"],
+  "presets": ["@babel/env", "@babel/typescript"],
   "plugins": ["add-module-exports"]
 }

@@ -1,5 +1,10 @@
-export default () => {
-  const callbacks = [];
+export type Destructor = {
+  destroy(): void,
+  onDestroy(callback: Function): void
+}
+
+export default (): Destructor => {
+  const callbacks: Function[] = [];
   let destroyed = false;
 
   return {

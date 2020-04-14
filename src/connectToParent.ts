@@ -1,13 +1,22 @@
-import { HANDSHAKE, HANDSHAKE_REPLY, MESSAGE } from './constants';
-import {
-  ERR_CONNECTION_DESTROYED,
-  ERR_CONNECTION_TIMEOUT,
-  ERR_NOT_IN_IFRAME
-} from './errorCodes';
 import createDestructor from './createDestructor';
 import connectCallReceiver from './connectCallReceiver';
 import connectCallSender from './connectCallSender';
 import createLogger from './createLogger';
+import {
+  CallSender,
+  HandshakeMessage,
+  Methods,
+  PenpalError,
+  WindowsInfo
+} from './types';
+import { ErrorCode, MessageType, NativeEventType } from './enums';
+
+type Options = {
+  parentOrigin?: string;
+  methods?: Methods;
+  timeout?: number;
+  debug?: boolean;
+};
 
 /**
  * @typedef {Object} Parent
@@ -26,14 +35,15 @@ import createLogger from './createLogger';
  * for the parent to respond before rejecting the connection promise.
  * @return {Parent}
  */
-export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
+export default (options: Options = {}) => {
+  const { parentOrigin = '*', methods = {}, timeout, debug = false } = options;
   const log = createLogger(debug);
 
   if (window === window.top) {
     const error = new Error(
       'connectToParent() must be called within an iframe'
-    );
-    error.code = ERR_NOT_IN_IFRAME;
+    ) as PenpalError;
+    error.code = ErrorCode.NotInIframe;
     throw error;
   }
 
@@ -42,21 +52,21 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
   const child = window;
   const parent = child.parent;
 
-  const promise = new Promise((resolveConnectionPromise, reject) => {
-    let connectionTimeoutId;
+  const promise = new Promise((resolve, reject) => {
+    let connectionTimeoutId: number;
 
     if (timeout !== undefined) {
-      connectionTimeoutId = setTimeout(() => {
-        const error = new Error(
+      connectionTimeoutId = window.setTimeout(() => {
+        const error: PenpalError = new Error(
           `Connection to parent timed out after ${timeout}ms`
-        );
-        error.code = ERR_CONNECTION_TIMEOUT;
+        ) as PenpalError;
+        error.code = ErrorCode.ConnectionTimeout;
         reject(error);
         destroy();
       }, timeout);
     }
 
-    const handleMessageEvent = event => {
+    const handleMessageEvent = (event: MessageEvent) => {
       // Under niche scenarios, we get into this function after
       // the iframe has been removed from the DOM. In Edge, this
       // results in "Object expected" errors being thrown when we
@@ -70,7 +80,10 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
         return;
       }
 
-      if (event.source !== parent || event.data.penpal !== HANDSHAKE_REPLY) {
+      if (
+        event.source !== parent ||
+        event.data.penpal !== MessageType.HandshakeReply
+      ) {
         return;
       }
 
@@ -85,9 +98,9 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
 
       log('Child: Received handshake reply');
 
-      child.removeEventListener(MESSAGE, handleMessageEvent);
+      child.removeEventListener(NativeEventType.Message, handleMessageEvent);
 
-      const info = {
+      const info: WindowsInfo = {
         localName: 'Child',
         local: child,
         remote: parent,
@@ -95,7 +108,7 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
         originForReceiving: event.origin
       };
 
-      const callSender = {};
+      const callSender: CallSender = {};
 
       const destroyCallReceiver = connectCallReceiver(info, methods, log);
 
@@ -112,28 +125,29 @@ export default ({ parentOrigin = '*', methods = {}, timeout, debug } = {}) => {
       onDestroy(destroyCallSender);
 
       clearTimeout(connectionTimeoutId);
-      resolveConnectionPromise(callSender);
+      resolve(callSender);
     };
 
-    child.addEventListener(MESSAGE, handleMessageEvent);
+    child.addEventListener(NativeEventType.Message, handleMessageEvent);
 
     onDestroy(() => {
-      child.removeEventListener(MESSAGE, handleMessageEvent);
+      child.removeEventListener(NativeEventType.Message, handleMessageEvent);
 
-      const error = new Error('Connection destroyed');
-      error.code = ERR_CONNECTION_DESTROYED;
+      const error: PenpalError = new Error(
+        'Connection destroyed'
+      ) as PenpalError;
+      error.code = ErrorCode.ConnectionDestroyed;
       reject(error);
     });
 
     log('Child: Sending handshake');
 
-    parent.postMessage(
-      {
-        penpal: HANDSHAKE,
-        methodNames: Object.keys(methods)
-      },
-      parentOrigin
-    );
+    const handshakeMessage: HandshakeMessage = {
+      penpal: MessageType.Handshake,
+      methodNames: Object.keys(methods)
+    };
+
+    parent.postMessage(handshakeMessage, parentOrigin);
   });
 
   return {

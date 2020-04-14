@@ -1,7 +1,8 @@
 const babel = require('rollup-plugin-babel');
+const typescript = require('rollup-plugin-typescript');
 
 module.exports = {
-  input: 'src/index.js',
+  input: 'src/index.ts',
   output: [
     {
       file: 'dist/penpal.js',
@@ -9,5 +10,10 @@ module.exports = {
       name: 'Penpal'
     }
   ],
-  plugins: [babel()]
+  plugins: [
+    typescript(),
+    babel({
+      extensions: ['.js', '.ts']
+    })
+  ]
 };

@@ -1,16 +1,20 @@
-import { HANDSHAKE, HANDSHAKE_REPLY, MESSAGE } from './constants';
-import {
-  ERR_CONNECTION_DESTROYED,
-  ERR_CONNECTION_TIMEOUT,
-  ERR_NO_IFRAME_SRC
-} from './errorCodes';
 import createDestructor from './createDestructor';
 import getOriginFromSrc from './getOriginFromSrc';
 import createLogger from './createLogger';
 import connectCallReceiver from './connectCallReceiver';
 import connectCallSender from './connectCallSender';
+import { CallSender, HandshakeMessage, Methods, PenpalError, WindowsInfo } from './types';
+import { ErrorCode, MessageType, NativeEventType } from './enums';
 
 const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
+
+type Options = {
+  iframe: HTMLIFrameElement;
+  methods?: Methods;
+  childOrigin?: string;
+  timeout?: number;
+  debug?: boolean;
+};
 
 /**
  * @typedef {Object} Child
@@ -32,17 +36,19 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * for the child to respond before rejecting the connection promise.
  * @return {Child}
  */
-export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
+export default (options: Options) => {
+  let { iframe, methods = {}, childOrigin, timeout, debug = false } = options;
+
   const log = createLogger(debug);
   const parent = window;
   const { destroy, onDestroy } = createDestructor();
 
   if (!childOrigin) {
     if (!iframe.src && !iframe.srcdoc) {
-      const error = new Error(
+      const error: PenpalError = new Error(
         'Iframe must have src or srcdoc property defined.'
-      );
-      error.code = ERR_NO_IFRAME_SRC;
+      ) as PenpalError;
+      error.code = ErrorCode.NoIframeSrc;
       throw error;
     }
 
@@ -55,15 +61,15 @@ export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
   // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
   const originForSending = childOrigin === 'null' ? '*' : childOrigin;
 
-  const promise = new Promise((resolveConnectionPromise, reject) => {
-    let connectionTimeoutId;
+  const promise = new Promise((resolve, reject) => {
+    let connectionTimeoutId: number;
 
     if (timeout !== undefined) {
-      connectionTimeoutId = setTimeout(() => {
-        const error = new Error(
+      connectionTimeoutId = window.setTimeout(() => {
+        const error: PenpalError = new Error(
           `Connection to child timed out after ${timeout}ms`
-        );
-        error.code = ERR_CONNECTION_TIMEOUT;
+        ) as PenpalError;
+        error.code = ErrorCode.ConnectionTimeout;
         reject(error);
         destroy();
       }, timeout);
@@ -72,15 +78,17 @@ export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
     // We resolve the promise with the call sender. If the child reconnects (for example, after
     // refreshing or navigating to another page that uses Penpal, we'll update the call sender
     // with methods that match the latest provided by the child.
-    const callSender = {};
-    let receiverMethodNames;
+    const callSender: CallSender = {};
+    let receiverMethodNames: string[];
+    let destroyCallReceiver: Function;
 
-    let destroyCallReceiver;
-
-    const handleMessage = event => {
+    const handleMessage = (event: MessageEvent) => {
       const child = iframe.contentWindow;
 
-      if (event.source !== child || event.data.penpal !== HANDSHAKE) {
+      if (
+        event.source !== child ||
+        event.data.penpal !== MessageType.Handshake
+      ) {
         return;
       }
 
@@ -95,18 +103,17 @@ export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
 
       log('Parent: Received handshake, sending reply');
 
-      event.source.postMessage(
-        {
-          penpal: HANDSHAKE_REPLY,
-          methodNames: Object.keys(methods)
-        },
-        originForSending
-      );
+      const handshakeReplyMessage: HandshakeMessage = {
+        penpal: MessageType.HandshakeReply,
+        methodNames: Object.keys(methods)
+      };
 
-      const info = {
+      event.source!.postMessage(handshakeReplyMessage, originForSending);
+
+      const info: WindowsInfo = {
         localName: 'Parent',
         local: parent,
-        remote: child,
+        remote: child!,
         originForSending: originForSending,
         originForReceiving: childOrigin
       };
@@ -141,10 +148,10 @@ export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
       onDestroy(destroyCallSender);
 
       clearTimeout(connectionTimeoutId);
-      resolveConnectionPromise(callSender);
+      resolve(callSender);
     };
 
-    parent.addEventListener(MESSAGE, handleMessage);
+    parent.addEventListener(NativeEventType.Message, handleMessage);
 
     log('Parent: Awaiting handshake');
 
@@ -162,11 +169,13 @@ export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
     }, CHECK_IFRAME_IN_DOC_INTERVAL);
 
     onDestroy(() => {
-      parent.removeEventListener(MESSAGE, handleMessage);
+      parent.removeEventListener(NativeEventType.Message, handleMessage);
       clearInterval(checkIframeInDocIntervalId);
 
-      const error = new Error('Connection destroyed');
-      error.code = ERR_CONNECTION_DESTROYED;
+      const error: PenpalError = new Error(
+        'Connection destroyed'
+      ) as PenpalError;
+      error.code = ErrorCode.ConnectionDestroyed;
       reject(error);
     });
   });
