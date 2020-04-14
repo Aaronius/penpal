@@ -16,8 +16,6 @@ export default (info: WindowsInfo, methods: Methods, log: Function) => {
   } = info;
   let destroyed = false;
 
-  log(`${localName}: Connecting call receiver`);
-
   const handleMessageEvent = (event: MessageEvent) => {
     if (event.source !== remote || event.data.penpal !== MessageType.Call) {
       return;

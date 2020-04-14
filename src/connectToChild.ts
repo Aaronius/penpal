@@ -1,9 +1,15 @@
-import createDestructor from './createDestructor';
+import createDestructor, { Destructor } from './createDestructor';
 import getOriginFromSrc from './getOriginFromSrc';
 import createLogger from './createLogger';
 import connectCallReceiver from './connectCallReceiver';
 import connectCallSender from './connectCallSender';
-import { CallSender, HandshakeMessage, Methods, PenpalError, WindowsInfo } from './types';
+import {
+  CallSender,
+  Methods,
+  PenpalError,
+  SynAckMessage,
+  WindowsInfo
+} from './types';
 import { ErrorCode, MessageType, NativeEventType } from './enums';
 
 const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
@@ -14,6 +20,79 @@ type Options = {
   childOrigin?: string;
   timeout?: number;
   debug?: boolean;
+};
+
+const handleSynMessage = (
+  event: MessageEvent,
+  log: Function,
+  methods: Methods,
+  originForSending: string
+) => {
+  log('Parent: Handshake - Received SYN, responding with SYN-ACK');
+
+  const synAckMessage: SynAckMessage = {
+    penpal: MessageType.SynAck,
+    methodNames: Object.keys(methods)
+  };
+
+  (event.source as Window).postMessage(synAckMessage, originForSending);
+};
+
+const handleAckMessage = (
+  event: MessageEvent,
+  log: Function,
+  methods: Methods,
+  parent: Window,
+  child: Window,
+  originForSending: string,
+  childOrigin: string,
+  destroyCallReceiver: Function,
+  callSender: CallSender,
+  destructor: Destructor,
+  connectionTimeoutId: number
+) => {
+  const { destroy, onDestroy } = destructor;
+
+  log('Parent: Handshake - Received ACK');
+
+  const info: WindowsInfo = {
+    localName: 'Parent',
+    local: parent,
+    remote: child!,
+    originForSending: originForSending,
+    originForReceiving: childOrigin
+  };
+
+  // If the child reconnected, we need to destroy the previous call receiver before setting
+  // up a new one.
+  if (destroyCallReceiver) {
+    destroyCallReceiver();
+  }
+
+  destroyCallReceiver = connectCallReceiver(info, methods, log);
+
+  onDestroy(destroyCallReceiver);
+
+  // If the child reconnected, we need to remove the methods from the previous call receiver
+  // off the sender.
+  Object.keys(callSender).forEach(key => {
+    delete callSender[key];
+  });
+
+  const receiverMethodNames = event.data.methodNames;
+  const destroyCallSender = connectCallSender(
+    callSender,
+    info,
+    receiverMethodNames,
+    destroy,
+    log
+  );
+
+  onDestroy(destroyCallSender);
+
+  clearTimeout(connectionTimeoutId);
+
+  return destroyCallReceiver;
 };
 
 /**
@@ -41,7 +120,8 @@ export default (options: Options) => {
 
   const log = createLogger(debug);
   const parent = window;
-  const { destroy, onDestroy } = createDestructor();
+  const destructor = createDestructor();
+  const { onDestroy, destroy } = destructor;
 
   if (!childOrigin) {
     if (!iframe.src && !iframe.srcdoc) {
@@ -79,76 +159,53 @@ export default (options: Options) => {
     // refreshing or navigating to another page that uses Penpal, we'll update the call sender
     // with methods that match the latest provided by the child.
     const callSender: CallSender = {};
-    let receiverMethodNames: string[];
     let destroyCallReceiver: Function;
 
     const handleMessage = (event: MessageEvent) => {
       const child = iframe.contentWindow;
 
-      if (
-        event.source !== child ||
-        event.data.penpal !== MessageType.Handshake
-      ) {
+      if (event.source !== child) {
         return;
       }
 
-      if (event.origin !== childOrigin) {
+      if (
+        event.origin !== childOrigin &&
+        (
+          event.data.penpal === MessageType.Syn ||
+          event.data.penpal === MessageType.Ack
+        )
+      ) {
         log(
-          `Parent received handshake from origin ${
+          `Parent: Handshake - Received message from origin ${
             event.origin
           } which did not match expected origin ${childOrigin}`
         );
         return;
       }
 
-      log('Parent: Received handshake, sending reply');
-
-      const handshakeReplyMessage: HandshakeMessage = {
-        penpal: MessageType.HandshakeReply,
-        methodNames: Object.keys(methods)
-      };
-
-      event.source!.postMessage(handshakeReplyMessage, originForSending);
-
-      const info: WindowsInfo = {
-        localName: 'Parent',
-        local: parent,
-        remote: child!,
-        originForSending: originForSending,
-        originForReceiving: childOrigin
-      };
-
-      // If the child reconnected, we need to destroy the previous call receiver before setting
-      // up a new one.
-      if (destroyCallReceiver) {
-        destroyCallReceiver();
+      if (event.data.penpal === MessageType.Syn) {
+        handleSynMessage(event, log, methods, originForSending);
+        return;
       }
 
-      destroyCallReceiver = connectCallReceiver(info, methods, log);
+      if (event.data.penpal === MessageType.Ack) {
+        destroyCallReceiver = handleAckMessage(
+          event,
+          log,
+          methods,
+          parent,
+          child!,
+          originForSending,
+          childOrigin!,
+          destroyCallReceiver,
+          callSender,
+          destructor,
+          connectionTimeoutId
+        );
 
-      onDestroy(destroyCallReceiver);
-
-      // If the child reconnected, we need to remove the methods from the previous call receiver
-      // off the sender.
-      if (receiverMethodNames) {
-        receiverMethodNames.forEach(receiverMethodName => {
-          delete callSender[receiverMethodName];
-        });
+        resolve(callSender);
+        return;
       }
-
-      receiverMethodNames = event.data.methodNames;
-      const destroyCallSender = connectCallSender(
-        callSender,
-        info,
-        receiverMethodNames,
-        destroy,
-        log
-      );
-
-      onDestroy(destroyCallSender);
-
-      clearTimeout(connectionTimeoutId);
-      resolve(callSender);
     };
 
     parent.addEventListener(NativeEventType.Message, handleMessage);

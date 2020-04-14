@@ -4,7 +4,8 @@ import { createAndAddIframe } from './utils';
 describe('communication between parent and child', () => {
   it('calls a function on the child', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`),
+      debug: true
     });
 
     return connection.promise

@@ -1,8 +1,9 @@
 export enum MessageType {
   Call = 'call',
   Reply = 'reply',
-  Handshake = 'handshake',
-  HandshakeReply = 'handshake-reply'
+  Syn = 'syn',
+  SynAck = 'synAck',
+  Ack = 'ack',
 }
 
 export enum Resolution {

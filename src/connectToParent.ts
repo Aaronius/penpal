@@ -3,8 +3,9 @@ import connectCallReceiver from './connectCallReceiver';
 import connectCallSender from './connectCallSender';
 import createLogger from './createLogger';
 import {
+  SynMessage,
+  AckMessage,
   CallSender,
-  HandshakeMessage,
   Methods,
   PenpalError,
   WindowsInfo
@@ -80,23 +81,27 @@ export default (options: Options = {}) => {
         return;
       }
 
-      if (
-        event.source !== parent ||
-        event.data.penpal !== MessageType.HandshakeReply
-      ) {
+      if (event.source !== parent || event.data.penpal !== MessageType.SynAck) {
         return;
       }
 
       if (parentOrigin !== '*' && parentOrigin !== event.origin) {
         log(
-          `Child received handshake reply from origin ${
+          `Child: Handshake - Received SYN-ACK from origin ${
             event.origin
           } which did not match expected origin ${parentOrigin}`
         );
         return;
       }
 
-      log('Child: Received handshake reply');
+      log('Child: Handshake - Received SYN-ACK, responding with ACK');
+
+      const ackMessage: AckMessage = {
+        penpal: MessageType.Ack,
+        methodNames: Object.keys(methods)
+      };
+
+      parent.postMessage(ackMessage, parentOrigin);
 
       child.removeEventListener(NativeEventType.Message, handleMessageEvent);
 
@@ -140,14 +145,13 @@ export default (options: Options = {}) => {
       reject(error);
     });
 
-    log('Child: Sending handshake');
+    log('Child: Handshake - Sending SYN');
 
-    const handshakeMessage: HandshakeMessage = {
-      penpal: MessageType.Handshake,
-      methodNames: Object.keys(methods)
+    const synMessage: SynMessage = {
+      penpal: MessageType.Syn
     };
 
-    parent.postMessage(handshakeMessage, parentOrigin);
+    parent.postMessage(synMessage, parentOrigin);
   });
 
   return {

@@ -38,8 +38,17 @@ export type CallMessage = {
   args: any[]
 }
 
-export type HandshakeMessage = {
-  penpal: MessageType.Handshake | MessageType.HandshakeReply,
+export type SynMessage = {
+  penpal: MessageType.Syn
+}
+
+export type SynAckMessage = {
+  penpal: MessageType.SynAck,
+  methodNames: string[]
+}
+
+export type AckMessage = {
+  penpal: MessageType.Ack,
   methodNames: string[]
 }
 
