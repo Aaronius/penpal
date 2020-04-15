@@ -1,18 +1,15 @@
 import createDestructor, { Destructor } from './createDestructor';
 import getOriginFromSrc from './getOriginFromSrc';
 import createLogger from './createLogger';
-import connectCallReceiver from './connectCallReceiver';
-import connectCallSender from './connectCallSender';
+import handleSynMessageFactory from './handleSynMessageFactory';
+import handleAckMessageFactory from './handleAckMessageFactory';
 import {
-  CallSender,
   Methods,
   PenpalError,
-  SynAckMessage,
-  WindowsInfo
 } from './types';
 import { ErrorCode, MessageType, NativeEventType } from './enums';
-
-const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
+import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
+import monitorIframeRemoval from './monitorIframeRemoval';
 
 type Options = {
   iframe: HTMLIFrameElement;
@@ -20,79 +17,6 @@ type Options = {
   childOrigin?: string;
   timeout?: number;
   debug?: boolean;
-};
-
-const handleSynMessage = (
-  event: MessageEvent,
-  log: Function,
-  methods: Methods,
-  originForSending: string
-) => {
-  log('Parent: Handshake - Received SYN, responding with SYN-ACK');
-
-  const synAckMessage: SynAckMessage = {
-    penpal: MessageType.SynAck,
-    methodNames: Object.keys(methods)
-  };
-
-  (event.source as Window).postMessage(synAckMessage, originForSending);
-};
-
-const handleAckMessage = (
-  event: MessageEvent,
-  log: Function,
-  methods: Methods,
-  parent: Window,
-  child: Window,
-  originForSending: string,
-  childOrigin: string,
-  destroyCallReceiver: Function,
-  callSender: CallSender,
-  destructor: Destructor,
-  connectionTimeoutId: number
-) => {
-  const { destroy, onDestroy } = destructor;
-
-  log('Parent: Handshake - Received ACK');
-
-  const info: WindowsInfo = {
-    localName: 'Parent',
-    local: parent,
-    remote: child!,
-    originForSending: originForSending,
-    originForReceiving: childOrigin
-  };
-
-  // If the child reconnected, we need to destroy the previous call receiver before setting
-  // up a new one.
-  if (destroyCallReceiver) {
-    destroyCallReceiver();
-  }
-
-  destroyCallReceiver = connectCallReceiver(info, methods, log);
-
-  onDestroy(destroyCallReceiver);
-
-  // If the child reconnected, we need to remove the methods from the previous call receiver
-  // off the sender.
-  Object.keys(callSender).forEach(key => {
-    delete callSender[key];
-  });
-
-  const receiverMethodNames = event.data.methodNames;
-  const destroyCallSender = connectCallSender(
-    callSender,
-    info,
-    receiverMethodNames,
-    destroy,
-    log
-  );
-
-  onDestroy(destroyCallSender);
-
-  clearTimeout(connectionTimeoutId);
-
-  return destroyCallReceiver;
 };
 
 /**
@@ -124,14 +48,7 @@ export default (options: Options) => {
   const { onDestroy, destroy } = destructor;
 
   if (!childOrigin) {
-    if (!iframe.src && !iframe.srcdoc) {
-      const error: PenpalError = new Error(
-        'Iframe must have src or srcdoc property defined.'
-      ) as PenpalError;
-      error.code = ErrorCode.NoIframeSrc;
-      throw error;
-    }
-
+    validateIframeHasSrcOrSrcDoc(iframe);
     childOrigin = getOriginFromSrc(iframe.src);
   }
 
@@ -140,6 +57,19 @@ export default (options: Options) => {
   // when sending and allow
   // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
   const originForSending = childOrigin === 'null' ? '*' : childOrigin;
+  const handleSynMessage = handleSynMessageFactory(
+    log,
+    methods,
+    originForSending
+  );
+  const handleAckMessage = handleAckMessageFactory(
+    parent,
+    methods,
+    childOrigin,
+    originForSending,
+    destructor,
+    log
+  );
 
   const promise = new Promise((resolve, reject) => {
     let connectionTimeoutId: number;
@@ -155,16 +85,8 @@ export default (options: Options) => {
       }, timeout);
     }
 
-    // We resolve the promise with the call sender. If the child reconnects (for example, after
-    // refreshing or navigating to another page that uses Penpal, we'll update the call sender
-    // with methods that match the latest provided by the child.
-    const callSender: CallSender = {};
-    let destroyCallReceiver: Function;
-
     const handleMessage = (event: MessageEvent) => {
-      const child = iframe.contentWindow;
-
-      if (event.source !== child) {
+      if (event.source !== iframe.contentWindow) {
         return;
       }
 
@@ -184,25 +106,13 @@ export default (options: Options) => {
       }
 
       if (event.data.penpal === MessageType.Syn) {
-        handleSynMessage(event, log, methods, originForSending);
+        handleSynMessage(event);
         return;
       }
 
       if (event.data.penpal === MessageType.Ack) {
-        destroyCallReceiver = handleAckMessage(
-          event,
-          log,
-          methods,
-          parent,
-          child!,
-          originForSending,
-          childOrigin!,
-          destroyCallReceiver,
-          callSender,
-          destructor,
-          connectionTimeoutId
-        );
-
+        const callSender = handleAckMessage(event);
+        clearTimeout(connectionTimeoutId);
         resolve(callSender);
         return;
       }
@@ -211,24 +121,10 @@ export default (options: Options) => {
     parent.addEventListener(NativeEventType.Message, handleMessage);
 
     log('Parent: Awaiting handshake');
-
-    // This is to prevent memory leaks when the iframe is removed
-    // from the document and the consumer hasn't called destroy().
-    // Without this, event listeners attached to the window would
-    // stick around and since the event handlers have a reference
-    // to the iframe in their closures, the iframe would stick around
-    // too.
-    var checkIframeInDocIntervalId = setInterval(() => {
-      if (!document.contains(iframe)) {
-        clearInterval(checkIframeInDocIntervalId);
-        destroy();
-      }
-    }, CHECK_IFRAME_IN_DOC_INTERVAL);
+    monitorIframeRemoval(iframe, destructor);
 
     onDestroy(() => {
       parent.removeEventListener(NativeEventType.Message, handleMessage);
-      clearInterval(checkIframeInDocIntervalId);
-
       const error: PenpalError = new Error(
         'Connection destroyed'
       ) as PenpalError;
