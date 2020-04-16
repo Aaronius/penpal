@@ -158,7 +158,7 @@ describe('connection management', () => {
     return connection.promise.catch(error => {
       expect(error).toEqual(jasmine.any(Error));
       expect(error.message).toBe('Connection timed out after 0ms');
-      expect(error.code).toBe(Penpal.ERR_CONNECTION_TIMEOUT);
+      expect(error.code).toBe(Penpal.ErrorCode.ConnectionTimeout);
     });
   });
 
@@ -226,7 +226,7 @@ describe('connection management', () => {
         }
 
         expect(error).toBeDefined();
-        expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
+        expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
       });
     }
   );
@@ -253,7 +253,7 @@ describe('connection management', () => {
         }
 
         expect(error).toBeDefined();
-        expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
+        expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
       });
     }
   );

@@ -1,4 +1,4 @@
-import createDestructor, { Destructor } from '../createDestructor';
+import createDestructor from '../createDestructor';
 import getOriginFromSrc from './getOriginFromSrc';
 import createLogger from '../createLogger';
 import handleSynMessageFactory from './handleSynMessageFactory';

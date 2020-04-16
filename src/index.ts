@@ -1,17 +1,7 @@
-import connectToChild from './parent/connectToChild';
-import connectToParent from './child/connectToParent';
-import {
-  ERR_CONNECTION_DESTROYED,
-  ERR_CONNECTION_TIMEOUT,
-  ERR_NOT_IN_IFRAME,
-  ERR_NO_IFRAME_SRC
-} from './errorCodes';
+import _connectToChild from './parent/connectToChild';
+import _connectToParent from './child/connectToParent';
+import { ErrorCode as _ErrorCode } from './enums';
 
-export default {
-  ERR_CONNECTION_DESTROYED,
-  ERR_CONNECTION_TIMEOUT,
-  ERR_NOT_IN_IFRAME,
-  ERR_NO_IFRAME_SRC,
-  connectToChild,
-  connectToParent
-};
+export const connectToChild = _connectToChild;
+export const connectToParent = _connectToParent;
+export const ErrorCode = _ErrorCode;

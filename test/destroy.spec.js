@@ -10,7 +10,7 @@ describe('destroy', () => {
     connection.promise.catch(error => {
       expect(error).toEqual(jasmine.any(Error));
       expect(error.message).toBe('Connection destroyed');
-      expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
+      expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
       done();
     });
 
@@ -73,7 +73,7 @@ describe('destroy', () => {
         expect(error.message).toBe(
           'Unable to send multiply() call due to destroyed connection'
         );
-        expect(error.code).toBe(Penpal.ERR_CONNECTION_DESTROYED);
+        expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
         done();
       }
     });
