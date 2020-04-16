@@ -1,17 +1,19 @@
+import { PenpalError } from './types';
+
 export type Destructor = {
-  destroy(): void,
-  onDestroy(callback: Function): void
-}
+  destroy(error?: PenpalError): void;
+  onDestroy(callback: Function): void;
+};
 
 export default (): Destructor => {
   const callbacks: Function[] = [];
   let destroyed = false;
 
   return {
-    destroy() {
+    destroy(error) {
       destroyed = true;
       callbacks.forEach(callback => {
-        callback();
+        callback(error);
       });
     },
     onDestroy(callback) {

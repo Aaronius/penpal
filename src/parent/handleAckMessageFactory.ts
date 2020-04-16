@@ -1,16 +1,16 @@
-import { CallSender, Methods, WindowsInfo } from './types';
-import { Destructor } from './createDestructor';
-import connectCallReceiver from './connectCallReceiver';
-import connectCallSender from './connectCallSender';
+import { CallSender, Methods, WindowsInfo } from '../types';
+import { Destructor } from '../createDestructor';
+import connectCallReceiver from '../connectCallReceiver';
+import connectCallSender from '../connectCallSender';
 
 export default (
-  parent: Window,
   methods: Methods,
   childOrigin: string,
   originForSending: string,
   destructor: Destructor,
   log: Function
 ) => {
+  const { destroy, onDestroy } = destructor;
   let destroyCallReceiver: Function;
   let receiverMethodNames: string[];
   // We resolve the promise with the call sender. If the child reconnects
@@ -19,14 +19,21 @@ export default (
   // latest provided by the child.
   const callSender: CallSender = {};
 
-  return (event: MessageEvent): CallSender => {
-    const { destroy, onDestroy } = destructor;
+  return (event: MessageEvent): CallSender|undefined => {
+    if (event.origin !== childOrigin) {
+      log(
+        `Parent: Handshake - Received ACK message from origin ${
+          event.origin
+        } which did not match expected origin ${childOrigin}`
+      );
+      return;
+    }
 
     log('Parent: Handshake - Received ACK');
 
     const info: WindowsInfo = {
       localName: 'Parent',
-      local: parent,
+      local: window,
       remote: event.source as Window,
       originForSending: originForSending,
       originForReceiving: childOrigin

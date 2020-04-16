@@ -1,5 +1,5 @@
-import { PenpalError } from './types';
-import { ErrorCode } from './enums';
+import { PenpalError } from '../types';
+import { ErrorCode } from '../enums';
 
 export default (iframe: HTMLIFrameElement) => {
   if (!iframe.src && !iframe.srcdoc) {

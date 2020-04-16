@@ -1,5 +1,5 @@
-import connectToChild from './connectToChild';
-import connectToParent from './connectToParent';
+import connectToChild from './parent/connectToChild';
+import connectToParent from './child/connectToParent';
 import {
   ERR_CONNECTION_DESTROYED,
   ERR_CONNECTION_TIMEOUT,

@@ -1,15 +1,13 @@
-import createDestructor, { Destructor } from './createDestructor';
+import createDestructor, { Destructor } from '../createDestructor';
 import getOriginFromSrc from './getOriginFromSrc';
-import createLogger from './createLogger';
+import createLogger from '../createLogger';
 import handleSynMessageFactory from './handleSynMessageFactory';
 import handleAckMessageFactory from './handleAckMessageFactory';
-import {
-  Methods,
-  PenpalError,
-} from './types';
-import { ErrorCode, MessageType, NativeEventType } from './enums';
+import { Methods, PenpalError } from '../types';
+import { ErrorCode, MessageType, NativeEventType } from '../enums';
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
 import monitorIframeRemoval from './monitorIframeRemoval';
+import startConnectionTimeout from '../startConnectionTimeout';
 
 type Options = {
   iframe: HTMLIFrameElement;
@@ -43,7 +41,6 @@ export default (options: Options) => {
   let { iframe, methods = {}, childOrigin, timeout, debug = false } = options;
 
   const log = createLogger(debug);
-  const parent = window;
   const destructor = createDestructor();
   const { onDestroy, destroy } = destructor;
 
@@ -60,10 +57,10 @@ export default (options: Options) => {
   const handleSynMessage = handleSynMessageFactory(
     log,
     methods,
+    childOrigin,
     originForSending
   );
   const handleAckMessage = handleAckMessageFactory(
-    parent,
     methods,
     childOrigin,
     originForSending,
@@ -72,36 +69,9 @@ export default (options: Options) => {
   );
 
   const promise = new Promise((resolve, reject) => {
-    let connectionTimeoutId: number;
-
-    if (timeout !== undefined) {
-      connectionTimeoutId = window.setTimeout(() => {
-        const error: PenpalError = new Error(
-          `Connection to child timed out after ${timeout}ms`
-        ) as PenpalError;
-        error.code = ErrorCode.ConnectionTimeout;
-        reject(error);
-        destroy();
-      }, timeout);
-    }
-
+    const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (event: MessageEvent) => {
-      if (event.source !== iframe.contentWindow) {
-        return;
-      }
-
-      if (
-        event.origin !== childOrigin &&
-        (
-          event.data.penpal === MessageType.Syn ||
-          event.data.penpal === MessageType.Ack
-        )
-      ) {
-        log(
-          `Parent: Handshake - Received message from origin ${
-            event.origin
-          } which did not match expected origin ${childOrigin}`
-        );
+      if (event.source !== iframe.contentWindow || !event.data) {
         return;
       }
 
@@ -112,29 +82,35 @@ export default (options: Options) => {
 
       if (event.data.penpal === MessageType.Ack) {
         const callSender = handleAckMessage(event);
-        clearTimeout(connectionTimeoutId);
-        resolve(callSender);
+
+        if (callSender) {
+          stopConnectionTimeout();
+          resolve(callSender);
+        }
         return;
       }
     };
 
-    parent.addEventListener(NativeEventType.Message, handleMessage);
+    window.addEventListener(NativeEventType.Message, handleMessage);
 
     log('Parent: Awaiting handshake');
     monitorIframeRemoval(iframe, destructor);
 
-    onDestroy(() => {
-      parent.removeEventListener(NativeEventType.Message, handleMessage);
-      const error: PenpalError = new Error(
-        'Connection destroyed'
-      ) as PenpalError;
-      error.code = ErrorCode.ConnectionDestroyed;
+    onDestroy((error?: PenpalError) => {
+      window.removeEventListener(NativeEventType.Message, handleMessage);
+      if (!error) {
+        error = new Error('Connection destroyed') as PenpalError;
+        error.code = ErrorCode.ConnectionDestroyed;
+      }
       reject(error);
     });
   });
 
   return {
     promise,
-    destroy
+    destroy() {
+      // Don't allow consumer to pass an error into destroy.
+      destroy();
+    }
   };
 };

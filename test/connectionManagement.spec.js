@@ -157,7 +157,7 @@ describe('connection management', () => {
 
     return connection.promise.catch(error => {
       expect(error).toEqual(jasmine.any(Error));
-      expect(error.message).toBe('Connection to child timed out after 0ms');
+      expect(error.message).toBe('Connection timed out after 0ms');
       expect(error.code).toBe(Penpal.ERR_CONNECTION_TIMEOUT);
     });
   });
