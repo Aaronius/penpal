@@ -9,10 +9,8 @@ const opaqueOriginSchemes = ['file:', 'data:'];
 
 /**
  * Converts a src value into an origin.
- * @param {string} src
- * @return {string} The URL's origin
  */
-export default (src: string) => {
+export default (src: string): string => {
   if (src && opaqueOriginSchemes.find(scheme => src.startsWith(scheme))) {
     // The origin of the child document is an opaque origin and its
     // serialization is "null"

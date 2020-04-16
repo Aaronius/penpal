@@ -3,7 +3,7 @@ import createLogger from '../createLogger';
 import {
   SynMessage,
   Methods,
-  PenpalError,
+  PenpalError, CallSender
 } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 import validateWindowIsIframe from './validateWindowIsIframe';
@@ -20,30 +20,41 @@ const areGlobalsAccessible = () => {
 }
 
 type Options = {
+  /**
+   * Valid parent origin used to restrict communication.
+   */
   parentOrigin?: string;
+  /**
+   * Methods that may be called by the parent window.
+   */
   methods?: Methods;
+  /**
+   * The amount of time, in milliseconds, Penpal should wait
+   * for the parent to respond before rejecting the connection promise.
+   */
   timeout?: number;
+  /**
+   * Whether log messages should be emitted to the console.
+   */
   debug?: boolean;
 };
 
-/**
- * @typedef {Object} Parent
- * @property {Promise} promise A promise which will be resolved once a connection has
- * been established.
- * @property {Function} destroy A method that, when called, will disconnect any
- * messaging channels. You may call this even before a connection has been established.
- */
+type Connection = {
+  /**
+   * A promise which will be resolved once a connection has been established.
+   */
+  promise: Promise<CallSender>;
+  /**
+   * A method that, when called, will disconnect any messaging channels.
+   * You may call this even before a connection has been established.
+   */
+  destroy: Function;
+};
 
 /**
  * Attempts to establish communication with the parent window.
- * @param {Object} options
- * @param {string} [options.parentOrigin=*] Valid parent origin used to restrict communication.
- * @param {Object} [options.methods={}] Methods that may be called by the parent window.
- * @param {Number} [options.timeout] The amount of time, in milliseconds, Penpal should wait
- * for the parent to respond before rejecting the connection promise.
- * @return {Parent}
  */
-export default (options: Options = {}) => {
+export default (options: Options = {}): Connection => {
   const { parentOrigin = '*', methods = {}, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor();
@@ -66,7 +77,7 @@ export default (options: Options = {}) => {
     window.parent.postMessage(synMessage, parentOrigin);
   }
 
-  const promise = new Promise((resolve, reject) => {
+  const promise: Promise<CallSender> = new Promise((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (event: MessageEvent) => {
       // Under niche scenarios, we get into this function after

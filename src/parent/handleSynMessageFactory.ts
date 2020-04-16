@@ -1,6 +1,9 @@
 import { Methods, SynAckMessage } from '../types';
 import { MessageType } from '../enums';
 
+/**
+ * Handles a SYN handshake message.
+ */
 export default (
   log: Function,
   methods: Methods,

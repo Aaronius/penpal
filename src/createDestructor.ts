@@ -1,7 +1,13 @@
 import { PenpalError } from './types';
 
 export type Destructor = {
+  /**
+   * Calls all onDestroy callbacks.
+   */
   destroy(error?: PenpalError): void;
+  /**
+   * Registers a callback to be called when destroy is called.
+   */
   onDestroy(callback: Function): void;
 };
 

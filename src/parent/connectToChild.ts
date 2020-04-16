@@ -3,41 +3,54 @@ import getOriginFromSrc from './getOriginFromSrc';
 import createLogger from '../createLogger';
 import handleSynMessageFactory from './handleSynMessageFactory';
 import handleAckMessageFactory from './handleAckMessageFactory';
-import { Methods, PenpalError } from '../types';
+import { CallSender, Methods, PenpalError } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import startConnectionTimeout from '../startConnectionTimeout';
 
 type Options = {
+  /**
+   * The iframe to which a connection should be made.
+   */
   iframe: HTMLIFrameElement;
+  /**
+   * Methods that may be called by the iframe.
+   */
   methods?: Methods;
+  /**
+   * The child origin to use to secure communication. If
+   * not provided, the child origin will be derived from the
+   * iframe's src or srcdoc value.
+   */
   childOrigin?: string;
+  /**
+   * The amount of time, in milliseconds, Penpal should wait
+   * for the iframe to respond before rejecting the connection promise.
+   */
   timeout?: number;
+  /**
+   * Whether log messages should be emitted to the console.
+   */
   debug?: boolean;
 };
 
-/**
- * @typedef {Object} Child
- * @property {Promise} promise A promise which will be resolved once a connection has
- * been established.
- * @property {Function} destroy A method that, when called, will disconnect any
- * messaging channels. You may call this even before a connection has been established.
- */
+type Connection = {
+  /**
+   * A promise which will be resolved once a connection has been established.
+   */
+  promise: Promise<CallSender>;
+  /**
+   * A method that, when called, will disconnect any messaging channels.
+   * You may call this even before a connection has been established.
+   */
+  destroy: Function;
+};
 
 /**
- * Creates an iframe, loads a webpage into the URL, and attempts to establish communication with
- * the iframe.
- * @param {Object} options
- * @param {HTMLIframeElement} options.iframe The iframe to connect to.
- * @param {Object} [options.methods={}] Methods that may be called by the iframe.
- * @param {String} [options.childOrigin] The child origin to use to secure communication. If
- * not provided, the child origin will be derived from the iframe's src or srcdoc value.
- * @param {Number} [options.timeout] The amount of time, in milliseconds, Penpal should wait
- * for the child to respond before rejecting the connection promise.
- * @return {Child}
+ * Attempts to establish communication with an iframe.
  */
-export default (options: Options) => {
+export default (options: Options): Connection => {
   let { iframe, methods = {}, childOrigin, timeout, debug = false } = options;
 
   const log = createLogger(debug);
@@ -68,7 +81,7 @@ export default (options: Options) => {
     log
   );
 
-  const promise = new Promise((resolve, reject) => {
+  const promise: Promise<CallSender> = new Promise((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (event: MessageEvent) => {
       if (event.source !== iframe.contentWindow || !event.data) {

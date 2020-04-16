@@ -3,6 +3,9 @@ import { Destructor } from '../createDestructor';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 
+/**
+ * Handles an ACK handshake message.
+ */
 export default (
   methods: Methods,
   childOrigin: string,
@@ -19,7 +22,7 @@ export default (
   // latest provided by the child.
   const callSender: CallSender = {};
 
-  return (event: MessageEvent): CallSender|undefined => {
+  return (event: MessageEvent): CallSender | undefined => {
     if (event.origin !== childOrigin) {
       log(
         `Parent: Handshake - Received ACK message from origin ${

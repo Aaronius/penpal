@@ -16,15 +16,18 @@ import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 import { Destructor } from '../createDestructor';
 
+/**
+ * Handles a SYN-ACK handshake message.
+ */
 export default (
   parentOrigin: string,
   methods: Methods,
   destructor: Destructor,
-  log: Function,
+  log: Function
 ) => {
   const { destroy, onDestroy } = destructor;
 
-  return (event: MessageEvent) => {
+  return (event: MessageEvent): CallSender | undefined => {
     if (parentOrigin !== '*' && parentOrigin !== event.origin) {
       log(
         `Child: Handshake - Received SYN-ACK from origin ${
