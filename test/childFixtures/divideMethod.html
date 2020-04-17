@@ -7,7 +7,7 @@
     Test Iframe
 
     <script>
-      window.onerror = function() {
+      window.onerror = function () {
         console.log.apply(console, arguments);
       };
     </script>
@@ -16,14 +16,14 @@
       var parentAPI;
 
       var methods = {
-        divide: function(num1, num2) {
+        divide: function (num1, num2) {
           return num1 / num2;
-        }
+        },
       };
 
       Penpal.connectToParent({
-        methods: methods
-      }).promise.then(function(parent) {
+        methods: methods,
+      }).promise.then(function (parent) {
         parentAPI = parent;
       });
     </script>

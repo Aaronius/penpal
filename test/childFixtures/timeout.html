@@ -7,16 +7,16 @@
     Test Iframe
 
     <script>
-      window.onerror = function() {
+      window.onerror = function () {
         console.log.apply(console, arguments);
       };
     </script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
       Penpal.connectToParent({
-        timeout: 30
-      }).promise.then(function(parent) {
-        setTimeout(function() {
+        timeout: 30,
+      }).promise.then(function (parent) {
+        setTimeout(function () {
           parent.reportStillConnected();
         }, 31);
       });

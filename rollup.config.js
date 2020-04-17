@@ -7,13 +7,13 @@ module.exports = {
     {
       file: 'dist/penpal.js',
       format: 'iife',
-      name: 'Penpal'
-    }
+      name: 'Penpal',
+    },
   ],
   plugins: [
     typescript(),
     babel({
-      extensions: ['.ts']
-    })
-  ]
+      extensions: ['.ts'],
+    }),
+  ],
 };

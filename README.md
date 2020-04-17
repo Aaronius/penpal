@@ -51,13 +51,13 @@ const connection = connectToChild({
   methods: {
     add(num1, num2) {
       return num1 + num2;
-    }
-  }
+    },
+  },
 });
 
-connection.promise.then(child => {
-  child.multiply(2, 6).then(total => console.log(total));
-  child.divide(12, 4).then(total => console.log(total));
+connection.promise.then((child) => {
+  child.multiply(2, 6).then((total) => console.log(total));
+  child.divide(12, 4).then((total) => console.log(total));
 });
 ```
 
@@ -74,17 +74,17 @@ const connection = connectToParent({
     },
     divide(num1, num2) {
       // Return a promise if the value being returned requires asynchronous processing.
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           resolve(num1 / num2);
         }, 1000);
       });
-    }
-  }
+    },
+  },
 });
 
-connection.promise.then(parent => {
-  parent.add(3, 1).then(total => console.log(total));
+connection.promise.then((parent) => {
+  parent.add(3, 1).then((total) => console.log(total));
 });
 ```
 

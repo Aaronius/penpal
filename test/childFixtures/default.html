@@ -7,7 +7,7 @@
     Test Iframe
 
     <script>
-      window.onerror = function() {
+      window.onerror = function () {
         console.log.apply(console, arguments);
       };
     </script>
@@ -17,46 +17,46 @@
       var parentReturnValue;
 
       var methods = {
-        multiply: function(num1, num2) {
+        multiply: function (num1, num2) {
           return num1 * num2;
         },
-        multiplyAsync: function(num1, num2) {
-          return new Promise(function(resolve) {
+        multiplyAsync: function (num1, num2) {
+          return new Promise(function (resolve) {
             resolve(num1 * num2);
           });
         },
-        addUsingParent: function() {
-          parentAPI.add(3, 6).then(function(value) {
+        addUsingParent: function () {
+          parentAPI.add(3, 6).then(function (value) {
             parentReturnValue = value;
           });
         },
-        getParentReturnValue: function() {
+        getParentReturnValue: function () {
           return parentReturnValue;
         },
-        getRejectedPromiseString: function() {
+        getRejectedPromiseString: function () {
           return Promise.reject('test error string');
         },
-        getRejectedPromiseError: function() {
+        getRejectedPromiseError: function () {
           // TypeError instead of Error just to make sure "name" transfers properly.
           return Promise.reject(new TypeError('test error object'));
         },
-        throwError: function() {
+        throwError: function () {
           throw new Error('Oh nos!');
         },
-        getUnclonableValue: function() {
+        getUnclonableValue: function () {
           return window;
         },
-        reload: function() {
+        reload: function () {
           window.location.reload(true);
         },
-        navigate: function() {
+        navigate: function () {
           window.location.href = 'divideMethod.html';
-        }
+        },
       };
 
       Penpal.connectToParent({
-        methods: methods
-      }).promise.then(function(parent) {
+        methods: methods,
+      }).promise.then(function (parent) {
         parentAPI = parent;
       });
     </script>

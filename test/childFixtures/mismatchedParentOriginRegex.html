@@ -7,21 +7,21 @@
     Test Iframe
 
     <script>
-      window.onerror = function() {
+      window.onerror = function () {
         console.log.apply(console, arguments);
       };
     </script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
       var methods = {
-        multiply: function(num1, num2) {
+        multiply: function (num1, num2) {
           return num1 * num2;
-        }
+        },
       };
 
       Penpal.connectToParent({
         parentOrigin: /example\.com/,
-        methods: methods
+        methods: methods,
       });
     </script>
   </body>

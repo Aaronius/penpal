@@ -2,12 +2,12 @@ import { CHILD_SERVER } from './constants';
 import { createAndAddIframe } from './utils';
 
 describe('destroy', () => {
-  it('rejects promise', done => {
+  it('rejects promise', (done) => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
-    connection.promise.catch(error => {
+    connection.promise.catch((error) => {
       expect(error).toEqual(jasmine.any(Error));
       expect(error.message).toBe('Connection destroyed');
       expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
@@ -44,26 +44,26 @@ describe('destroy', () => {
     spyOn(window, 'removeEventListener').and.callThrough();
 
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
     // The method call message listener is set up after the connection has been established.
     return connection.promise.then(() => {
       connection.destroy();
 
-      window.addEventListener.calls.allArgs().forEach(args => {
+      window.addEventListener.calls.allArgs().forEach((args) => {
         expect(window.removeEventListener).toHaveBeenCalledWith(...args);
       });
     });
   });
 
-  it('prevents method calls from being sent', done => {
+  it('prevents method calls from being sent', (done) => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
     // The method call message listener is set up after the connection has been established.
-    connection.promise.then(child => {
+    connection.promise.then((child) => {
       connection.destroy();
 
       try {
@@ -81,25 +81,25 @@ describe('destroy', () => {
 
   it('supports multiple connections', () => {
     const connection1 = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
     const connection2 = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
     return Promise.all([
-      connection1.promise.then(child => {
-        return child.multiplyAsync(2, 5).then(value => {
+      connection1.promise.then((child) => {
+        return child.multiplyAsync(2, 5).then((value) => {
           expect(value).toEqual(10);
           connection1.destroy();
         });
       }),
-      connection2.promise.then(child => {
-        return child.multiplyAsync(3, 5).then(value => {
+      connection2.promise.then((child) => {
+        return child.multiplyAsync(3, 5).then((value) => {
           expect(value).toEqual(15);
           connection2.destroy();
         });
-      })
+      }),
     ]);
   });
 });

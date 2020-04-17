@@ -7,7 +7,7 @@
     Test Iframe
 
     <script>
-      window.onerror = function() {
+      window.onerror = function () {
         console.log.apply(console, arguments);
       };
     </script>
@@ -20,14 +20,14 @@
       );
 
       var methods = {
-        multiply: function(num1, num2) {
+        multiply: function (num1, num2) {
           return num1 * num2;
-        }
+        },
       };
 
       Penpal.connectToParent({
         parentOrigin: parentOrigin,
-        methods: methods
+        methods: methods,
       });
     </script>
   </body>
