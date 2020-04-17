@@ -8,7 +8,7 @@ import { Destructor } from '../createDestructor';
  * Handles a SYN-ACK handshake message.
  */
 export default (
-  parentOrigin: string,
+  parentOrigin: string | RegExp,
   methods: Methods,
   destructor: Destructor,
   log: Function
@@ -16,7 +16,12 @@ export default (
   const { destroy, onDestroy } = destructor;
 
   return (event: MessageEvent): CallSender | undefined => {
-    if (parentOrigin !== '*' && parentOrigin !== event.origin) {
+    let originQualifies =
+      parentOrigin instanceof RegExp
+        ? parentOrigin.test(event.origin)
+        : parentOrigin === '*' || parentOrigin === event.origin;
+
+    if (!originQualifies) {
       log(
         `Child: Handshake - Received SYN-ACK from origin ${
           event.origin
@@ -27,18 +32,23 @@ export default (
 
     log('Child: Handshake - Received SYN-ACK, responding with ACK');
 
+    // If event.origin is "null", the remote protocol is file: or data: and we
+    // must post messages with "*" as targetOrigin when sending messages.
+    // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
+    const originForSending = event.origin === 'null' ? '*' : event.origin
+
     const ackMessage: AckMessage = {
       penpal: MessageType.Ack,
       methodNames: Object.keys(methods)
     };
 
-    window.parent.postMessage(ackMessage, parentOrigin);
+    window.parent.postMessage(ackMessage, originForSending);
 
     const info: WindowsInfo = {
       localName: 'Child',
       local: window,
       remote: window.parent,
-      originForSending: event.origin === 'null' ? '*' : event.origin,
+      originForSending,
       originForReceiving: event.origin
     };
 

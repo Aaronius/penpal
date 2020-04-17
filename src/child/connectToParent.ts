@@ -1,10 +1,6 @@
 import createDestructor from '../createDestructor';
 import createLogger from '../createLogger';
-import {
-  SynMessage,
-  Methods,
-  PenpalError, CallSender
-} from '../types';
+import { SynMessage, Methods, PenpalError, CallSender } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 import validateWindowIsIframe from './validateWindowIsIframe';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
@@ -17,13 +13,13 @@ const areGlobalsAccessible = () => {
     return false;
   }
   return true;
-}
+};
 
 type Options = {
   /**
    * Valid parent origin used to restrict communication.
    */
-  parentOrigin?: string;
+  parentOrigin?: string | RegExp;
   /**
    * Methods that may be called by the parent window.
    */
@@ -71,11 +67,11 @@ export default (options: Options = {}): Connection => {
 
   const sendSynMessage = () => {
     log('Child: Handshake - Sending SYN');
-    const synMessage: SynMessage = {
-      penpal: MessageType.Syn
-    };
-    window.parent.postMessage(synMessage, parentOrigin);
-  }
+    const synMessage: SynMessage = { penpal: MessageType.Syn };
+    const parentOriginForSyn =
+      parentOrigin instanceof RegExp ? '*' : parentOrigin;
+    window.parent.postMessage(synMessage, parentOriginForSyn);
+  };
 
   const promise: Promise<CallSender> = new Promise((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
@@ -112,9 +108,7 @@ export default (options: Options = {}): Connection => {
     onDestroy((error?: PenpalError) => {
       window.removeEventListener(NativeEventType.Message, handleMessage);
       if (!error) {
-        error = new Error(
-          'Connection destroyed'
-        ) as PenpalError;
+        error = new Error('Connection destroyed') as PenpalError;
         error.code = ErrorCode.ConnectionDestroyed;
       }
       reject(error);

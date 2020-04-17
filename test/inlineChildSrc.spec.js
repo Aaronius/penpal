@@ -23,7 +23,7 @@ const htmlSrcRedirect = `
 <html>
   <head>
     <script>
-      document.location = '${CHILD_SERVER}/child.html'
+      document.location = '${CHILD_SERVER}/default.html'
     </script>
   </head>
 </html>

@@ -4,7 +4,7 @@ import { createAndAddIframe } from './utils';
 describe('destroy', () => {
   it('rejects promise', done => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     connection.promise.catch(error => {
@@ -24,7 +24,7 @@ describe('destroy', () => {
   //   spyOn(window, 'removeEventListener').and.callThrough();
   //
   //   const connection = Penpal.connectToChild({
-  //     iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+  //     iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
   //   });
   //
   //   // The handshake message listener is set up immediately after the iframe has loaded.
@@ -44,7 +44,7 @@ describe('destroy', () => {
     spyOn(window, 'removeEventListener').and.callThrough();
 
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     // The method call message listener is set up after the connection has been established.
@@ -59,7 +59,7 @@ describe('destroy', () => {
 
   it('prevents method calls from being sent', done => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     // The method call message listener is set up after the connection has been established.
@@ -81,10 +81,10 @@ describe('destroy', () => {
 
   it('supports multiple connections', () => {
     const connection1 = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
     const connection2 = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     return Promise.all([

@@ -4,7 +4,7 @@ import { createAndAddIframe } from './utils';
 describe('communication between parent and child', () => {
   it('calls a function on the child', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`),
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
       debug: true
     });
 
@@ -18,9 +18,9 @@ describe('communication between parent and child', () => {
       });
   });
 
-  it('calls a function on the child with origin set', () => {
+  it('calls a function on the child with matching parentOrigin set', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/childOrigin.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/matchingParentOrigin.html`)
     });
 
     return connection.promise
@@ -35,7 +35,7 @@ describe('communication between parent and child', () => {
 
   it('calls an asynchronous function on the child', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     return connection.promise
@@ -50,7 +50,7 @@ describe('communication between parent and child', () => {
 
   it('calls a function on the parent', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`),
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
       methods: {
         add: (num1, num2) => {
           return num1 + num2;
@@ -73,7 +73,7 @@ describe('communication between parent and child', () => {
 
   it('handles promises rejected with strings', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     return connection.promise
@@ -88,7 +88,7 @@ describe('communication between parent and child', () => {
 
   it('handles promises rejected with error objects', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     return connection.promise
@@ -108,7 +108,7 @@ describe('communication between parent and child', () => {
 
   it('handles thrown errors', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     return connection.promise
@@ -124,7 +124,7 @@ describe('communication between parent and child', () => {
 
   it('handles unclonable values', () => {
     const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/child.html`)
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`)
     });
 
     return connection.promise

@@ -15,7 +15,7 @@ const serveChildViews = () => {
   // to properly test cross-domain iframe communication
   const childViewsApp = connect()
     .use(serveStatic('dist'))
-    .use(serveStatic('test/fixtures'));
+    .use(serveStatic('test/childFixtures'));
 
   http.createServer(childViewsApp).listen(9000);
 };

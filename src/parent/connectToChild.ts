@@ -62,10 +62,9 @@ export default (options: Options): Connection => {
     childOrigin = getOriginFromSrc(iframe.src);
   }
 
-  // If event.origin is "null", the remote protocol is
-  // file:, data:, and we must post messages with "*" as targetOrigin
-  // when sending and allow
-  // [1] https://developer.mozilla.org/fr/docs/Web/API/Window/postMessage#Utiliser_window.postMessage_dans_les_extensions
+  // If event.origin is "null", the remote protocol is file: or data: and we
+  // must post messages with "*" as targetOrigin when sending messages.
+  // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
   const originForSending = childOrigin === 'null' ? '*' : childOrigin;
   const handleSynMessage = handleSynMessageFactory(
     log,
