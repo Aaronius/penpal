@@ -23,12 +23,12 @@ If you don't want to use npm to manage client packages, Penpal also provides a U
 Penpal will then be installed on `window.Penpal`. `window.Penpal` will contain the following properties:
 
 ```
+Penpal.connectToChild
+Penpal.connectToParent
 Penpal.ErrorCode.ConnectionDestroyed
 Penpal.ErrorCode.ConnectionTimeout
 Penpal.ErrorCode.NotInIframe
 Penpal.ErrorCode.NoIframeSrc
-Penpal.connectToChild
-Penpal.connectToParent
 ```
 
 Usage is similar to if you were using a bundler, which is documented below, but instead of importing each module, you would access it on the `Penpal` global instead.
