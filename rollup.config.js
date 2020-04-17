@@ -13,7 +13,7 @@ module.exports = {
   plugins: [
     typescript(),
     babel({
-      extensions: ['.js', '.ts']
+      extensions: ['.ts']
     })
   ]
 };

@@ -16,14 +16,12 @@
     "postMessage",
     "promise"
   ],
-  "main": "es5/index.js",
-  "module": "es6/index.js",
+  "main": "lib/index.js",
   "scripts": {
-    "clean": "rm -rf es6 es5 dist",
-    "build:es5": "babel ./src --out-dir ./es5 --extensions '.ts'",
-    "build:es6": "tsc --outDir es6",
+    "clean": "rm -rf lib dist",
+    "build:lib": "tsc --outDir lib",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
-    "build": "npm-run-all clean build:es6 build:es5 build:dist && ls -lh dist/penpal.min.js",
+    "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{json,js,md,html,babelrc,eslintrc}\"",
     "test": "npm-run-all clean runTests",
@@ -45,8 +43,7 @@
     "last 2 Edge version"
   ],
   "files": [
-    "es6",
-    "es5",
+    "lib",
     "dist"
   ],
   "dependencies": {},
@@ -57,7 +54,6 @@
     "@babel/preset-typescript": "^7.8.3",
     "@metahub/karma-rollup-preprocessor": "^4.1.0",
     "@rollup/plugin-typescript": "^4.0.0",
-    "babel-plugin-add-module-exports": "^1.0.0",
     "connect": "^3.6.6",
     "eslint": "^5.10.0",
     "eslint-config-prettier": "^4.1.0",
