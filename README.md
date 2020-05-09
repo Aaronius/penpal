@@ -1,5 +1,7 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
+### Upgrading from version 4? See [version 5 release notes](https://github.com/Aaronius/penpal/releases/tag/v5.0.0) for details.
+
 # Penpal
 
 Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
