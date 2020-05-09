@@ -42,14 +42,16 @@ import { connectToChild } from 'penpal';
 
 const iframe = document.createElement('iframe');
 iframe.src = 'http://example.com/iframe.html';
-if (document.readyState === "complete"
-  || document.readyState === "interactive") {
+if (
+  document.readyState === 'complete' ||
+  document.readyState === 'interactive'
+) {
   document.body.appendChild(iframe);
 } else {
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(iframe);
-  }); 
-}  
+  });
+}
 
 const connection = connectToChild({
   // The iframe to which a connection should be made
