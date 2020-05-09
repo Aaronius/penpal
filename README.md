@@ -2,6 +2,9 @@
 
 ### Upgrading from version 4? See [version 5 release notes](https://github.com/Aaronius/penpal/releases/tag/v5.0.0) for details.
 
+[See documentation for 4.x](https://github.com/Aaronius/penpal/tree/4.x)  
+[See documentation for 3.x](https://github.com/Aaronius/penpal/tree/3.x)
+
 # Penpal
 
 Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
