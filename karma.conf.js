@@ -1,7 +1,7 @@
 const babel = require('rollup-plugin-babel');
 const argv = require('yargs').argv;
 
-module.exports = config => {
+module.exports = (config) => {
   // Example set of browsers to run on Sauce Labs
   // Check out https://saucelabs.com/platforms for all browser/platform combos
   var customLaunchers = {
@@ -9,37 +9,37 @@ module.exports = config => {
       base: 'SauceLabs',
       browserName: 'microsoftedge',
       platform: 'Windows 10',
-      version: 'latest'
+      version: 'latest',
     },
     sl_chrome: {
       base: 'SauceLabs',
       browserName: 'chrome',
       platform: 'Windows 10',
-      version: 'latest'
+      version: 'latest',
     },
     sl_firefox: {
       base: 'SauceLabs',
       browserName: 'firefox',
       platform: 'Windows 10',
-      version: 'latest'
+      version: 'latest',
     },
     sl_mac_safari: {
       base: 'SauceLabs',
       browserName: 'safari',
       platform: 'OS X 10.11',
-      version: 'latest'
+      version: 'latest',
     },
     sl_mac_chrome: {
       base: 'SauceLabs',
       browserName: 'chrome',
       platform: 'OS X 10.11',
-      version: 'latest'
+      version: 'latest',
     },
     sl_mac_firefox: {
       base: 'SauceLabs',
       browserName: 'firefox',
       platform: 'OS X 10.11',
-      version: 'latest'
+      version: 'latest',
     },
     sl_android: {
       base: 'SauceLabs',
@@ -47,7 +47,7 @@ module.exports = config => {
       appiumVersion: '1.13.0',
       browserName: 'Chrome',
       platformName: 'Android',
-      platformVersion: '7.1'
+      platformVersion: '7.1',
     },
     sl_ios: {
       base: 'SauceLabs',
@@ -55,8 +55,8 @@ module.exports = config => {
       appiumVersion: '1.9.1',
       browserName: 'Safari',
       platformName: 'iOS',
-      platformVersion: '11.0'
-    }
+      platformVersion: '11.0',
+    },
   };
 
   var browsers = ['Chrome'];
@@ -83,21 +83,21 @@ module.exports = config => {
       'karma-chrome-launcher',
       'karma-firefox-launcher',
       'karma-babel-preprocessor',
-      'karma-sauce-launcher'
+      'karma-sauce-launcher',
     ],
     preprocessors: {
-      'test/**/*.js': ['rollup']
+      'test/**/*.js': ['rollup'],
     },
     rollupPreprocessor: {
       options: {
         output: {
           // To include inlined sourcemaps as data URIs
           sourcemap: true,
-          format: 'iife'
+          format: 'iife',
         },
         // To compile with babel using es2015 preset
-        plugins: [babel()]
-      }
+        plugins: [babel()],
+      },
     },
     port: 9001,
     colors: true,
@@ -106,7 +106,7 @@ module.exports = config => {
     sauceLabs: {
       testName: 'Penpal Karma Test',
       tunnelIdentifier: process.env.TRAVIS_JOB_NUMBER,
-      startConnect: startConnect
+      startConnect: startConnect,
     },
     customLaunchers: customLaunchers,
     browsers: browsers,
@@ -116,6 +116,6 @@ module.exports = config => {
     // Travis + SauceLabs is super flaky. This attempts to solve the issue:
     // https://github.com/jasmine/jasmine/issues/1327#issuecomment-332939551
     browserDisconnectTolerance: 2,
-    browserNoActivityTimeout: 50000
+    browserNoActivityTimeout: 50000,
   });
 };

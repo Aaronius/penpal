@@ -23,7 +23,7 @@ const htmlSrcRedirect = `
 <html>
   <head>
     <script>
-      document.location = '${CHILD_SERVER}/child.html'
+      document.location = '${CHILD_SERVER}/default.html'
     </script>
   </head>
 </html>
@@ -36,26 +36,26 @@ describe('data URI support', () => {
     document.body.appendChild(iframe);
 
     const connection = Penpal.connectToChild({
-      iframe
+      iframe,
     });
 
     return connection.promise
-      .then(child => {
+      .then((child) => {
         return child.multiply(2, 5);
       })
-      .then(value => {
+      .then((value) => {
         expect(value).toEqual(10);
         connection.destroy();
       });
   });
 
-  it('does not connect if child redirects to non-opaque origin', done => {
+  it('does not connect if child redirects to non-opaque origin', (done) => {
     const iframe = document.createElement('iframe');
     iframe.src = `data:text/html,${htmlSrcRedirect}`;
     document.body.appendChild(iframe);
 
     const connection = Penpal.connectToChild({
-      iframe
+      iframe,
     });
 
     const connectionResolved = jasmine.createSpy().and.callFake(() => {
@@ -75,17 +75,17 @@ var supportsSrcDoc = !!('srcdoc' in document.createElement('iframe'));
 
 if (supportsSrcDoc) {
   describe('srcdoc support', () => {
-    it('connects and calls a function on the child', done => {
+    it('connects and calls a function on the child', (done) => {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = htmlSrc;
       document.body.appendChild(iframe);
 
       const connection = Penpal.connectToChild({
-        iframe
+        iframe,
       });
 
-      connection.promise.then(child => {
-        child.multiply(2, 5).then(value => {
+      connection.promise.then((child) => {
+        child.multiply(2, 5).then((value) => {
           expect(value).toEqual(10);
 
           setTimeout(() => {
@@ -96,13 +96,13 @@ if (supportsSrcDoc) {
       });
     });
 
-    it('does not connect if child redirects to non-opaque origin', done => {
+    it('does not connect if child redirects to non-opaque origin', (done) => {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = htmlSrcRedirect;
       document.body.appendChild(iframe);
 
       const connection = Penpal.connectToChild({
-        iframe
+        iframe,
       });
 
       const connectionResolved = jasmine.createSpy().and.callFake(() => {

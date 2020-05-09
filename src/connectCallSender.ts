@@ -1,7 +1,13 @@
-import { CALL, FULFILLED, MESSAGE, REPLY } from './constants';
-import { ERR_CONNECTION_DESTROYED } from './errorCodes';
 import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
+import {
+  CallMessage,
+  CallSender,
+  PenpalError,
+  ReplyMessage,
+  WindowsInfo
+} from './types';
+import { ErrorCode, MessageType, NativeEventType, Resolution } from './enums';
 
 /**
  * Augments an object with methods that match those defined by the remote. When these methods are
@@ -14,7 +20,13 @@ import { deserializeError } from './errorSerialization';
  * connection.
  * @returns {Object} The call sender object with methods that may be called.
  */
-export default (callSender, info, methodNames, destroyConnection, log) => {
+export default (
+  callSender: CallSender,
+  info: WindowsInfo,
+  methodNames: string[],
+  destroyConnection: Function,
+  log: Function
+) => {
   const {
     localName,
     local,
@@ -26,8 +38,8 @@ export default (callSender, info, methodNames, destroyConnection, log) => {
 
   log(`${localName}: Connecting call sender`);
 
-  const createMethodProxy = methodName => {
-    return (...args) => {
+  const createMethodProxy = (methodName: string) => {
+    return (...args: any) => {
       log(`${localName}: Sending ${methodName}() call`);
 
       // This handles the case where the iframe has been removed from the DOM
@@ -53,19 +65,20 @@ export default (callSender, info, methodNames, destroyConnection, log) => {
       }
 
       if (destroyed) {
-        const error = new Error(
+        const error: PenpalError = new Error(
           `Unable to send ${methodName}() call due ` + `to destroyed connection`
-        );
-        error.code = ERR_CONNECTION_DESTROYED;
+        ) as PenpalError;
+
+        error.code = ErrorCode.ConnectionDestroyed;
         throw error;
       }
 
       return new Promise((resolve, reject) => {
         const id = generateId();
-        const handleMessageEvent = event => {
+        const handleMessageEvent = (event: MessageEvent) => {
           if (
             event.source !== remote ||
-            event.data.penpal !== REPLY ||
+            event.data.penpal !== MessageType.Reply ||
             event.data.id !== id
           ) {
             return;
@@ -80,28 +93,30 @@ export default (callSender, info, methodNames, destroyConnection, log) => {
             return;
           }
 
+          const replyMessage: ReplyMessage = event.data;
+
           log(`${localName}: Received ${methodName}() reply`);
-          local.removeEventListener(MESSAGE, handleMessageEvent);
+          local.removeEventListener(NativeEventType.Message, handleMessageEvent);
 
-          let returnValue = event.data.returnValue;
+          let returnValue = replyMessage.returnValue;
 
-          if (event.data.returnValueIsError) {
+          if (replyMessage.returnValueIsError) {
             returnValue = deserializeError(returnValue);
           }
 
-          (event.data.resolution === FULFILLED ? resolve : reject)(returnValue);
+          (replyMessage.resolution === Resolution.Fulfilled ? resolve : reject)(
+            returnValue
+          );
         };
 
-        local.addEventListener(MESSAGE, handleMessageEvent);
-        remote.postMessage(
-          {
-            penpal: CALL,
-            id,
-            methodName,
-            args
-          },
-          originForSending
-        );
+        local.addEventListener(NativeEventType.Message, handleMessageEvent);
+        const callMessage: CallMessage = {
+          penpal: MessageType.Call,
+          id,
+          methodName,
+          args
+        };
+        remote.postMessage(callMessage, originForSending);
       });
     };
   };

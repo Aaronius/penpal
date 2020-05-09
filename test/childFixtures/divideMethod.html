@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Iframe</title>
+  </head>
+  <body>
+    Test Iframe
+
+    <script>
+      window.onerror = function () {
+        console.log.apply(console, arguments);
+      };
+    </script>
+    <script type="text/javascript" src="penpal.js"></script>
+    <script type="text/javascript">
+      var parentAPI;
+
+      var methods = {
+        divide: function (num1, num2) {
+          return num1 / num2;
+        },
+      };
+
+      Penpal.connectToParent({
+        methods: methods,
+      }).promise.then(function (parent) {
+        parentAPI = parent;
+      });
+    </script>
+  </body>
+</html>

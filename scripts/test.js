@@ -15,7 +15,7 @@ const serveChildViews = () => {
   // to properly test cross-domain iframe communication
   const childViewsApp = connect()
     .use(serveStatic('dist'))
-    .use(serveStatic('test/fixtures'));
+    .use(serveStatic('test/childFixtures'));
 
   http.createServer(childViewsApp).listen(9000);
 };
@@ -23,7 +23,7 @@ const serveChildViews = () => {
 const runTests = () => {
   new KarmaServer({
     configFile: path.resolve(__dirname, '../karma.conf.js'),
-    singleRun: !argv.watch
+    singleRun: !argv.watch,
     // logLevel: 'debug'
   }).start();
 };
@@ -33,7 +33,7 @@ const build = () => {
 
   let testsRunning = false;
 
-  watcher.on('event', event => {
+  watcher.on('event', (event) => {
     // Wait until the first bundle is created before
     // running tests.
     switch (event.code) {

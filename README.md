@@ -1,7 +1,5 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
-### Upgrading from version 3? See [version 4 release notes](https://github.com/Aaronius/penpal/releases/tag/v4.0.0) for details.
-
 # Penpal
 
 Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
@@ -14,7 +12,7 @@ This library has no dependencies.
 
 Preferably, you'll be able to use Penpal from npm with a bundler like [Webpack](https://webpack.github.io/), [Rollup](https://rollupjs.org), or [Parcel](https://parceljs.org/). If you use npm for client package management, you can install Penpal with:
 
-`npm install penpal --save`
+`npm install penpal`
 
 ### Using a CDN
 
@@ -25,12 +23,12 @@ If you don't want to use npm to manage client packages, Penpal also provides a U
 Penpal will then be installed on `window.Penpal`. `window.Penpal` will contain the following properties:
 
 ```
-Penpal.ERR_CONNECTION_DESTROYED
-Penpal.ERR_CONNECTION_TIMEOUT
-Penpal.ERR_NOT_IN_IFRAME
-Penpal.ERR_NO_IFRAME_SRC
 Penpal.connectToChild
 Penpal.connectToParent
+Penpal.ErrorCode.ConnectionDestroyed
+Penpal.ErrorCode.ConnectionTimeout
+Penpal.ErrorCode.NotInIframe
+Penpal.ErrorCode.NoIframeSrc
 ```
 
 Usage is similar to if you were using a bundler, which is documented below, but instead of importing each module, you would access it on the `Penpal` global instead.
@@ -40,7 +38,7 @@ Usage is similar to if you were using a bundler, which is documented below, but 
 ### Parent Window
 
 ```javascript
-import connectToChild from 'penpal/lib/connectToChild';
+import { connectToChild } from 'penpal';
 
 const iframe = document.createElement('iframe');
 iframe.src = 'http://example.com/iframe.html';
@@ -60,20 +58,20 @@ const connection = connectToChild({
   methods: {
     add(num1, num2) {
       return num1 + num2;
-    }
-  }
+    },
+  },
 });
 
-connection.promise.then(child => {
-  child.multiply(2, 6).then(total => console.log(total));
-  child.divide(12, 4).then(total => console.log(total));
+connection.promise.then((child) => {
+  child.multiply(2, 6).then((total) => console.log(total));
+  child.divide(12, 4).then((total) => console.log(total));
 });
 ```
 
 ### Child Iframe
 
 ```javascript
-import connectToParent from 'penpal/lib/connectToParent';
+import { connectToParent } from 'penpal';
 
 const connection = connectToParent({
   // Methods child is exposing to parent
@@ -83,65 +81,65 @@ const connection = connectToParent({
     },
     divide(num1, num2) {
       // Return a promise if the value being returned requires asynchronous processing.
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           resolve(num1 / num2);
         }, 1000);
       });
-    }
-  }
+    },
+  },
 });
 
-connection.promise.then(parent => {
-  parent.add(3, 1).then(total => console.log(total));
+connection.promise.then((parent) => {
+  parent.add(3, 1).then((total) => console.log(total));
 });
 ```
 
 ## API
 
-### `connectToChild(options:Object) => Object`
+### `connectToChild(options: Object) => Object`
 
 **For Penpal to operate correctly, you must ensure that `connectToChild` is called before the iframe has called `connectToParent`.** As shown in the example above, it is safe to set the `src` or `srcdoc` property of the iframe and append the iframe to the document before calling `connectToChild` as long as they are both done in the same [JavaScript event loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop). Alternatively, you can always append the iframe to the document _after_ calling `connectToChild` instead of _before_.
 
 #### Options
 
-`options.iframe` (required) The iframe element to which Penpal should connect. Unless you provide the `childOrigin` option, you will need to have set either the `src` or `srcdoc` property on the iframe prior to calling `connectToChild` so that Penpal can automatically derive the child origin. In addition to regular URLs, [data URIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) and [file URIs](https://en.wikipedia.org/wiki/File_URI_scheme) are also supported.
+`options.iframe: HTMLIFrameElement` (required) The iframe element to which Penpal should connect. Unless you provide the `childOrigin` option, you will need to have set either the `src` or `srcdoc` property on the iframe prior to calling `connectToChild` so that Penpal can automatically derive the child origin. In addition to regular URLs, [data URIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) and [file URIs](https://en.wikipedia.org/wiki/File_URI_scheme) are also supported.
 
-`options.methods` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
+`options.methods: Object` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
-`options.childOrigin` (optional) In the vast majority of cases, Penpal can automatically determine the child origin based on the `src` or `srcdoc` property that you have set on the iframe. Unfortunately, browsers are inconsistent in certain cases, particularly when using the `file://` protocol on various devices. If you receive an error saying that the parent received a hanshake from an unexpected origin, you may need to manually pass the child origin using this option.
+`options.childOrigin: string` (optional) In the vast majority of cases, Penpal can automatically determine the child origin based on the `src` or `srcdoc` property that you have set on the iframe. Unfortunately, browsers are inconsistent in certain cases, particularly when using the `file://` protocol on various devices. If you receive an error saying that the parent received a hanshake from an unexpected origin, you may need to manually pass the child origin using this option.
 
-`options.timeout` (optional) The amount of time, in milliseconds, Penpal should wait for the child to respond before rejecting the connection promise. There is no timeout by default.
+`options.timeout: number` (optional) The amount of time, in milliseconds, Penpal should wait for the child to respond before rejecting the connection promise. There is no timeout by default.
 
-`options.debug` (optional) Enables or disables debug logging. Debug logging is disabled by default.
+`options.debug: boolean` (optional) Enables or disables debug logging. Debug logging is disabled by default.
 
 #### Return value
 
 The return value of `connectToChild` is a `connection` object with the following properties:
 
-`connection.promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the child has exposed. Note that these aren't actual memory references to the methods the child exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the child, calling the actual method within the child with the arguments you have passed, and then sending the return value back to the parent. The promise you received will then be resolved with the return value.
+`connection.promise: Promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the child has exposed. Note that these aren't actual memory references to the methods the child exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the child, calling the actual method within the child with the arguments you have passed, and then sending the return value back to the parent. The promise you received will then be resolved with the return value.
 
-`connection.destroy` A method that, when called, will disconnect any messaging channels. You may call this even before a connection has been established.
+`connection.destroy: Function` A method that, when called, will disconnect any messaging channels. You may call this even before a connection has been established.
 
-### `connectToParent([options:Object]) => Object`
+### `connectToParent([options: Object]) => Object`
 
 #### Options
 
-`options.parentOrigin` (optional) The origin of the parent window which your iframe will be communicating with. If this is not provided, communication will not be restricted to any particular parent origin resulting in any webpage being able to load your webpage into an iframe and communicate with it.
+`options.parentOrigin: string | RegExp` (optional) The origin of the parent window which your iframe will be communicating with. If this is not provided, communication will not be restricted to any particular parent origin resulting in any webpage being able to load your webpage into an iframe and communicate with it.
 
-`options.methods` (optional) An object containing methods which should be exposed for the parent window to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
+`options.methods: Object` (optional) An object containing methods which should be exposed for the parent window to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
-`options.timeout` (optional) The amount of time, in milliseconds, Penpal should wait for the parent to respond before rejecting the connection promise. There is no timeout by default.
+`options.timeout: number` (optional) The amount of time, in milliseconds, Penpal should wait for the parent to respond before rejecting the connection promise. There is no timeout by default.
 
-`options.debug` (optional) Enables or disables debug logging. Debug logging is disabled by default.
+`options.debug: boolean` (optional) Enables or disables debug logging. Debug logging is disabled by default.
 
 #### Return value
 
 The return value of `connectToParent` is a `connection` object with the following property:
 
-`connection.promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the parent has exposed. Note that these aren't actual memory references to the methods the parent exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the parent, calling the actual method within the parent with the arguments you have passed, and then sending the return value back to the child. The promise you received will then be resolved with the return value.
+`connection.promise: Promise` A promise which will be resolved once communication has been established. The promise will be resolved with an object containing the methods which the parent has exposed. Note that these aren't actual memory references to the methods the parent exposed, but instead proxy methods Penpal has created with the same names and signatures. When one of these methods is called, Penpal will immediately return a promise and then go to work sending a message to the parent, calling the actual method within the parent with the arguments you have passed, and then sending the return value back to the child. The promise you received will then be resolved with the return value.
 
-`connection.destroy` A method that, when called, will disconnect any messaging channels. You may call this even before a connection has been established.
+`connection.destroy: Function` A method that, when called, will disconnect any messaging channels. You may call this even before a connection has been established.
 
 ## Reconnection
 
@@ -163,15 +161,14 @@ Penpal will throw (or reject promises with) errors in certain situations. Each e
 - `NoIframeSrc`
   - This error will be thrown when the iframe passed into `connectToChild` does not have `src` or `srcdoc` set.
 
-For your convenience, these error codes are exported as constants that can be imported as follows:
+For your convenience, these error codes can be imported as follows:
 
 ```
-import {
-  ERR_CONNECTION_DESTROYED,
-  ERR_CONNECTION_TIMEOUT,
-  ERR_NOT_IN_IFRAME,
-  ERR_NO_IFRAME_SRC
-} from 'penpal/lib/errorCodes';
+import { ErrorCode } from 'penpal';
+// ErrorCode.ConnectionDestroyed
+// ErrorCode.ConnectionTimeout
+// ErrorCode.NotInIframe
+// ErrorCode.NoIframeSrc
 ```
 
 ## Supported Browsers

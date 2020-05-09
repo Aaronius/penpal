@@ -3,19 +3,19 @@
   <head>
     <script src="../../../dist/penpal.js"></script>
     <script type="text/javascript">
-      window.addEventListener('load', function() {
+      window.addEventListener('load', function () {
         const iframe = document.createElement('iframe');
         iframe.src =
-          'file:///Users/aahardy/dev/penpal/test/manual/file/child.html';
+          'file:///Users/aahardy/dev/penpal/test/manual/file/default.html';
         document.body.appendChild(iframe);
 
         const connection = Penpal.connectToChild({
           iframe,
-          debug: true
+          debug: true,
         });
 
-        connection.promise.then(function(child) {
-          child.multiply(3, 2).then(result => {
+        connection.promise.then(function (child) {
+          child.multiply(3, 2).then((result) => {
             var div = document.createElement('div');
             div.textContent = '3 X 2 = ' + result;
             document.body.appendChild(div);

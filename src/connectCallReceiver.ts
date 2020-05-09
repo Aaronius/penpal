@@ -1,24 +1,12 @@
-import {
-  CALL,
-  DATA_CLONE_ERROR,
-  FULFILLED,
-  MESSAGE,
-  REJECTED,
-  REPLY
-} from './constants';
 import { serializeError } from './errorSerialization';
+import { CallMessage, Methods, ReplyMessage, WindowsInfo } from './types';
+import { MessageType, NativeEventType, NativeErrorName, Resolution } from './enums';
 
 /**
  * Listens for "call" messages coming from the remote, executes the corresponding method, and
  * responds with the return value.
- * @param {Object} info Information about the local and remote windows.
- * @param {Object} methods The keys are the names of the methods that can be called by the remote
- * while the values are the method functions.
- * @param {Promise} destructionPromise A promise resolved when destroy() is called on the penpal
- * connection.
- * @returns {Function} A function that may be called to disconnect the receiver.
  */
-export default (info, methods, log) => {
+export default (info: WindowsInfo, methods: Methods, log: Function) => {
   const {
     localName,
     local,
@@ -28,10 +16,8 @@ export default (info, methods, log) => {
   } = info;
   let destroyed = false;
 
-  log(`${localName}: Connecting call receiver`);
-
-  const handleMessageEvent = event => {
-    if (event.source !== remote || event.data.penpal !== CALL) {
+  const handleMessageEvent = (event: MessageEvent) => {
+    if (event.source !== remote || event.data.penpal !== MessageType.Call) {
       return;
     }
 
@@ -44,12 +30,13 @@ export default (info, methods, log) => {
       return;
     }
 
-    const { methodName, args, id } = event.data;
+    const callMessage: CallMessage = event.data;
+    const { methodName, args, id } = callMessage;
 
     log(`${localName}: Received ${methodName}() call`);
 
-    const createPromiseHandler = resolution => {
-      return returnValue => {
+    const createPromiseHandler = (resolution: Resolution) => {
+      return (returnValue: any) => {
         log(`${localName}: Sending ${methodName}() reply`);
 
         if (destroyed) {
@@ -64,14 +51,17 @@ export default (info, methods, log) => {
           return;
         }
 
-        const message = {
-          penpal: REPLY,
+        const message: ReplyMessage = {
+          penpal: MessageType.Reply,
           id,
           resolution,
           returnValue
         };
 
-        if (resolution === REJECTED && returnValue instanceof Error) {
+        if (
+          resolution === Resolution.Rejected &&
+          returnValue instanceof Error
+        ) {
           message.returnValue = serializeError(returnValue);
           message.returnValueIsError = true;
         }
@@ -81,17 +71,15 @@ export default (info, methods, log) => {
         } catch (err) {
           // If a consumer attempts to send an object that's not cloneable (e.g., window),
           // we want to ensure the receiver's promise gets rejected.
-          if (err.name === DATA_CLONE_ERROR) {
-            remote.postMessage(
-              {
-                penpal: REPLY,
-                id,
-                resolution: REJECTED,
-                returnValue: serializeError(err),
-                returnValueIsError: true
-              },
-              originForSending
-            );
+          if (err.name === NativeErrorName.DataCloneError) {
+            const errorReplyMessage: ReplyMessage = {
+              penpal: MessageType.Reply,
+              id,
+              resolution: Resolution.Rejected,
+              returnValue: serializeError(err),
+              returnValueIsError: true
+            };
+            remote.postMessage(errorReplyMessage, originForSending);
           }
 
           throw err;
@@ -101,13 +89,16 @@ export default (info, methods, log) => {
 
     new Promise(resolve =>
       resolve(methods[methodName].apply(methods, args))
-    ).then(createPromiseHandler(FULFILLED), createPromiseHandler(REJECTED));
+    ).then(
+      createPromiseHandler(Resolution.Fulfilled),
+      createPromiseHandler(Resolution.Rejected)
+    );
   };
 
-  local.addEventListener(MESSAGE, handleMessageEvent);
+  local.addEventListener(NativeEventType.Message, handleMessageEvent);
 
   return () => {
     destroyed = true;
-    local.removeEventListener(MESSAGE, handleMessageEvent);
+    local.removeEventListener(NativeEventType.Message, handleMessageEvent);
   };
 };

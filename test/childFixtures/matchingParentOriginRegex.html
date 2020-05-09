@@ -7,27 +7,33 @@
     Test Iframe
 
     <script>
-      window.onerror = function() {
+      window.onerror = function () {
         console.log.apply(console, arguments);
       };
     </script>
     <script type="text/javascript" src="penpal.js"></script>
     <script type="text/javascript">
+      var escapeRegExp = function (string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+      };
+
       // A cheap way to get the parent origin for our tests.
       var parentOrigin = document.referrer.substring(
         0,
         document.referrer.lastIndexOf('/')
       );
 
+      var parentOriginRegex = new RegExp(escapeRegExp(parentOrigin));
+
       var methods = {
-        multiply: function(num1, num2) {
+        multiply: function (num1, num2) {
           return num1 * num2;
-        }
+        },
       };
 
       Penpal.connectToParent({
-        parentOrigin: parentOrigin,
-        methods: methods
+        parentOrigin: parentOriginRegex,
+        methods: methods,
       });
     </script>
   </body>

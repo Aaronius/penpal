@@ -1,4 +1,4 @@
-const DEFAULT_PORTS = {
+const DEFAULT_PORT_BY_PROTOCOL: {[index: string]: string} = {
   'http:': '80',
   'https:': '443'
 };
@@ -9,10 +9,8 @@ const opaqueOriginSchemes = ['file:', 'data:'];
 
 /**
  * Converts a src value into an origin.
- * @param {string} src
- * @return {string} The URL's origin
  */
-export default src => {
+export default (src: string): string => {
   if (src && opaqueOriginSchemes.find(scheme => src.startsWith(scheme))) {
     // The origin of the child document is an opaque origin and its
     // serialization is "null"
@@ -34,7 +32,7 @@ export default src => {
   if (regexResult) {
     // It's an absolute URL. Use the parsed info.
     // regexResult[1] will be undefined if the URL starts with //
-    protocol = regexResult[1] ? regexResult[1] : location.protocol;
+    protocol = (regexResult[1] ? regexResult[1] : location.protocol);
     hostname = regexResult[2];
     port = regexResult[4];
   } else {
@@ -46,6 +44,8 @@ export default src => {
 
   // If the port is the default for the protocol, we don't want to add it to the origin string
   // or it won't match the message's event.origin.
-  const portSuffix = port && port !== DEFAULT_PORTS[protocol] ? `:${port}` : '';
+
+  const portSuffix =
+    port && port !== DEFAULT_PORT_BY_PROTOCOL[protocol] ? `:${port}` : '';
   return `${protocol}//${hostname}${portSuffix}`;
 };
