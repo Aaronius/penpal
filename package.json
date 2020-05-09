@@ -72,5 +72,8 @@
     "serve-static": "^1.13.2",
     "terser": "^3.13.1",
     "yargs": "^12.0.5"
+  },
+  "publishConfig": {
+    "tag": "4.x"
   }
 }
