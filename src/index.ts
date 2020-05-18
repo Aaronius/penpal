@@ -5,3 +5,4 @@ import { ErrorCode as _ErrorCode } from './enums';
 export const connectToChild = _connectToChild;
 export const connectToParent = _connectToParent;
 export const ErrorCode = _ErrorCode;
+export { CallSender } from './types'

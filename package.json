@@ -18,10 +18,11 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "clean": "rm -rf lib dist",
+    "clean": "rimraf lib/** dist/**",
     "build:lib": "tsc --outDir lib",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
-    "build": "npm-run-all clean build:lib build:dist && ls -lh dist/penpal.min.js",
+    "build:analysis": "node ./scripts/filesize dist/penpal.min.js",
+    "build": "npm-run-all clean build:lib build:dist build:analysis",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{json,js,md,html,babelrc,eslintrc}\"",
     "test": "npm-run-all clean runTests",
@@ -74,6 +75,8 @@
     "serve-static": "^1.13.2",
     "terser": "^4.6.11",
     "typescript": "^3.8.3",
-    "yargs": "^15.3.1"
+    "yargs": "^15.3.1",
+    "rimraf": "^3.0.2",
+    "filesize": "^6.1.0"
   }
 }

@@ -35,11 +35,11 @@ type Options = {
   debug?: boolean;
 };
 
-type Connection = {
+type Connection<TCallSender extends CallSender = CallSender> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<CallSender>;
+  promise: Promise<TCallSender>;
   /**
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
@@ -50,7 +50,7 @@ type Connection = {
 /**
  * Attempts to establish communication with an iframe.
  */
-export default (options: Options): Connection => {
+export default <TCallSender extends CallSender = CallSender>(options: Options): Connection<TCallSender> => {
   let { iframe, methods = {}, childOrigin, timeout, debug = false } = options;
 
   const log = createLogger(debug);
@@ -80,7 +80,7 @@ export default (options: Options): Connection => {
     log
   );
 
-  const promise: Promise<CallSender> = new Promise((resolve, reject) => {
+  const promise: Promise<TCallSender> = new Promise((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (event: MessageEvent) => {
       if (event.source !== iframe.contentWindow || !event.data) {
@@ -93,7 +93,7 @@ export default (options: Options): Connection => {
       }
 
       if (event.data.penpal === MessageType.Ack) {
-        const callSender = handleAckMessage(event);
+        const callSender = handleAckMessage(event) as TCallSender;
 
         if (callSender) {
           stopConnectionTimeout();
