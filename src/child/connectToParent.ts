@@ -35,7 +35,7 @@ type Options = {
   debug?: boolean;
 };
 
-type Connection<TCallSender extends CallSender = CallSender> = {
+type Connection<TCallSender extends object = CallSender> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
@@ -50,7 +50,7 @@ type Connection<TCallSender extends CallSender = CallSender> = {
 /**
  * Attempts to establish communication with the parent window.
  */
-export default <TCallSender extends CallSender = CallSender>(options: Options = {}): Connection<TCallSender> => {
+export default <TCallSender extends object = CallSender>(options: Options = {}): Connection<TCallSender> => {
   const { parentOrigin = '*', methods = {}, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor();
