@@ -35,11 +35,11 @@ type Options = {
   debug?: boolean;
 };
 
-type Connection = {
+type Connection<TCallSender extends object = CallSender> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<CallSender>;
+  promise: Promise<TCallSender>;
   /**
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
@@ -50,7 +50,7 @@ type Connection = {
 /**
  * Attempts to establish communication with the parent window.
  */
-export default (options: Options = {}): Connection => {
+export default <TCallSender extends object = CallSender>(options: Options = {}): Connection<TCallSender> => {
   const { parentOrigin = '*', methods = {}, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor();
@@ -73,7 +73,7 @@ export default (options: Options = {}): Connection => {
     window.parent.postMessage(synMessage, parentOriginForSyn);
   };
 
-  const promise: Promise<CallSender> = new Promise((resolve, reject) => {
+  const promise: Promise<TCallSender> = new Promise((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (event: MessageEvent) => {
       // Under niche scenarios, we get into this function after
@@ -92,7 +92,7 @@ export default (options: Options = {}): Connection => {
       }
 
       if (event.data.penpal === MessageType.SynAck) {
-        const callSender = handleSynAckMessage(event);
+        const callSender = handleSynAckMessage(event) as TCallSender;
         if (callSender) {
           window.removeEventListener(NativeEventType.Message, handleMessage);
           stopConnectionTimeout();
