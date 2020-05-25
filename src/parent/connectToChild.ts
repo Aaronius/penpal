@@ -3,7 +3,7 @@ import getOriginFromSrc from './getOriginFromSrc';
 import createLogger from '../createLogger';
 import handleSynMessageFactory from './handleSynMessageFactory';
 import handleAckMessageFactory from './handleAckMessageFactory';
-import { CallSender, Methods, PenpalError } from '../types';
+import { CallSender, Methods, PenpalError, AsyncMethodReturns } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
 import monitorIframeRemoval from './monitorIframeRemoval';
@@ -39,7 +39,7 @@ type Connection<TCallSender extends object = CallSender> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<TCallSender>;
+  promise: Promise<AsyncMethodReturns<TCallSender>>;
   /**
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
@@ -80,7 +80,7 @@ export default <TCallSender extends object = CallSender>(options: Options): Conn
     log
   );
 
-  const promise: Promise<TCallSender> = new Promise((resolve, reject) => {
+  const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (event: MessageEvent) => {
       if (event.source !== iframe.contentWindow || !event.data) {
@@ -93,7 +93,7 @@ export default <TCallSender extends object = CallSender>(options: Options): Conn
       }
 
       if (event.data.penpal === MessageType.Ack) {
-        const callSender = handleAckMessage(event) as TCallSender;
+        const callSender = handleAckMessage(event) as AsyncMethodReturns<TCallSender>;
 
         if (callSender) {
           stopConnectionTimeout();

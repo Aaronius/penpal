@@ -1,6 +1,6 @@
 import createDestructor from '../createDestructor';
 import createLogger from '../createLogger';
-import { SynMessage, Methods, PenpalError, CallSender } from '../types';
+import { SynMessage, Methods, PenpalError, CallSender, AsyncMethodReturns } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 import validateWindowIsIframe from './validateWindowIsIframe';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
@@ -39,7 +39,7 @@ type Connection<TCallSender extends object = CallSender> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<TCallSender>;
+  promise: Promise<AsyncMethodReturns<TCallSender>>;
   /**
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
@@ -73,7 +73,7 @@ export default <TCallSender extends object = CallSender>(options: Options = {}):
     window.parent.postMessage(synMessage, parentOriginForSyn);
   };
 
-  const promise: Promise<TCallSender> = new Promise((resolve, reject) => {
+  const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (event: MessageEvent) => {
       // Under niche scenarios, we get into this function after
@@ -92,7 +92,7 @@ export default <TCallSender extends object = CallSender>(options: Options = {}):
       }
 
       if (event.data.penpal === MessageType.SynAck) {
-        const callSender = handleSynAckMessage(event) as TCallSender;
+        const callSender = handleSynAckMessage(event) as AsyncMethodReturns<TCallSender>;
         if (callSender) {
           window.removeEventListener(NativeEventType.Message, handleMessage);
           stopConnectionTimeout();
