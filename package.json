@@ -21,7 +21,7 @@
   "scripts": {
     "clean": "rimraf lib es5 dist",
     "build:lib": "tsc --outDir lib",
-    "build:es5": "babel ./src --out-dir ./es5 --extensions '.ts'",
+    "build:es5": "babel ./src --out-dir ./es5 --extensions '.ts' && tsc --emitDeclarationOnly --outDir es5",
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
     "build:analysis": "node ./scripts/filesize dist/penpal.min.js",
     "build": "npm-run-all clean build:lib build:es5 build:dist build:analysis",
