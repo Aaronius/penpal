@@ -152,7 +152,7 @@ The return value of `connectToParent` is a `connection` object with the followin
 
 If the child iframe attempts to reconnect with the parent, the parent will accept the new connection. This could happen, for example, if a user refreshes the child iframe or navigates within the iframe to a different page that also uses Penpal. In this case, the `child` object the parent received when the initial connection was established will be updated with the new methods provided by the child iframe.
 
-NOTE: Currently there is no API to notify consumers of a reconnection. If this is important for you, please file an issue and explain why it would be beneficial to you.
+NOTE: Currently there is no API to notify consumers of a reconnection. If this is important for you, please provide feedback on [this issue](https://github.com/Aaronius/penpal/issues/58) with how you would like to see the API designed.
 
 ## Errors
 
