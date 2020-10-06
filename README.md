@@ -184,6 +184,12 @@ Penpal is designed to run successfully on the most recent versions of Chrome, Fi
 
 Penpal has also been reported to work within Ionic projects on iOS and Android devices.
 
+## Cypress Support
+
+When calling `connectToParent`, Penpal checks to see if it is running inside an iframe and, if not, throws a `NotInIframe` error to make you aware of the problem. When running in [Cypress](https://docs.cypress.io/), Cypress by default attempts to "modify obstructive code". In other words, if any JavaScript attempts to perform framebusting, [Cypress tries to modify the code since such techniques prevent Cypress from working properly](https://docs.cypress.io/guides/references/configuration.html#modifyObstructiveCode). As it turns out, Penpal's check to see if it is running inside of an iframe is **not** performing framebusting, but Cypress sees it as obstrucive code anyway and attempts to modify it, which actually breaks testing with Cypress + Penpal entirely.
+
+To work around this issue, disable Cypress's modification of obstructive code by setting [`modifyObstructiveCode`](https://docs.cypress.io/guides/references/configuration.html#modifyObstructiveCode) to `false` within your `cypress.json` file. If you find you must have `modifyObstructiveCode` enabled for other reasons, please comment on [this issue](https://github.com/Aaronius/penpal/issues/61) with details about your situation.
+
 ## Inspiration
 
 This library is inspired by:
