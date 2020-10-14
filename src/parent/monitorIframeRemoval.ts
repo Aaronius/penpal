@@ -14,7 +14,7 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
 export default (iframe: HTMLIFrameElement, destructor: Destructor) => {
   const { destroy, onDestroy } = destructor;
   const checkIframeInDocIntervalId = setInterval(() => {
-    if (!document.contains(iframe)) {
+    if (!iframe.isConnected) {
       clearInterval(checkIframeInDocIntervalId);
       destroy();
     }
