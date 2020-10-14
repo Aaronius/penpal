@@ -105,3 +105,15 @@ export type AsyncMethodReturns<T, K extends keyof T = FunctionPropertyNames<T>> 
     ? (...args: A) => Promise<R>
     : T[KK]
 };
+
+export type Connection<TCallSender extends object = CallSender> = {
+  /**
+   * A promise which will be resolved once a connection has been established.
+   */
+  promise: Promise<AsyncMethodReturns<TCallSender>>;
+  /**
+   * A method that, when called, will disconnect any messaging channels.
+   * You may call this even before a connection has been established.
+   */
+  destroy: Function;
+};

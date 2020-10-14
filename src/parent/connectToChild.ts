@@ -1,13 +1,15 @@
-import createDestructor from '../createDestructor';
-import getOriginFromSrc from './getOriginFromSrc';
-import createLogger from '../createLogger';
-import handleSynMessageFactory from './handleSynMessageFactory';
-import handleAckMessageFactory from './handleAckMessageFactory';
-import { CallSender, Methods, PenpalError, AsyncMethodReturns } from '../types';
+import { CallSender, PenpalError, AsyncMethodReturns, Connection, Methods } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
-import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
+
+import createDestructor from '../createDestructor';
+import createLogger from '../createLogger';
+import getOriginFromSrc from './getOriginFromSrc';
+import handleAckMessageFactory from './handleAckMessageFactory';
+import handleSynMessageFactory from './handleSynMessageFactory';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import startConnectionTimeout from '../startConnectionTimeout';
+import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
+
 
 type Options = {
   /**
@@ -33,18 +35,6 @@ type Options = {
    * Whether log messages should be emitted to the console.
    */
   debug?: boolean;
-};
-
-type Connection<TCallSender extends object = CallSender> = {
-  /**
-   * A promise which will be resolved once a connection has been established.
-   */
-  promise: Promise<AsyncMethodReturns<TCallSender>>;
-  /**
-   * A method that, when called, will disconnect any messaging channels.
-   * You may call this even before a connection has been established.
-   */
-  destroy: Function;
 };
 
 /**
