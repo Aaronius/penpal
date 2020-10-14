@@ -1,6 +1,6 @@
 import { Destructor } from '../createDestructor';
 
-const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
+const DEFAULT_CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
 
 /**
  * Monitors for iframe removal and destroys connection if iframe
@@ -11,14 +11,18 @@ const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
  * reference to the iframe in their closures, the iframe would stick
  * around too.
  */
-export default (iframe: HTMLIFrameElement, destructor: Destructor) => {
+export default (iframe: HTMLIFrameElement, destructor: Destructor, interval: number | undefined) => {
+  if (interval === 0) {
+    return;
+  }
+
   const { destroy, onDestroy } = destructor;
   const checkIframeInDocIntervalId = setInterval(() => {
     if (!document.contains(iframe)) {
       clearInterval(checkIframeInDocIntervalId);
       destroy();
     }
-  }, CHECK_IFRAME_IN_DOC_INTERVAL);
+  }, interval === undefined ? DEFAULT_CHECK_IFRAME_IN_DOC_INTERVAL : interval);
 
   onDestroy(() => {
     clearInterval(checkIframeInDocIntervalId);
