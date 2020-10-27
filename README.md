@@ -23,7 +23,7 @@ Preferably, you'll be able to use Penpal from npm with a bundler like [Webpack](
 
 If you don't want to use npm to manage client packages, Penpal also provides a UMD distribution in a `dist` folder which is hosted on a CDN:
 
-`<script src="https://unpkg.com/penpal/dist/penpal.min.js"></script>`
+`<script src="https://unpkg.com/penpal@^5/dist/penpal.min.js"></script>`
 
 Penpal will then be installed on `window.Penpal`. `window.Penpal` will contain the following properties:
 
