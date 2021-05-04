@@ -8,7 +8,6 @@ import {
   AsyncMethodReturns,
 } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
-import validateWindowIsIframe from './validateWindowIsIframe';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
 import startConnectionTimeout from '../startConnectionTimeout';
 
@@ -63,8 +62,6 @@ export default <TCallSender extends object = CallSender>(
   const log = createLogger(debug);
   const destructor = createDestructor();
   const { destroy, onDestroy } = destructor;
-
-  validateWindowIsIframe();
 
   const handleSynAckMessage = handleSynAckMessageFactory(
     parentOrigin,

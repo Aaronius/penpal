@@ -32,7 +32,6 @@ Penpal.connectToChild
 Penpal.connectToParent
 Penpal.ErrorCode.ConnectionDestroyed
 Penpal.ErrorCode.ConnectionTimeout
-Penpal.ErrorCode.NotInIframe
 Penpal.ErrorCode.NoIframeSrc
 ```
 
@@ -163,8 +162,6 @@ Penpal will throw (or reject promises with) errors in certain situations. Each e
   - This error will be thrown when attempting to call a method on `child` or `parent` objects and the connection was previously destroyed.
 - `ConnectionTimeout`
   - `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.
-- `NotInIframe`
-  - This error will be thrown when attempting to call `connectToParent()` from outside of an iframe context.
 - `NoIframeSrc`
   - This error will be thrown when the iframe passed into `connectToChild` does not have `src` or `srcdoc` set.
 
@@ -174,7 +171,6 @@ For your convenience, these error codes can be imported as follows:
 import { ErrorCode } from 'penpal';
 // ErrorCode.ConnectionDestroyed
 // ErrorCode.ConnectionTimeout
-// ErrorCode.NotInIframe
 // ErrorCode.NoIframeSrc
 ```
 
@@ -187,12 +183,6 @@ Penpal has also been reported to work within Ionic projects on iOS and Android d
 ## React Support
 
 To implement Penpal within React applications more easily, check out [React-Penpal](https://www.npmjs.com/package/react-penpal).
-
-## Cypress Support
-
-When calling `connectToParent`, Penpal checks to see if it is running inside an iframe and, if not, throws a `NotInIframe` error to make you aware of the problem. When running in [Cypress](https://docs.cypress.io/), Cypress by default attempts to "modify obstructive code". In other words, if any JavaScript attempts to perform framebusting, [Cypress tries to modify the code since such techniques prevent Cypress from working properly](https://docs.cypress.io/guides/references/configuration.html#modifyObstructiveCode). As it turns out, Penpal's check to see if it is running inside of an iframe is **not** performing framebusting, but Cypress sees it as obstrucive code anyway and attempts to modify it, which actually breaks testing with Cypress + Penpal entirely.
-
-To work around this issue, disable Cypress's modification of obstructive code by setting [`modifyObstructiveCode`](https://docs.cypress.io/guides/references/configuration.html#modifyObstructiveCode) to `false` within your `cypress.json` file. If you find you must have `modifyObstructiveCode` enabled for other reasons, please comment on [this issue](https://github.com/Aaronius/penpal/issues/61) with details about your situation.
 
 ## Inspiration
 
