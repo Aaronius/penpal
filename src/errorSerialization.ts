@@ -10,11 +10,11 @@ type SerializedError = {
 export const serializeError = ({
   name,
   message,
-  stack
+  stack,
 }: Error): SerializedError => ({
   name,
   message,
-  stack
+  stack,
 });
 
 /**
@@ -23,6 +23,6 @@ export const serializeError = ({
 export const deserializeError = (obj: SerializedError): Error => {
   const deserializedError = new Error();
   // @ts-ignore
-  Object.keys(obj).forEach(key => (deserializedError[key] = obj[key]));
+  Object.keys(obj).forEach((key) => (deserializedError[key] = obj[key]));
   return deserializedError;
 };

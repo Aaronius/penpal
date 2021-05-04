@@ -18,12 +18,12 @@ export default (): Destructor => {
   return {
     destroy(error) {
       destroyed = true;
-      callbacks.forEach(callback => {
+      callbacks.forEach((callback) => {
         callback(error);
       });
     },
     onDestroy(callback) {
       destroyed ? callback() : callbacks.push(callback);
-    }
+    },
   };
 };

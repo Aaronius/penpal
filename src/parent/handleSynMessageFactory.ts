@@ -13,9 +13,7 @@ export default (
   return (event: MessageEvent) => {
     if (event.origin !== childOrigin) {
       log(
-        `Parent: Handshake - Received SYN message from origin ${
-          event.origin
-        } which did not match expected origin ${childOrigin}`
+        `Parent: Handshake - Received SYN message from origin ${event.origin} which did not match expected origin ${childOrigin}`
       );
       return;
     }
@@ -24,7 +22,7 @@ export default (
 
     const synAckMessage: SynAckMessage = {
       penpal: MessageType.SynAck,
-      methodNames: Object.keys(methods)
+      methodNames: Object.keys(methods),
     };
 
     (event.source as Window).postMessage(synAckMessage, originForSending);

@@ -23,9 +23,7 @@ export default (
 
     if (!originQualifies) {
       log(
-        `Child: Handshake - Received SYN-ACK from origin ${
-          event.origin
-        } which did not match expected origin ${parentOrigin}`
+        `Child: Handshake - Received SYN-ACK from origin ${event.origin} which did not match expected origin ${parentOrigin}`
       );
       return;
     }
@@ -35,11 +33,11 @@ export default (
     // If event.origin is "null", the remote protocol is file: or data: and we
     // must post messages with "*" as targetOrigin when sending messages.
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-    const originForSending = event.origin === 'null' ? '*' : event.origin
+    const originForSending = event.origin === 'null' ? '*' : event.origin;
 
     const ackMessage: AckMessage = {
       penpal: MessageType.Ack,
-      methodNames: Object.keys(methods)
+      methodNames: Object.keys(methods),
     };
 
     window.parent.postMessage(ackMessage, originForSending);
@@ -49,7 +47,7 @@ export default (
       local: window,
       remote: window.parent,
       originForSending,
-      originForReceiving: event.origin
+      originForReceiving: event.origin,
     };
 
     const destroyCallReceiver = connectCallReceiver(info, methods, log);

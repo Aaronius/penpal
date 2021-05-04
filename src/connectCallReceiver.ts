@@ -1,6 +1,11 @@
 import { serializeError } from './errorSerialization';
 import { CallMessage, Methods, ReplyMessage, WindowsInfo } from './types';
-import { MessageType, NativeEventType, NativeErrorName, Resolution } from './enums';
+import {
+  MessageType,
+  NativeEventType,
+  NativeErrorName,
+  Resolution,
+} from './enums';
 
 /**
  * Listens for "call" messages coming from the remote, executes the corresponding method, and
@@ -12,7 +17,7 @@ export default (info: WindowsInfo, methods: Methods, log: Function) => {
     local,
     remote,
     originForSending,
-    originForReceiving
+    originForReceiving,
   } = info;
   let destroyed = false;
 
@@ -23,9 +28,7 @@ export default (info: WindowsInfo, methods: Methods, log: Function) => {
 
     if (event.origin !== originForReceiving) {
       log(
-        `${localName} received message from origin ${
-          event.origin
-        } which did not match expected origin ${originForReceiving}`
+        `${localName} received message from origin ${event.origin} which did not match expected origin ${originForReceiving}`
       );
       return;
     }
@@ -55,7 +58,7 @@ export default (info: WindowsInfo, methods: Methods, log: Function) => {
           penpal: MessageType.Reply,
           id,
           resolution,
-          returnValue
+          returnValue,
         };
 
         if (
@@ -77,7 +80,7 @@ export default (info: WindowsInfo, methods: Methods, log: Function) => {
               id,
               resolution: Resolution.Rejected,
               returnValue: serializeError(err),
-              returnValueIsError: true
+              returnValueIsError: true,
             };
             remote.postMessage(errorReplyMessage, originForSending);
           }
@@ -87,7 +90,7 @@ export default (info: WindowsInfo, methods: Methods, log: Function) => {
       };
     };
 
-    new Promise(resolve =>
+    new Promise((resolve) =>
       resolve(methods[methodName].apply(methods, args))
     ).then(
       createPromiseHandler(Resolution.Fulfilled),

@@ -5,5 +5,5 @@ import { ErrorCode } from './enums';
 export default {
   connectToChild,
   connectToParent,
-  ErrorCode
+  ErrorCode,
 };

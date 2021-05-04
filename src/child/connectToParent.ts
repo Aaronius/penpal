@@ -1,6 +1,12 @@
 import createDestructor from '../createDestructor';
 import createLogger from '../createLogger';
-import { SynMessage, Methods, PenpalError, CallSender, AsyncMethodReturns } from '../types';
+import {
+  SynMessage,
+  Methods,
+  PenpalError,
+  CallSender,
+  AsyncMethodReturns,
+} from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 import validateWindowIsIframe from './validateWindowIsIframe';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
@@ -50,7 +56,9 @@ type Connection<TCallSender extends object = CallSender> = {
 /**
  * Attempts to establish communication with the parent window.
  */
-export default <TCallSender extends object = CallSender>(options: Options = {}): Connection<TCallSender> => {
+export default <TCallSender extends object = CallSender>(
+  options: Options = {}
+): Connection<TCallSender> => {
   const { parentOrigin = '*', methods = {}, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor();
@@ -73,53 +81,57 @@ export default <TCallSender extends object = CallSender>(options: Options = {}):
     window.parent.postMessage(synMessage, parentOriginForSyn);
   };
 
-  const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise((resolve, reject) => {
-    const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
-    const handleMessage = (event: MessageEvent) => {
-      // Under niche scenarios, we get into this function after
-      // the iframe has been removed from the DOM. In Edge, this
-      // results in "Object expected" errors being thrown when we
-      // try to access properties on window (global properties).
-      // For this reason, we try to access a global up front (clearTimeout)
-      // and if it fails we can assume the iframe has been removed
-      // and we ignore the message event.
-      if (!areGlobalsAccessible()) {
-        return;
-      }
-
-      if (event.source !== parent || !event.data) {
-        return;
-      }
-
-      if (event.data.penpal === MessageType.SynAck) {
-        const callSender = handleSynAckMessage(event) as AsyncMethodReturns<TCallSender>;
-        if (callSender) {
-          window.removeEventListener(NativeEventType.Message, handleMessage);
-          stopConnectionTimeout();
-          resolve(callSender);
+  const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise(
+    (resolve, reject) => {
+      const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
+      const handleMessage = (event: MessageEvent) => {
+        // Under niche scenarios, we get into this function after
+        // the iframe has been removed from the DOM. In Edge, this
+        // results in "Object expected" errors being thrown when we
+        // try to access properties on window (global properties).
+        // For this reason, we try to access a global up front (clearTimeout)
+        // and if it fails we can assume the iframe has been removed
+        // and we ignore the message event.
+        if (!areGlobalsAccessible()) {
+          return;
         }
-      }
-    };
 
-    window.addEventListener(NativeEventType.Message, handleMessage);
+        if (event.source !== parent || !event.data) {
+          return;
+        }
 
-    sendSynMessage();
+        if (event.data.penpal === MessageType.SynAck) {
+          const callSender = handleSynAckMessage(event) as AsyncMethodReturns<
+            TCallSender
+          >;
+          if (callSender) {
+            window.removeEventListener(NativeEventType.Message, handleMessage);
+            stopConnectionTimeout();
+            resolve(callSender);
+          }
+        }
+      };
 
-    onDestroy((error?: PenpalError) => {
-      window.removeEventListener(NativeEventType.Message, handleMessage);
-      if (!error) {
-        error = new Error('Connection destroyed') as PenpalError;
-        error.code = ErrorCode.ConnectionDestroyed;
-      }
-      reject(error);
-    });
-  });
+      window.addEventListener(NativeEventType.Message, handleMessage);
+
+      sendSynMessage();
+
+      onDestroy((error?: PenpalError) => {
+        window.removeEventListener(NativeEventType.Message, handleMessage);
+        if (!error) {
+          error = new Error('Connection destroyed') as PenpalError;
+          error.code = ErrorCode.ConnectionDestroyed;
+        }
+        reject(error);
+      });
+    }
+  );
 
   return {
     promise,
     destroy() {
       // Don't allow consumer to pass an error into destroy.
       destroy();
-    }
+    },
   };
 };

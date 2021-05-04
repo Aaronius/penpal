@@ -1,4 +1,10 @@
-import { CallSender, PenpalError, AsyncMethodReturns, Connection, Methods } from '../types';
+import {
+  CallSender,
+  PenpalError,
+  AsyncMethodReturns,
+  Connection,
+  Methods,
+} from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 
 import createDestructor from '../createDestructor';
@@ -9,7 +15,6 @@ import handleSynMessageFactory from './handleSynMessageFactory';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import startConnectionTimeout from '../startConnectionTimeout';
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
-
 
 type Options = {
   /**
@@ -40,7 +45,9 @@ type Options = {
 /**
  * Attempts to establish communication with an iframe.
  */
-export default <TCallSender extends object = CallSender>(options: Options): Connection<TCallSender> => {
+export default <TCallSender extends object = CallSender>(
+  options: Options
+): Connection<TCallSender> => {
   let { iframe, methods = {}, childOrigin, timeout, debug = false } = options;
 
   const log = createLogger(debug);
@@ -70,49 +77,53 @@ export default <TCallSender extends object = CallSender>(options: Options): Conn
     log
   );
 
-  const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise((resolve, reject) => {
-    const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
-    const handleMessage = (event: MessageEvent) => {
-      if (event.source !== iframe.contentWindow || !event.data) {
-        return;
-      }
-
-      if (event.data.penpal === MessageType.Syn) {
-        handleSynMessage(event);
-        return;
-      }
-
-      if (event.data.penpal === MessageType.Ack) {
-        const callSender = handleAckMessage(event) as AsyncMethodReturns<TCallSender>;
-
-        if (callSender) {
-          stopConnectionTimeout();
-          resolve(callSender);
+  const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise(
+    (resolve, reject) => {
+      const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
+      const handleMessage = (event: MessageEvent) => {
+        if (event.source !== iframe.contentWindow || !event.data) {
+          return;
         }
-        return;
-      }
-    };
 
-    window.addEventListener(NativeEventType.Message, handleMessage);
+        if (event.data.penpal === MessageType.Syn) {
+          handleSynMessage(event);
+          return;
+        }
 
-    log('Parent: Awaiting handshake');
-    monitorIframeRemoval(iframe, destructor);
+        if (event.data.penpal === MessageType.Ack) {
+          const callSender = handleAckMessage(event) as AsyncMethodReturns<
+            TCallSender
+          >;
 
-    onDestroy((error?: PenpalError) => {
-      window.removeEventListener(NativeEventType.Message, handleMessage);
-      if (!error) {
-        error = new Error('Connection destroyed') as PenpalError;
-        error.code = ErrorCode.ConnectionDestroyed;
-      }
-      reject(error);
-    });
-  });
+          if (callSender) {
+            stopConnectionTimeout();
+            resolve(callSender);
+          }
+          return;
+        }
+      };
+
+      window.addEventListener(NativeEventType.Message, handleMessage);
+
+      log('Parent: Awaiting handshake');
+      monitorIframeRemoval(iframe, destructor);
+
+      onDestroy((error?: PenpalError) => {
+        window.removeEventListener(NativeEventType.Message, handleMessage);
+        if (!error) {
+          error = new Error('Connection destroyed') as PenpalError;
+          error.code = ErrorCode.ConnectionDestroyed;
+        }
+        reject(error);
+      });
+    }
+  );
 
   return {
     promise,
     destroy() {
       // Don't allow consumer to pass an error into destroy.
       destroy();
-    }
+    },
   };
 };

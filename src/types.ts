@@ -1,6 +1,5 @@
 import { ErrorCode, MessageType, Resolution } from './enums';
 
-
 /**
  * An ACK handshake message.
  */
@@ -12,12 +11,15 @@ export type AckMessage = {
 /**
  * A mapped type to convert non async methods into async methods and exclude any non function properties.
  */
-export type AsyncMethodReturns<T, K extends keyof T = FunctionPropertyNames<T>> = {
+export type AsyncMethodReturns<
+  T,
+  K extends keyof T = FunctionPropertyNames<T>
+> = {
   [KK in K]: T[KK] extends (...args: any[]) => PromiseLike<any>
-      ? T[KK]
-      : T[KK] extends (...args: infer A) => infer R
-          ? (...args: A) => Promise<R>
-          : T[KK]
+    ? T[KK]
+    : T[KK] extends (...args: infer A) => infer R
+    ? (...args: A) => Promise<R>
+    : T[KK];
 };
 
 /**
@@ -52,7 +54,9 @@ export type Connection<TCallSender extends object = CallSender> = {
 /**
  * A mapped type to extract only object properties which are functions.
  */
-export type FunctionPropertyNames<T> = { [K in keyof T]: T[K] extends Function ? K : never }[keyof T];
+export type FunctionPropertyNames<T> = {
+  [K in keyof T]: T[K] extends Function ? K : never;
+}[keyof T];
 
 /**
  * Methods to expose to the remote window.

@@ -9,4 +9,4 @@ export default () => {
     error.code = ErrorCode.NotInIframe;
     throw error;
   }
-}
+};

@@ -5,7 +5,7 @@ import {
   CallSender,
   PenpalError,
   ReplyMessage,
-  WindowsInfo
+  WindowsInfo,
 } from './types';
 import { ErrorCode, MessageType, NativeEventType, Resolution } from './enums';
 
@@ -32,7 +32,7 @@ export default (
     local,
     remote,
     originForSending,
-    originForReceiving
+    originForReceiving,
   } = info;
   let destroyed = false;
 
@@ -86,9 +86,7 @@ export default (
 
           if (event.origin !== originForReceiving) {
             log(
-              `${localName} received message from origin ${
-                event.origin
-              } which did not match expected origin ${originForReceiving}`
+              `${localName} received message from origin ${event.origin} which did not match expected origin ${originForReceiving}`
             );
             return;
           }
@@ -96,7 +94,10 @@ export default (
           const replyMessage: ReplyMessage = event.data;
 
           log(`${localName}: Received ${methodName}() reply`);
-          local.removeEventListener(NativeEventType.Message, handleMessageEvent);
+          local.removeEventListener(
+            NativeEventType.Message,
+            handleMessageEvent
+          );
 
           let returnValue = replyMessage.returnValue;
 
@@ -114,7 +115,7 @@ export default (
           penpal: MessageType.Call,
           id,
           methodName,
-          args
+          args,
         };
         remote.postMessage(callMessage, originForSending);
       });

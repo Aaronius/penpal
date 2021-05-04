@@ -25,9 +25,7 @@ export default (
   return (event: MessageEvent): CallSender | undefined => {
     if (event.origin !== childOrigin) {
       log(
-        `Parent: Handshake - Received ACK message from origin ${
-          event.origin
-        } which did not match expected origin ${childOrigin}`
+        `Parent: Handshake - Received ACK message from origin ${event.origin} which did not match expected origin ${childOrigin}`
       );
       return;
     }
@@ -39,7 +37,7 @@ export default (
       local: window,
       remote: event.source as Window,
       originForSending: originForSending,
-      originForReceiving: childOrigin
+      originForReceiving: childOrigin,
     };
 
     // If the child reconnected, we need to destroy the prior call receiver
@@ -54,7 +52,7 @@ export default (
     // If the child reconnected, we need to remove the methods from the
     // previous call receiver off the sender.
     if (receiverMethodNames) {
-      receiverMethodNames.forEach(receiverMethodName => {
+      receiverMethodNames.forEach((receiverMethodName) => {
         delete callSender[receiverMethodName];
       });
     }

@@ -22,5 +22,5 @@ export default (iframe: HTMLIFrameElement, destructor: Destructor) => {
 
   onDestroy(() => {
     clearInterval(checkIframeInDocIntervalId);
-  })
-}
+  });
+};

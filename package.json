@@ -26,19 +26,23 @@
     "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
     "build:analysis": "node ./scripts/filesize dist/penpal.min.js",
     "build": "npm-run-all clean build:lib build:es5 build:dist build:analysis",
-    "lint": "eslint .",
-    "format": "prettier --write \"**/*.{json,js,md,html,babelrc,eslintrc}\"",
+    "lint": "eslint **/*.js",
+    "format": "prettier --write \"**/*.{json,ts,js,md,html,babelrc,eslintrc}\"",
     "test": "npm-run-all clean runTests",
     "test:watch": "npm-run-all clean runTests:watch",
     "test:sauce": "npm-run-all build 'runTests -- --sauce'",
     "runTests": "node ./scripts/test.js",
     "runTests:watch": "npm run runTests -- --watch",
-    "prepublishOnly": "npm-run-all format lint test build"
+    "prepublishOnly": "npm-run-all format lint test build",
+    "prepare": "husky install"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm-run-all format lint test && git add ."
-    }
+  "lint-staged": {
+    "**/*.js": [
+      "eslint --cache --fix"
+    ],
+    "**/*.{json,ts,js,md,html,babelrc,eslintrc}": [
+      "prettier --write"
+    ]
   },
   "browserslist": [
     "last 2 Chrome version",
@@ -51,7 +55,6 @@
     "es5",
     "dist"
   ],
-  "dependencies": {},
   "devDependencies": {
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.3.4",
@@ -60,11 +63,11 @@
     "@metahub/karma-rollup-preprocessor": "^6.0.0",
     "@rollup/plugin-typescript": "^4.0.0",
     "connect": "^3.6.6",
-    "eslint": "^6.8.0",
+    "eslint": "^7.25.0",
     "eslint-config-prettier": "^6.10.1",
     "eslint-plugin-import": "^2.14.0",
     "filesize": "^6.1.0",
-    "husky": "^4.2.5",
+    "husky": "^6.0.0",
     "jasmine-core": "^3.3.0",
     "karma": "^5.0.2",
     "karma-babel-preprocessor": "^8.0.0-beta.0",
@@ -82,5 +85,8 @@
     "terser": "^4.6.11",
     "typescript": "^3.8.3",
     "yargs": "^15.3.1"
+  },
+  "dependencies": {
+    "lint-staged": "^10.5.4"
   }
 }

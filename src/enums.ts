@@ -8,20 +8,20 @@ export enum MessageType {
 
 export enum Resolution {
   Fulfilled = 'fulfilled',
-  Rejected = 'rejected'
+  Rejected = 'rejected',
 }
 
 export enum ErrorCode {
   ConnectionDestroyed = 'ConnectionDestroyed',
   ConnectionTimeout = 'ConnectionTimeout',
   NotInIframe = 'NotInIframe',
-  NoIframeSrc = 'NoIframeSrc'
+  NoIframeSrc = 'NoIframeSrc',
 }
 
 export enum NativeErrorName {
-  DataCloneError = 'DataCloneError'
+  DataCloneError = 'DataCloneError',
 }
 
 export enum NativeEventType {
-  Message = 'message'
+  Message = 'message',
 }
