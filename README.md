@@ -114,7 +114,7 @@ connection.promise.then((parent) => {
 
 `options.methods: Object` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
-`options.childOrigin: string` (optional) In the vast majority of cases, Penpal can automatically determine the child origin based on the `src` or `srcdoc` property that you have set on the iframe. Unfortunately, browsers are inconsistent in certain cases, particularly when using the `file://` protocol on various devices. If you receive an error saying that the parent received a hanshake from an unexpected origin, you may need to manually pass the child origin using this option.
+`options.childOrigin: string` (optional) In the vast majority of cases, Penpal can automatically determine the child origin based on the `src` or `srcdoc` property that you have set on the iframe. Unfortunately, browsers are inconsistent in certain cases, particularly when using the `file://` protocol on various devices. If you receive an error saying that the parent received a handshake from an unexpected origin, you may need to manually pass the child origin using this option.
 
 `options.timeout: number` (optional) The amount of time, in milliseconds, Penpal should wait for the child to respond before rejecting the connection promise. There is no timeout by default.
 
