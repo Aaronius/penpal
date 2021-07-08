@@ -39,6 +39,9 @@ export type CallSender = {
   [index: string]: Function;
 };
 
+/**
+ * Connection object returned from calling connectToChild or connectToParent.
+ */
 export type Connection<TCallSender extends object = CallSender> = {
   /**
    * A promise which will be resolved once a connection has been established.
