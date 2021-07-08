@@ -180,10 +180,6 @@ Penpal is designed to run successfully on the most recent versions of Chrome, Fi
 
 Penpal has also been reported to work within Ionic projects on iOS and Android devices.
 
-## React Support
-
-To implement Penpal within React applications more easily, check out [React-Penpal](https://www.npmjs.com/package/react-penpal).
-
 ## Inspiration
 
 This library is inspired by:
