@@ -276,31 +276,4 @@ describe('connection management', () => {
       });
     }
   );
-
-  it(
-    'destroys connection if iframe has been removed from DOM ' +
-      'and method is called',
-    () => {
-      const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
-
-      var connection = Penpal.connectToChild({
-        iframe,
-        appendTo: document.body,
-      });
-
-      return connection.promise.then((child) => {
-        document.body.removeChild(iframe);
-
-        let error;
-        try {
-          child.multiply(2, 3);
-        } catch (err) {
-          error = err;
-        }
-
-        expect(error).toBeDefined();
-        expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
-      });
-    }
-  );
 });

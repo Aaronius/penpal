@@ -51,7 +51,7 @@ export default <TCallSender extends object = CallSender>(
   let { iframe, methods = {}, childOrigin, timeout, debug = false } = options;
 
   const log = createLogger(debug);
-  const destructor = createDestructor();
+  const destructor = createDestructor('Parent', log);
   const { onDestroy, destroy } = destructor;
 
   if (!childOrigin) {
@@ -110,11 +110,10 @@ export default <TCallSender extends object = CallSender>(
 
       onDestroy((error?: PenpalError) => {
         window.removeEventListener(NativeEventType.Message, handleMessage);
-        if (!error) {
-          error = new Error('Connection destroyed') as PenpalError;
-          error.code = ErrorCode.ConnectionDestroyed;
+
+        if (error) {
+          reject(error);
         }
-        reject(error);
       });
     }
   );

@@ -158,7 +158,6 @@ NOTE: Currently there is no API to notify consumers of a reconnection. If this i
 Penpal will throw (or reject promises with) errors in certain situations. Each error will have a `code` property which may be used for programmatic decisioning (e.g., do something if the error was due to a connection timing out) along with a `message` describing the problem. Errors may be thrown with the following codes:
 
 - `ConnectionDestroyed`
-  - `connection.promise` will be rejected with this error if the connection is destroyed (by calling `connection.destroy()`) while Penpal is attempting to establish the connection.
   - This error will be thrown when attempting to call a method on `child` or `parent` objects and the connection was previously destroyed.
 - `ConnectionTimeout`
   - `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.

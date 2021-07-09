@@ -60,7 +60,7 @@ export default <TCallSender extends object = CallSender>(
 ): Connection<TCallSender> => {
   const { parentOrigin = '*', methods = {}, timeout, debug = false } = options;
   const log = createLogger(debug);
-  const destructor = createDestructor();
+  const destructor = createDestructor('Child', log);
   const { destroy, onDestroy } = destructor;
 
   const handleSynAckMessage = handleSynAckMessageFactory(
@@ -115,11 +115,10 @@ export default <TCallSender extends object = CallSender>(
 
       onDestroy((error?: PenpalError) => {
         window.removeEventListener(NativeEventType.Message, handleMessage);
-        if (!error) {
-          error = new Error('Connection destroyed') as PenpalError;
-          error.code = ErrorCode.ConnectionDestroyed;
+
+        if (error) {
+          reject(error);
         }
-        reject(error);
       });
     }
   );

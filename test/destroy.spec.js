@@ -2,19 +2,15 @@ import { CHILD_SERVER } from './constants';
 import { createAndAddIframe } from './utils';
 
 describe('destroy', () => {
-  it('rejects promise', (done) => {
+  // Issue #51
+  it('does not resolve or reject promise', async () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
-    connection.promise.catch((error) => {
-      expect(error).toEqual(jasmine.any(Error));
-      expect(error.message).toBe('Connection destroyed');
-      expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
-      done();
-    });
-
     connection.destroy();
+
+    await expectAsync(connection.promise).toBePending();
   });
 
   // This test fails seemingly randomly and I can't figure

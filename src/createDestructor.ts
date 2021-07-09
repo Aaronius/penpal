@@ -11,16 +11,19 @@ export type Destructor = {
   onDestroy(callback: Function): void;
 };
 
-export default (): Destructor => {
+export default (localName: 'Parent' | 'Child', log: Function): Destructor => {
   const callbacks: Function[] = [];
   let destroyed = false;
 
   return {
     destroy(error) {
-      destroyed = true;
-      callbacks.forEach((callback) => {
-        callback(error);
-      });
+      if (!destroyed) {
+        destroyed = true;
+        log(`${localName}: Destroying connection`);
+        callbacks.forEach((callback) => {
+          callback(error);
+        });
+      }
     },
     onDestroy(callback) {
       destroyed ? callback() : callbacks.push(callback);
