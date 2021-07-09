@@ -1,8 +1,8 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
-### Documentation for older versions
+### Upgrading from version 5? See [version 6 release notes](https://github.com/Aaronius/penpal/releases/tag/v6.0.0) for details.
 
-[See documentation for 5.x](https://github.com/Aaronius/penpal/tree/5.x)
+[See documentation for 5.x](https://github.com/Aaronius/penpal/tree/5.x)  
 [See documentation for 4.x](https://github.com/Aaronius/penpal/tree/4.x)  
 [See documentation for 3.x](https://github.com/Aaronius/penpal/tree/3.x)
 
@@ -24,7 +24,7 @@ Preferably, you'll be able to use Penpal from npm with a bundler like [Webpack](
 
 If you don't want to use npm to manage client packages, Penpal also provides a UMD distribution in a `dist` folder which is hosted on a CDN:
 
-`<script src="https://unpkg.com/penpal@^5/dist/penpal.min.js"></script>`
+`<script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>`
 
 Penpal will then be installed on `window.Penpal`. `window.Penpal` will contain the following properties:
 
