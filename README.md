@@ -1,7 +1,8 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
-### Upgrading from version 4? See [version 5 release notes](https://github.com/Aaronius/penpal/releases/tag/v5.0.0) for details.
+### Documentation for older versions
 
+[See documentation for 5.x](https://github.com/Aaronius/penpal/tree/5.x)
 [See documentation for 4.x](https://github.com/Aaronius/penpal/tree/4.x)  
 [See documentation for 3.x](https://github.com/Aaronius/penpal/tree/3.x)
 
