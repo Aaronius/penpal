@@ -74,9 +74,7 @@ describe('communication between parent and child', () => {
     expect(error).toEqual(jasmine.any(Error));
     expect(error.name).toBe('TypeError');
     expect(error.message).toBe('test error object');
-    // In IE, errors only get `stack` set when an error is raised. In this test case, the
-    // promise rejected with the error and never raised, so no stack.
-    // expect(error.stack).toEqual(jasmine.any(String));
+    expect(error.stack).toEqual(jasmine.any(String));
     connection.destroy();
   });
 
