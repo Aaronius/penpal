@@ -35,7 +35,7 @@ describe('destroy', () => {
   //   });
   // });
 
-  it('removes method call message listeners', () => {
+  it('removes method call message listeners', async () => {
     spyOn(window, 'addEventListener').and.callThrough();
     spyOn(window, 'removeEventListener').and.callThrough();
 
@@ -44,38 +44,39 @@ describe('destroy', () => {
     });
 
     // The method call message listener is set up after the connection has been established.
-    return connection.promise.then(() => {
-      connection.destroy();
+    await connection.promise;
+    connection.destroy();
 
-      window.addEventListener.calls.allArgs().forEach((args) => {
-        expect(window.removeEventListener).toHaveBeenCalledWith(...args);
-      });
+    expect(window.addEventListener.calls.count()).toBe(2);
+    window.addEventListener.calls.allArgs().forEach((args) => {
+      expect(window.removeEventListener).toHaveBeenCalledWith(...args);
     });
   });
 
-  it('prevents method calls from being sent', (done) => {
+  it('prevents method calls from being sent', async () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
     // The method call message listener is set up after the connection has been established.
-    connection.promise.then((child) => {
-      connection.destroy();
 
-      try {
-        child.multiply();
-      } catch (error) {
-        expect(error).toEqual(jasmine.any(Error));
-        expect(error.message).toBe(
-          'Unable to send multiply() call due to destroyed connection'
-        );
-        expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
-        done();
-      }
-    });
+    const child = await connection.promise;
+    connection.destroy();
+
+    let error;
+    try {
+      child.multiply();
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toEqual(jasmine.any(Error));
+    expect(error.message).toBe(
+      'Unable to send multiply() call due to destroyed connection'
+    );
+    expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
   });
 
-  it('supports multiple connections', () => {
+  it('supports multiple connections', async () => {
     const connection1 = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
@@ -83,18 +84,16 @@ describe('destroy', () => {
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
-    return Promise.all([
-      connection1.promise.then((child) => {
-        return child.multiplyAsync(2, 5).then((value) => {
-          expect(value).toEqual(10);
-          connection1.destroy();
-        });
+    await Promise.all([
+      connection1.promise.then(async (child) => {
+        const value = await child.multiplyAsync(2, 5);
+        expect(value).toEqual(10);
+        connection1.destroy();
       }),
-      connection2.promise.then((child) => {
-        return child.multiplyAsync(3, 5).then((value) => {
-          expect(value).toEqual(15);
-          connection2.destroy();
-        });
+      connection2.promise.then(async (child) => {
+        const value = await child.multiplyAsync(3, 5);
+        expect(value).toEqual(15);
+        connection2.destroy();
       }),
     ]);
   });

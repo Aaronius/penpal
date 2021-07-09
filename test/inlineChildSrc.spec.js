@@ -30,7 +30,7 @@ const htmlSrcRedirect = `
 `;
 
 describe('data URI support', () => {
-  it('connects and calls a function on the child', () => {
+  it('connects and calls a function on the child', async () => {
     const iframe = document.createElement('iframe');
     iframe.src = `data:text/html,${htmlSrc}`;
     document.body.appendChild(iframe);
@@ -39,14 +39,10 @@ describe('data URI support', () => {
       iframe,
     });
 
-    return connection.promise
-      .then((child) => {
-        return child.multiply(2, 5);
-      })
-      .then((value) => {
-        expect(value).toEqual(10);
-        connection.destroy();
-      });
+    const child = await connection.promise;
+    const value = await child.multiply(2, 5);
+    expect(value).toEqual(10);
+    connection.destroy();
   });
 
   it('does not connect if child redirects to non-opaque origin', (done) => {
@@ -75,7 +71,7 @@ var supportsSrcDoc = !!('srcdoc' in document.createElement('iframe'));
 
 if (supportsSrcDoc) {
   describe('srcdoc support', () => {
-    it('connects and calls a function on the child', (done) => {
+    it('connects and calls a function on the child', async () => {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = htmlSrc;
       document.body.appendChild(iframe);
@@ -84,16 +80,10 @@ if (supportsSrcDoc) {
         iframe,
       });
 
-      connection.promise.then((child) => {
-        child.multiply(2, 5).then((value) => {
-          expect(value).toEqual(10);
-
-          setTimeout(() => {
-            connection.destroy();
-            done();
-          }, 500);
-        });
-      });
+      const child = await connection.promise;
+      const value = await child.multiply(2, 5);
+      expect(value).toEqual(10);
+      connection.destroy();
     });
 
     it('does not connect if child redirects to non-opaque origin', (done) => {
