@@ -2,3 +2,4 @@ node_modules
 dist
 lib
 es5
+.eslintcache
