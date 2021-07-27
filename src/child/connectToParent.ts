@@ -9,6 +9,7 @@ import {
 } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
+import { serializeMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 
 const areGlobalsAccessible = () => {
@@ -62,10 +63,11 @@ export default <TCallSender extends object = CallSender>(
   const log = createLogger(debug);
   const destructor = createDestructor('Child', log);
   const { destroy, onDestroy } = destructor;
+  const serializedMethods = serializeMethods(methods);
 
   const handleSynAckMessage = handleSynAckMessageFactory(
     parentOrigin,
-    methods,
+    serializedMethods,
     destructor,
     log
   );

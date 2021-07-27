@@ -13,6 +13,19 @@ describe('communication between parent and child', () => {
     connection.destroy();
   });
 
+  it('calls nested functions on the child', async () => {
+    const connection = Penpal.connectToChild({
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+      debug: true,
+    });
+    const child = await connection.promise;
+    const oneLevel = await child.nested.oneLevel('pen');
+    expect(oneLevel).toEqual('pen');
+    const twoLevels = await child.nested.by.twoLevels('pal');
+    expect(twoLevels).toEqual('pal');
+    connection.destroy();
+  });
+
   it('calls a function on the child with matching parentOrigin set', async () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/matchingParentOrigin.html`),

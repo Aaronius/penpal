@@ -1,5 +1,10 @@
 import { serializeError } from './errorSerialization';
-import { CallMessage, Methods, ReplyMessage, WindowsInfo } from './types';
+import {
+  CallMessage,
+  SerializedMethods,
+  ReplyMessage,
+  WindowsInfo,
+} from './types';
 import {
   MessageType,
   NativeEventType,
@@ -11,7 +16,11 @@ import {
  * Listens for "call" messages coming from the remote, executes the corresponding method, and
  * responds with the return value.
  */
-export default (info: WindowsInfo, methods: Methods, log: Function) => {
+export default (
+  info: WindowsInfo,
+  serializedMethods: SerializedMethods,
+  log: Function
+) => {
   const {
     localName,
     local,
@@ -91,7 +100,7 @@ export default (info: WindowsInfo, methods: Methods, log: Function) => {
     };
 
     new Promise((resolve) =>
-      resolve(methods[methodName].apply(methods, args))
+      resolve(serializedMethods[methodName].apply(serializedMethods, args))
     ).then(
       createPromiseHandler(Resolution.Fulfilled),
       createPromiseHandler(Resolution.Rejected)

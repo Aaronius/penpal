@@ -1,4 +1,4 @@
-import { Methods, SynAckMessage } from '../types';
+import { SerializedMethods, SynAckMessage } from '../types';
 import { MessageType } from '../enums';
 
 /**
@@ -6,7 +6,7 @@ import { MessageType } from '../enums';
  */
 export default (
   log: Function,
-  methods: Methods,
+  serializedMethods: SerializedMethods,
   childOrigin: string,
   originForSending: string
 ) => {
@@ -22,7 +22,7 @@ export default (
 
     const synAckMessage: SynAckMessage = {
       penpal: MessageType.SynAck,
-      methodNames: Object.keys(methods),
+      methodNames: Object.keys(serializedMethods),
     };
 
     (event.source as Window).postMessage(synAckMessage, originForSending);

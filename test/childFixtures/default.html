@@ -52,6 +52,16 @@
         navigate: function () {
           window.location.href = 'divideMethod.html';
         },
+        nested: {
+          oneLevel: function (input) {
+            return input;
+          },
+          by: {
+            twoLevels: function (input) {
+              return input;
+            },
+          },
+        },
       };
 
       Penpal.connectToParent({

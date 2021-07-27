@@ -112,7 +112,7 @@ connection.promise.then((parent) => {
 
 `options.iframe: HTMLIFrameElement` (required) The iframe element to which Penpal should connect. Unless you provide the `childOrigin` option, you will need to have set either the `src` or `srcdoc` property on the iframe prior to calling `connectToChild` so that Penpal can automatically derive the child origin. In addition to regular URLs, [data URIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) and [file URIs](https://en.wikipedia.org/wiki/File_URI_scheme) are also supported.
 
-`options.methods: Object` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
+`options.methods: Object` (optional) An object containing methods which should be exposed for the child iframe to call. The keys of the object are the method names and the values are the functions. Nested objects with function values are recursively included. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
 `options.childOrigin: string` (optional) In the vast majority of cases, Penpal can automatically determine the child origin based on the `src` or `srcdoc` property that you have set on the iframe. Unfortunately, browsers are inconsistent in certain cases, particularly when using the `file://` protocol on various devices. If you receive an error saying that the parent received a handshake from an unexpected origin, you may need to manually pass the child origin using this option.
 
@@ -134,7 +134,7 @@ The return value of `connectToChild` is a `connection` object with the following
 
 `options.parentOrigin: string | RegExp` (optional) The origin of the parent window which your iframe will be communicating with. If this is not provided, communication will not be restricted to any particular parent origin resulting in any webpage being able to load your webpage into an iframe and communicate with it.
 
-`options.methods: Object` (optional) An object containing methods which should be exposed for the parent window to call. The keys of the object are the method names and the values are the functions. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
+`options.methods: Object` (optional) An object containing methods which should be exposed for the parent window to call. The keys of the object are the method names and the values are the functions. Nested objects with function values are recursively included. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
 
 `options.timeout: number` (optional) The amount of time, in milliseconds, Penpal should wait for the parent to respond before rejecting the connection promise. There is no timeout by default.
 
