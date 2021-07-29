@@ -1,4 +1,9 @@
-import { AckMessage, CallSender, Methods, WindowsInfo } from '../types';
+import {
+  AckMessage,
+  CallSender,
+  SerializedMethods,
+  WindowsInfo,
+} from '../types';
 import { MessageType } from '../enums';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
@@ -9,7 +14,7 @@ import { Destructor } from '../createDestructor';
  */
 export default (
   parentOrigin: string | RegExp,
-  methods: Methods,
+  serializedMethods: SerializedMethods,
   destructor: Destructor,
   log: Function
 ) => {
@@ -37,7 +42,7 @@ export default (
 
     const ackMessage: AckMessage = {
       penpal: MessageType.Ack,
-      methodNames: Object.keys(methods),
+      methodNames: Object.keys(serializedMethods),
     };
 
     window.parent.postMessage(ackMessage, originForSending);
@@ -50,7 +55,11 @@ export default (
       originForReceiving: event.origin,
     };
 
-    const destroyCallReceiver = connectCallReceiver(info, methods, log);
+    const destroyCallReceiver = connectCallReceiver(
+      info,
+      serializedMethods,
+      log
+    );
     onDestroy(destroyCallReceiver);
 
     const callSender: CallSender = {};

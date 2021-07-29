@@ -9,17 +9,24 @@ export type AckMessage = {
 };
 
 /**
- * A mapped type to convert non async methods into async methods and exclude any non function properties.
+ * Extract keys of T whose values are are assignable to U.
  */
-export type AsyncMethodReturns<
-  T,
-  K extends keyof T = FunctionPropertyNames<T>
-> = {
-  [KK in K]: T[KK] extends (...args: any[]) => PromiseLike<any>
-    ? T[KK]
-    : T[KK] extends (...args: infer A) => infer R
+type ExtractKeys<T, U> = {
+  [P in keyof T]: T[P] extends U ? P : never;
+}[keyof T];
+
+/**
+ * A mapped type to recursively convert non async methods into async methods and exclude
+ * any non function properties from T.
+ */
+export type AsyncMethodReturns<T> = {
+  [K in ExtractKeys<T, Function | object>]: T[K] extends (
+    ...args: any
+  ) => PromiseLike<any>
+    ? T[K]
+    : T[K] extends (...args: infer A) => infer R
     ? (...args: A) => Promise<R>
-    : T[KK];
+    : AsyncMethodReturns<T[K]>;
 };
 
 /**
@@ -55,16 +62,16 @@ export type Connection<TCallSender extends object = CallSender> = {
 };
 
 /**
- * A mapped type to extract only object properties which are functions.
- */
-export type FunctionPropertyNames<T> = {
-  [K in keyof T]: T[K] extends Function ? K : never;
-}[keyof T];
-
-/**
  * Methods to expose to the remote window.
  */
 export type Methods = {
+  [index: string]: Methods | Function;
+};
+
+/**
+ * A map of key path to function. The flatted counterpart of Methods.
+ */
+export type SerializedMethods = {
   [index: string]: Function;
 };
 

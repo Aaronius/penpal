@@ -1,5 +1,6 @@
 import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
+import { deserializeMethods } from './methodSerialization';
 import {
   CallMessage,
   CallSender,
@@ -15,7 +16,7 @@ import { ErrorCode, MessageType, NativeEventType, Resolution } from './enums';
  * executed, and the method's return value will be returned via a message.
  * @param {Object} callSender Sender object that should be augmented with methods.
  * @param {Object} info Information about the local and remote windows.
- * @param {Array} methodNames Names of methods available to be called on the remote.
+ * @param {Array} methodKeyPaths Key paths of methods available to be called on the remote.
  * @param {Promise} destructionPromise A promise resolved when destroy() is called on the penpal
  * connection.
  * @returns {Object} The call sender object with methods that may be called.
@@ -23,7 +24,7 @@ import { ErrorCode, MessageType, NativeEventType, Resolution } from './enums';
 export default (
   callSender: CallSender,
   info: WindowsInfo,
-  methodNames: string[],
+  methodKeyPaths: string[],
   destroyConnection: Function,
   log: Function
 ) => {
@@ -122,10 +123,17 @@ export default (
     };
   };
 
-  methodNames.reduce((api, methodName) => {
-    api[methodName] = createMethodProxy(methodName);
+  // Wrap each method in a proxy which sends it to the corresponding receiver.
+  const flattenedMethods = methodKeyPaths.reduce<
+    Record<string, () => Promise<unknown>>
+  >((api, name) => {
+    api[name] = createMethodProxy(name);
     return api;
-  }, callSender);
+  }, {});
+
+  // Unpack the structure of the provided methods object onto the CallSender, exposing
+  // the methods in the same shape they were provided.
+  Object.assign(callSender, deserializeMethods(flattenedMethods));
 
   return () => {
     destroyed = true;

@@ -1,4 +1,4 @@
-import { CallSender, Methods, WindowsInfo } from '../types';
+import { CallSender, SerializedMethods, WindowsInfo } from '../types';
 import { Destructor } from '../createDestructor';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
@@ -7,7 +7,7 @@ import connectCallSender from '../connectCallSender';
  * Handles an ACK handshake message.
  */
 export default (
-  methods: Methods,
+  serializedMethods: SerializedMethods,
   childOrigin: string,
   originForSending: string,
   destructor: Destructor,
@@ -46,7 +46,7 @@ export default (
       destroyCallReceiver();
     }
 
-    destroyCallReceiver = connectCallReceiver(info, methods, log);
+    destroyCallReceiver = connectCallReceiver(info, serializedMethods, log);
     onDestroy(destroyCallReceiver);
 
     // If the child reconnected, we need to remove the methods from the

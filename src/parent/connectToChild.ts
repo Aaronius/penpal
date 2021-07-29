@@ -12,6 +12,7 @@ import createLogger from '../createLogger';
 import getOriginFromSrc from './getOriginFromSrc';
 import handleAckMessageFactory from './handleAckMessageFactory';
 import handleSynMessageFactory from './handleSynMessageFactory';
+import { serializeMethods } from '../methodSerialization';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import startConnectionTimeout from '../startConnectionTimeout';
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
@@ -63,14 +64,15 @@ export default <TCallSender extends object = CallSender>(
   // must post messages with "*" as targetOrigin when sending messages.
   // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
   const originForSending = childOrigin === 'null' ? '*' : childOrigin;
+  const serializedMethods = serializeMethods(methods);
   const handleSynMessage = handleSynMessageFactory(
     log,
-    methods,
+    serializedMethods,
     childOrigin,
     originForSending
   );
   const handleAckMessage = handleAckMessageFactory(
-    methods,
+    serializedMethods,
     childOrigin,
     originForSending,
     destructor,
