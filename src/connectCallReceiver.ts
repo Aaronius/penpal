@@ -35,7 +35,7 @@ export default (
       return;
     }
 
-    if (event.origin !== originForReceiving) {
+    if (originForReceiving !== false && event.origin !== originForReceiving) {
       log(
         `${localName} received message from origin ${event.origin} which did not match expected origin ${originForReceiving}`
       );
