@@ -30,8 +30,9 @@ type Options = {
    * The child origin to use to secure communication. If
    * not provided, the child origin will be derived from the
    * iframe's src or srcdoc value.
+   * Use `false` to skip original url check.
    */
-  childOrigin?: string;
+  childOrigin?: string | false;
   /**
    * The amount of time, in milliseconds, Penpal should wait
    * for the iframe to respond before rejecting the connection promise.
@@ -55,7 +56,7 @@ export default <TCallSender extends object = CallSender>(
   const destructor = createDestructor('Parent', log);
   const { onDestroy, destroy } = destructor;
 
-  if (!childOrigin) {
+  if (childOrigin === undefined) {
     validateIframeHasSrcOrSrcDoc(iframe);
     childOrigin = getOriginFromSrc(iframe.src);
   }
@@ -63,7 +64,8 @@ export default <TCallSender extends object = CallSender>(
   // If event.origin is "null", the remote protocol is file: or data: and we
   // must post messages with "*" as targetOrigin when sending messages.
   // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-  const originForSending = childOrigin === 'null' ? '*' : childOrigin;
+  const originForSending =
+    childOrigin === 'null' || childOrigin === false ? '*' : childOrigin;
   const serializedMethods = serializeMethods(methods);
   const handleSynMessage = handleSynMessageFactory(
     log,

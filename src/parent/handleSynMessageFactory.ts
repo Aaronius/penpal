@@ -7,11 +7,15 @@ import { MessageType } from '../enums';
 export default (
   log: Function,
   serializedMethods: SerializedMethods,
-  childOrigin: string,
+  childOrigin: string | false,
   originForSending: string
 ) => {
   return (event: MessageEvent) => {
-    if (event.origin !== childOrigin) {
+    if (childOrigin === false) {
+      log(
+        `Parent: Handshake - Received SYN message, skipping event.origin check, since childOrigin is "null"`
+      );
+    } else if (event.origin !== childOrigin) {
       log(
         `Parent: Handshake - Received SYN message from origin ${event.origin} which did not match expected origin ${childOrigin}`
       );

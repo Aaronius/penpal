@@ -8,7 +8,7 @@ import connectCallSender from '../connectCallSender';
  */
 export default (
   serializedMethods: SerializedMethods,
-  childOrigin: string,
+  childOrigin: string | false,
   originForSending: string,
   destructor: Destructor,
   log: Function
@@ -23,7 +23,11 @@ export default (
   const callSender: CallSender = {};
 
   return (event: MessageEvent): CallSender | undefined => {
-    if (event.origin !== childOrigin) {
+    if (childOrigin === false) {
+      log(
+        `Parent: Handshake - Received ACK message, skipping event.origin check, since childOrigin is "null"`
+      );
+    } else if (event.origin !== childOrigin) {
       log(
         `Parent: Handshake - Received ACK message from origin ${event.origin} which did not match expected origin ${childOrigin}`
       );
