@@ -56,7 +56,7 @@ export default <TCallSender extends object = CallSender>(
   const destructor = createDestructor('Parent', log);
   const { onDestroy, destroy } = destructor;
 
-  if (childOrigin === undefined) {
+  if (!childOrigin && childOrigin !== false) {
     validateIframeHasSrcOrSrcDoc(iframe);
     childOrigin = getOriginFromSrc(iframe.src);
   }

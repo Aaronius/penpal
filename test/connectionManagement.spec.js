@@ -31,15 +31,18 @@ describe('connection management', () => {
     await connection.promise;
   });
 
-  it('connects to iframe connecting to parent with mis-matching origin, when childOrigin is false', async () => {
+  it('connects to iframe with mis-matching origin, when childOrigin is false', async () => {
     const iframe = createAndAddIframe();
-    iframe.src = `${CHILD_SERVER}/matchingParentOrigin.html`;
 
     const connection = Penpal.connectToChild({
       debug: true,
       iframe,
       childOrigin: false,
     });
+
+    // set iframe src after setup, so connectToChild will not use it as `childOrigin`,
+    // and unless `childOrigin` is `false`
+    iframe.src = `${CHILD_SERVER}/matchingParentOrigin.html`;
 
     await connection.promise;
   });
