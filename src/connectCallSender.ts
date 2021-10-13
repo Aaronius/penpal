@@ -86,7 +86,7 @@ export default (
           }
 
           if (
-            originForReceiving !== false &&
+            originForReceiving !== '*' &&
             event.origin !== originForReceiving
           ) {
             log(
