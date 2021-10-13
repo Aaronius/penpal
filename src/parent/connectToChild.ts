@@ -30,7 +30,6 @@ type Options = {
    * The child origin to use to secure communication. If
    * not provided, the child origin will be derived from the
    * iframe's src or srcdoc value.
-   * Use `false` to skip original url check.
    */
   childOrigin?: string;
   /**

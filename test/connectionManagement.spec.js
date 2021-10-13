@@ -31,7 +31,7 @@ describe('connection management', () => {
     await connection.promise;
   });
 
-  it('connects to iframe when childOrigin is false', async () => {
+  it('connects to iframe when childOrigin is *', async () => {
     const iframe = createAndAddIframe();
 
     const connection = Penpal.connectToChild({
