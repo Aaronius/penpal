@@ -130,5 +130,5 @@ export type WindowsInfo = {
   /**
    * Origin that should be used for receiving messages from the remote window.
    */
-  originForReceiving: string | false;
+  originForReceiving: string;
 };
