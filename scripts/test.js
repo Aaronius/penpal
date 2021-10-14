@@ -18,6 +18,9 @@ const serveChildViews = () => {
     .use(serveStatic('test/childFixtures'));
 
   http.createServer(childViewsApp).listen(9000);
+  // Host the child views on two ports so tests can do interesting
+  // things like redirect the iframe between two origins.
+  http.createServer(childViewsApp).listen(9001);
 };
 
 const runTests = () => {
