@@ -1,5 +1,25 @@
-import { CHILD_SERVER } from './constants';
+import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants';
 import { createAndAddIframe } from './utils';
+
+/**
+ * Asserts that no connection is successfully made between the parent and the
+ * child.
+ */
+const expectNoSuccessfulConnection = (connectionPromise, iframe) => {
+  const spy = jasmine.createSpy();
+
+  connectionPromise.then(spy);
+
+  return new Promise((resolve) => {
+    iframe.addEventListener('load', function () {
+      // Give Penpal time to try to make a handshake.
+      setTimeout(() => {
+        expect(spy).not.toHaveBeenCalled();
+        resolve();
+      }, 100);
+    });
+  });
+};
 
 describe('connection management', () => {
   it('connects to iframe when correct child origin provided', async () => {
@@ -43,7 +63,7 @@ describe('connection management', () => {
     await connection.promise;
   });
 
-  it("doesn't connect to iframe when incorrect child origin provided", (done) => {
+  it("doesn't connect to iframe when incorrect child origin provided", async () => {
     const iframe = createAndAddIframe();
 
     const connection = Penpal.connectToChild({
@@ -57,20 +77,10 @@ describe('connection management', () => {
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/default.html`;
 
-    const spy = jasmine.createSpy();
-
-    connection.promise.then(spy);
-
-    iframe.addEventListener('load', function () {
-      // Give Penpal time to try to make a handshake.
-      setTimeout(() => {
-        expect(spy).not.toHaveBeenCalled();
-        done();
-      }, 100);
-    });
+    await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
-  it("doesn't connect to iframe connecting to mismatched parent origin", (done) => {
+  it("doesn't connect to iframe connecting to mismatched parent origin", async () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/mismatchedParentOrigin.html`
     );
@@ -79,20 +89,10 @@ describe('connection management', () => {
       iframe,
     });
 
-    const spy = jasmine.createSpy();
-
-    connection.promise.then(spy);
-
-    iframe.addEventListener('load', function () {
-      // Give Penpal time to try to make a handshake.
-      setTimeout(() => {
-        expect(spy).not.toHaveBeenCalled();
-        done();
-      }, 100);
-    });
+    await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
-  it("doesn't connect to iframe connecting to mismatched parent origin regex", (done) => {
+  it("doesn't connect to iframe connecting to mismatched parent origin regex", async () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/mismatchedParentOriginRegex.html`
     );
@@ -101,17 +101,40 @@ describe('connection management', () => {
       iframe,
     });
 
-    const spy = jasmine.createSpy();
+    await expectNoSuccessfulConnection(connection.promise, iframe);
+  });
 
-    connection.promise.then(spy);
+  it('connects to iframe when child redirects to different origin and child origin is set to *', async () => {
+    const redirectToUrl = encodeURIComponent(
+      `${CHILD_SERVER_ALTERNATE}/default.html`
+    );
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
+    );
 
-    iframe.addEventListener('load', function () {
-      // Give Penpal time to try to make a handshake.
-      setTimeout(() => {
-        expect(spy).not.toHaveBeenCalled();
-        done();
-      }, 100);
+    const connection = Penpal.connectToChild({
+      debug: true,
+      iframe,
+      childOrigin: '*',
     });
+
+    await connection.promise;
+  });
+
+  it("doesn't connect to iframe when child redirects to different origin and child origin is not set", async () => {
+    const redirectToUrl = encodeURIComponent(
+      `${CHILD_SERVER_ALTERNATE}/default.html`
+    );
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
+    );
+
+    const connection = Penpal.connectToChild({
+      debug: true,
+      iframe,
+    });
+
+    await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
   it('reconnects after child reloads', (done) => {

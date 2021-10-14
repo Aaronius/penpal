@@ -23,7 +23,7 @@ export default (
   const callSender: CallSender = {};
 
   return (event: MessageEvent): CallSender | undefined => {
-    if (event.origin !== childOrigin) {
+    if (childOrigin !== '*' && event.origin !== childOrigin) {
       log(
         `Parent: Handshake - Received ACK message from origin ${event.origin} which did not match expected origin ${childOrigin}`
       );

@@ -11,7 +11,7 @@ export default (
   originForSending: string
 ) => {
   return (event: MessageEvent) => {
-    if (event.origin !== childOrigin) {
+    if (childOrigin !== '*' && event.origin !== childOrigin) {
       log(
         `Parent: Handshake - Received SYN message from origin ${event.origin} which did not match expected origin ${childOrigin}`
       );
