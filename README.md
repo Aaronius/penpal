@@ -216,6 +216,39 @@ import { ErrorCode } from 'penpal';
 // ErrorCode.NoIframeSrc
 ```
 
+## TypeScript
+
+When calling `connectToChild` or `connectToParent`, you may pass a generic type argument. This will be used to type the `child` or `parent` object that `connection.promise` is resolved with. This is better explained in code:
+
+```typescript
+import { connectToChild } from 'penpal';
+
+// This interace could be imported from a code library
+// that both the parent and child share.
+interface ChildApi {
+  multiply(...args: number[]): number;
+}
+
+// Supply the interface as a generic argument.
+const connection = connectToChild<ChildApi>({
+  iframe: new HTMLIFrameElement(),
+});
+
+// The resulting child object will contain properly
+// typed methods.
+const child = await connection.promise;
+// The result variable is typed as a number.
+const result = await child.multiply(1, 3);
+```
+
+The following TypeScript types are also exported as named constants for your use:
+
+- `Connection`
+- `Methods`
+- `AsyncMethodReturns`
+- `CallSender`
+- `PenpalError`
+
 ## Supported Browsers
 
 Penpal is designed to run successfully on the most recent versions of Chrome, Firefox, Safari, and Edge. If you need to support Internet Explorer 11, feel free to use version 3.x of Penpal. See the [3.x README](https://github.com/Aaronius/penpal/tree/3.x) for documentation.
