@@ -125,7 +125,7 @@ An object containing methods which should be exposed for the child iframe to cal
 
 `options.childOrigin: string` (optional)
 
-In the vast majority of cases, Penpal can automatically determine the child origin based on the `src` or `srcdoc` property that you have set on the iframe. This will automatically restrict communication to that origin.
+In the vast majority of cases, Penpal can automatically determine the child origin based on the `src` or `srcdoc` property that you have set on the iframe. Communication will automatically be restricted to that origin.
 
 In some rare cases, particularly when using the `file://` protocol on various devices, browsers are inconsistent in how they report and handle origins. If you receive an error saying that the parent received a handshake from an unexpected origin, you may need to manually pass the child origin using this option.
 
