@@ -249,6 +249,10 @@ The following TypeScript types are also exported as named constants for your use
 - `CallSender`
 - `PenpalError`
 
+## React
+
+If you're using Penpal within a React app, please check out [react-penpal](https://github.com/Lunuy/react-penpal).
+
 ## Supported Browsers
 
 Penpal is designed to run successfully on the most recent versions of Chrome, Firefox, Safari, and Edge. If you need to support Internet Explorer 11, feel free to use version 3.x of Penpal. See the [3.x README](https://github.com/Aaronius/penpal/tree/3.x) for documentation.
