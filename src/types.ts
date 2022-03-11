@@ -9,7 +9,7 @@ export type AckMessage = {
 };
 
 /**
- * Extract keys of T whose values are are assignable to U.
+ * Extract keys of T whose values are assignable to U.
  */
 type ExtractKeys<T, U> = {
   [P in keyof T]: T[P] extends U ? P : never;
