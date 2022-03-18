@@ -47,4 +47,4 @@ jobs:
         run: npm run build
 
       - name: Run Tests
-        run: npm run test
+        run: npm test -- --watch=false --browsers=ChromeHeadless
