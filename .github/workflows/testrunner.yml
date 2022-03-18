@@ -1,0 +1,29 @@
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+env:
+  SAUCE_USERNAME: ${{secrets.SAUCE_USERNAME}}
+  SAUCE_ACCESS_KEY: ${{secrets.SAUCE_ACCESS_KEY}}
+  SAUCECTL_VERSION: "0.37.0"
+  BUILD_PREFUX: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+      - uses: actions/checkout@v2
+
+      - name: Set up node
+        uses: actions/setup-node@v1
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        env:
+          CI: false
+        run: npm run build
