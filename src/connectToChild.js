@@ -148,6 +148,22 @@ export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
 
     log('Parent: Awaiting handshake');
 
+    // Check if an element exists in DOM or shadow DOM.
+    // https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment
+    const isInDocument = (element) => {
+      let currentElement = element;
+      while(currentElement && currentElement.parentNode) {
+          if(currentElement.parentNode === document) {
+              return true;
+          } else if(currentElement.parentNode instanceof DocumentFragment) {
+              currentElement = currentElement.parentNode.host;
+          } else {
+              currentElement = currentElement.parentNode;
+          }
+      }
+      return false;
+    };
+
     // This is to prevent memory leaks when the iframe is removed
     // from the document and the consumer hasn't called destroy().
     // Without this, event listeners attached to the window would
@@ -155,7 +171,7 @@ export default ({ iframe, methods = {}, childOrigin, timeout, debug }) => {
     // to the iframe in their closures, the iframe would stick around
     // too.
     var checkIframeInDocIntervalId = setInterval(() => {
-      if (!document.contains(iframe)) {
+      if (!isInDocument(iframe)) {
         clearInterval(checkIframeInDocIntervalId);
         destroy();
       }
