@@ -251,7 +251,7 @@ The following TypeScript types are also exported as named constants for your use
 
 ## React
 
-If you're using Penpal within a React app, please check out [react-penpal](https://github.com/Lunuy/react-penpal).
+If you're using Penpal within a React app, please check out [@weblivion/react-penpal](https://www.npmjs.com/package/@weblivion/react-penpal).
 
 ## Supported Browsers
 
