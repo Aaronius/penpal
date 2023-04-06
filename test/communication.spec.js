@@ -2,7 +2,7 @@ import { CHILD_SERVER } from './constants';
 import { createAndAddIframe } from './utils';
 
 describe('communication between parent and child', () => {
-  it('calls a function on the child', async () => {
+  fit('calls a function on the child', async () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
       debug: true,

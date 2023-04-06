@@ -17,6 +17,7 @@ import {
  * responds with the return value.
  */
 export default (
+  port: MessagePort,
   info: WindowsInfo,
   serializedMethods: SerializedMethods,
   log: Function
@@ -31,14 +32,7 @@ export default (
   let destroyed = false;
 
   const handleMessageEvent = (event: MessageEvent) => {
-    if (event.source !== remote || event.data.penpal !== MessageType.Call) {
-      return;
-    }
-
-    if (originForReceiving !== '*' && event.origin !== originForReceiving) {
-      log(
-        `${localName} received message from origin ${event.origin} which did not match expected origin ${originForReceiving}`
-      );
+    if (event.data.penpal !== MessageType.Call) {
       return;
     }
 
@@ -79,19 +73,19 @@ export default (
         }
 
         try {
-          remote.postMessage(message, originForSending);
+          port.postMessage(message);
         } catch (err) {
           // If a consumer attempts to send an object that's not cloneable (e.g., window),
           // we want to ensure the receiver's promise gets rejected.
-          if (err.name === NativeErrorName.DataCloneError) {
+          if ((err as Error).name === NativeErrorName.DataCloneError) {
             const errorReplyMessage: ReplyMessage = {
               penpal: MessageType.Reply,
               id,
               resolution: Resolution.Rejected,
-              returnValue: serializeError(err),
+              returnValue: serializeError(err as Error),
               returnValueIsError: true,
             };
-            remote.postMessage(errorReplyMessage, originForSending);
+            port.postMessage(errorReplyMessage);
           }
 
           throw err;
@@ -107,10 +101,12 @@ export default (
     );
   };
 
-  local.addEventListener(NativeEventType.Message, handleMessageEvent);
+  port.addEventListener(NativeEventType.Message, handleMessageEvent);
+  port.start();
 
   return () => {
     destroyed = true;
-    local.removeEventListener(NativeEventType.Message, handleMessageEvent);
+    port.removeEventListener(NativeEventType.Message, handleMessageEvent);
+    port.close();
   };
 };

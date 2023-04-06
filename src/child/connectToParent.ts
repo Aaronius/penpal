@@ -69,7 +69,7 @@ export default <TCallSender extends object = CallSender>(
     parentOrigin,
     serializedMethods,
     destructor,
-    log
+    log,
   );
 
   const sendSynMessage = () => {
@@ -92,10 +92,6 @@ export default <TCallSender extends object = CallSender>(
         // and if it fails we can assume the iframe has been removed
         // and we ignore the message event.
         if (!areGlobalsAccessible()) {
-          return;
-        }
-
-        if (event.source !== parent || !event.data) {
           return;
         }
 

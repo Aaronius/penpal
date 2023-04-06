@@ -22,6 +22,7 @@ import { ErrorCode, MessageType, NativeEventType, Resolution } from './enums';
  * @returns {Object} The call sender object with methods that may be called.
  */
 export default (
+  port: MessagePort,
   callSender: CallSender,
   info: WindowsInfo,
   methodKeyPaths: string[],
@@ -78,27 +79,16 @@ export default (
         const id = generateId();
         const handleMessageEvent = (event: MessageEvent) => {
           if (
-            event.source !== remote ||
             event.data.penpal !== MessageType.Reply ||
             event.data.id !== id
           ) {
             return;
           }
 
-          if (
-            originForReceiving !== '*' &&
-            event.origin !== originForReceiving
-          ) {
-            log(
-              `${localName} received message from origin ${event.origin} which did not match expected origin ${originForReceiving}`
-            );
-            return;
-          }
-
           const replyMessage: ReplyMessage = event.data;
 
           log(`${localName}: Received ${methodName}() reply`);
-          local.removeEventListener(
+          port.removeEventListener(
             NativeEventType.Message,
             handleMessageEvent
           );
@@ -114,14 +104,16 @@ export default (
           );
         };
 
-        local.addEventListener(NativeEventType.Message, handleMessageEvent);
+        port.addEventListener(NativeEventType.Message, handleMessageEvent);
+        port.start();
+
         const callMessage: CallMessage = {
           penpal: MessageType.Call,
           id,
           methodName,
           args,
         };
-        remote.postMessage(callMessage, originForSending);
+        port.postMessage(callMessage);
       });
     };
   };

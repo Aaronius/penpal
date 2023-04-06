@@ -32,6 +32,8 @@ export default (
 
     log('Parent: Handshake - Received ACK');
 
+    const port = event.ports[0];
+
     const info: WindowsInfo = {
       localName: 'Parent',
       local: window,
@@ -46,7 +48,12 @@ export default (
       destroyCallReceiver();
     }
 
-    destroyCallReceiver = connectCallReceiver(info, serializedMethods, log);
+    destroyCallReceiver = connectCallReceiver(
+      port,
+      info,
+      serializedMethods,
+      log
+    );
     onDestroy(destroyCallReceiver);
 
     // If the child reconnected, we need to remove the methods from the
@@ -60,6 +67,7 @@ export default (
     receiverMethodNames = event.data.methodNames;
 
     const destroyCallSender = connectCallSender(
+      port,
       callSender,
       info,
       receiverMethodNames,

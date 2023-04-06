@@ -45,7 +45,9 @@ export default (
       methodNames: Object.keys(serializedMethods),
     };
 
-    window.parent.postMessage(ackMessage, originForSending);
+    const channel = new MessageChannel();
+    const port = channel.port1;
+    window.parent.postMessage(ackMessage, originForSending, [channel.port2]);
 
     const info: WindowsInfo = {
       localName: 'Child',
@@ -56,6 +58,7 @@ export default (
     };
 
     const destroyCallReceiver = connectCallReceiver(
+      port,
       info,
       serializedMethods,
       log
@@ -64,6 +67,7 @@ export default (
 
     const callSender: CallSender = {};
     const destroyCallSender = connectCallSender(
+      port,
       callSender,
       info,
       event.data.methodNames,
