@@ -2,14 +2,15 @@ import { CallSender, SerializedMethods, WindowsInfo } from '../types';
 import { Destructor } from '../createDestructor';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
+import isWorker from '../isWorker';
+import CommsAdapter from '../CommsAdapter';
 
 /**
  * Handles an ACK handshake message.
  */
 export default (
+  commsAdapter: CommsAdapter,
   serializedMethods: SerializedMethods,
-  childOrigin: string,
-  originForSending: string,
   destructor: Destructor,
   log: Function
 ) => {
@@ -22,22 +23,12 @@ export default (
   // latest provided by the child.
   const callSender: CallSender = {};
 
-  return (event: MessageEvent): CallSender | undefined => {
-    if (childOrigin !== '*' && event.origin !== childOrigin) {
-      log(
-        `Parent: Handshake - Received ACK message from origin ${event.origin} which did not match expected origin ${childOrigin}`
-      );
-      return;
-    }
-
+  const handleAckMessage = (methodNames: string[]): CallSender | undefined => {
     log('Parent: Handshake - Received ACK');
 
     const info: WindowsInfo = {
       localName: 'Parent',
-      local: window,
-      remote: event.source as Window,
-      originForSending: originForSending,
-      originForReceiving: childOrigin,
+      commsAdapter,
     };
 
     // If the child reconnected, we need to destroy the prior call receiver
@@ -57,13 +48,12 @@ export default (
       });
     }
 
-    receiverMethodNames = event.data.methodNames;
+    receiverMethodNames = methodNames;
 
     const destroyCallSender = connectCallSender(
       callSender,
       info,
       receiverMethodNames,
-      destroy,
       log
     );
 
@@ -71,4 +61,6 @@ export default (
 
     return callSender;
   };
+
+  return handleAckMessage;
 };

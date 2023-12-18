@@ -1,6 +1,8 @@
-export const createAndAddIframe = (url) => {
+export const createAndAddIframe = (url?: string) => {
   const iframe = document.createElement('iframe');
-  iframe.src = url;
+  if (url) {
+    iframe.src = url;
+  }
   document.body.appendChild(iframe);
   return iframe;
 };

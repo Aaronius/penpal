@@ -4,6 +4,7 @@ import {
   AsyncMethodReturns,
   Connection,
   Methods,
+  PenpalMessage,
 } from '../types';
 import { ErrorCode, MessageType, NativeEventType } from '../enums';
 
@@ -16,12 +17,15 @@ import { serializeMethods } from '../methodSerialization';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import startConnectionTimeout from '../startConnectionTimeout';
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
+import isWorker from '../isWorker';
+import ParentToIframeAdapter from '../ParentToIframeAdapter';
+import CommsAdapter from '../CommsAdapter';
 
 type Options = {
   /**
    * The iframe to which a connection should be made.
    */
-  iframe: HTMLIFrameElement;
+  child: HTMLIFrameElement | Worker;
   /**
    * Methods that may be called by the iframe.
    */
@@ -49,32 +53,36 @@ type Options = {
 export default <TCallSender extends object = CallSender>(
   options: Options
 ): Connection<TCallSender> => {
-  let { iframe, methods = {}, childOrigin, timeout, debug = false } = options;
+  let { child, methods = {}, childOrigin, timeout, debug = false } = options;
 
   const log = createLogger(debug);
   const destructor = createDestructor('Parent', log);
   const { onDestroy, destroy } = destructor;
 
-  if (!childOrigin) {
-    validateIframeHasSrcOrSrcDoc(iframe);
-    childOrigin = getOriginFromSrc(iframe.src);
-  }
+  let commsAdapter: CommsAdapter;
 
-  // If event.origin is "null", the remote protocol is file: or data: and we
-  // must post messages with "*" as targetOrigin when sending messages.
-  // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-  const originForSending = childOrigin === 'null' ? '*' : childOrigin;
+  // if (child instanceof HTMLIFrameElement) {
+  commsAdapter = new ParentToIframeAdapter(
+    child as HTMLIFrameElement,
+    childOrigin,
+    log,
+    destructor
+  );
+  // } else if (child instanceof Worker) {
+  //   // TODO
+  // } else {
+  //   // TODO
+  // }
+
   const serializedMethods = serializeMethods(methods);
   const handleSynMessage = handleSynMessageFactory(
+    commsAdapter,
     log,
-    serializedMethods,
-    childOrigin,
-    originForSending
+    serializedMethods
   );
   const handleAckMessage = handleAckMessageFactory(
+    commsAdapter,
     serializedMethods,
-    childOrigin,
-    originForSending,
     destructor,
     log
   );
@@ -82,20 +90,16 @@ export default <TCallSender extends object = CallSender>(
   const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise(
     (resolve, reject) => {
       const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
-      const handleMessage = (event: MessageEvent) => {
-        if (event.source !== iframe.contentWindow || !event.data) {
+      const handleMessage = (message: PenpalMessage) => {
+        if (message.penpal === MessageType.Syn) {
+          handleSynMessage();
           return;
         }
 
-        if (event.data.penpal === MessageType.Syn) {
-          handleSynMessage(event);
-          return;
-        }
-
-        if (event.data.penpal === MessageType.Ack) {
-          const callSender = handleAckMessage(event) as AsyncMethodReturns<
-            TCallSender
-          >;
+        if (message.penpal === MessageType.Ack) {
+          const callSender = handleAckMessage(
+            message.methodNames
+          ) as AsyncMethodReturns<TCallSender>;
 
           if (callSender) {
             stopConnectionTimeout();
@@ -105,13 +109,12 @@ export default <TCallSender extends object = CallSender>(
         }
       };
 
-      window.addEventListener(NativeEventType.Message, handleMessage);
+      commsAdapter.listenForMessagesFromRemote(handleMessage);
 
       log('Parent: Awaiting handshake');
-      monitorIframeRemoval(iframe, destructor);
 
       onDestroy((error?: PenpalError) => {
-        window.removeEventListener(NativeEventType.Message, handleMessage);
+        commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
 
         if (error) {
           reject(error);

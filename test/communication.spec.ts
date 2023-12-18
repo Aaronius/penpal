@@ -2,6 +2,19 @@ import { CHILD_SERVER } from './constants';
 import { createAndAddIframe } from './utils';
 
 describe('communication between parent and child', () => {
+  // fit('calls a function on the child', async () => {
+  //   const worker = new Worker(`/base/test/childFixtures/worker.ts`);
+  //
+  //   const connection = Penpal.connectToChild({
+  //     iframe: worker,
+  //     debug: true,
+  //   });
+  //   const child = await connection.promise;
+  //   const value = await child.multiply(2, 5);
+  //   expect(value).toEqual(10);
+  //   connection.destroy();
+  // });
+
   it('calls a function on the child', async () => {
     const connection = Penpal.connectToChild({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),

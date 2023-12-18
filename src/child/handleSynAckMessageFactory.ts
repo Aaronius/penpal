@@ -1,18 +1,23 @@
 import {
   AckMessage,
   CallSender,
+  PenpalMessage,
   SerializedMethods,
+  SynAckMessage,
   WindowsInfo,
 } from '../types';
 import { MessageType } from '../enums';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 import { Destructor } from '../createDestructor';
+import isWorker from '../isWorker';
+import CommsAdapter from '../CommsAdapter';
 
 /**
  * Handles a SYN-ACK handshake message.
  */
 export default (
+  commsAdapter: CommsAdapter,
   parentOrigin: string | RegExp,
   serializedMethods: SerializedMethods,
   destructor: Destructor,
@@ -20,39 +25,19 @@ export default (
 ) => {
   const { destroy, onDestroy } = destructor;
 
-  return (event: MessageEvent): CallSender | undefined => {
-    let originQualifies =
-      parentOrigin instanceof RegExp
-        ? parentOrigin.test(event.origin)
-        : parentOrigin === '*' || parentOrigin === event.origin;
-
-    if (!originQualifies) {
-      log(
-        `Child: Handshake - Received SYN-ACK from origin ${event.origin} which did not match expected origin ${parentOrigin}`
-      );
-      return;
-    }
-
+  const handleAckMessage = (message: SynAckMessage): CallSender => {
     log('Child: Handshake - Received SYN-ACK, responding with ACK');
-
-    // If event.origin is "null", the remote protocol is file: or data: and we
-    // must post messages with "*" as targetOrigin when sending messages.
-    // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-    const originForSending = event.origin === 'null' ? '*' : event.origin;
 
     const ackMessage: AckMessage = {
       penpal: MessageType.Ack,
       methodNames: Object.keys(serializedMethods),
     };
 
-    window.parent.postMessage(ackMessage, originForSending);
+    commsAdapter.sendMessageToRemote(ackMessage);
 
     const info: WindowsInfo = {
       localName: 'Child',
-      local: window,
-      remote: window.parent,
-      originForSending,
-      originForReceiving: event.origin,
+      commsAdapter: commsAdapter,
     };
 
     const destroyCallReceiver = connectCallReceiver(
@@ -66,12 +51,13 @@ export default (
     const destroyCallSender = connectCallSender(
       callSender,
       info,
-      event.data.methodNames,
-      destroy,
+      message.methodNames,
       log
     );
     onDestroy(destroyCallSender);
 
     return callSender;
   };
+
+  return handleAckMessage;
 };

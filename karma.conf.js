@@ -1,4 +1,5 @@
 const babel = require('rollup-plugin-babel');
+const typescript = require('rollup-plugin-typescript');
 const argv = require('yargs').argv;
 
 module.exports = (config) => {
@@ -76,7 +77,16 @@ module.exports = (config) => {
 
   config.set({
     frameworks: ['jasmine'],
-    files: ['dist/penpal.js', 'test/**/*.spec.js'],
+    files: [
+      {
+        pattern: 'test/childFixtures/worker.ts',
+        watched: true,
+        included: false,
+        served: true,
+      },
+      'dist/penpal.js',
+      'test/**/*.spec.ts',
+    ],
     plugins: [
       '@metahub/karma-rollup-preprocessor',
       'karma-jasmine',
@@ -86,7 +96,7 @@ module.exports = (config) => {
       'karma-sauce-launcher',
     ],
     preprocessors: {
-      'test/**/*.js': ['rollup'],
+      'test/**/*.ts': ['rollup'],
     },
     rollupPreprocessor: {
       options: {
@@ -96,12 +106,18 @@ module.exports = (config) => {
           format: 'iife',
         },
         // To compile with babel using es2015 preset
-        plugins: [babel()],
+        plugins: [
+          typescript(),
+          babel({
+            extensions: ['.ts'],
+          }),
+        ],
       },
     },
     port: 9001,
     colors: true,
-    logLevel: config.LOG_INFO,
+    // logLevel: config.LOG_INFO,
+    logLevel: config.LOG_DEBUG,
     autoWatch: true,
     sauceLabs: {
       testName: 'Penpal Karma Test',
@@ -115,7 +131,13 @@ module.exports = (config) => {
     concurrency: Infinity,
     // Travis + SauceLabs is super flaky. This attempts to solve the issue:
     // https://github.com/jasmine/jasmine/issues/1327#issuecomment-332939551
-    browserDisconnectTolerance: 2,
-    browserNoActivityTimeout: 50000,
+    // browserDisconnectTolerance: 2,
+    // browserNoActivityTimeout: 1000000,
+    // browserNoActivityTimeout: 50000,
+    // customHeaders: [{
+    //   match: "worker.ts",
+    //   name: "Access-Control-Allow-Origin",
+    //   value: "*"
+    // }]
   });
 };

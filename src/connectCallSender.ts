@@ -5,6 +5,7 @@ import {
   CallMessage,
   CallSender,
   PenpalError,
+  PenpalMessage,
   ReplyMessage,
   WindowsInfo,
 } from './types';
@@ -19,22 +20,16 @@ import { ErrorCode, MessageType, NativeEventType, Resolution } from './enums';
  * @param {Array} methodKeyPaths Key paths of methods available to be called on the remote.
  * @param {Promise} destructionPromise A promise resolved when destroy() is called on the penpal
  * connection.
+ * @param {Function} log Logs messages.
  * @returns {Object} The call sender object with methods that may be called.
  */
 export default (
   callSender: CallSender,
   info: WindowsInfo,
   methodKeyPaths: string[],
-  destroyConnection: Function,
   log: Function
 ) => {
-  const {
-    localName,
-    local,
-    remote,
-    originForSending,
-    originForReceiving,
-  } = info;
+  const { localName, commsAdapter } = info;
   let destroyed = false;
 
   log(`${localName}: Connecting call sender`);
@@ -42,28 +37,6 @@ export default (
   const createMethodProxy = (methodName: string) => {
     return (...args: any) => {
       log(`${localName}: Sending ${methodName}() call`);
-
-      // This handles the case where the iframe has been removed from the DOM
-      // (and therefore its window closed), the consumer has not yet
-      // called destroy(), and the user calls a method exposed by
-      // the remote. We detect the iframe has been removed and force
-      // a destroy() immediately so that the consumer sees the error saying
-      // the connection has been destroyed. We wrap this check in a try catch
-      // because Edge throws an "Object expected" error when accessing
-      // contentWindow.closed on a contentWindow from an iframe that's been
-      // removed from the DOM.
-      let iframeRemoved;
-      try {
-        if (remote.closed) {
-          iframeRemoved = true;
-        }
-      } catch (e) {
-        iframeRemoved = true;
-      }
-
-      if (iframeRemoved) {
-        destroyConnection();
-      }
 
       if (destroyed) {
         const error: PenpalError = new Error(
@@ -76,52 +49,34 @@ export default (
 
       return new Promise((resolve, reject) => {
         const id = generateId();
-        const handleMessageEvent = (event: MessageEvent) => {
-          if (
-            event.source !== remote ||
-            event.data.penpal !== MessageType.Reply ||
-            event.data.id !== id
-          ) {
+        const handleMessage = (message: PenpalMessage) => {
+          if (message.penpal !== MessageType.Reply || message.id !== id) {
             return;
           }
-
-          if (
-            originForReceiving !== '*' &&
-            event.origin !== originForReceiving
-          ) {
-            log(
-              `${localName} received message from origin ${event.origin} which did not match expected origin ${originForReceiving}`
-            );
-            return;
-          }
-
-          const replyMessage: ReplyMessage = event.data;
 
           log(`${localName}: Received ${methodName}() reply`);
-          local.removeEventListener(
-            NativeEventType.Message,
-            handleMessageEvent
-          );
+          commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
 
-          let returnValue = replyMessage.returnValue;
+          let returnValue = message.returnValue;
 
-          if (replyMessage.returnValueIsError) {
+          if (message.returnValueIsError) {
             returnValue = deserializeError(returnValue);
           }
 
-          (replyMessage.resolution === Resolution.Fulfilled ? resolve : reject)(
+          (message.resolution === Resolution.Fulfilled ? resolve : reject)(
             returnValue
           );
         };
 
-        local.addEventListener(NativeEventType.Message, handleMessageEvent);
+        commsAdapter.listenForMessagesFromRemote(handleMessage);
+
         const callMessage: CallMessage = {
           penpal: MessageType.Call,
           id,
           methodName,
           args,
         };
-        remote.postMessage(callMessage, originForSending);
+        commsAdapter.sendMessageToRemote(callMessage);
       });
     };
   };

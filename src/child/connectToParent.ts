@@ -6,20 +6,13 @@ import {
   PenpalError,
   CallSender,
   AsyncMethodReturns,
+  PenpalMessage,
 } from '../types';
-import { ErrorCode, MessageType, NativeEventType } from '../enums';
+import { MessageType, NativeEventType } from '../enums';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
 import { serializeMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
-
-const areGlobalsAccessible = () => {
-  try {
-    clearTimeout();
-  } catch (e) {
-    return false;
-  }
-  return true;
-};
+import IframeToParentAdapter from '../IframeToParentAdapter';
 
 type Options = {
   /**
@@ -65,7 +58,10 @@ export default <TCallSender extends object = CallSender>(
   const { destroy, onDestroy } = destructor;
   const serializedMethods = serializeMethods(methods);
 
+  let commsAdapter = new IframeToParentAdapter(parentOrigin, log, destructor);
+
   const handleSynAckMessage = handleSynAckMessageFactory(
+    commsAdapter,
     parentOrigin,
     serializedMethods,
     destructor,
@@ -75,48 +71,29 @@ export default <TCallSender extends object = CallSender>(
   const sendSynMessage = () => {
     log('Child: Handshake - Sending SYN');
     const synMessage: SynMessage = { penpal: MessageType.Syn };
-    const parentOriginForSyn =
-      parentOrigin instanceof RegExp ? '*' : parentOrigin;
-    window.parent.postMessage(synMessage, parentOriginForSyn);
+    commsAdapter.sendMessageToRemote(synMessage);
   };
 
   const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise(
     (resolve, reject) => {
       const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
-      const handleMessage = (event: MessageEvent) => {
-        // Under niche scenarios, we get into this function after
-        // the iframe has been removed from the DOM. In Edge, this
-        // results in "Object expected" errors being thrown when we
-        // try to access properties on window (global properties).
-        // For this reason, we try to access a global up front (clearTimeout)
-        // and if it fails we can assume the iframe has been removed
-        // and we ignore the message event.
-        if (!areGlobalsAccessible()) {
-          return;
-        }
-
-        if (event.source !== parent || !event.data) {
-          return;
-        }
-
-        if (event.data.penpal === MessageType.SynAck) {
-          const callSender = handleSynAckMessage(event) as AsyncMethodReturns<
+      const handleMessage = (message: PenpalMessage) => {
+        if (message.penpal === MessageType.SynAck) {
+          commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
+          stopConnectionTimeout();
+          const callSender = handleSynAckMessage(message) as AsyncMethodReturns<
             TCallSender
           >;
-          if (callSender) {
-            window.removeEventListener(NativeEventType.Message, handleMessage);
-            stopConnectionTimeout();
-            resolve(callSender);
-          }
+          resolve(callSender);
         }
       };
 
-      window.addEventListener(NativeEventType.Message, handleMessage);
+      commsAdapter.listenForMessagesFromRemote(handleMessage);
 
       sendSynMessage();
 
       onDestroy((error?: PenpalError) => {
-        window.removeEventListener(NativeEventType.Message, handleMessage);
+        commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
 
         if (error) {
           reject(error);

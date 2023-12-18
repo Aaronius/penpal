@@ -9,7 +9,7 @@ export default (timeout: number | undefined, callback: Function): Function => {
   let timeoutId: number;
 
   if (timeout !== undefined) {
-    timeoutId = window.setTimeout(() => {
+    timeoutId = self.setTimeout(() => {
       const error: PenpalError = new Error(
         `Connection timed out after ${timeout}ms`
       ) as PenpalError;

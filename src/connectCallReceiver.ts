@@ -4,6 +4,7 @@ import {
   SerializedMethods,
   ReplyMessage,
   WindowsInfo,
+  PenpalMessage,
 } from './types';
 import {
   MessageType,
@@ -21,29 +22,15 @@ export default (
   serializedMethods: SerializedMethods,
   log: Function
 ) => {
-  const {
-    localName,
-    local,
-    remote,
-    originForSending,
-    originForReceiving,
-  } = info;
+  const { localName, commsAdapter } = info;
   let destroyed = false;
 
-  const handleMessageEvent = (event: MessageEvent) => {
-    if (event.source !== remote || event.data.penpal !== MessageType.Call) {
+  const handleMessage = (message: PenpalMessage) => {
+    if (message.penpal !== MessageType.Call) {
       return;
     }
 
-    if (originForReceiving !== '*' && event.origin !== originForReceiving) {
-      log(
-        `${localName} received message from origin ${event.origin} which did not match expected origin ${originForReceiving}`
-      );
-      return;
-    }
-
-    const callMessage: CallMessage = event.data;
-    const { methodName, args, id } = callMessage;
+    const { methodName, args, id } = message;
 
     log(`${localName}: Received ${methodName}() call`);
 
@@ -79,7 +66,7 @@ export default (
         }
 
         try {
-          remote.postMessage(message, originForSending);
+          commsAdapter.sendMessageToRemote(message);
         } catch (err) {
           // If a consumer attempts to send an object that's not cloneable (e.g., window),
           // we want to ensure the receiver's promise gets rejected.
@@ -91,7 +78,7 @@ export default (
               returnValue: serializeError(err),
               returnValueIsError: true,
             };
-            remote.postMessage(errorReplyMessage, originForSending);
+            commsAdapter.sendMessageToRemote(errorReplyMessage);
           }
 
           throw err;
@@ -107,10 +94,10 @@ export default (
     );
   };
 
-  local.addEventListener(NativeEventType.Message, handleMessageEvent);
+  commsAdapter.listenForMessagesFromRemote(handleMessage);
 
   return () => {
     destroyed = true;
-    local.removeEventListener(NativeEventType.Message, handleMessageEvent);
+    commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
   };
 };

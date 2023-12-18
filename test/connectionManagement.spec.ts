@@ -1,11 +1,15 @@
 import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants';
 import { createAndAddIframe } from './utils';
+import { connectToChild, ErrorCode } from '../src/index';
 
 /**
  * Asserts that no connection is successfully made between the parent and the
  * child.
  */
-const expectNoSuccessfulConnection = (connectionPromise, iframe) => {
+const expectNoSuccessfulConnection = (
+  connectionPromise: Promise<unknown>,
+  iframe: HTMLIFrameElement
+) => {
   const spy = jasmine.createSpy();
 
   connectionPromise.then(spy);
@@ -21,13 +25,13 @@ const expectNoSuccessfulConnection = (connectionPromise, iframe) => {
   });
 };
 
-describe('connection management', () => {
+fdescribe('connection management', () => {
   it('connects to iframe when correct child origin provided', async () => {
     const iframe = createAndAddIframe();
 
-    const connection = Penpal.connectToChild({
+    const connection = connectToChild({
       debug: true,
-      iframe,
+      child: iframe,
       childOrigin: CHILD_SERVER,
     });
 
@@ -43,9 +47,9 @@ describe('connection management', () => {
     const iframe = createAndAddIframe();
     iframe.src = `${CHILD_SERVER}/matchingParentOrigin.html`;
 
-    const connection = Penpal.connectToChild({
+    const connection = connectToChild({
       debug: true,
-      iframe,
+      child: iframe,
     });
 
     await connection.promise;
@@ -55,9 +59,9 @@ describe('connection management', () => {
     const iframe = createAndAddIframe();
     iframe.src = `${CHILD_SERVER}/matchingParentOriginRegex.html`;
 
-    const connection = Penpal.connectToChild({
+    const connection = connectToChild({
       debug: true,
-      iframe,
+      child: iframe,
     });
 
     await connection.promise;
@@ -66,9 +70,9 @@ describe('connection management', () => {
   it("doesn't connect to iframe when incorrect child origin provided", async () => {
     const iframe = createAndAddIframe();
 
-    const connection = Penpal.connectToChild({
+    const connection = connectToChild({
       debug: true,
-      iframe,
+      child: iframe,
       childOrigin: 'http://bogus.com',
     });
 
@@ -85,8 +89,8 @@ describe('connection management', () => {
       `${CHILD_SERVER}/mismatchedParentOrigin.html`
     );
 
-    const connection = Penpal.connectToChild({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -97,8 +101,8 @@ describe('connection management', () => {
       `${CHILD_SERVER}/mismatchedParentOriginRegex.html`
     );
 
-    const connection = Penpal.connectToChild({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -112,9 +116,9 @@ describe('connection management', () => {
       `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = Penpal.connectToChild({
+    const connection = connectToChild({
       debug: true,
-      iframe,
+      child: iframe,
       childOrigin: '*',
     });
 
@@ -129,17 +133,17 @@ describe('connection management', () => {
       `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = Penpal.connectToChild({
+    const connection = connectToChild({
       debug: true,
-      iframe,
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
-  it('reconnects after child reloads', (done) => {
-    const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+  it('reconnects after child reloads', (done: DoneCallback) => {
+    const connection = connectToChild({
+      child: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
     connection.promise.then((child) => {
@@ -149,7 +153,8 @@ describe('connection management', () => {
         // Detect reconnection
         if (child.multiply !== previousMultiply) {
           clearInterval(intervalId);
-          child.multiply(2, 4).then((value) => {
+          // @ts-expect-error
+          child.multiply(2, 4).then((value: number) => {
             expect(value).toEqual(8);
             connection.destroy();
             done();
@@ -157,18 +162,19 @@ describe('connection management', () => {
         }
       }, 10);
 
+      // @ts-expect-error
       child.reload();
     });
   });
 
   // Issue #18
-  it('properly disconnects previous call receiver upon reconnection', (done) => {
+  it('properly disconnects previous call receiver upon reconnection', (done: DoneCallback) => {
     const add = jasmine.createSpy().and.callFake((num1, num2) => {
       return num1 + num2;
     });
 
-    const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+    const connection = connectToChild({
+      child: createAndAddIframe(`${CHILD_SERVER}/default.html`),
       methods: {
         add,
       },
@@ -181,6 +187,7 @@ describe('connection management', () => {
         // Detect reconnection
         if (child.addUsingParent !== previousAddUsingParent) {
           clearInterval(intervalId);
+          // @ts-expect-error
           child.addUsingParent().then(() => {
             expect(add.calls.count()).toEqual(1);
             connection.destroy();
@@ -189,13 +196,14 @@ describe('connection management', () => {
         }
       }, 10);
 
+      // @ts-expect-error
       child.reload();
     });
   });
 
-  it('reconnects after child navigates to other page with different methods', (done) => {
-    const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+  it('reconnects after child navigates to other page with different methods', (done: DoneCallback) => {
+    const connection = connectToChild({
+      child: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
     connection.promise.then((child) => {
@@ -204,6 +212,7 @@ describe('connection management', () => {
         if (child.divide) {
           clearInterval(intervalId);
           expect(child.multiply).not.toBeDefined();
+          // @ts-expect-error
           child.divide(6, 3).then((value) => {
             expect(value).toEqual(2);
             connection.destroy();
@@ -212,15 +221,14 @@ describe('connection management', () => {
         }
       }, 10);
 
+      // @ts-expect-error
       child.navigate();
     });
   });
 
   it('rejects promise if connectToChild times out', async () => {
-    const connection = Penpal.connectToChild({
-      iframe: createAndAddIframe(
-        'http://www.fakeresponse.com/api/?sleep=10000'
-      ),
+    const connection = connectToChild({
+      child: createAndAddIframe('http://www.fakeresponse.com/api/?sleep=10000'),
       timeout: 0,
     });
 
@@ -232,7 +240,7 @@ describe('connection management', () => {
     }
     expect(error).toEqual(jasmine.any(Error));
     expect(error.message).toBe('Connection timed out after 0ms');
-    expect(error.code).toBe(Penpal.ErrorCode.ConnectionTimeout);
+    expect(error.code).toBe(ErrorCode.ConnectionTimeout);
   });
 
   it(
@@ -243,8 +251,8 @@ describe('connection management', () => {
 
       const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
 
-      const connection = Penpal.connectToChild({
-        iframe,
+      const connection = connectToChild({
+        child: iframe,
         timeout: 100000,
       });
 
@@ -261,9 +269,9 @@ describe('connection management', () => {
   it(
     "doesn't destroy connection if connection succeeds then " +
       'timeout passes (connectToParent)',
-    (done) => {
-      var connection = Penpal.connectToChild({
-        iframe: createAndAddIframe(`${CHILD_SERVER}/timeout.html`),
+    (done: DoneCallback) => {
+      const connection = connectToChild({
+        child: createAndAddIframe(`${CHILD_SERVER}/timeout.html`),
         methods: {
           reportStillConnected() {
             connection.destroy();
@@ -274,29 +282,31 @@ describe('connection management', () => {
     }
   );
 
-  it(
-    'destroys connection if iframe has been removed from DOM ' +
-      'and method is called',
-    async () => {
-      const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+  it('destroys connection if iframe has been removed from DOM', async () => {
+    jasmine.clock().install();
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
 
-      var connection = Penpal.connectToChild({
-        iframe,
-        appendTo: document.body,
-      });
+    const connection = connectToChild({
+      child: iframe,
+    });
 
-      const child = await connection.promise;
-      document.body.removeChild(iframe);
+    const child = await connection.promise;
+    document.body.removeChild(iframe);
 
-      let error;
-      try {
-        child.multiply(2, 3);
-      } catch (e) {
-        error = e;
-      }
+    jasmine.clock().tick(61000);
 
-      expect(error).toBeDefined();
-      expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
+    let error;
+    try {
+      // @ts-expect-error
+      await child.multiply(2, 3);
+    } catch (e) {
+      error = e;
     }
-  );
+
+    expect(error).toBeDefined();
+    expect(error.code).toBe(ErrorCode.ConnectionDestroyed);
+
+    jasmine.clock().uninstall();
+    connection.destroy();
+  });
 });

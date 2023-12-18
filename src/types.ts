@@ -1,12 +1,5 @@
 import { ErrorCode, MessageType, Resolution } from './enums';
-
-/**
- * An ACK handshake message.
- */
-export type AckMessage = {
-  penpal: MessageType.Ack;
-  methodNames: string[];
-};
+import CommsAdapter from './CommsAdapter';
 
 /**
  * Extract keys of T whose values are assignable to U.
@@ -27,16 +20,6 @@ export type AsyncMethodReturns<T> = {
     : T[K] extends (...args: infer A) => infer R
     ? (...args: A) => Promise<R>
     : AsyncMethodReturns<T[K]>;
-};
-
-/**
- * A method call message.
- */
-export type CallMessage = {
-  penpal: MessageType.Call;
-  id: number;
-  methodName: string;
-  args: any[];
 };
 
 /**
@@ -81,14 +64,10 @@ export type SerializedMethods = {
 export type PenpalError = Error & { code: ErrorCode };
 
 /**
- * A method response message.
+ * A SYN handshake message.
  */
-export type ReplyMessage = {
-  penpal: MessageType.Reply;
-  id: number;
-  resolution: Resolution;
-  returnValue: any;
-  returnValueIsError?: boolean;
+export type SynMessage = {
+  penpal: MessageType.Syn;
 };
 
 /**
@@ -100,11 +79,40 @@ export type SynAckMessage = {
 };
 
 /**
- * A SYN handshake message.
+ * An ACK handshake message.
  */
-export type SynMessage = {
-  penpal: MessageType.Syn;
+export type AckMessage = {
+  penpal: MessageType.Ack;
+  methodNames: string[];
 };
+
+/**
+ * A method call message.
+ */
+export type CallMessage = {
+  penpal: MessageType.Call;
+  id: number;
+  methodName: string;
+  args: any[];
+};
+
+/**
+ * A method response message.
+ */
+export type ReplyMessage = {
+  penpal: MessageType.Reply;
+  id: number;
+  resolution: Resolution;
+  returnValue: any;
+  returnValueIsError?: boolean;
+};
+
+export type PenpalMessage =
+  | SynMessage
+  | SynAckMessage
+  | AckMessage
+  | CallMessage
+  | ReplyMessage;
 
 export type WindowsInfo = {
   /**
@@ -112,23 +120,5 @@ export type WindowsInfo = {
    */
   localName: 'Parent' | 'Child';
 
-  /**
-   * The local window.
-   */
-  local: Window;
-
-  /**
-   * The remote window.
-   */
-  remote: Window;
-
-  /**
-   * Origin that should be used for sending messages to the remote window.
-   */
-  originForSending: string;
-
-  /**
-   * Origin that should be used for receiving messages from the remote window.
-   */
-  originForReceiving: string;
+  commsAdapter: CommsAdapter;
 };
