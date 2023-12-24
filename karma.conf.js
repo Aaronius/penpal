@@ -116,8 +116,8 @@ module.exports = (config) => {
     },
     port: 9001,
     colors: true,
-    // logLevel: config.LOG_INFO,
-    logLevel: config.LOG_DEBUG,
+    logLevel: config.LOG_INFO,
+    // logLevel: config.LOG_DEBUG,
     autoWatch: true,
     sauceLabs: {
       testName: 'Penpal Karma Test',

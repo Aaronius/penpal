@@ -1,13 +1,12 @@
 import { Destructor } from './createDestructor';
-import { MessageType } from './enums';
-import { PenpalMessage } from './types';
+import { ErrorCode, MessageType } from './enums';
+import { PenpalError, PenpalMessage } from './types';
 import CommsAdapter from './CommsAdapter';
 import areGlobalsAccessible from './areGlobalsAccessible';
 
 class IframeToParentAdapter implements CommsAdapter {
   private _parentOrigin: string | RegExp;
   private _log: Function;
-  private _destructor: Destructor;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
   private _originForSending: string | undefined;
 
@@ -17,20 +16,24 @@ class IframeToParentAdapter implements CommsAdapter {
     destructor: Destructor
   ) {
     this._log = log;
-    this._destructor = destructor;
     this._parentOrigin = parentOrigin;
-  }
 
-  sendMessageToRemote = (message: PenpalMessage) => {
-    if (message.penpal === MessageType.Syn) {
-      const parentOriginForSyn =
-        this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
-      window.parent.postMessage(message, parentOriginForSyn);
-      return;
+    if (!this._parentOrigin) {
+      const error: PenpalError = new Error(
+        `The parentOrigin option must be specified when connecting to a parent from an iframe`
+      ) as PenpalError;
+
+      error.code = ErrorCode.OriginRequired;
+      throw error;
     }
 
-    window.parent.postMessage(message, this._originForSending!);
-  };
+    window.addEventListener('message', this._handleMessageFromParent);
+
+    destructor.onDestroy(() => {
+      window.removeEventListener('message', this._handleMessageFromParent);
+      this._messageCallbacks.clear();
+    });
+  }
 
   private _handleMessageFromParent = (event: MessageEvent): void => {
     // Under niche scenarios, we get into this function after
@@ -78,24 +81,23 @@ class IframeToParentAdapter implements CommsAdapter {
     }
   };
 
-  listenForMessagesFromRemote = (
-    callback: (message: PenpalMessage) => void
-  ): void => {
-    if (!this._messageCallbacks.size) {
-      window.addEventListener('message', this._handleMessageFromParent);
+  sendMessage = (message: PenpalMessage) => {
+    if (message.penpal === MessageType.Syn) {
+      const parentOriginForSyn =
+        this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
+      window.parent.postMessage(message, parentOriginForSyn);
+      return;
     }
 
+    window.parent.postMessage(message, this._originForSending!);
+  };
+
+  addMessageHandler = (callback: (message: PenpalMessage) => void): void => {
     this._messageCallbacks.add(callback);
   };
 
-  stopListeningForMessagesFromRemote = (
-    callback: (message: PenpalMessage) => void
-  ): void => {
+  removeMessageHandler = (callback: (message: PenpalMessage) => void): void => {
     this._messageCallbacks.delete(callback);
-
-    if (!this._messageCallbacks.size) {
-      window.removeEventListener('message', this._handleMessageFromParent);
-    }
   };
 }
 

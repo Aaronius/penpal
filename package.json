@@ -63,6 +63,7 @@
     "@metahub/karma-rollup-preprocessor": "^6.0.0",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-typescript": "^4.1.2",
+    "@types/jasmine": "^5.1.4",
     "@types/jest": "^29.5.11",
     "connect": "^3.6.6",
     "eslint": "^7.25.0",

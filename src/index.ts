@@ -1,5 +1,6 @@
-export { default as connectToChild } from './parent/connectToChild';
-export { default as connectToParent } from './child/connectToParent';
+export { default as connectToChildIframe } from './parent/connectToChildIframe';
+export { default as connectToParentFromIframe } from './child/connectToParentFromIframe';
+
 export { ErrorCode } from './enums';
 export {
   Connection,

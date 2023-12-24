@@ -1,7 +1,6 @@
 import {
   AckMessage,
   CallSender,
-  PenpalMessage,
   SerializedMethods,
   SynAckMessage,
   WindowsInfo,
@@ -10,22 +9,20 @@ import { MessageType } from '../enums';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 import { Destructor } from '../createDestructor';
-import isWorker from '../isWorker';
 import CommsAdapter from '../CommsAdapter';
 
 /**
  * Handles a SYN-ACK handshake message.
  */
-export default (
+const handleSynAckMessageFactory = (
   commsAdapter: CommsAdapter,
-  parentOrigin: string | RegExp,
   serializedMethods: SerializedMethods,
   destructor: Destructor,
   log: Function
 ) => {
-  const { destroy, onDestroy } = destructor;
+  const { onDestroy } = destructor;
 
-  const handleAckMessage = (message: SynAckMessage): CallSender => {
+  const handleSynAckMessage = (message: SynAckMessage): CallSender => {
     log('Child: Handshake - Received SYN-ACK, responding with ACK');
 
     const ackMessage: AckMessage = {
@@ -33,7 +30,7 @@ export default (
       methodNames: Object.keys(serializedMethods),
     };
 
-    commsAdapter.sendMessageToRemote(ackMessage);
+    commsAdapter.sendMessage(ackMessage);
 
     const info: WindowsInfo = {
       localName: 'Child',
@@ -59,5 +56,7 @@ export default (
     return callSender;
   };
 
-  return handleAckMessage;
+  return handleSynAckMessage;
 };
+
+export default handleSynAckMessageFactory;

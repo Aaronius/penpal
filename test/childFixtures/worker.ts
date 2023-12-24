@@ -1,6 +1,6 @@
 importScripts('/base/dist/penpal.js');
 
-Penpal.connectToParent({
+Penpal.connectToParentFromIframe({
   methods: {
     multiply: function (num1, num2) {
       console.log('multiply received');

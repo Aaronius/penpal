@@ -1,4 +1,5 @@
 import { CHILD_SERVER } from './constants';
+import { connectToChildIframe, ErrorCode } from '../src/index';
 
 const htmlSrc = `
 <!DOCTYPE html>
@@ -6,7 +7,8 @@ const htmlSrc = `
   <body>
     <script type="text/javascript" src="${CHILD_SERVER}/penpal.js"></script>
     <script type="text/javascript">
-      Penpal.connectToParent({
+      Penpal.connectToParentFromIframe({
+        parentOrigin: "*",
         methods: {
           multiply: function(num1, num2) {
             return num1 * num2;
@@ -35,11 +37,12 @@ describe('data URI support', () => {
     iframe.src = `data:text/html,${htmlSrc}`;
     document.body.appendChild(iframe);
 
-    const connection = Penpal.connectToChild({
+    const connection = connectToChildIframe({
       iframe,
     });
 
     const child = await connection.promise;
+    // @ts-expect-error
     const value = await child.multiply(2, 5);
     expect(value).toEqual(10);
     connection.destroy();
@@ -50,7 +53,7 @@ describe('data URI support', () => {
     iframe.src = `data:text/html,${htmlSrcRedirect}`;
     document.body.appendChild(iframe);
 
-    const connection = Penpal.connectToChild({
+    const connection = connectToChildIframe({
       iframe,
     });
 
@@ -76,11 +79,12 @@ if (supportsSrcDoc) {
       iframe.srcdoc = htmlSrc;
       document.body.appendChild(iframe);
 
-      const connection = Penpal.connectToChild({
+      const connection = connectToChildIframe({
         iframe,
       });
 
       const child = await connection.promise;
+      // @ts-expect-error
       const value = await child.multiply(2, 5);
       expect(value).toEqual(10);
       connection.destroy();
@@ -91,7 +95,7 @@ if (supportsSrcDoc) {
       iframe.srcdoc = htmlSrcRedirect;
       document.body.appendChild(iframe);
 
-      const connection = Penpal.connectToChild({
+      const connection = connectToChildIframe({
         iframe,
       });
 

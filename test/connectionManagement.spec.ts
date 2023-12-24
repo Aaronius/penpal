@@ -1,6 +1,6 @@
 import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants';
 import { createAndAddIframe } from './utils';
-import { connectToChild, ErrorCode } from '../src/index';
+import { connectToChildIframe, ErrorCode } from '../src/index';
 
 /**
  * Asserts that no connection is successfully made between the parent and the
@@ -25,17 +25,17 @@ const expectNoSuccessfulConnection = (
   });
 };
 
-fdescribe('connection management', () => {
+describe('connection management', () => {
   it('connects to iframe when correct child origin provided', async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChild({
+    const connection = connectToChildIframe({
       debug: true,
-      child: iframe,
+      iframe,
       childOrigin: CHILD_SERVER,
     });
 
-    // We're setting src after calling connectToChild to ensure
+    // We're setting src after calling connectToChildIframe to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/default.html`;
@@ -47,9 +47,9 @@ fdescribe('connection management', () => {
     const iframe = createAndAddIframe();
     iframe.src = `${CHILD_SERVER}/matchingParentOrigin.html`;
 
-    const connection = connectToChild({
+    const connection = connectToChildIframe({
       debug: true,
-      child: iframe,
+      iframe,
     });
 
     await connection.promise;
@@ -59,9 +59,9 @@ fdescribe('connection management', () => {
     const iframe = createAndAddIframe();
     iframe.src = `${CHILD_SERVER}/matchingParentOriginRegex.html`;
 
-    const connection = connectToChild({
+    const connection = connectToChildIframe({
       debug: true,
-      child: iframe,
+      iframe,
     });
 
     await connection.promise;
@@ -70,13 +70,13 @@ fdescribe('connection management', () => {
   it("doesn't connect to iframe when incorrect child origin provided", async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChild({
+    const connection = connectToChildIframe({
       debug: true,
-      child: iframe,
+      iframe,
       childOrigin: 'http://bogus.com',
     });
 
-    // We're setting src after calling connectToChild to ensure
+    // We're setting src after calling connectToChildIframe to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/default.html`;
@@ -89,8 +89,8 @@ fdescribe('connection management', () => {
       `${CHILD_SERVER}/mismatchedParentOrigin.html`
     );
 
-    const connection = connectToChild({
-      child: iframe,
+    const connection = connectToChildIframe({
+      iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -101,8 +101,8 @@ fdescribe('connection management', () => {
       `${CHILD_SERVER}/mismatchedParentOriginRegex.html`
     );
 
-    const connection = connectToChild({
-      child: iframe,
+    const connection = connectToChildIframe({
+      iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -116,9 +116,9 @@ fdescribe('connection management', () => {
       `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChild({
+    const connection = connectToChildIframe({
       debug: true,
-      child: iframe,
+      iframe,
       childOrigin: '*',
     });
 
@@ -133,17 +133,17 @@ fdescribe('connection management', () => {
       `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChild({
+    const connection = connectToChildIframe({
       debug: true,
-      child: iframe,
+      iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
   it('reconnects after child reloads', (done: DoneCallback) => {
-    const connection = connectToChild({
-      child: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+    const connection = connectToChildIframe({
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
     connection.promise.then((child) => {
@@ -173,8 +173,8 @@ fdescribe('connection management', () => {
       return num1 + num2;
     });
 
-    const connection = connectToChild({
-      child: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+    const connection = connectToChildIframe({
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
       methods: {
         add,
       },
@@ -202,8 +202,8 @@ fdescribe('connection management', () => {
   });
 
   it('reconnects after child navigates to other page with different methods', (done: DoneCallback) => {
-    const connection = connectToChild({
-      child: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+    const connection = connectToChildIframe({
+      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
 
     connection.promise.then((child) => {
@@ -226,9 +226,11 @@ fdescribe('connection management', () => {
     });
   });
 
-  it('rejects promise if connectToChild times out', async () => {
-    const connection = connectToChild({
-      child: createAndAddIframe('http://www.fakeresponse.com/api/?sleep=10000'),
+  it('rejects promise if connectToChildIframe times out', async () => {
+    const connection = connectToChildIframe({
+      iframe: createAndAddIframe(
+        'http://www.fakeresponse.com/api/?sleep=10000'
+      ),
       timeout: 0,
     });
 
@@ -245,14 +247,14 @@ fdescribe('connection management', () => {
 
   it(
     "doesn't destroy connection if connection succeeds then " +
-      'timeout passes (connectToChild)',
+      'timeout passes (connectToChildIframe)',
     async () => {
       jasmine.clock().install();
 
       const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
 
-      const connection = connectToChild({
-        child: iframe,
+      const connection = connectToChildIframe({
+        iframe,
         timeout: 100000,
       });
 
@@ -270,8 +272,8 @@ fdescribe('connection management', () => {
     "doesn't destroy connection if connection succeeds then " +
       'timeout passes (connectToParent)',
     (done: DoneCallback) => {
-      const connection = connectToChild({
-        child: createAndAddIframe(`${CHILD_SERVER}/timeout.html`),
+      const connection = connectToChildIframe({
+        iframe: createAndAddIframe(`${CHILD_SERVER}/timeout.html`),
         methods: {
           reportStillConnected() {
             connection.destroy();
@@ -286,8 +288,8 @@ fdescribe('connection management', () => {
     jasmine.clock().install();
     const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
 
-    const connection = connectToChild({
-      child: iframe,
+    const connection = connectToChildIframe({
+      iframe,
     });
 
     const child = await connection.promise;

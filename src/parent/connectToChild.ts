@@ -6,45 +6,27 @@ import {
   Methods,
   PenpalMessage,
 } from '../types';
-import { ErrorCode, MessageType, NativeEventType } from '../enums';
-
-import createDestructor from '../createDestructor';
-import createLogger from '../createLogger';
-import getOriginFromSrc from './getOriginFromSrc';
+import { MessageType } from '../enums';
+import { Destructor } from '../createDestructor';
 import handleAckMessageFactory from './handleAckMessageFactory';
 import handleSynMessageFactory from './handleSynMessageFactory';
 import { serializeMethods } from '../methodSerialization';
-import monitorIframeRemoval from './monitorIframeRemoval';
 import startConnectionTimeout from '../startConnectionTimeout';
-import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
-import isWorker from '../isWorker';
-import ParentToIframeAdapter from '../ParentToIframeAdapter';
 import CommsAdapter from '../CommsAdapter';
 
 type Options = {
-  /**
-   * The iframe to which a connection should be made.
-   */
-  child: HTMLIFrameElement | Worker;
+  commsAdapter: CommsAdapter;
   /**
    * Methods that may be called by the iframe.
    */
   methods?: Methods;
   /**
-   * The child origin to use to secure communication. If
-   * not provided, the child origin will be derived from the
-   * iframe's src or srcdoc value.
-   */
-  childOrigin?: string;
-  /**
    * The amount of time, in milliseconds, Penpal should wait
    * for the iframe to respond before rejecting the connection promise.
    */
   timeout?: number;
-  /**
-   * Whether log messages should be emitted to the console.
-   */
-  debug?: boolean;
+  log: (...args: any) => void;
+  destructor: Destructor;
 };
 
 /**
@@ -53,26 +35,8 @@ type Options = {
 export default <TCallSender extends object = CallSender>(
   options: Options
 ): Connection<TCallSender> => {
-  let { child, methods = {}, childOrigin, timeout, debug = false } = options;
-
-  const log = createLogger(debug);
-  const destructor = createDestructor('Parent', log);
+  const { commsAdapter, methods = {}, timeout, log, destructor } = options;
   const { onDestroy, destroy } = destructor;
-
-  let commsAdapter: CommsAdapter;
-
-  // if (child instanceof HTMLIFrameElement) {
-  commsAdapter = new ParentToIframeAdapter(
-    child as HTMLIFrameElement,
-    childOrigin,
-    log,
-    destructor
-  );
-  // } else if (child instanceof Worker) {
-  //   // TODO
-  // } else {
-  //   // TODO
-  // }
 
   const serializedMethods = serializeMethods(methods);
   const handleSynMessage = handleSynMessageFactory(
@@ -97,24 +61,19 @@ export default <TCallSender extends object = CallSender>(
         }
 
         if (message.penpal === MessageType.Ack) {
-          const callSender = handleAckMessage(
-            message.methodNames
-          ) as AsyncMethodReturns<TCallSender>;
-
-          if (callSender) {
-            stopConnectionTimeout();
-            resolve(callSender);
-          }
+          const callSender = handleAckMessage(message.methodNames);
+          stopConnectionTimeout();
+          resolve(callSender as AsyncMethodReturns<TCallSender>);
           return;
         }
       };
 
-      commsAdapter.listenForMessagesFromRemote(handleMessage);
+      commsAdapter.addMessageHandler(handleMessage);
 
       log('Parent: Awaiting handshake');
 
       onDestroy((error?: PenpalError) => {
-        commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
+        commsAdapter.removeMessageHandler(handleMessage);
 
         if (error) {
           reject(error);

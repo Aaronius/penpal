@@ -10,7 +10,6 @@ class ParentToIframeAdapter implements CommsAdapter {
   private _child: HTMLIFrameElement;
   private _childOrigin: string;
   private _log: Function;
-  private _destructor: Destructor;
   private _originForSending: string;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
 
@@ -22,7 +21,6 @@ class ParentToIframeAdapter implements CommsAdapter {
   ) {
     this._child = child;
     this._log = log;
-    this._destructor = destructor;
 
     if (!childOrigin) {
       validateIframeHasSrcOrSrcDoc(child);
@@ -35,11 +33,14 @@ class ParentToIframeAdapter implements CommsAdapter {
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
     this._originForSending = childOrigin === 'null' ? '*' : childOrigin;
     monitorIframeRemoval(child, destructor);
-  }
 
-  sendMessageToRemote = (message: PenpalMessage): void => {
-    this._child.contentWindow?.postMessage(message, this._originForSending);
-  };
+    window.addEventListener('message', this._handleMessageFromChild);
+
+    destructor.onDestroy(() => {
+      window.removeEventListener('message', this._handleMessageFromChild);
+      this._messageCallbacks.clear();
+    });
+  }
 
   private _handleMessageFromChild = (event: MessageEvent): void => {
     // Under specific timing circumstances, we can receive an event
@@ -87,24 +88,16 @@ class ParentToIframeAdapter implements CommsAdapter {
     }
   };
 
-  listenForMessagesFromRemote = (
-    callback: (message: PenpalMessage) => void
-  ): void => {
-    if (!this._messageCallbacks.size) {
-      window.addEventListener('message', this._handleMessageFromChild);
-    }
+  sendMessage = (message: PenpalMessage): void => {
+    this._child.contentWindow?.postMessage(message, this._originForSending);
+  };
 
+  addMessageHandler = (callback: (message: PenpalMessage) => void): void => {
     this._messageCallbacks.add(callback);
   };
 
-  stopListeningForMessagesFromRemote = (
-    callback: (message: PenpalMessage) => void
-  ): void => {
+  removeMessageHandler = (callback: (message: PenpalMessage) => void): void => {
     this._messageCallbacks.delete(callback);
-
-    if (!this._messageCallbacks.size) {
-      window.removeEventListener('message', this._handleMessageFromChild);
-    }
   };
 }
 

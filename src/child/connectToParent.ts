@@ -1,5 +1,4 @@
-import createDestructor from '../createDestructor';
-import createLogger from '../createLogger';
+import { Destructor } from '../createDestructor';
 import {
   SynMessage,
   Methods,
@@ -8,17 +7,14 @@ import {
   AsyncMethodReturns,
   PenpalMessage,
 } from '../types';
-import { MessageType, NativeEventType } from '../enums';
+import { MessageType } from '../enums';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
 import { serializeMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
-import IframeToParentAdapter from '../IframeToParentAdapter';
+import CommsAdapter from '../CommsAdapter';
 
 type Options = {
-  /**
-   * Valid parent origin used to restrict communication.
-   */
-  parentOrigin?: string | RegExp;
+  commsAdapter: CommsAdapter;
   /**
    * Methods that may be called by the parent window.
    */
@@ -28,10 +24,8 @@ type Options = {
    * for the parent to respond before rejecting the connection promise.
    */
   timeout?: number;
-  /**
-   * Whether log messages should be emitted to the console.
-   */
-  debug?: boolean;
+  log: (...args: any) => void;
+  destructor: Destructor;
 };
 
 type Connection<TCallSender extends object = CallSender> = {
@@ -50,19 +44,14 @@ type Connection<TCallSender extends object = CallSender> = {
  * Attempts to establish communication with the parent window.
  */
 export default <TCallSender extends object = CallSender>(
-  options: Options = {}
+  options: Options
 ): Connection<TCallSender> => {
-  const { parentOrigin = '*', methods = {}, timeout, debug = false } = options;
-  const log = createLogger(debug);
-  const destructor = createDestructor('Child', log);
+  const { commsAdapter, methods = {}, timeout, log, destructor } = options;
   const { destroy, onDestroy } = destructor;
   const serializedMethods = serializeMethods(methods);
 
-  let commsAdapter = new IframeToParentAdapter(parentOrigin, log, destructor);
-
   const handleSynAckMessage = handleSynAckMessageFactory(
     commsAdapter,
-    parentOrigin,
     serializedMethods,
     destructor,
     log
@@ -71,7 +60,7 @@ export default <TCallSender extends object = CallSender>(
   const sendSynMessage = () => {
     log('Child: Handshake - Sending SYN');
     const synMessage: SynMessage = { penpal: MessageType.Syn };
-    commsAdapter.sendMessageToRemote(synMessage);
+    commsAdapter.sendMessage(synMessage);
   };
 
   const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise(
@@ -79,7 +68,7 @@ export default <TCallSender extends object = CallSender>(
       const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
       const handleMessage = (message: PenpalMessage) => {
         if (message.penpal === MessageType.SynAck) {
-          commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
+          commsAdapter.removeMessageHandler(handleMessage);
           stopConnectionTimeout();
           const callSender = handleSynAckMessage(message) as AsyncMethodReturns<
             TCallSender
@@ -88,12 +77,12 @@ export default <TCallSender extends object = CallSender>(
         }
       };
 
-      commsAdapter.listenForMessagesFromRemote(handleMessage);
+      commsAdapter.addMessageHandler(handleMessage);
 
       sendSynMessage();
 
       onDestroy((error?: PenpalError) => {
-        commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
+        commsAdapter.removeMessageHandler(handleMessage);
 
         if (error) {
           reject(error);

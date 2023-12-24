@@ -55,7 +55,7 @@ export default (
           }
 
           log(`${localName}: Received ${methodName}() reply`);
-          commsAdapter.stopListeningForMessagesFromRemote(handleMessage);
+          commsAdapter.removeMessageHandler(handleMessage);
 
           let returnValue = message.returnValue;
 
@@ -68,7 +68,7 @@ export default (
           );
         };
 
-        commsAdapter.listenForMessagesFromRemote(handleMessage);
+        commsAdapter.addMessageHandler(handleMessage);
 
         const callMessage: CallMessage = {
           penpal: MessageType.Call,
@@ -76,7 +76,7 @@ export default (
           methodName,
           args,
         };
-        commsAdapter.sendMessageToRemote(callMessage);
+        commsAdapter.sendMessage(callMessage);
       });
     };
   };

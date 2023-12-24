@@ -5,12 +5,12 @@ import CommsAdapter from '../CommsAdapter';
 /**
  * Handles a SYN handshake message.
  */
-export default (
+const handleSynMessageFactory = (
   commsAdapter: CommsAdapter,
   log: Function,
   serializedMethods: SerializedMethods
 ) => {
-  return () => {
+  const handleSynMessage = () => {
     log('Parent: Handshake - Received SYN, responding with SYN-ACK');
 
     const synAckMessage: SynAckMessage = {
@@ -18,6 +18,10 @@ export default (
       methodNames: Object.keys(serializedMethods),
     };
 
-    commsAdapter.sendMessageToRemote(synAckMessage);
+    commsAdapter.sendMessage(synAckMessage);
   };
+
+  return handleSynMessage;
 };
+
+export default handleSynMessageFactory;

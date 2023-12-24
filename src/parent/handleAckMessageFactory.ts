@@ -2,19 +2,18 @@ import { CallSender, SerializedMethods, WindowsInfo } from '../types';
 import { Destructor } from '../createDestructor';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
-import isWorker from '../isWorker';
 import CommsAdapter from '../CommsAdapter';
 
 /**
  * Handles an ACK handshake message.
  */
-export default (
+const handleAckMessageFactory = (
   commsAdapter: CommsAdapter,
   serializedMethods: SerializedMethods,
   destructor: Destructor,
   log: Function
 ) => {
-  const { destroy, onDestroy } = destructor;
+  const { onDestroy } = destructor;
   let destroyCallReceiver: Function;
   let receiverMethodNames: string[];
   // We resolve the promise with the call sender. If the child reconnects
@@ -23,7 +22,7 @@ export default (
   // latest provided by the child.
   const callSender: CallSender = {};
 
-  const handleAckMessage = (methodNames: string[]): CallSender | undefined => {
+  const handleAckMessage = (methodNames: string[]): CallSender => {
     log('Parent: Handshake - Received ACK');
 
     const info: WindowsInfo = {
@@ -64,3 +63,5 @@ export default (
 
   return handleAckMessage;
 };
+
+export default handleAckMessageFactory;

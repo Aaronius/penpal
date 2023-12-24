@@ -1,9 +1,9 @@
-import connectToChild from './parent/connectToChild';
-import connectToParent from './child/connectToParent';
+import connectToChildIframe from './parent/connectToChildIframe';
+import connectToParentFromIframe from './child/connectToParentFromIframe';
 import { ErrorCode } from './enums';
 
 export default {
-  connectToChild,
-  connectToParent,
+  connectToChildIframe,
+  connectToParentFromIframe,
   ErrorCode,
 };

@@ -64,7 +64,8 @@
         },
       };
 
-      Penpal.connectToParent({
+      Penpal.connectToParentFromIframe({
+        parentOrigin: '*',
         methods: methods,
       }).promise.then(function (parent) {
         parentAPI = parent;
