@@ -1,24 +1,18 @@
-import ParentToIframeAdapter from './ParentToIframeAdapter';
 import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
 import { Methods } from '../types';
 import connectToChild from './connectToChild';
+import ParentToWorkerAdapter from './ParentToWorkerAdapter';
 
 type Options = {
   /**
-   * The iframe to which a connection should be made.
+   * The worker to which a connection should be made.
    */
-  iframe: HTMLIFrameElement;
+  worker: Worker;
   /**
    * Methods that may be called by the iframe.
    */
   methods?: Methods;
-  /**
-   * The child origin to use to secure communication. If
-   * not provided, the child origin will be derived from the
-   * iframe's src or srcdoc value.
-   */
-  childOrigin?: string;
   /**
    * The amount of time, in milliseconds, Penpal should wait
    * for the iframe to respond before rejecting the connection promise.
@@ -31,15 +25,10 @@ type Options = {
 };
 
 const connectToChildIframe = (options: Options) => {
-  const { iframe, methods, childOrigin, timeout, debug = false } = options;
+  const { worker, methods, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Parent', log);
-  const commsAdapter = new ParentToIframeAdapter(
-    iframe,
-    childOrigin,
-    log,
-    destructor
-  );
+  const commsAdapter = new ParentToWorkerAdapter(worker, log, destructor);
   return connectToChild({
     commsAdapter,
     methods,

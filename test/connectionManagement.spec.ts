@@ -1,6 +1,10 @@
 import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants';
 import { createAndAddIframe } from './utils';
-import { connectToChildIframe, ErrorCode } from '../src/index';
+import {
+  connectToChildIframe,
+  connectToChildWorker,
+  ErrorCode,
+} from '../src/index';
 
 /**
  * Asserts that no connection is successfully made between the parent and the
@@ -39,6 +43,17 @@ describe('connection management', () => {
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/default.html`;
+
+    await connection.promise;
+  });
+
+  fit('connects to worker', async () => {
+    const worker = new Worker('/base/test/childFixtures/worker.js');
+
+    const connection = connectToChildWorker({
+      debug: true,
+      worker,
+    });
 
     await connection.promise;
   });

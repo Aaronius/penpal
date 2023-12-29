@@ -1,8 +1,8 @@
-import { Destructor } from './createDestructor';
-import { ErrorCode, MessageType } from './enums';
-import { PenpalError, PenpalMessage } from './types';
-import CommsAdapter from './CommsAdapter';
-import areGlobalsAccessible from './areGlobalsAccessible';
+import { Destructor } from '../createDestructor';
+import { ErrorCode, MessageType } from '../enums';
+import { PenpalError, PenpalMessage } from '../types';
+import CommsAdapter from '../CommsAdapter';
+import areGlobalsAccessible from '../areGlobalsAccessible';
 
 class IframeToParentAdapter implements CommsAdapter {
   private _parentOrigin: string | RegExp;
@@ -18,7 +18,7 @@ class IframeToParentAdapter implements CommsAdapter {
     this._log = log;
     this._parentOrigin = parentOrigin;
 
-    if (!this._parentOrigin) {
+    if (!parentOrigin) {
       const error: PenpalError = new Error(
         `The parentOrigin option must be specified when connecting to a parent from an iframe`
       ) as PenpalError;
@@ -85,6 +85,7 @@ class IframeToParentAdapter implements CommsAdapter {
     if (message.penpal === MessageType.Syn) {
       const parentOriginForSyn =
         this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
+      console.log('message', message);
       window.parent.postMessage(message, parentOriginForSyn);
       return;
     }

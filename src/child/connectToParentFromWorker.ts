@@ -3,12 +3,9 @@ import IframeToParentAdapter from './IframeToParentAdapter';
 import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
 import connectToParent from './connectToParent';
+import WorkerToParentAdapter from './WorkerToParentAdapter';
 
 type Options = {
-  /**
-   * Valid parent origin used to restrict communication.
-   */
-  parentOrigin: string | RegExp;
   /**
    * Methods that may be called by the parent window.
    */
@@ -24,11 +21,11 @@ type Options = {
   debug?: boolean;
 };
 
-const connectToParentFromIframe = (options: Options) => {
-  const { parentOrigin, methods, timeout, debug = false } = options;
+const connectToParentFromWorker = (options: Options) => {
+  const { methods, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Child', log);
-  const commsAdapter = new IframeToParentAdapter(parentOrigin, log, destructor);
+  const commsAdapter = new WorkerToParentAdapter(log, destructor);
   return connectToParent({
     commsAdapter,
     methods,
@@ -38,4 +35,4 @@ const connectToParentFromIframe = (options: Options) => {
   });
 };
 
-export default connectToParentFromIframe;
+export default connectToParentFromWorker;

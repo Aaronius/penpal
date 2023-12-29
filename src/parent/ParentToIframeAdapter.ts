@@ -1,30 +1,30 @@
-import validateIframeHasSrcOrSrcDoc from './parent/validateIframeHasSrcOrSrcDoc';
-import getOriginFromSrc from './parent/getOriginFromSrc';
-import { AsyncMethodReturns, PenpalMessage, SynAckMessage } from './types';
-import { MessageType } from './enums';
-import { Destructor } from './createDestructor';
-import monitorIframeRemoval from './parent/monitorIframeRemoval';
-import CommsAdapter from './CommsAdapter';
+import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
+import getOriginFromSrc from './getOriginFromSrc';
+import { AsyncMethodReturns, PenpalMessage, SynAckMessage } from '../types';
+import { MessageType } from '../enums';
+import { Destructor } from '../createDestructor';
+import monitorIframeRemoval from './monitorIframeRemoval';
+import CommsAdapter from '../CommsAdapter';
 
 class ParentToIframeAdapter implements CommsAdapter {
-  private _child: HTMLIFrameElement;
+  private _iframe: HTMLIFrameElement;
   private _childOrigin: string;
   private _log: Function;
   private _originForSending: string;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
 
   constructor(
-    child: HTMLIFrameElement,
+    iframe: HTMLIFrameElement,
     childOrigin: string | undefined,
     log: Function,
     destructor: Destructor
   ) {
-    this._child = child;
+    this._iframe = iframe;
     this._log = log;
 
     if (!childOrigin) {
-      validateIframeHasSrcOrSrcDoc(child);
-      childOrigin = getOriginFromSrc(child.src);
+      validateIframeHasSrcOrSrcDoc(iframe);
+      childOrigin = getOriginFromSrc(iframe.src);
     }
 
     this._childOrigin = childOrigin;
@@ -32,7 +32,7 @@ class ParentToIframeAdapter implements CommsAdapter {
     // must post messages with "*" as targetOrigin when sending messages.
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
     this._originForSending = childOrigin === 'null' ? '*' : childOrigin;
-    monitorIframeRemoval(child, destructor);
+    monitorIframeRemoval(iframe, destructor);
 
     window.addEventListener('message', this._handleMessageFromChild);
 
@@ -49,7 +49,7 @@ class ParentToIframeAdapter implements CommsAdapter {
     // https://github.com/Aaronius/penpal/issues/85
     if (
       !event.source ||
-      event.source !== this._child.contentWindow ||
+      event.source !== this._iframe.contentWindow ||
       !event.data?.penpal
     ) {
       return;
@@ -89,7 +89,7 @@ class ParentToIframeAdapter implements CommsAdapter {
   };
 
   sendMessage = (message: PenpalMessage): void => {
-    this._child.contentWindow?.postMessage(message, this._originForSending);
+    this._iframe.contentWindow?.postMessage(message, this._originForSending);
   };
 
   addMessageHandler = (callback: (message: PenpalMessage) => void): void => {
