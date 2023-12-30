@@ -18,7 +18,7 @@ type Options = {
    * not provided, the child origin will be derived from the
    * iframe's src or srcdoc value.
    */
-  childOrigin?: string;
+  childOrigin?: string | RegExp;
   /**
    * The amount of time, in milliseconds, Penpal should wait
    * for the iframe to respond before rejecting the connection promise.

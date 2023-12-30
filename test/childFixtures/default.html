@@ -18,6 +18,7 @@
 
       var methods = {
         multiply: function (num1, num2) {
+          console.log('window origin', window.origin);
           return num1 * num2;
         },
         multiplyAsync: function (num1, num2) {
@@ -58,8 +59,8 @@
         reload: function () {
           window.location.reload(true);
         },
-        navigate: function () {
-          window.location.href = 'divideMethod.html';
+        navigate: function (to) {
+          window.location.href = to;
         },
         nested: {
           oneLevel: function (input) {
@@ -76,9 +77,12 @@
       Penpal.connectToParentFromIframe({
         parentOrigin: '*',
         methods: methods,
+        debug: true,
       }).promise.then(function (parent) {
         parentAPI = parent;
       });
+
+      window.parent.postMessage('IFRAME_LOADED', '*');
     </script>
   </body>
 </html>

@@ -59,21 +59,20 @@ class IframeToParentAdapter implements CommsAdapter {
         ? this._parentOrigin.test(event.origin)
         : this._parentOrigin === '*' || this._parentOrigin === event.origin;
 
-    if (messageType === MessageType.SynAck) {
-      if (originQualifies) {
-        // If event.origin is "null", the remote protocol is file: or data: and we
-        // must post messages with "*" as targetOrigin when sending messages.
-        // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-        this._originForSending = event.origin === 'null' ? '*' : event.origin;
-      } else {
+    if (!originQualifies) {
+      if (messageType === MessageType.SynAck) {
         this._log(
           `Child: Handshake - Received SYN-ACK from origin ${event.origin} which did not match expected origin ${this._parentOrigin}`
         );
       }
+      return;
     }
 
-    if (!originQualifies) {
-      return;
+    if (messageType === MessageType.SynAck) {
+      // If event.origin is "null", the remote protocol is file: or data: and we
+      // must post messages with "*" as targetOrigin when sending messages.
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
+      this._originForSending = event.origin === 'null' ? '*' : event.origin;
     }
 
     for (const callback of this._messageCallbacks) {
@@ -90,6 +89,13 @@ class IframeToParentAdapter implements CommsAdapter {
         transfer: transferables,
       });
       return;
+    }
+
+    if (!this._originForSending) {
+      // We should never reach this point, but we check anyway to ensure we're
+      // always specifying a target origin. If we do reach this point, it's
+      // due to improper Penpal logic.
+      throw new Error('Origin for sending not set');
     }
 
     window.parent.postMessage(message, {

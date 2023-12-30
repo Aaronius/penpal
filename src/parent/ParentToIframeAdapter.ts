@@ -8,14 +8,14 @@ import CommsAdapter from '../CommsAdapter';
 
 class ParentToIframeAdapter implements CommsAdapter {
   private _iframe: HTMLIFrameElement;
-  private _childOrigin: string;
+  private _childOrigin: string | RegExp;
   private _log: Function;
-  private _originForSending: string;
+  private _originForSending: string | undefined;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
 
   constructor(
     iframe: HTMLIFrameElement,
-    childOrigin: string | undefined,
+    childOrigin: string | RegExp | undefined,
     log: Function,
     destructor: Destructor
   ) {
@@ -28,10 +28,6 @@ class ParentToIframeAdapter implements CommsAdapter {
     }
 
     this._childOrigin = childOrigin;
-    // If event.origin is "null", the remote protocol is file: or data: and we
-    // must post messages with "*" as targetOrigin when sending messages.
-    // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-    this._originForSending = childOrigin === 'null' ? '*' : childOrigin;
     monitorIframeRemoval(iframe, destructor);
 
     window.addEventListener('message', this._handleMessageFromChild);
@@ -58,7 +54,12 @@ class ParentToIframeAdapter implements CommsAdapter {
     const penpalMessage: PenpalMessage = event.data;
     const { penpal: messageType } = penpalMessage;
 
-    if (this._childOrigin !== '*' && event.origin !== this._childOrigin) {
+    let originQualifies =
+      this._childOrigin instanceof RegExp
+        ? this._childOrigin.test(event.origin)
+        : this._childOrigin === '*' || this._childOrigin === event.origin;
+
+    if (!originQualifies) {
       if (messageType === MessageType.Syn) {
         this._log(
           `Parent: Handshake - Received SYN message from origin ${event.origin} which did not match expected origin ${this._childOrigin}`
@@ -80,6 +81,13 @@ class ParentToIframeAdapter implements CommsAdapter {
       return;
     }
 
+    if (messageType === MessageType.Syn) {
+      // If event.origin is "null", the remote protocol is file: or data: and we
+      // must post messages with "*" as targetOrigin when sending messages.
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
+      this._originForSending = event.origin === 'null' ? '*' : event.origin;
+    }
+
     for (const callback of this._messageCallbacks) {
       callback(penpalMessage);
     }
@@ -89,6 +97,13 @@ class ParentToIframeAdapter implements CommsAdapter {
     message: PenpalMessage,
     transferables?: Transferable[]
   ): void => {
+    if (!this._originForSending) {
+      // We should never reach this point, but we check anyway to ensure we're
+      // always specifying a target origin. If we do reach this point, it's
+      // due to improper Penpal logic.
+      throw new Error('Origin for sending not set');
+    }
+
     this._iframe.contentWindow?.postMessage(message, {
       targetOrigin: this._originForSending,
       transfer: transferables,

@@ -1,6 +1,6 @@
 const areGlobalsAccessible = () => {
   try {
-    clearTimeout();
+    clearTimeout(0);
   } catch (e) {
     return false;
   }

@@ -35,12 +35,54 @@ const expectNoSuccessfulConnection = (
 };
 
 describe('connection management', () => {
+  it('connects to iframe when no child origin is provided but src is set on iframe', async () => {
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+
+    const connection = connectToChildIframe({
+      iframe,
+    });
+
+    await connection.promise;
+  });
+
   it('connects to iframe when correct child origin provided', async () => {
     const iframe = createAndAddIframe();
 
     const connection = connectToChildIframe({
       iframe,
       childOrigin: CHILD_SERVER,
+    });
+
+    // We're setting src after calling connectToChildIframe to ensure
+    // that we don't throw an error in such a case. src is only
+    // needed when childOrigin is not passed.
+    iframe.src = `${CHILD_SERVER}/default.html`;
+
+    await connection.promise;
+  });
+
+  it('connects to iframe when correct child origin regex provided', async () => {
+    const iframe = createAndAddIframe();
+
+    const connection = connectToChildIframe({
+      iframe,
+      childOrigin: /^http/,
+    });
+
+    // We're setting src after calling connectToChildIframe to ensure
+    // that we don't throw an error in such a case. src is only
+    // needed when childOrigin is not passed.
+    iframe.src = `${CHILD_SERVER}/default.html`;
+
+    await connection.promise;
+  });
+
+  it('connects to iframe when correct child origin regex provided', async () => {
+    const iframe = createAndAddIframe();
+
+    const connection = connectToChildIframe({
+      iframe,
+      childOrigin: /^http/,
     });
 
     // We're setting src after calling connectToChildIframe to ensure
@@ -154,6 +196,38 @@ describe('connection management', () => {
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
+  it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin", async () => {
+    const redirectToUrl = encodeURIComponent(
+      `${CHILD_SERVER_ALTERNATE}/default.html`
+    );
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
+    );
+
+    const connection = connectToChildIframe({
+      iframe,
+      childOrigin: CHILD_SERVER,
+    });
+
+    await expectNoSuccessfulConnection(connection.promise, iframe);
+  });
+
+  it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin regex", async () => {
+    const redirectToUrl = encodeURIComponent(
+      `${CHILD_SERVER_ALTERNATE}/default.html`
+    );
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
+    );
+
+    const connection = connectToChildIframe({
+      iframe,
+      childOrigin: /example\.com/,
+    });
+
+    await expectNoSuccessfulConnection(connection.promise, iframe);
+  });
+
   it('reconnects after child reloads', (done) => {
     const connection = connectToChildIframe({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
@@ -235,7 +309,7 @@ describe('connection management', () => {
       }, 10);
 
       // @ts-expect-error
-      child.navigate();
+      child.navigate('divideMethod.html');
     });
   });
 
