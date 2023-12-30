@@ -25,7 +25,7 @@ const createKeyPath = (key: string, prefix?: string) => {
 export const setAtKeyPath = (
   subject: Record<string, any>,
   keyPath: string,
-  value: any
+  value: unknown
 ) => {
   const segments = keyPathToSegments(keyPath);
 

@@ -1,7 +1,7 @@
 import { PenpalMessage } from './types';
 
 interface CommsAdapter {
-  sendMessage: (message: PenpalMessage) => void;
+  sendMessage: (message: PenpalMessage, transferables?: Transferable[]) => void;
   addMessageHandler: (callback: (message: PenpalMessage) => void) => void;
   removeMessageHandler: (callback: (message: PenpalMessage) => void) => void;
 }

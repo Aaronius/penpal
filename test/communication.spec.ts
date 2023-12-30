@@ -1,4 +1,5 @@
 import { createIframeAndConnection, createWorkerAndConnection } from './utils';
+import { MessageOptions } from '../src/index';
 
 const variants = [
   {
@@ -54,6 +55,48 @@ for (const variant of variants) {
       connection.destroy();
     });
 
+    it('calls a function on the child using transferables', async () => {
+      const input1DataView = new DataView(new ArrayBuffer(4));
+      input1DataView.setInt32(0, 2);
+
+      const input2DataView = new DataView(new ArrayBuffer(4));
+      input2DataView.setInt32(0, 5);
+
+      const connection = createConnection();
+      const child = await connection.promise;
+
+      // @ts-expect-error
+      const returnValuePromise = child.multiplyUsingTransferables(
+        input1DataView,
+        input2DataView,
+        new MessageOptions({
+          transfer: [input1DataView.buffer, input2DataView.buffer],
+        })
+      );
+
+      for (const dataView of [input1DataView, input2DataView]) {
+        let errorWritingToTransferredBuffer: Error;
+
+        try {
+          /*
+          An error should be thrown here because the underlying array buffer should
+          have been successfully transferred to the child and the parent should no
+          longer have access to it due to native browser security.
+           */
+          input1DataView.setInt32(0, 1);
+        } catch (error) {
+          errorWritingToTransferredBuffer = error as Error;
+        }
+
+        expect(errorWritingToTransferredBuffer!).toBeDefined();
+        expect(errorWritingToTransferredBuffer!.name).toBe('TypeError');
+      }
+
+      const returnValue = await returnValuePromise;
+      expect(returnValue.getInt32(0)).toBe(10);
+      connection.destroy();
+    });
+
     it('calls a function on the parent', async () => {
       const connection = createConnection({
         methods: {
@@ -92,9 +135,9 @@ for (const variant of variants) {
         error = e;
       }
       expect(error).toEqual(jasmine.any(Error));
-      expect(error.name).toBe('TypeError');
-      expect(error.message).toBe('test error object');
-      expect(error.stack).toEqual(jasmine.any(String));
+      expect((error as Error).name).toBe('TypeError');
+      expect((error as Error).message).toBe('test error object');
+      expect((error as Error).stack).toEqual(jasmine.any(String));
       connection.destroy();
     });
 
@@ -109,7 +152,7 @@ for (const variant of variants) {
         error = e;
       }
       expect(error).toEqual(jasmine.any(Error));
-      expect(error.message).toBe('Oh nos!');
+      expect((error as Error).message).toBe('Oh nos!');
       connection.destroy();
     });
 
@@ -124,7 +167,7 @@ for (const variant of variants) {
         error = e;
       }
       expect(error).toEqual(jasmine.any(Error));
-      expect(error.name).toBe('DataCloneError');
+      expect((error as Error).name).toBe('DataCloneError');
       connection.destroy();
     });
   });

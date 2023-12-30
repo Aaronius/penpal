@@ -6,10 +6,11 @@ import {
   CallSender,
   PenpalError,
   PenpalMessage,
-  ReplyMessage,
+  SerializedError,
   WindowsInfo,
 } from './types';
-import { ErrorCode, MessageType, NativeEventType, Resolution } from './enums';
+import { ErrorCode, MessageType, Resolution } from './enums';
+import MessageOptions from './MessageOptions';
 
 /**
  * Augments an object with methods that match those defined by the remote. When these methods are
@@ -35,7 +36,7 @@ export default (
   log(`${localName}: Connecting call sender`);
 
   const createMethodProxy = (methodName: string) => {
-    return (...args: any) => {
+    return (...args: unknown[]) => {
       log(`${localName}: Sending ${methodName}() call`);
 
       if (destroyed) {
@@ -45,6 +46,17 @@ export default (
 
         error.code = ErrorCode.ConnectionDestroyed;
         throw error;
+      }
+
+      let methodCallArgs = args;
+      let transferables: Transferable[] | undefined;
+
+      if (args.length) {
+        const lastArg = args[args.length - 1];
+        if (lastArg instanceof MessageOptions) {
+          methodCallArgs = args.slice(0, -1);
+          transferables = lastArg.options.transfer;
+        }
       }
 
       return new Promise((resolve, reject) => {
@@ -60,7 +72,7 @@ export default (
           let returnValue = message.returnValue;
 
           if (message.returnValueIsError) {
-            returnValue = deserializeError(returnValue);
+            returnValue = deserializeError(returnValue as SerializedError);
           }
 
           (message.resolution === Resolution.Fulfilled ? resolve : reject)(
@@ -74,9 +86,9 @@ export default (
           penpal: MessageType.Call,
           id,
           methodName,
-          args,
+          args: methodCallArgs,
         };
-        commsAdapter.sendMessage(callMessage);
+        commsAdapter.sendMessage(callMessage, transferables);
       });
     };
   };

@@ -8,6 +8,7 @@ import {
   connectToChildIframe,
   connectToChildWorker,
   ErrorCode,
+  PenpalError,
 } from '../src/index';
 
 /**
@@ -22,7 +23,7 @@ const expectNoSuccessfulConnection = (
 
   connectionPromise.then(spy);
 
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     iframe.addEventListener('load', function () {
       // Give Penpal time to try to make a handshake.
       setTimeout(() => {
@@ -153,7 +154,7 @@ describe('connection management', () => {
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
-  it('reconnects after child reloads', (done: DoneCallback) => {
+  it('reconnects after child reloads', (done) => {
     const connection = connectToChildIframe({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
@@ -180,7 +181,7 @@ describe('connection management', () => {
   });
 
   // Issue #18
-  it('properly disconnects previous call receiver upon reconnection', (done: DoneCallback) => {
+  it('properly disconnects previous call receiver upon reconnection', (done) => {
     const add = jasmine.createSpy().and.callFake((num1, num2) => {
       return num1 + num2;
     });
@@ -213,7 +214,7 @@ describe('connection management', () => {
     });
   });
 
-  it('reconnects after child navigates to other page with different methods', (done: DoneCallback) => {
+  it('reconnects after child navigates to other page with different methods', (done) => {
     const connection = connectToChildIframe({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
     });
@@ -253,8 +254,8 @@ describe('connection management', () => {
       error = e;
     }
     expect(error).toEqual(jasmine.any(Error));
-    expect(error.message).toBe('Connection timed out after 0ms');
-    expect(error.code).toBe(ErrorCode.ConnectionTimeout);
+    expect((error as Error).message).toBe('Connection timed out after 0ms');
+    expect((error as PenpalError).code).toBe(ErrorCode.ConnectionTimeout);
   });
 
   it(
@@ -283,7 +284,7 @@ describe('connection management', () => {
   it(
     "doesn't destroy connection if connection succeeds then " +
       'timeout passes (connectToParent)',
-    (done: DoneCallback) => {
+    (done) => {
       const connection = connectToChildIframe({
         iframe: createAndAddIframe(`${CHILD_SERVER}/timeout.html`),
         methods: {
@@ -318,7 +319,7 @@ describe('connection management', () => {
     }
 
     expect(error).toBeDefined();
-    expect(error.code).toBe(ErrorCode.ConnectionDestroyed);
+    expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
 
     jasmine.clock().uninstall();
     connection.destroy();

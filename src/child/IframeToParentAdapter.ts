@@ -81,16 +81,21 @@ class IframeToParentAdapter implements CommsAdapter {
     }
   };
 
-  sendMessage = (message: PenpalMessage) => {
+  sendMessage = (message: PenpalMessage, transferables?: Transferable[]) => {
     if (message.penpal === MessageType.Syn) {
       const parentOriginForSyn =
         this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
-      console.log('message', message);
-      window.parent.postMessage(message, parentOriginForSyn);
+      window.parent.postMessage(message, {
+        targetOrigin: parentOriginForSyn,
+        transfer: transferables,
+      });
       return;
     }
 
-    window.parent.postMessage(message, this._originForSending!);
+    window.parent.postMessage(message, {
+      targetOrigin: this._originForSending,
+      transfer: transferables,
+    });
   };
 
   addMessageHandler = (callback: (message: PenpalMessage) => void): void => {

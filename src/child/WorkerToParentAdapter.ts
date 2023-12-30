@@ -30,8 +30,11 @@ class IframeToParentAdapter implements CommsAdapter {
     }
   };
 
-  sendMessage = (message: PenpalMessage) => {
-    self.postMessage(message, this._originForSending!);
+  sendMessage = (message: PenpalMessage, transferables?: Transferable[]) => {
+    self.postMessage(message, {
+      targetOrigin: this._originForSending,
+      transfer: transferables,
+    });
   };
 
   addMessageHandler = (callback: (message: PenpalMessage) => void): void => {

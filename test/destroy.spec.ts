@@ -8,6 +8,7 @@ import {
   connectToChildIframe,
   connectToChildWorker,
   ErrorCode,
+  PenpalError,
 } from '../src/index';
 
 const variants = [
@@ -102,10 +103,10 @@ for (const variant of variants) {
         error = e;
       }
       expect(error).toEqual(jasmine.any(Error));
-      expect(error.message).toBe(
+      expect((error as Error).message).toBe(
         'Unable to send multiply() call due to destroyed connection'
       );
-      expect(error.code).toBe(ErrorCode.ConnectionDestroyed);
+      expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
     });
 
     it('supports multiple connections', async () => {

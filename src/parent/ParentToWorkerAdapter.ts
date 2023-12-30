@@ -32,8 +32,13 @@ class ParentToWorkerAdapter implements CommsAdapter {
     }
   };
 
-  sendMessage = (message: PenpalMessage): void => {
-    this._worker.postMessage(message);
+  sendMessage = (
+    message: PenpalMessage,
+    transferables?: Transferable[]
+  ): void => {
+    this._worker.postMessage(message, {
+      transfer: transferables,
+    });
   };
 
   addMessageHandler = (callback: (message: PenpalMessage) => void): void => {

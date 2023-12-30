@@ -1,17 +1,12 @@
 import { serializeError } from './errorSerialization';
 import {
-  CallMessage,
-  SerializedMethods,
-  ReplyMessage,
-  WindowsInfo,
   PenpalMessage,
+  ReplyMessage,
+  SerializedMethods,
+  WindowsInfo,
 } from './types';
-import {
-  MessageType,
-  NativeEventType,
-  NativeErrorName,
-  Resolution,
-} from './enums';
+import { MessageType, NativeErrorName, Resolution } from './enums';
+import Reply from './Reply';
 
 /**
  * Listens for "call" messages coming from the remote, executes the corresponding method, and
@@ -35,7 +30,7 @@ export default (
     log(`${localName}: Received ${methodName}() call`);
 
     const createPromiseHandler = (resolution: Resolution) => {
-      return (returnValue: any) => {
+      return (returnValue: unknown) => {
         log(`${localName}: Sending ${methodName}() reply`);
 
         if (destroyed) {
@@ -50,35 +45,43 @@ export default (
           return;
         }
 
+        let transferables: Transferable[] | undefined;
+        let methodCallReturnValue = returnValue;
+
+        if (returnValue instanceof Reply) {
+          transferables = returnValue.messageOptions?.options.transfer;
+          methodCallReturnValue = returnValue.returnValue;
+        }
+
         const message: ReplyMessage = {
           penpal: MessageType.Reply,
           id,
           resolution,
-          returnValue,
+          returnValue: methodCallReturnValue,
         };
 
         if (
           resolution === Resolution.Rejected &&
-          returnValue instanceof Error
+          methodCallReturnValue instanceof Error
         ) {
-          message.returnValue = serializeError(returnValue);
+          message.returnValue = serializeError(methodCallReturnValue);
           message.returnValueIsError = true;
         }
 
         try {
-          commsAdapter.sendMessage(message);
+          commsAdapter.sendMessage(message, transferables);
         } catch (err) {
           // If a consumer attempts to send an object that's not cloneable (e.g., window),
           // we want to ensure the receiver's promise gets rejected.
-          if (err.name === NativeErrorName.DataCloneError) {
+          if ((err as Error).name === NativeErrorName.DataCloneError) {
             const errorReplyMessage: ReplyMessage = {
               penpal: MessageType.Reply,
               id,
               resolution: Resolution.Rejected,
-              returnValue: serializeError(err),
+              returnValue: serializeError(err as Error),
               returnValueIsError: true,
             };
-            commsAdapter.sendMessage(errorReplyMessage);
+            commsAdapter.sendMessage(errorReplyMessage, transferables);
           }
 
           throw err;

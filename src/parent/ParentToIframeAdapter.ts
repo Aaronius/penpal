@@ -1,6 +1,6 @@
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
 import getOriginFromSrc from './getOriginFromSrc';
-import { AsyncMethodReturns, PenpalMessage, SynAckMessage } from '../types';
+import { PenpalMessage } from '../types';
 import { MessageType } from '../enums';
 import { Destructor } from '../createDestructor';
 import monitorIframeRemoval from './monitorIframeRemoval';
@@ -74,11 +74,8 @@ class ParentToIframeAdapter implements CommsAdapter {
         messageType === MessageType.Reply
       ) {
         this._log(
-          `Parent received message from origin ${event.origin} which did not match expected origin`
+          `Parent received message from origin ${event.origin} which did not match expected origin ${this._childOrigin}`
         );
-        // this._log(
-        //     `Parent received message from origin ${event.origin} which did not match expected origin ${originForReceiving}`
-        // );
       }
       return;
     }
@@ -88,8 +85,14 @@ class ParentToIframeAdapter implements CommsAdapter {
     }
   };
 
-  sendMessage = (message: PenpalMessage): void => {
-    this._iframe.contentWindow?.postMessage(message, this._originForSending);
+  sendMessage = (
+    message: PenpalMessage,
+    transferables?: Transferable[]
+  ): void => {
+    this._iframe.contentWindow?.postMessage(message, {
+      targetOrigin: this._originForSending,
+      transfer: transferables,
+    });
   };
 
   addMessageHandler = (callback: (message: PenpalMessage) => void): void => {

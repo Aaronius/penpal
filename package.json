@@ -87,7 +87,7 @@
     "rollup-plugin-typescript": "^1.0.1",
     "serve-static": "^1.13.2",
     "terser": "^4.6.11",
-    "typescript": "^3.9.10",
+    "typescript": "^5.3.3",
     "yargs": "^15.3.1"
   }
 }

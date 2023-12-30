@@ -1,8 +1,4 @@
-type SerializedError = {
-  name: string;
-  message: string;
-  stack: string | undefined;
-};
+import { SerializedError } from './types';
 
 /**
  * Converts an error object into a plain object.

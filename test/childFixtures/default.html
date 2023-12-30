@@ -25,6 +25,15 @@
             resolve(num1 * num2);
           });
         },
+        multiplyUsingTransferables: function (num1DataView, num2DataView) {
+          const num1 = num1DataView.getInt32(0);
+          const num2 = num2DataView.getInt32(0);
+          const returnValue = new DataView(new ArrayBuffer(4));
+          returnValue.setInt32(0, num1 * num2);
+          return Penpal.withMessageOptions(returnValue, {
+            transfer: [returnValue.buffer],
+          });
+        },
         addUsingParent: function () {
           parentAPI.add(3, 6).then(function (value) {
             parentReturnValue = value;

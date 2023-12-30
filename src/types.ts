@@ -14,7 +14,7 @@ type ExtractKeys<T, U> = {
  */
 export type AsyncMethodReturns<T> = {
   [K in ExtractKeys<T, Function | object>]: T[K] extends (
-    ...args: any
+    ...args: unknown[]
   ) => PromiseLike<any>
     ? T[K]
     : T[K] extends (...args: infer A) => infer R
@@ -58,6 +58,12 @@ export type SerializedMethods = {
   [index: string]: Function;
 };
 
+export type SerializedError = {
+  name: string;
+  message: string;
+  stack: string | undefined;
+};
+
 /**
  * A Penpal-specific error.
  */
@@ -93,7 +99,7 @@ export type CallMessage = {
   penpal: MessageType.Call;
   id: number;
   methodName: string;
-  args: any[];
+  args: unknown[];
 };
 
 /**
@@ -103,7 +109,7 @@ export type ReplyMessage = {
   penpal: MessageType.Reply;
   id: number;
   resolution: Resolution;
-  returnValue: any;
+  returnValue: unknown;
   returnValueIsError?: boolean;
 };
 

@@ -24,7 +24,7 @@ type Options = {
    * for the parent to respond before rejecting the connection promise.
    */
   timeout?: number;
-  log: (...args: any) => void;
+  log: (...args: unknown[]) => void;
   destructor: Destructor;
 };
 
