@@ -1,4 +1,8 @@
-import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants';
+import {
+  CHILD_SERVER,
+  CHILD_SERVER_ALTERNATE,
+  WORKER_URL_PATH,
+} from './constants';
 import { createAndAddIframe } from './utils';
 import {
   connectToChildIframe,
@@ -34,7 +38,6 @@ describe('connection management', () => {
     const iframe = createAndAddIframe();
 
     const connection = connectToChildIframe({
-      debug: true,
       iframe,
       childOrigin: CHILD_SERVER,
     });
@@ -47,11 +50,10 @@ describe('connection management', () => {
     await connection.promise;
   });
 
-  fit('connects to worker', async () => {
-    const worker = new Worker('/base/test/childFixtures/worker.js');
+  it('connects to worker', async () => {
+    const worker = new Worker(WORKER_URL_PATH);
 
     const connection = connectToChildWorker({
-      debug: true,
       worker,
     });
 
@@ -63,7 +65,6 @@ describe('connection management', () => {
     iframe.src = `${CHILD_SERVER}/matchingParentOrigin.html`;
 
     const connection = connectToChildIframe({
-      debug: true,
       iframe,
     });
 
@@ -75,7 +76,6 @@ describe('connection management', () => {
     iframe.src = `${CHILD_SERVER}/matchingParentOriginRegex.html`;
 
     const connection = connectToChildIframe({
-      debug: true,
       iframe,
     });
 
@@ -86,7 +86,6 @@ describe('connection management', () => {
     const iframe = createAndAddIframe();
 
     const connection = connectToChildIframe({
-      debug: true,
       iframe,
       childOrigin: 'http://bogus.com',
     });
@@ -132,7 +131,6 @@ describe('connection management', () => {
     );
 
     const connection = connectToChildIframe({
-      debug: true,
       iframe,
       childOrigin: '*',
     });
@@ -149,7 +147,6 @@ describe('connection management', () => {
     );
 
     const connection = connectToChildIframe({
-      debug: true,
       iframe,
     });
 

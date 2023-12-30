@@ -1,47 +1,20 @@
-import { CHILD_SERVER } from './constants';
-import { createAndAddIframe } from './utils';
-import { connectToChildIframe, connectToChildWorker } from '../src/index';
-
-const methods = {
-  add: (num1: number, num2: number) => {
-    return num1 + num2;
-  },
-};
-
-const createIframeConnection = () => {
-  const connection = connectToChildIframe({
-    iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
-    methods,
-    debug: true,
-  });
-  return connection;
-};
-
-const createWorkerConnection = () => {
-  const worker = new Worker(`/base/test/childFixtures/worker.js`);
-  const connection = connectToChildWorker({
-    worker,
-    methods,
-    debug: true,
-  });
-  return connection;
-};
+import { createIframeAndConnection, createWorkerAndConnection } from './utils';
 
 const variants = [
   {
     childType: 'iframe',
-    createConnection: createIframeConnection,
+    createConnection: createIframeAndConnection,
   },
   {
     childType: 'worker',
-    createConnection: createWorkerConnection,
+    createConnection: createWorkerAndConnection,
   },
 ];
 
 for (const variant of variants) {
   const { childType, createConnection } = variant;
 
-  fdescribe(`communication between parent and child ${childType}`, () => {
+  describe(`communication between parent and child ${childType}`, () => {
     it('calls a function on the child', async () => {
       const connection = createConnection();
       const child = await connection.promise;
@@ -82,7 +55,13 @@ for (const variant of variants) {
     });
 
     it('calls a function on the parent', async () => {
-      const connection = createConnection();
+      const connection = createConnection({
+        methods: {
+          add: (num1: number, num2: number) => {
+            return num1 + num2;
+          },
+        },
+      });
       const child = await connection.promise;
       // @ts-expect-error
       await child.addUsingParent();
@@ -150,12 +129,3 @@ for (const variant of variants) {
     });
   });
 }
-
-it('calls a function on the child iframe with matching parentOrigin set', async () => {
-  const connection = createIframeConnection();
-  const child = await connection.promise;
-  // @ts-expect-error
-  const value = await child.multiply(2, 5);
-  expect(value).toEqual(10);
-  connection.destroy();
-});

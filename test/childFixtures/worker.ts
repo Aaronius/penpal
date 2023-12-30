@@ -1,5 +1,5 @@
 import { connectToParentFromWorker } from '../../src/index';
-
+console.log('web worker origin', self.location.origin);
 type ParentAPI = Record<'add', (num1: number, num2: number) => Promise<number>>;
 
 let parentAPI: ParentAPI;

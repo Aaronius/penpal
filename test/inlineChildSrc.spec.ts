@@ -1,5 +1,9 @@
-import { CHILD_SERVER } from './constants';
-import { connectToChildIframe, ErrorCode } from '../src/index';
+import { CHILD_SERVER, WORKER_URL_PATH } from './constants';
+import {
+  connectToChildIframe,
+  connectToChildWorker,
+  ErrorCode,
+} from '../src/index';
 
 const htmlSrc = `
 <!DOCTYPE html>
@@ -32,7 +36,7 @@ const htmlSrcRedirect = `
 `;
 
 describe('data URI support', () => {
-  it('connects and calls a function on the child', async () => {
+  it('connects and calls a function on the child iframe', async () => {
     const iframe = document.createElement('iframe');
     iframe.src = `data:text/html,${htmlSrc}`;
     document.body.appendChild(iframe);
@@ -48,7 +52,7 @@ describe('data URI support', () => {
     connection.destroy();
   });
 
-  it('does not connect if child redirects to non-opaque origin', (done) => {
+  it('does not connect if child iframe redirects to non-opaque origin', (done) => {
     const iframe = document.createElement('iframe');
     iframe.src = `data:text/html,${htmlSrcRedirect}`;
     document.body.appendChild(iframe);
@@ -68,13 +72,31 @@ describe('data URI support', () => {
       done();
     }, 200);
   });
+
+  it('connects and calls a function on the child worker', async () => {
+    const response = await fetch(WORKER_URL_PATH);
+    const code = await response.text();
+    const worker = new Worker(`data:text/javascript;base64,${btoa(code)}`, {
+      type: 'module',
+    });
+
+    const connection = connectToChildWorker({
+      worker,
+    });
+
+    const child = await connection.promise;
+    // @ts-expect-error
+    const value = await child.multiply(2, 5);
+    expect(value).toEqual(10);
+    connection.destroy();
+  });
 });
 
 var supportsSrcDoc = !!('srcdoc' in document.createElement('iframe'));
 
 if (supportsSrcDoc) {
-  describe('srcdoc support', () => {
-    it('connects and calls a function on the child', async () => {
+  describe('iframe srcdoc support', () => {
+    it('connects and calls a function on the child iframe', async () => {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = htmlSrc;
       document.body.appendChild(iframe);
@@ -90,7 +112,7 @@ if (supportsSrcDoc) {
       connection.destroy();
     });
 
-    it('does not connect if child redirects to non-opaque origin', (done) => {
+    it('does not connect if child iframe redirects to non-opaque origin', (done) => {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = htmlSrcRedirect;
       document.body.appendChild(iframe);

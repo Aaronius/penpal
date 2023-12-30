@@ -78,6 +78,9 @@ module.exports = (config) => {
   config.set({
     frameworks: ['jasmine'],
     files: [
+      // The worker must be served from the same host
+      // as the tests because the browser only lets workers from the
+      // same origin or an opaque origin (null origin) be loaded.
       {
         pattern: 'test/childFixtures/worker.ts',
         watched: true,
