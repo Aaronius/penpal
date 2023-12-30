@@ -14,7 +14,6 @@ export enum Resolution {
 export enum ErrorCode {
   ConnectionDestroyed = 'ConnectionDestroyed',
   ConnectionTimeout = 'ConnectionTimeout',
-  NoIframeSrc = 'NoIframeSrc',
   OriginRequired = 'OriginRequired',
 }
 

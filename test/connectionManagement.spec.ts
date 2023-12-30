@@ -228,6 +228,16 @@ describe('connection management', () => {
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
+  it("doesn't connect to iframe when child does not set parent origin", async () => {
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/noParentOrigin.html`);
+
+    const connection = connectToChildIframe({
+      iframe,
+    });
+
+    await expectNoSuccessfulConnection(connection.promise, iframe);
+  });
+
   it('reconnects after child reloads', (done) => {
     const connection = connectToChildIframe({
       iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
@@ -311,6 +321,24 @@ describe('connection management', () => {
       // @ts-expect-error
       child.navigate('divideMethod.html');
     });
+  });
+
+  it('throws error if childOrigin is not specified and cannot be derived from iframe src or srcdoc', async () => {
+    let error;
+
+    try {
+      connectToChildIframe({
+        iframe: createAndAddIframe(),
+      });
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toEqual(jasmine.any(Error));
+    expect((error as Error).message).toBe(
+      'The childOrigin option must be specified or the iframe must have src or srcdoc property defined'
+    );
+    expect((error as PenpalError).code).toBe(ErrorCode.OriginRequired);
   });
 
   it('rejects promise if connectToChildIframe times out', async () => {
