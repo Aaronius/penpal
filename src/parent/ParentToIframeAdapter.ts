@@ -10,8 +10,9 @@ class ParentToIframeAdapter implements CommsAdapter {
   private _iframe: HTMLIFrameElement;
   private _childOrigin: string | RegExp;
   private _log: Function;
-  private _originForSending: string | undefined;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
+  private _handshakePort: MessagePort | undefined;
+  private _port: MessagePort | undefined;
 
   constructor(
     iframe: HTMLIFrameElement,
@@ -82,10 +83,11 @@ class ParentToIframeAdapter implements CommsAdapter {
     }
 
     if (messageType === MessageType.Syn) {
-      // If event.origin is "null", the remote protocol is file: or data: and we
-      // must post messages with "*" as targetOrigin when sending messages.
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-      this._originForSending = event.origin === 'null' ? '*' : event.origin;
+      this._handshakePort = event.ports[0];
+    }
+
+    if (messageType === MessageType.Ack) {
+      this._port = event.ports[0];
     }
 
     for (const callback of this._messageCallbacks) {
@@ -97,15 +99,20 @@ class ParentToIframeAdapter implements CommsAdapter {
     message: PenpalMessage,
     transferables?: Transferable[]
   ): void => {
-    if (!this._originForSending) {
-      // We should never reach this point, but we check anyway to ensure we're
-      // always specifying a target origin. If we do reach this point, it's
-      // due to improper Penpal logic.
-      throw new Error('Origin for sending not set');
+    const { penpal: messageType } = message;
+
+    if (messageType === MessageType.SynAck) {
+      this._handshakePort?.postMessage(message, {
+        transfer: transferables,
+      });
+      this._handshakePort?.addEventListener(
+        'message',
+        this._handleMessageFromChild
+      );
+      this._handshakePort?.start();
     }
 
-    this._iframe.contentWindow?.postMessage(message, {
-      targetOrigin: this._originForSending,
+    this._port?.postMessage(message, {
       transfer: transferables,
     });
   };

@@ -8,7 +8,9 @@ class IframeToParentAdapter implements CommsAdapter {
   private _parentOrigin: string | RegExp;
   private _log: Function;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
-  private _originForSending: string | undefined;
+  private _port1: MessagePort;
+  private _port2: MessagePort;
+  private _isConnected = false;
 
   constructor(
     parentOrigin: string | RegExp,
@@ -27,10 +29,15 @@ class IframeToParentAdapter implements CommsAdapter {
       throw error;
     }
 
-    window.addEventListener('message', this._handleMessageFromParent);
+    const { port1, port2 } = new MessageChannel();
+    this._port1 = port1;
+    this._port2 = port2;
+    port1.addEventListener('message', this._handleMessageFromParent);
+    port1.start();
 
     destructor.onDestroy(() => {
-      window.removeEventListener('message', this._handleMessageFromParent);
+      port1.removeEventListener('message', this._handleMessageFromParent);
+      port1.close();
       this._messageCallbacks.clear();
     });
   }
@@ -47,32 +54,26 @@ class IframeToParentAdapter implements CommsAdapter {
       return;
     }
 
-    if (event.source !== parent || !event.data?.penpal) {
+    if (event.source !== window.parent || !event.data?.penpal) {
       return;
     }
 
     const penpalMessage: PenpalMessage = event.data;
     const { penpal: messageType } = penpalMessage;
 
-    let originQualifies =
-      this._parentOrigin instanceof RegExp
-        ? this._parentOrigin.test(event.origin)
-        : this._parentOrigin === '*' || this._parentOrigin === event.origin;
-
-    if (!originQualifies) {
-      if (messageType === MessageType.SynAck) {
+    if (messageType === MessageType.SynAck) {
+      const originQualifies =
+        this._parentOrigin instanceof RegExp
+          ? this._parentOrigin.test(event.origin)
+          : this._parentOrigin === '*' || this._parentOrigin === event.origin;
+      if (originQualifies) {
+        this._isConnected = true;
+      } else {
         this._log(
           `Child: Handshake - Received SYN-ACK from origin ${event.origin} which did not match expected origin ${this._parentOrigin}`
         );
       }
       return;
-    }
-
-    if (messageType === MessageType.SynAck) {
-      // If event.origin is "null", the remote protocol is file: or data: and we
-      // must post messages with "*" as targetOrigin when sending messages.
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-      this._originForSending = event.origin === 'null' ? '*' : event.origin;
     }
 
     for (const callback of this._messageCallbacks) {
@@ -86,20 +87,12 @@ class IframeToParentAdapter implements CommsAdapter {
         this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
       window.parent.postMessage(message, {
         targetOrigin: parentOriginForSyn,
-        transfer: transferables,
+        transfer: [this._port2],
       });
       return;
     }
 
-    if (!this._originForSending) {
-      // We should never reach this point, but we check anyway to ensure we're
-      // always specifying a target origin. If we do reach this point, it's
-      // due to improper Penpal logic.
-      throw new Error('Origin for sending not set');
-    }
-
-    window.parent.postMessage(message, {
-      targetOrigin: this._originForSending,
+    this._port1.postMessage(message, {
       transfer: transferables,
     });
   };
