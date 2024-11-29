@@ -71,6 +71,14 @@ const connection = connectToChild({
       return num1 + num2;
     },
   },
+  // Callback function to be called when the connection with the child is lost.
+  onConnectionLost: () => {
+    console.log('Connection with child lost');
+  },
+  // Callback function to be called when the connection with the child is established or re-established.
+  onConnection: () => {
+    console.log('Connection with child established or re-established');
+  },
 });
 
 connection.promise.then((child) => {
@@ -99,6 +107,14 @@ const connection = connectToParent({
         }, 1000);
       });
     },
+  },
+  // Callback function to be called when the connection with the parent is lost.
+  onConnectionLost: () => {
+    console.log('Connection with parent lost');
+  },
+  // Callback function to be called when the connection with the parent is established or re-established.
+  onConnection: () => {
+    console.log('Connection with parent established or re-established');
   },
 });
 
@@ -141,6 +157,14 @@ The amount of time, in milliseconds, Penpal should wait for the child to respond
 
 Enables or disables debug logging. Debug logging is disabled by default.
 
+`options.onConnectionLost: Function` (optional)
+
+A callback function to be called when the connection with the child is lost.
+
+`options.onConnection: Function` (optional)
+
+A callback function to be called when the connection with the child is established or re-established.
+
 #### Return value
 
 The return value of `connectToChild` is a `connection` object with the following properties:
@@ -172,6 +196,14 @@ The amount of time, in milliseconds, Penpal should wait for the parent to respon
 `options.debug: boolean` (optional)
 
 Enables or disables debug logging. Debug logging is disabled by default.
+
+`options.onConnectionLost: Function` (optional)
+
+A callback function to be called when the connection with the parent is lost.
+
+`options.onConnection: Function` (optional)
+
+A callback function to be called when the connection with the parent is established or re-established.
 
 #### Return value
 

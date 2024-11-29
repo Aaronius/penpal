@@ -299,4 +299,80 @@ describe('connection management', () => {
       expect(error.code).toBe(Penpal.ErrorCode.ConnectionDestroyed);
     }
   );
+
+  it('calls onConnectionLost when connection with child is lost', (done) => {
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+
+    const connection = Penpal.connectToChild({
+      iframe,
+      onConnectionLost: () => {
+        expect(true).toBe(true);
+        done();
+      },
+    });
+
+    connection.promise.then(() => {
+      document.body.removeChild(iframe);
+    });
+  });
+
+  it('calls onConnection when connection with child is established or re-established', (done) => {
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+
+    let connectionCount = 0;
+
+    const connection = Penpal.connectToChild({
+      iframe,
+      onConnection: () => {
+        connectionCount += 1;
+        if (connectionCount === 2) {
+          expect(true).toBe(true);
+          connection.destroy();
+          done();
+        }
+      },
+    });
+
+    connection.promise.then((child) => {
+      child.reload();
+    });
+  });
+
+  it('calls onConnectionLost when connection with parent is lost', (done) => {
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+
+    const connection = Penpal.connectToParent({
+      iframe,
+      onConnectionLost: () => {
+        expect(true).toBe(true);
+        done();
+      },
+    });
+
+    connection.promise.then(() => {
+      document.body.removeChild(iframe);
+    });
+  });
+
+  it('calls onConnection when connection with parent is established or re-established', (done) => {
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+
+    let connectionCount = 0;
+
+    const connection = Penpal.connectToParent({
+      iframe,
+      onConnection: () => {
+        connectionCount += 1;
+        if (connectionCount === 2) {
+          expect(true).toBe(true);
+          connection.destroy();
+          done();
+        }
+      },
+    });
+
+    connection.promise.then((parent) => {
+      parent.reload();
+    });
+  });
 });

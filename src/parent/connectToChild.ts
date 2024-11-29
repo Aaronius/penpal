@@ -41,6 +41,14 @@ type Options = {
    * Whether log messages should be emitted to the console.
    */
   debug?: boolean;
+  /**
+   * Callback function to be called when the connection with the child is lost.
+   */
+  onConnectionLost?: () => void;
+  /**
+   * Callback function to be called when the connection with the child is established or re-established.
+   */
+  onConnection?: () => void;
 };
 
 /**
@@ -49,7 +57,7 @@ type Options = {
 export default <TCallSender extends object = CallSender>(
   options: Options
 ): Connection<TCallSender> => {
-  let { iframe, methods = {}, childOrigin, timeout, debug = false } = options;
+  let { iframe, methods = {}, childOrigin, timeout, debug = false, onConnectionLost, onConnection } = options;
 
   const log = createLogger(debug);
   const destructor = createDestructor('Parent', log);
@@ -100,6 +108,9 @@ export default <TCallSender extends object = CallSender>(
           if (callSender) {
             stopConnectionTimeout();
             resolve(callSender);
+            if (onConnection) {
+              onConnection();
+            }
           }
           return;
         }
@@ -115,6 +126,10 @@ export default <TCallSender extends object = CallSender>(
 
         if (error) {
           reject(error);
+        }
+
+        if (onConnectionLost) {
+          onConnectionLost();
         }
       });
     }
