@@ -39,6 +39,14 @@ type Options = {
    * Whether log messages should be emitted to the console.
    */
   debug?: boolean;
+  /**
+   * Callback function to be called when the connection with the parent is lost.
+   */
+  onConnectionLost?: () => void;
+  /**
+   * Callback function to be called when the connection with the parent is established or re-established.
+   */
+  onConnection?: () => void;
 };
 
 type Connection<TCallSender extends object = CallSender> = {
@@ -59,7 +67,7 @@ type Connection<TCallSender extends object = CallSender> = {
 export default <TCallSender extends object = CallSender>(
   options: Options = {}
 ): Connection<TCallSender> => {
-  const { parentOrigin = '*', methods = {}, timeout, debug = false } = options;
+  const { parentOrigin = '*', methods = {}, timeout, debug = false, onConnectionLost, onConnection } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Child', log);
   const { destroy, onDestroy } = destructor;
@@ -107,6 +115,9 @@ export default <TCallSender extends object = CallSender>(
             window.removeEventListener(NativeEventType.Message, handleMessage);
             stopConnectionTimeout();
             resolve(callSender);
+            if (onConnection) {
+              onConnection();
+            }
           }
         }
       };
@@ -120,6 +131,10 @@ export default <TCallSender extends object = CallSender>(
 
         if (error) {
           reject(error);
+        }
+
+        if (onConnectionLost) {
+          onConnectionLost();
         }
       });
     }
