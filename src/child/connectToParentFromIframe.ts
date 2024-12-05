@@ -1,5 +1,5 @@
 import { Methods } from '../types';
-import IframeToParentAdapter from './IframeToParentAdapter';
+import IframeToParentMessenger from './IframeToParentMessenger';
 import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
 import connectToParent from './connectToParent';
@@ -28,9 +28,9 @@ const connectToParentFromIframe = (options: Options) => {
   const { parentOrigin, methods, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Child', log);
-  const commsAdapter = new IframeToParentAdapter(parentOrigin, log, destructor);
+  const messenger = new IframeToParentMessenger(parentOrigin, log, destructor);
   return connectToParent({
-    commsAdapter,
+    messenger,
     methods,
     timeout,
     log,

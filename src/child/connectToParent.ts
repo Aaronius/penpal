@@ -11,10 +11,10 @@ import { MessageType } from '../enums';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
 import { serializeMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
-import CommsAdapter from '../CommsAdapter';
+import Messenger from '../Messenger';
 
 type Options = {
-  commsAdapter: CommsAdapter;
+  messenger: Messenger;
   /**
    * Methods that may be called by the parent window.
    */
@@ -46,12 +46,12 @@ type Connection<TCallSender extends object = CallSender> = {
 export default <TCallSender extends object = CallSender>(
   options: Options
 ): Connection<TCallSender> => {
-  const { commsAdapter, methods = {}, timeout, log, destructor } = options;
+  const { messenger, methods = {}, timeout, log, destructor } = options;
   const { destroy, onDestroy } = destructor;
   const serializedMethods = serializeMethods(methods);
 
   const handleSynAckMessage = handleSynAckMessageFactory(
-    commsAdapter,
+    messenger,
     serializedMethods,
     destructor,
     log
@@ -60,7 +60,7 @@ export default <TCallSender extends object = CallSender>(
   const sendSynMessage = () => {
     log('Child: Handshake - Sending SYN');
     const synMessage: SynMessage = { penpal: MessageType.Syn };
-    commsAdapter.sendMessage(synMessage);
+    messenger.sendMessage(synMessage);
   };
 
   const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise(
@@ -68,7 +68,7 @@ export default <TCallSender extends object = CallSender>(
       const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
       const handleMessage = (message: PenpalMessage) => {
         if (message.penpal === MessageType.SynAck) {
-          commsAdapter.removeMessageHandler(handleMessage);
+          messenger.removeMessageHandler(handleMessage);
           stopConnectionTimeout();
           const callSender = handleSynAckMessage(message) as AsyncMethodReturns<
             TCallSender
@@ -77,12 +77,12 @@ export default <TCallSender extends object = CallSender>(
         }
       };
 
-      commsAdapter.addMessageHandler(handleMessage);
+      messenger.addMessageHandler(handleMessage);
 
       sendSynMessage();
 
       onDestroy((error?: PenpalError) => {
-        commsAdapter.removeMessageHandler(handleMessage);
+        messenger.removeMessageHandler(handleMessage);
 
         if (error) {
           reject(error);

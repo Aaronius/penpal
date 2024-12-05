@@ -30,7 +30,7 @@ export default (
   methodKeyPaths: string[],
   log: Function
 ) => {
-  const { localName, commsAdapter } = info;
+  const { localName, messenger } = info;
   let destroyed = false;
 
   log(`${localName}: Connecting call sender`);
@@ -67,7 +67,7 @@ export default (
           }
 
           log(`${localName}: Received ${methodName}() reply`);
-          commsAdapter.removeMessageHandler(handleMessage);
+          messenger.removeMessageHandler(handleMessage);
 
           let returnValue = message.returnValue;
 
@@ -80,7 +80,7 @@ export default (
           );
         };
 
-        commsAdapter.addMessageHandler(handleMessage);
+        messenger.addMessageHandler(handleMessage);
 
         const callMessage: CallMessage = {
           penpal: MessageType.Call,
@@ -88,7 +88,7 @@ export default (
           methodName,
           args: methodCallArgs,
         };
-        commsAdapter.sendMessage(callMessage, transferables);
+        messenger.sendMessage(callMessage, transferables);
       });
     };
   };

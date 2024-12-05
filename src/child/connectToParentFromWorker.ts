@@ -1,9 +1,9 @@
 import { Methods } from '../types';
-import IframeToParentAdapter from './IframeToParentAdapter';
+import IframeToParentMessenger from './IframeToParentMessenger';
 import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
 import connectToParent from './connectToParent';
-import WorkerToParentAdapter from './WorkerToParentAdapter';
+import WorkerToParentMessenger from './WorkerToParentMessenger';
 
 type Options = {
   /**
@@ -25,9 +25,9 @@ const connectToParentFromWorker = (options: Options) => {
   const { methods, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Child', log);
-  const commsAdapter = new WorkerToParentAdapter(log, destructor);
+  const messenger = new WorkerToParentMessenger(log, destructor);
   return connectToParent({
-    commsAdapter,
+    messenger,
     methods,
     timeout,
     log,

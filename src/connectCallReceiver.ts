@@ -17,7 +17,7 @@ export default (
   serializedMethods: SerializedMethods,
   log: Function
 ) => {
-  const { localName, commsAdapter } = info;
+  const { localName, messenger } = info;
   let destroyed = false;
 
   const handleMessage = (message: PenpalMessage) => {
@@ -69,7 +69,7 @@ export default (
         }
 
         try {
-          commsAdapter.sendMessage(message, transferables);
+          messenger.sendMessage(message, transferables);
         } catch (err) {
           // If a consumer attempts to send an object that's not cloneable (e.g., window),
           // we want to ensure the receiver's promise gets rejected.
@@ -81,7 +81,7 @@ export default (
               returnValue: serializeError(err as Error),
               returnValueIsError: true,
             };
-            commsAdapter.sendMessage(errorReplyMessage, transferables);
+            messenger.sendMessage(errorReplyMessage, transferables);
           }
 
           throw err;
@@ -97,10 +97,10 @@ export default (
     );
   };
 
-  commsAdapter.addMessageHandler(handleMessage);
+  messenger.addMessageHandler(handleMessage);
 
   return () => {
     destroyed = true;
-    commsAdapter.removeMessageHandler(handleMessage);
+    messenger.removeMessageHandler(handleMessage);
   };
 };

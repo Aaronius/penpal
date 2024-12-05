@@ -1,12 +1,12 @@
 import { SerializedMethods, SynAckMessage } from '../types';
 import { MessageType } from '../enums';
-import CommsAdapter from '../CommsAdapter';
+import Messenger from '../Messenger';
 
 /**
  * Handles a SYN handshake message.
  */
 const handleSynMessageFactory = (
-  commsAdapter: CommsAdapter,
+  messenger: Messenger,
   log: Function,
   serializedMethods: SerializedMethods
 ) => {
@@ -18,7 +18,7 @@ const handleSynMessageFactory = (
       methodNames: Object.keys(serializedMethods),
     };
 
-    commsAdapter.sendMessage(synAckMessage);
+    messenger.sendMessage(synAckMessage);
   };
 
   return handleSynMessage;

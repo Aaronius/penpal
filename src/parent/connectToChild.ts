@@ -12,10 +12,10 @@ import handleAckMessageFactory from './handleAckMessageFactory';
 import handleSynMessageFactory from './handleSynMessageFactory';
 import { serializeMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
-import CommsAdapter from '../CommsAdapter';
+import Messenger from '../Messenger';
 
 type Options = {
-  commsAdapter: CommsAdapter;
+  messenger: Messenger;
   /**
    * Methods that may be called by the iframe.
    */
@@ -35,17 +35,17 @@ type Options = {
 export default <TCallSender extends object = CallSender>(
   options: Options
 ): Connection<TCallSender> => {
-  const { commsAdapter, methods = {}, timeout, log, destructor } = options;
+  const { messenger, methods = {}, timeout, log, destructor } = options;
   const { onDestroy, destroy } = destructor;
 
   const serializedMethods = serializeMethods(methods);
   const handleSynMessage = handleSynMessageFactory(
-    commsAdapter,
+    messenger,
     log,
     serializedMethods
   );
   const handleAckMessage = handleAckMessageFactory(
-    commsAdapter,
+    messenger,
     serializedMethods,
     destructor,
     log
@@ -68,12 +68,12 @@ export default <TCallSender extends object = CallSender>(
         }
       };
 
-      commsAdapter.addMessageHandler(handleMessage);
+      messenger.addMessageHandler(handleMessage);
 
       log('Parent: Awaiting handshake');
 
       onDestroy((error?: PenpalError) => {
-        commsAdapter.removeMessageHandler(handleMessage);
+        messenger.removeMessageHandler(handleMessage);
 
         if (error) {
           reject(error);

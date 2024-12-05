@@ -2,13 +2,13 @@ import { CallSender, SerializedMethods, WindowsInfo } from '../types';
 import { Destructor } from '../createDestructor';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
-import CommsAdapter from '../CommsAdapter';
+import Messenger from '../Messenger';
 
 /**
  * Handles an ACK handshake message.
  */
 const handleAckMessageFactory = (
-  commsAdapter: CommsAdapter,
+  messenger: Messenger,
   serializedMethods: SerializedMethods,
   destructor: Destructor,
   log: Function
@@ -27,7 +27,7 @@ const handleAckMessageFactory = (
 
     const info: WindowsInfo = {
       localName: 'Parent',
-      commsAdapter,
+      messenger,
     };
 
     // If the child reconnected, we need to destroy the prior call receiver

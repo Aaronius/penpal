@@ -1,9 +1,9 @@
 import { Destructor } from '../createDestructor';
 import { ErrorCode, MessageType } from '../enums';
 import { PenpalError, PenpalMessage } from '../types';
-import CommsAdapter from '../CommsAdapter';
+import Messenger from '../Messenger';
 
-class IframeToParentAdapter implements CommsAdapter {
+class IframeToParentMessenger implements Messenger {
   private _parentOrigin: string | RegExp;
   private _log: Function;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
@@ -106,4 +106,4 @@ class IframeToParentAdapter implements CommsAdapter {
   };
 }
 
-export default IframeToParentAdapter;
+export default IframeToParentMessenger;

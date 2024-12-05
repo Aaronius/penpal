@@ -9,13 +9,13 @@ import { MessageType } from '../enums';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 import { Destructor } from '../createDestructor';
-import CommsAdapter from '../CommsAdapter';
+import Messenger from '../Messenger';
 
 /**
  * Handles a SYN-ACK handshake message.
  */
 const handleSynAckMessageFactory = (
-  commsAdapter: CommsAdapter,
+  messenger: Messenger,
   serializedMethods: SerializedMethods,
   destructor: Destructor,
   log: Function
@@ -30,11 +30,11 @@ const handleSynAckMessageFactory = (
       methodNames: Object.keys(serializedMethods),
     };
 
-    commsAdapter.sendMessage(ackMessage);
+    messenger.sendMessage(ackMessage);
 
     const info: WindowsInfo = {
       localName: 'Child',
-      commsAdapter: commsAdapter,
+      messenger: messenger,
     };
 
     const destroyCallReceiver = connectCallReceiver(

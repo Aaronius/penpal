@@ -2,7 +2,7 @@ import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
 import { Methods } from '../types';
 import connectToChild from './connectToChild';
-import ParentToWorkerAdapter from './ParentToWorkerAdapter';
+import ParentToWorkerMessenger from './ParentToWorkerMessenger';
 
 type Options = {
   /**
@@ -28,9 +28,9 @@ const connectToChildIframe = (options: Options) => {
   const { worker, methods, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Parent', log);
-  const commsAdapter = new ParentToWorkerAdapter(worker, log, destructor);
+  const messenger = new ParentToWorkerMessenger(worker, log, destructor);
   return connectToChild({
-    commsAdapter,
+    messenger,
     methods,
     timeout,
     log,

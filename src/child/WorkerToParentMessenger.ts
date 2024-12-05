@@ -1,42 +1,38 @@
-import { PenpalMessage } from '../types';
 import { Destructor } from '../createDestructor';
-import CommsAdapter from '../CommsAdapter';
+import { PenpalMessage } from '../types';
+import Messenger from '../Messenger';
 
-class ParentToWorkerAdapter implements CommsAdapter {
-  private _worker: Worker;
+class WorkerToParentMessenger implements Messenger {
   private _log: Function;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
+  private _originForSending: string | undefined;
 
-  constructor(worker: Worker, log: Function, destructor: Destructor) {
-    this._worker = worker;
+  constructor(log: Function, destructor: Destructor) {
     this._log = log;
 
-    worker.addEventListener('message', this._handleMessageFromChild);
+    self.addEventListener('message', this._handleMessageFromParent);
 
     destructor.onDestroy(() => {
-      worker.removeEventListener('message', this._handleMessageFromChild);
+      self.removeEventListener('message', this._handleMessageFromParent);
       this._messageCallbacks.clear();
     });
   }
 
-  private _handleMessageFromChild = (event: MessageEvent): void => {
+  private _handleMessageFromParent = (event: MessageEvent): void => {
     if (!event.data?.penpal) {
       return;
     }
 
     const penpalMessage: PenpalMessage = event.data;
-    const { penpal: messageType } = penpalMessage;
 
     for (const callback of this._messageCallbacks) {
       callback(penpalMessage);
     }
   };
 
-  sendMessage = (
-    message: PenpalMessage,
-    transferables?: Transferable[]
-  ): void => {
-    this._worker.postMessage(message, {
+  sendMessage = (message: PenpalMessage, transferables?: Transferable[]) => {
+    self.postMessage(message, {
+      targetOrigin: this._originForSending,
       transfer: transferables,
     });
   };
@@ -50,4 +46,4 @@ class ParentToWorkerAdapter implements CommsAdapter {
   };
 }
 
-export default ParentToWorkerAdapter;
+export default WorkerToParentMessenger;

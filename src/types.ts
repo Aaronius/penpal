@@ -1,5 +1,5 @@
 import { ErrorCode, MessageType, Resolution } from './enums';
-import CommsAdapter from './CommsAdapter';
+import Messenger from './Messenger';
 
 /**
  * Extract keys of T whose values are assignable to U.
@@ -126,5 +126,5 @@ export type WindowsInfo = {
    */
   localName: 'Parent' | 'Child';
 
-  commsAdapter: CommsAdapter;
+  messenger: Messenger;
 };

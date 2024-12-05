@@ -4,9 +4,9 @@ import { PenpalMessage } from '../types';
 import { MessageType } from '../enums';
 import { Destructor } from '../createDestructor';
 import monitorIframeRemoval from './monitorIframeRemoval';
-import CommsAdapter from '../CommsAdapter';
+import Messenger from '../Messenger';
 
-class ParentToIframeAdapter implements CommsAdapter {
+class ParentToIframeMessenger implements Messenger {
   private _iframe: HTMLIFrameElement;
   private _childOrigin: string | RegExp;
   private _validatedChildOrigin: string | undefined;
@@ -136,4 +136,4 @@ class ParentToIframeAdapter implements CommsAdapter {
   };
 }
 
-export default ParentToIframeAdapter;
+export default ParentToIframeMessenger;
