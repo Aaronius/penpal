@@ -52,7 +52,7 @@ const handleAckMessageFactory = (
     const destroyCallSender = connectCallSender(
       callSender,
       info,
-      receiverMethodNames,
+      methodNames,
       log
     );
 

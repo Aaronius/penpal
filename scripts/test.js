@@ -4,7 +4,7 @@
 const path = require('path');
 const http = require('http');
 const connect = require('connect');
-const KarmaServer = require('karma').Server;
+const karma = require('karma');
 const serveStatic = require('serve-static');
 const argv = require('yargs').argv;
 const rollup = require('rollup');
@@ -23,12 +23,13 @@ const serveChildViews = () => {
   http.createServer(childViewsApp).listen(9001);
 };
 
-const runTests = () => {
-  new KarmaServer({
-    configFile: path.resolve(__dirname, '../karma.conf.js'),
-    singleRun: !argv.watch,
-    // logLevel: 'debug'
-  }).start();
+const runTests = async () => {
+  const karmaConfig = await karma.config.parseConfig(
+    path.resolve(__dirname, '../karma.conf.js'),
+    { singleRun: !argv.watch }
+  );
+  const karmaServer = new karma.Server(karmaConfig);
+  await karmaServer.start();
 };
 
 const build = () => {
@@ -42,7 +43,7 @@ const build = () => {
     switch (event.code) {
       case 'END':
         if (!testsRunning) {
-          runTests();
+          void runTests();
           testsRunning = true;
         }
 

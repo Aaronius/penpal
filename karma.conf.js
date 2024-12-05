@@ -1,5 +1,5 @@
-const babel = require('rollup-plugin-babel');
-const typescript = require('rollup-plugin-typescript');
+const babel = require('@rollup/plugin-babel');
+const typescript = require('@rollup/plugin-typescript');
 const argv = require('yargs').argv;
 
 module.exports = (config) => {
@@ -113,11 +113,12 @@ module.exports = (config) => {
           typescript(),
           babel({
             extensions: ['.ts'],
+            babelHelpers: 'bundled',
           }),
         ],
       },
     },
-    port: 9001,
+    port: 9003,
     colors: true,
     logLevel: config.LOG_INFO,
     // logLevel: config.LOG_DEBUG,

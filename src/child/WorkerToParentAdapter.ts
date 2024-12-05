@@ -2,7 +2,7 @@ import { Destructor } from '../createDestructor';
 import { PenpalMessage } from '../types';
 import CommsAdapter from '../CommsAdapter';
 
-class IframeToParentAdapter implements CommsAdapter {
+class WorkerToParentAdapter implements CommsAdapter {
   private _log: Function;
   private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
   private _originForSending: string | undefined;
@@ -46,4 +46,4 @@ class IframeToParentAdapter implements CommsAdapter {
   };
 }
 
-export default IframeToParentAdapter;
+export default WorkerToParentAdapter;

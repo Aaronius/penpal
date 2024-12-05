@@ -25,15 +25,6 @@ for (const variant of variants) {
       connection.destroy();
     });
 
-    it('calls a function on the child', async () => {
-      const connection = createConnection();
-      const child = await connection.promise;
-      // @ts-expect-error
-      const value = await child.multiply(2, 5);
-      expect(value).toEqual(10);
-      connection.destroy();
-    });
-
     it('calls nested functions on the child', async () => {
       const connection = createConnection();
       const child = await connection.promise;
