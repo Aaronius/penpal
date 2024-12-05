@@ -12,6 +12,12 @@ import {
 import { ErrorCode, MessageType, Resolution } from './enums';
 import MessageOptions from './MessageOptions';
 
+type ReplyHandler = {
+  methodName: string;
+  resolve: (value: any) => void;
+  reject: (reason: any) => void;
+};
+
 /**
  * Augments an object with methods that match those defined by the remote. When these methods are
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
@@ -34,6 +40,37 @@ export default (
   let destroyed = false;
 
   log(`${localName}: Connecting call sender`);
+
+  const replyHandlerByMessageId = new Map<number, ReplyHandler>();
+
+  const handleMessage = (message: PenpalMessage) => {
+    if (message.penpal !== MessageType.Reply) {
+      return;
+    }
+
+    const replyHandler = replyHandlerByMessageId.get(message.id);
+
+    if (!replyHandler) {
+      return;
+    }
+
+    log(`${localName}: Received ${replyHandler.methodName}() reply`);
+
+    let returnValue = message.returnValue;
+
+    if (message.returnValueIsError) {
+      returnValue = deserializeError(returnValue as SerializedError);
+    }
+
+    const resolveOrReject =
+      message.resolution === Resolution.Fulfilled
+        ? replyHandler.resolve
+        : replyHandler.reject;
+
+    resolveOrReject(returnValue);
+  };
+
+  messenger.addMessageHandler(handleMessage);
 
   const createMethodProxy = (methodName: string) => {
     return (...args: unknown[]) => {
@@ -61,26 +98,12 @@ export default (
 
       return new Promise((resolve, reject) => {
         const id = generateId();
-        const handleMessage = (message: PenpalMessage) => {
-          if (message.penpal !== MessageType.Reply || message.id !== id) {
-            return;
-          }
 
-          log(`${localName}: Received ${methodName}() reply`);
-          messenger.removeMessageHandler(handleMessage);
-
-          let returnValue = message.returnValue;
-
-          if (message.returnValueIsError) {
-            returnValue = deserializeError(returnValue as SerializedError);
-          }
-
-          (message.resolution === Resolution.Fulfilled ? resolve : reject)(
-            returnValue
-          );
-        };
-
-        messenger.addMessageHandler(handleMessage);
+        replyHandlerByMessageId.set(id, {
+          methodName,
+          resolve,
+          reject,
+        });
 
         const callMessage: CallMessage = {
           penpal: MessageType.Call,
@@ -107,5 +130,7 @@ export default (
 
   return () => {
     destroyed = true;
+    messenger.removeMessageHandler(handleMessage);
+    replyHandlerByMessageId.clear();
   };
 };

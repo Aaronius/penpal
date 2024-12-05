@@ -14,7 +14,8 @@ const handleAckMessageFactory = (
   log: Function
 ) => {
   const { onDestroy } = destructor;
-  let destroyCallReceiver: Function;
+  let destroyCallReceiverConnection: Function;
+  let destroyCallSenderConnection: Function;
   let receiverMethodNames: string[];
   // We resolve the promise with the call sender. If the child reconnects
   // (for example, after refreshing or navigating to another page that
@@ -31,13 +32,23 @@ const handleAckMessageFactory = (
     };
 
     // If the child reconnected, we need to destroy the prior call receiver
-    // before setting up a new one.
-    if (destroyCallReceiver) {
-      destroyCallReceiver();
+    // connection before setting up a new one.
+    if (destroyCallReceiverConnection) {
+      destroyCallReceiverConnection();
     }
 
-    destroyCallReceiver = connectCallReceiver(info, serializedMethods, log);
-    onDestroy(destroyCallReceiver);
+    // If the child reconnected, we need to destroy the prior call sender
+    // connection before setting up a new one.
+    if (destroyCallSenderConnection) {
+      destroyCallSenderConnection();
+    }
+
+    destroyCallReceiverConnection = connectCallReceiver(
+      info,
+      serializedMethods,
+      log
+    );
+    onDestroy(destroyCallReceiverConnection);
 
     // If the child reconnected, we need to remove the methods from the
     // previous call receiver off the sender.
@@ -49,14 +60,14 @@ const handleAckMessageFactory = (
 
     receiverMethodNames = methodNames;
 
-    const destroyCallSender = connectCallSender(
+    destroyCallSenderConnection = connectCallSender(
       callSender,
       info,
       methodNames,
       log
     );
 
-    onDestroy(destroyCallSender);
+    onDestroy(destroyCallSenderConnection);
 
     return callSender;
   };

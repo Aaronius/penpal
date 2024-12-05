@@ -25,7 +25,6 @@ class ParentToWorkerMessenger implements Messenger {
     }
 
     const penpalMessage: PenpalMessage = event.data;
-    const { penpal: messageType } = penpalMessage;
 
     for (const callback of this._messageCallbacks) {
       callback(penpalMessage);
