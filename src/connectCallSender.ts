@@ -94,7 +94,7 @@ export default (
         const lastArg = args[args.length - 1];
         if (lastArg instanceof MessageOptions) {
           methodCallArgs = args.slice(0, -1);
-          transferables = lastArg.options.transfer;
+          transferables = lastArg.transfer;
         }
       }
 

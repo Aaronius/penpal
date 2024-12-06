@@ -1,10 +1,10 @@
 type Options = Pick<StructuredSerializeOptions, 'transfer'>;
 
 class MessageOptions {
-  readonly options: Options;
+  readonly transfer: Options['transfer'];
 
   constructor(options: Options) {
-    this.options = options;
+    this.transfer = options.transfer;
   }
 }
 

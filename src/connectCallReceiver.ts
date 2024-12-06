@@ -44,7 +44,7 @@ export default (
       let methodCallReturnValue = returnValue;
 
       if (returnValue instanceof Reply) {
-        transferables = returnValue.messageOptions?.options.transfer;
+        transferables = returnValue.messageOptions?.transfer;
         methodCallReturnValue = returnValue.returnValue;
       }
 
