@@ -54,6 +54,8 @@ export default (
       return;
     }
 
+    replyHandlerByMessageId.delete(message.id);
+
     log(`${localName}: Received ${replyHandler.methodName}() reply`);
 
     let returnValue = message.returnValue;
