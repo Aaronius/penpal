@@ -35,11 +35,16 @@ class ParentToIframeMessenger implements Messenger {
 
     destructor.onDestroy(() => {
       window.removeEventListener('message', this._handleMessageFromWindow);
-      this._port?.removeEventListener('message', this._handleMessageFromPort);
-      this._port?.close();
+      this._clearPort();
       this._messageCallbacks.clear();
     });
   }
+
+  private _clearPort = () => {
+    this._port?.removeEventListener('message', this._handleMessageFromPort);
+    this._port?.close();
+    this._port = undefined;
+  };
 
   private _handleMessageFromWindow = (event: MessageEvent): void => {
     // Under specific timing circumstances, we can receive an event
@@ -63,14 +68,25 @@ class ParentToIframeMessenger implements Messenger {
 
     if (messageType === MessageType.Syn) {
       if (originQualifies) {
+        this._clearPort();
         this._validatedChildOrigin = event.origin;
-        this._port = event.ports[0];
       } else {
         this._log(
           `Parent: Handshake - Received SYN message from origin ${event.origin} which did not match expected origin ${this._childOrigin}`
         );
         return;
       }
+    }
+
+    if (messageType === MessageType.Ack) {
+      this._port = event.ports[0];
+
+      if (!this._port) {
+        throw new Error('Parent: Handshake - No port received on ACK');
+      }
+
+      this._port.addEventListener('message', this._handleMessageFromPort);
+      this._port.start();
     }
 
     for (const callback of this._messageCallbacks) {
@@ -97,9 +113,6 @@ class ParentToIframeMessenger implements Messenger {
     const { penpal: messageType } = message;
 
     if (messageType === MessageType.SynAck) {
-      this._port?.addEventListener('message', this._handleMessageFromPort);
-      this._port?.start();
-
       if (!this._validatedChildOrigin) {
         // This should never be the case.
         throw new Error('Child origin has not been validated');
@@ -122,9 +135,13 @@ class ParentToIframeMessenger implements Messenger {
       return;
     }
 
-    this._port?.postMessage(message, {
-      transfer: transferables,
-    });
+    if (this._port) {
+      this._port.postMessage(message, {
+        transfer: transferables,
+      });
+    } else {
+      this._log(`Parent: Unable to send message during handshake`, message);
+    }
   };
 
   addMessageHandler = (callback: (message: PenpalMessage) => void): void => {

@@ -51,17 +51,18 @@ class IframeToParentMessenger implements Messenger {
     const penpalMessage: PenpalMessage = event.data;
     const { penpal: messageType } = penpalMessage;
 
-    if (messageType === MessageType.SynAck) {
-      const originQualifies =
-        this._parentOrigin instanceof RegExp
-          ? this._parentOrigin.test(event.origin)
-          : this._parentOrigin === '*' || this._parentOrigin === event.origin;
-      if (!originQualifies) {
+    const originQualifies =
+      this._parentOrigin instanceof RegExp
+        ? this._parentOrigin.test(event.origin)
+        : this._parentOrigin === '*' || this._parentOrigin === event.origin;
+
+    if (!originQualifies) {
+      if (messageType === MessageType.SynAck) {
         this._log(
           `Child: Handshake - Received SYN-ACK from origin ${event.origin} which did not match expected origin ${this._parentOrigin}`
         );
-        return;
       }
+      return;
     }
 
     for (const callback of this._messageCallbacks) {
@@ -82,12 +83,16 @@ class IframeToParentMessenger implements Messenger {
   };
 
   sendMessage = (message: PenpalMessage, transferables?: Transferable[]) => {
-    if (message.penpal === MessageType.Syn) {
-      const parentOriginForSyn =
+    if (
+      message.penpal === MessageType.Syn ||
+      message.penpal === MessageType.Ack
+    ) {
+      const parentOriginForPostMessage =
         this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
       window.parent.postMessage(message, {
-        targetOrigin: parentOriginForSyn,
-        transfer: [this._port2],
+        targetOrigin: parentOriginForPostMessage,
+        transfer:
+          message.penpal === MessageType.Ack ? [this._port2] : undefined,
       });
       return;
     }
