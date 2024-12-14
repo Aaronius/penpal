@@ -108,9 +108,12 @@ module.exports = (config) => {
           sourcemap: true,
           format: 'iife',
         },
-        // To compile with babel using es2015 preset
         plugins: [
-          typescript(),
+          typescript({
+            // Fail testing if types are wrong.
+            noEmitOnError: true,
+            include: ['test/**/*', 'src/**/*'],
+          }),
           babel({
             extensions: ['.ts'],
             babelHelpers: 'bundled',
