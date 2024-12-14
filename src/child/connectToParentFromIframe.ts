@@ -1,4 +1,4 @@
-import { Methods } from '../types';
+import { CallSender, Methods } from '../types';
 import IframeToParentMessenger from './IframeToParentMessenger';
 import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
@@ -24,12 +24,14 @@ type Options = {
   debug?: boolean;
 };
 
-const connectToParentFromIframe = (options: Options) => {
+const connectToParentFromIframe = <TCallSender extends object = CallSender>(
+  options: Options
+) => {
   const { parentOrigin, methods, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Child', log);
   const messenger = new IframeToParentMessenger(parentOrigin, log, destructor);
-  return connectToParent({
+  return connectToParent<TCallSender>({
     messenger,
     methods,
     timeout,

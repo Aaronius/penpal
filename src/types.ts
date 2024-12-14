@@ -1,25 +1,24 @@
 import { ErrorCode, MessageType, Resolution } from './enums';
 import Messenger from './Messenger';
+import MessageOptions from './MessageOptions';
+import Reply from './Reply';
+
+type ExtractReturnValueFromReply<R> = R extends Reply
+  ? Awaited<R['returnValue']>
+  : R;
 
 /**
- * Extract keys of T whose values are assignable to U.
+ * A mapped type to recursively convert sync methods into async methods and add
+ * an optional MessageOptions argument.
  */
-type ExtractKeys<T, U> = {
-  [P in keyof T]: T[P] extends U ? P : never;
-}[keyof T];
-
-/**
- * A mapped type to recursively convert non async methods into async methods and exclude
- * any non function properties from T.
- */
-export type AsyncMethodReturns<T> = {
-  [K in ExtractKeys<T, Function | object>]: T[K] extends (
-    ...args: unknown[]
-  ) => PromiseLike<any>
-    ? T[K]
-    : T[K] extends (...args: infer A) => infer R
-    ? (...args: A) => Promise<R>
-    : AsyncMethodReturns<T[K]>;
+export type Remote<T> = {
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R
+    ? (
+        ...args: [...A, MessageOptions?]
+      ) => Promise<ExtractReturnValueFromReply<Awaited<R>>>
+    : T[K] extends object
+    ? Remote<T[K]>
+    : never;
 };
 
 /**
@@ -36,7 +35,7 @@ export type Connection<TCallSender extends object = CallSender> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<AsyncMethodReturns<TCallSender>>;
+  promise: Promise<Remote<TCallSender>>;
   /**
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.

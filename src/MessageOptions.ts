@@ -1,10 +1,16 @@
-type Options = Pick<StructuredSerializeOptions, 'transfer'>;
+const brand: unique symbol = Symbol('MessageOptions');
 
 class MessageOptions {
-  readonly transfer: Options['transfer'];
+  readonly transfer?;
 
-  constructor(options: Options) {
-    this.transfer = options.transfer;
+  // This ensures that the class cannot be faked by structural typing.
+  // This is necessary because Penpal uses an instanceof check to determine
+  // if a value is, in fact, an instance of MessageOptions rather than just
+  // being structurally similar.
+  private [brand] = brand;
+
+  constructor(options?: Pick<StructuredSerializeOptions, 'transfer'>) {
+    this.transfer = options?.transfer;
   }
 }
 

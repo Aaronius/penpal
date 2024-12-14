@@ -1,7 +1,7 @@
 import {
   CallSender,
   PenpalError,
-  AsyncMethodReturns,
+  Remote,
   Connection,
   Methods,
   PenpalMessage,
@@ -51,7 +51,7 @@ export default <TCallSender extends object = CallSender>(
     log
   );
 
-  const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise(
+  const promise: Promise<Remote<TCallSender>> = new Promise(
     (resolve, reject) => {
       const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
       const handleMessage = (message: PenpalMessage) => {
@@ -63,7 +63,7 @@ export default <TCallSender extends object = CallSender>(
         if (message.penpal === MessageType.Ack) {
           const callSender = handleAckMessage(message.methodNames);
           stopConnectionTimeout();
-          resolve(callSender as AsyncMethodReturns<TCallSender>);
+          resolve(callSender as Remote<TCallSender>);
           return;
         }
       };

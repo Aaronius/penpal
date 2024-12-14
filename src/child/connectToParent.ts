@@ -4,7 +4,7 @@ import {
   Methods,
   PenpalError,
   CallSender,
-  AsyncMethodReturns,
+  Remote,
   PenpalMessage,
 } from '../types';
 import { MessageType } from '../enums';
@@ -32,7 +32,7 @@ type Connection<TCallSender extends object = CallSender> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<AsyncMethodReturns<TCallSender>>;
+  promise: Promise<Remote<TCallSender>>;
   /**
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
@@ -63,14 +63,14 @@ export default <TCallSender extends object = CallSender>(
     messenger.sendMessage(synMessage);
   };
 
-  const promise: Promise<AsyncMethodReturns<TCallSender>> = new Promise(
+  const promise: Promise<Remote<TCallSender>> = new Promise(
     (resolve, reject) => {
       const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
       const handleMessage = (message: PenpalMessage) => {
         if (message.penpal === MessageType.SynAck) {
           messenger.removeMessageHandler(handleMessage);
           stopConnectionTimeout();
-          const callSender = handleSynAckMessage(message) as AsyncMethodReturns<
+          const callSender = handleSynAckMessage(message) as Remote<
             TCallSender
           >;
           resolve(callSender);

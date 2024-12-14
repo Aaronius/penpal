@@ -1,4 +1,4 @@
-import { connectToParentFromWorker, withMessageOptions } from '../../src/index';
+import { connectToParentFromWorker, Reply } from '../../src/index';
 console.log('web worker origin', self.location.origin);
 type ParentAPI = Record<'add', (num1: number, num2: number) => Promise<number>>;
 
@@ -22,7 +22,7 @@ var methods = {
     const num2 = num2DataView.getInt32(0);
     const returnValue = new DataView(new ArrayBuffer(4));
     returnValue.setInt32(0, num1 * num2);
-    return withMessageOptions(returnValue, {
+    return new Reply(returnValue, {
       transfer: [returnValue.buffer],
     });
   },

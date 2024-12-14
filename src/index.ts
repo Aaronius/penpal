@@ -3,13 +3,7 @@ export { default as connectToParentFromIframe } from './child/connectToParentFro
 export { default as connectToChildWorker } from './parent/connectToChildWorker';
 export { default as connectToParentFromWorker } from './child/connectToParentFromWorker';
 export { default as MessageOptions } from './MessageOptions';
-export { default as withMessageOptions } from './withMessageOptions';
+export { default as Reply } from './Reply';
 
 export { ErrorCode } from './enums';
-export {
-  Connection,
-  AsyncMethodReturns,
-  CallSender,
-  Methods,
-  PenpalError,
-} from './types';
+export { Connection, Remote, CallSender, Methods, PenpalError } from './types';

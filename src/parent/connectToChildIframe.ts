@@ -1,7 +1,7 @@
 import ParentToIframeMessenger from './ParentToIframeMessenger';
 import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
-import { Methods } from '../types';
+import { CallSender, Methods } from '../types';
 import connectToChild from './connectToChild';
 
 type Options = {
@@ -30,7 +30,9 @@ type Options = {
   debug?: boolean;
 };
 
-const connectToChildIframe = (options: Options) => {
+const connectToChildIframe = <TCallSender extends object = CallSender>(
+  options: Options
+) => {
   const { iframe, methods, childOrigin, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Parent', log);
@@ -40,7 +42,7 @@ const connectToChildIframe = (options: Options) => {
     log,
     destructor
   );
-  return connectToChild({
+  return connectToChild<TCallSender>({
     messenger,
     methods,
     timeout,

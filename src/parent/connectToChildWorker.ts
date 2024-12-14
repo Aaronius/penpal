@@ -1,6 +1,6 @@
 import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
-import { Methods } from '../types';
+import { CallSender, Methods } from '../types';
 import connectToChild from './connectToChild';
 import ParentToWorkerMessenger from './ParentToWorkerMessenger';
 
@@ -24,12 +24,14 @@ type Options = {
   debug?: boolean;
 };
 
-const connectToChildIframe = (options: Options) => {
+const connectToChildIframe = <TCallSender extends object = CallSender>(
+  options: Options
+) => {
   const { worker, methods, timeout, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Parent', log);
   const messenger = new ParentToWorkerMessenger(worker, log, destructor);
-  return connectToChild({
+  return connectToChild<TCallSender>({
     messenger,
     methods,
     timeout,

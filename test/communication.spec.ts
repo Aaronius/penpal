@@ -88,6 +88,49 @@ for (const variant of variants) {
       connection.destroy();
     });
 
+    it('calls a function on the child using transferables', async () => {
+      const input1DataView = new DataView(new ArrayBuffer(4));
+      input1DataView.setInt32(0, 2);
+
+      const input2DataView = new DataView(new ArrayBuffer(4));
+      input2DataView.setInt32(0, 5);
+
+      const connection = createConnection();
+      const child = await connection.promise;
+
+      // @ts-expect-error
+      const returnValuePromise = child.multiplyUsingTransferables(
+        input1DataView,
+        input2DataView,
+        new MessageOptions({
+          transfer: [input1DataView.buffer, input2DataView.buffer],
+        })
+      );
+
+      // Validate that data views were actually transferred (not clones) to child
+      for (const dataView of [input1DataView, input2DataView]) {
+        let errorWritingToTransferredBuffer: Error;
+
+        try {
+          /*
+          An error should be thrown here because once the browser transfers
+          the data view array buffers to the child, the browser will block
+          access to the buffers from the parent.
+           */
+          dataView.setInt32(0, 1);
+        } catch (error) {
+          errorWritingToTransferredBuffer = error as Error;
+        }
+
+        expect(errorWritingToTransferredBuffer!).toBeDefined();
+        expect(errorWritingToTransferredBuffer!.name).toBe('TypeError');
+      }
+
+      const returnValue = await returnValuePromise;
+      expect(returnValue.getInt32(0)).toBe(10);
+      connection.destroy();
+    });
+
     it('calls a function on the parent', async () => {
       const connection = createConnection({
         methods: {
