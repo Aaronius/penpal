@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "target": "esnext",
+    "module": "es2022",
+    "target": "es2022",
+    "lib": ["ES2022", "DOM", "webworker"],
     "strict": true,
-    "lib": ["esnext", "DOM", "webworker"],
     "skipLibCheck": true
   }
 }

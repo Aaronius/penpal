@@ -1,4 +1,3 @@
-const babel = require('@rollup/plugin-babel');
 const typescript = require('@rollup/plugin-typescript');
 
 const browsers = ['Chrome'];
@@ -25,7 +24,6 @@ module.exports = (config) => {
       'karma-jasmine',
       'karma-chrome-launcher',
       'karma-firefox-launcher',
-      'karma-babel-preprocessor',
     ],
     preprocessors: {
       'test/**/*.ts': ['rollup'],
@@ -42,11 +40,7 @@ module.exports = (config) => {
             // Fail testing if types are wrong.
             noEmitOnError: true,
             include: ['test/**/*', 'src/**/*'],
-          }),
-          babel({
-            extensions: ['.ts'],
-            babelHelpers: 'bundled',
-          }),
+          })
         ],
       },
     },

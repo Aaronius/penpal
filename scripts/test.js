@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-'use strict';
 
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -8,7 +7,7 @@ import connect from 'connect';
 import karma from 'karma';
 import serveStatic from 'serve-static';
 import * as rollup from 'rollup';
-import config from '../rollup.config.mjs';
+import config from '../rollup.config.js';
 
 // Resolve __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);

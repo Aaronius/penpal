@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-'use strict';
 
 import filesize from 'filesize';
 import fs from 'fs';
