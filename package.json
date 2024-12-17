@@ -23,14 +23,14 @@
     "clean": "rimraf lib es5 dist",
     "build:lib": "tsc --project src/tsconfig.json",
     "build:es5": "babel src --out-dir es5 --extensions \".ts\"",
-    "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
-    "build:analysis": "node ./scripts/filesize dist/penpal.min.js",
+    "build:dist": "rollup --config rollup.config.mjs && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
+    "build:analysis": "node ./scripts/filesize.mjs dist/penpal.min.js",
     "build": "npm-run-all clean build:lib build:es5 build:dist build:analysis",
     "lint": "eslint **/*.js",
     "format": "prettier --write \"**/*.{json,ts,js,md,html,babelrc,eslintrc}\"",
     "test": "npm-run-all clean runTests",
     "test:watch": "npm-run-all clean runTests:watch",
-    "runTests": "node ./scripts/test.js",
+    "runTests": "node scripts/test.mjs",
     "runTests:watch": "npm run runTests -- --watch",
     "prepublishOnly": "npm-run-all format lint test build",
     "prepare": "husky install"
@@ -84,6 +84,6 @@
     "serve-static": "^1.16.2",
     "terser": "^5.36.0",
     "typescript": "^5.6.3",
-    "yargs": "^15.3.1"
+    "yargs": "^17.7.2"
   }
 }
