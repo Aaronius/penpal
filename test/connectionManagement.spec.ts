@@ -10,6 +10,7 @@ import {
   ErrorCode,
   PenpalError,
 } from '../src/index';
+import { CHECK_IFRAME_IN_DOC_INTERVAL } from '../src/parent/monitorIframeRemoval';
 
 /**
  * Asserts that no connection is successfully made between the parent and the
@@ -35,6 +36,10 @@ const expectNoSuccessfulConnection = (
 };
 
 describe('connection management', () => {
+  afterEach(() => {
+    jasmine.clock().uninstall();
+  });
+
   it('connects to iframe when no child origin is provided but src is set on iframe', async () => {
     const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
 
@@ -374,11 +379,10 @@ describe('connection management', () => {
       });
 
       await connection.promise;
-      jasmine.clock().tick(100001);
+      jasmine.clock().tick(10000);
 
       expect(iframe.parentNode).not.toBeNull();
 
-      jasmine.clock().uninstall();
       connection.destroy();
     }
   );
@@ -410,7 +414,7 @@ describe('connection management', () => {
     const child = await connection.promise;
     document.body.removeChild(iframe);
 
-    jasmine.clock().tick(61000);
+    jasmine.clock().tick(CHECK_IFRAME_IN_DOC_INTERVAL);
 
     let error;
     try {
@@ -423,7 +427,6 @@ describe('connection management', () => {
     expect(error).toBeDefined();
     expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
 
-    jasmine.clock().uninstall();
     connection.destroy();
   });
 });

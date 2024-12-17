@@ -15,6 +15,7 @@ export enum ErrorCode {
   ConnectionDestroyed = 'ConnectionDestroyed',
   ConnectionTimeout = 'ConnectionTimeout',
   OriginRequired = 'OriginRequired',
+  MethodCallTimeout = 'MethodCallTimeout',
 }
 
 export enum NativeErrorName {

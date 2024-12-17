@@ -1,10 +1,7 @@
 {
-  "include": ["src/**/*"],
   "compilerOptions": {
     "module": "esnext",
     "target": "esnext",
-    "declaration": true,
-    "outDir": "lib",
     "strict": true,
     "lib": ["esnext", "DOM", "webworker"],
     "skipLibCheck": true

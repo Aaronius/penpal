@@ -41,25 +41,27 @@ export default (
       }
 
       let transferables: Transferable[] | undefined;
-      let methodCallReturnValue = returnValue;
+      let unwrappedReturnValue;
 
       if (returnValue instanceof Reply) {
-        transferables = returnValue.messageOptions?.transfer;
-        methodCallReturnValue = returnValue.returnValue;
+        transferables = returnValue.transfer;
+        unwrappedReturnValue = returnValue.returnValue;
+      } else {
+        unwrappedReturnValue = returnValue;
       }
 
       const message: ReplyMessage = {
         penpal: MessageType.Reply,
         id: messageId,
         resolution,
-        returnValue: methodCallReturnValue,
+        returnValue: unwrappedReturnValue,
       };
 
       if (
         resolution === Resolution.Rejected &&
-        methodCallReturnValue instanceof Error
+        unwrappedReturnValue instanceof Error
       ) {
-        message.returnValue = serializeError(methodCallReturnValue);
+        message.returnValue = serializeError(unwrappedReturnValue);
         message.returnValueIsError = true;
       }
 

@@ -1,10 +1,8 @@
-import MessageOptions from './MessageOptions';
-
 const brand: unique symbol = Symbol('Reply');
 
 class Reply<T = unknown> {
   readonly returnValue: T;
-  readonly messageOptions?;
+  readonly transfer?: Transferable[];
 
   // This ensures that the class cannot be faked by structural typing.
   // This is necessary because Penpal uses an instanceof check to determine
@@ -14,12 +12,14 @@ class Reply<T = unknown> {
 
   constructor(
     returnValue: T,
-    messageOptions?:
-      | ConstructorParameters<typeof MessageOptions>[0]
-      | MessageOptions
+    options?: {
+      // Named transfer instead of transferables to match the native
+      // postMessage API
+      transfer?: Transferable[];
+    }
   ) {
     this.returnValue = returnValue;
-    this.messageOptions = new MessageOptions(messageOptions);
+    this.transfer = options?.transfer;
   }
 }
 

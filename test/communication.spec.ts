@@ -1,5 +1,5 @@
 import { createIframeAndConnection, createWorkerAndConnection } from './utils';
-import { MessageOptions } from '../src/index';
+import { ErrorCode, MethodCallOptions, PenpalError } from '../src/index';
 
 const variants = [
   {
@@ -16,6 +16,10 @@ for (const variant of variants) {
   const { childType, createConnection } = variant;
 
   describe(`communication between parent and child ${childType}`, () => {
+    afterEach(() => {
+      jasmine.clock().uninstall();
+    });
+
     it('calls a function on the child', async () => {
       const connection = createConnection();
       const child = await connection.promise;
@@ -60,7 +64,7 @@ for (const variant of variants) {
       const returnValuePromise = child.multiplyUsingTransferables(
         input1DataView,
         input2DataView,
-        new MessageOptions({
+        new MethodCallOptions({
           transfer: [input1DataView.buffer, input2DataView.buffer],
         })
       );
@@ -102,7 +106,7 @@ for (const variant of variants) {
       const returnValuePromise = child.multiplyUsingTransferables(
         input1DataView,
         input2DataView,
-        new MessageOptions({
+        new MethodCallOptions({
           transfer: [input1DataView.buffer, input2DataView.buffer],
         })
       );
@@ -202,6 +206,58 @@ for (const variant of variants) {
       }
       expect(error).toEqual(jasmine.any(Error));
       expect((error as Error).name).toBe('DataCloneError');
+      connection.destroy();
+    });
+
+    it('rejects method call promise if method call timeout reached', async () => {
+      jasmine.clock().install();
+      const connection = createConnection();
+      const child = await connection.promise;
+      // @ts-expect-error
+      const promise = child.neverResolve(
+        new MethodCallOptions({
+          timeout: 1000,
+        })
+      );
+      jasmine.clock().tick(999);
+      await expectAsync(promise).toBePending();
+      jasmine.clock().tick(1);
+
+      let error;
+      try {
+        await promise;
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error).toEqual(jasmine.any(Error));
+      expect((error as Error).message).toBe(
+        'Method call neverResolve() timed out after 1000ms'
+      );
+      expect((error as PenpalError).code).toBe(ErrorCode.MethodCallTimeout);
+      connection.destroy();
+    });
+
+    it('rejects method call promise if connection is destroyed before reply is received', async () => {
+      const connection = createConnection();
+      const child = await connection.promise;
+
+      let error: Error;
+
+      // @ts-expect-error
+      child.neverResolve().catch((e) => {
+        error = e;
+      });
+      connection.destroy();
+
+      // Wait for microtask queue to drain
+      await Promise.resolve();
+
+      expect(error!).toEqual(jasmine.any(Error));
+      expect(error!.message).toBe(
+        'Method call neverResolve() cannot be resolved due to destroyed connection'
+      );
+      expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
       connection.destroy();
     });
   });

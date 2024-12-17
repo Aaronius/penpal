@@ -57,6 +57,9 @@ var methods = {
       },
     },
   },
+  neverResolve: function () {
+    return new Promise(() => {});
+  },
 };
 
 connectToParentFromWorker({

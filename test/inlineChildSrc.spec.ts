@@ -1,9 +1,5 @@
 import { CHILD_SERVER, WORKER_URL_PATH } from './constants';
-import {
-  connectToChildIframe,
-  connectToChildWorker,
-  ErrorCode,
-} from '../src/index';
+import { connectToChildIframe, connectToChildWorker } from '../src/index';
 
 const htmlSrc = `
 <!DOCTYPE html>

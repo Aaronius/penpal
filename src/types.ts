@@ -1,6 +1,6 @@
 import { ErrorCode, MessageType, Resolution } from './enums';
 import Messenger from './Messenger';
-import MessageOptions from './MessageOptions';
+import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
 
 type ExtractReturnValueFromReply<R> = R extends Reply
@@ -9,12 +9,12 @@ type ExtractReturnValueFromReply<R> = R extends Reply
 
 /**
  * A mapped type to recursively convert sync methods into async methods and add
- * an optional MessageOptions argument.
+ * an optional MethodCallOptions argument.
  */
 export type Remote<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
     ? (
-        ...args: [...A, MessageOptions?]
+        ...args: [...A, MethodCallOptions?]
       ) => Promise<ExtractReturnValueFromReply<Awaited<R>>>
     : T[K] extends object
     ? Remote<T[K]>

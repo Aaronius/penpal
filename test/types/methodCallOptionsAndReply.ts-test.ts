@@ -1,7 +1,7 @@
 import assertType from './assertType';
 import {
   connectToChildIframe,
-  MessageOptions,
+  MethodCallOptions,
   Remote,
   Reply,
 } from '../../src/index';
@@ -39,23 +39,6 @@ const childMethods = {
       transfer: [returnValue.buffer],
     });
   },
-  multiplyWithTransferablesInReplyMessageOptionsInstance(
-    aDataView: DataView,
-    bDataView: DataView
-  ) {
-    const a = aDataView.getInt32(0);
-    const b = bDataView.getInt32(0);
-    const returnValue = new DataView(new ArrayBuffer(4));
-    returnValue.setInt32(0, a * b);
-    // This uses a MessageOptions instance rather than a plain object. Either
-    // are acceptable.
-    return new Reply(
-      returnValue,
-      new MessageOptions({
-        transfer: [returnValue.buffer],
-      })
-    );
-  },
 };
 
 type ChildMethods = typeof childMethods;
@@ -68,12 +51,12 @@ const child = await connection.promise;
 assertType<Remote<ChildMethods>>(child);
 assertType<Promise<number>>(child.multiply(2, 3));
 assertType<Promise<number>>(child.multiplyWithPromisedValue(2, 3));
-assertType<Promise<number>>(child.multiply(2, 3, new MessageOptions()));
-assertType<Promise<number>>(child.multiply(2, 3, new MessageOptions({})));
+assertType<Promise<number>>(child.multiply(2, 3, new MethodCallOptions()));
+assertType<Promise<number>>(child.multiply(2, 3, new MethodCallOptions({})));
 assertType<Promise<number>>(
-  child.multiply(2, 3, new MessageOptions({ transfer: [] }))
+  child.multiply(2, 3, new MethodCallOptions({ transfer: [] }))
 );
-// @ts-expect-error Message options must be an instance of MessageOptions.
+// @ts-expect-error Message options must be an instance of MethodCallOptions.
 void child.multiply(2, 3, { transfer: [] });
 assertType<Promise<number>>(child.multiplyWithReplyInstance(2, 3));
 assertType<Promise<number>>(child.multiplyWithPromisedReplyInstance(2, 3));
@@ -96,16 +79,7 @@ assertType<Promise<DataView>>(
   child.multiplyWithTransferables(
     input1DataView,
     input2DataView,
-    new MessageOptions({
-      transfer: [input1DataView.buffer, input2DataView.buffer],
-    })
-  )
-);
-assertType<Promise<DataView>>(
-  child.multiplyWithTransferablesInReplyMessageOptionsInstance(
-    input1DataView,
-    input2DataView,
-    new MessageOptions({
+    new MethodCallOptions({
       transfer: [input1DataView.buffer, input2DataView.buffer],
     })
   )

@@ -1,6 +1,6 @@
 import { Destructor } from '../createDestructor';
 
-const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
+export const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
 
 /**
  * Monitors for iframe removal and destroys connection if iframe

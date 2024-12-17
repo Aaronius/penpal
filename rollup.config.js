@@ -11,6 +11,7 @@ module.exports = {
   },
   plugins: [
     typescript({
+      tsconfig: 'src/tsconfig.json',
       compilerOptions: {
         outDir: 'dist',
         declaration: false,
