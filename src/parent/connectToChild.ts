@@ -5,9 +5,9 @@ import {
   Connection,
   Methods,
   PenpalMessage,
+  Destructor,
 } from '../types';
 import { MessageType } from '../enums';
-import { Destructor } from '../createDestructor';
 import handleAckMessageFactory from './handleAckMessageFactory';
 import handleSynMessageFactory from './handleSynMessageFactory';
 import { serializeMethods } from '../methodSerialization';
@@ -51,36 +51,34 @@ export default <TCallSender extends object = CallSender>(
     log
   );
 
-  const promise: Promise<Remote<TCallSender>> = new Promise(
-    (resolve, reject) => {
-      const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
-      const handleMessage = (message: PenpalMessage) => {
-        if (message.penpal === MessageType.Syn) {
-          handleSynMessage();
-          return;
-        }
+  const promise = new Promise<Remote<TCallSender>>((resolve, reject) => {
+    const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
+    const handleMessage = (message: PenpalMessage) => {
+      if (message.penpal === MessageType.Syn) {
+        handleSynMessage();
+        return;
+      }
 
-        if (message.penpal === MessageType.Ack) {
-          const callSender = handleAckMessage(message.methodNames);
-          stopConnectionTimeout();
-          resolve(callSender as Remote<TCallSender>);
-          return;
-        }
-      };
+      if (message.penpal === MessageType.Ack) {
+        const callSender = handleAckMessage(message.methodNames);
+        stopConnectionTimeout();
+        resolve(callSender as Remote<TCallSender>);
+        return;
+      }
+    };
 
-      messenger.addMessageHandler(handleMessage);
+    messenger.addMessageHandler(handleMessage);
 
-      log('Parent: Awaiting handshake');
+    log('Parent: Awaiting handshake');
 
-      onDestroy((error?: PenpalError) => {
-        messenger.removeMessageHandler(handleMessage);
+    onDestroy((error?: PenpalError) => {
+      messenger.removeMessageHandler(handleMessage);
 
-        if (error) {
-          reject(error);
-        }
-      });
-    }
-  );
+      if (error) {
+        reject(error);
+      }
+    });
+  });
 
   return {
     promise,

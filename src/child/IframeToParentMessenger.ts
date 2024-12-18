@@ -1,20 +1,15 @@
-import { Destructor } from '../createDestructor';
 import { ErrorCode, MessageType } from '../enums';
-import { PenpalError, PenpalMessage } from '../types';
+import { Log, PenpalError, PenpalMessage, Destructor } from '../types';
 import Messenger from '../Messenger';
 
 class IframeToParentMessenger implements Messenger {
   private _parentOrigin: string | RegExp;
-  private _log: Function;
-  private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
+  private _log: Log;
+  private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port1: MessagePort;
   private _port2: MessagePort;
 
-  constructor(
-    parentOrigin: string | RegExp,
-    log: Function,
-    destructor: Destructor
-  ) {
+  constructor(parentOrigin: string | RegExp, log: Log, destructor: Destructor) {
     this._log = log;
     this._parentOrigin = parentOrigin;
 

@@ -1,22 +1,11 @@
-import { PenpalError } from './types';
+import { Destructor, DestructorCallback, Log, PenpalError } from './types';
 
-export type Destructor = {
-  /**
-   * Calls all onDestroy callbacks.
-   */
-  destroy(error?: PenpalError): void;
-  /**
-   * Registers a callback to be called when destroy is called.
-   */
-  onDestroy(callback: Function): void;
-};
-
-export default (localName: 'Parent' | 'Child', log: Function): Destructor => {
-  const callbacks: Function[] = [];
+export default (localName: 'Parent' | 'Child', log: Log): Destructor => {
+  const callbacks: DestructorCallback[] = [];
   let destroyed = false;
 
   return {
-    destroy(error) {
+    destroy(error?: PenpalError) {
       if (!destroyed) {
         destroyed = true;
         log(`${localName}: Destroying connection`);
@@ -26,7 +15,11 @@ export default (localName: 'Parent' | 'Child', log: Function): Destructor => {
       }
     },
     onDestroy(callback) {
-      destroyed ? callback() : callbacks.push(callback);
+      if (destroyed) {
+        callback();
+      } else {
+        callbacks.push(callback);
+      }
     },
   };
 };

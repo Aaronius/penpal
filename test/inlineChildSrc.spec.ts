@@ -1,5 +1,6 @@
 import { CHILD_SERVER, WORKER_URL_PATH } from './constants';
 import { connectToChildIframe, connectToChildWorker } from '../src/index';
+import FixtureMethods from './childFixtures/types/FixtureMethods';
 
 const htmlSrc = `
 <!DOCTYPE html>
@@ -25,7 +26,7 @@ const htmlSrcRedirect = `
 <html>
   <head>
     <script>
-      document.location = '${CHILD_SERVER}/default.html'
+      document.location = '${CHILD_SERVER}/pages/default.html'
     </script>
   </head>
 </html>
@@ -37,12 +38,11 @@ describe('data URI support', () => {
     iframe.src = `data:text/html,${htmlSrc}`;
     document.body.appendChild(iframe);
 
-    const connection = connectToChildIframe({
+    const connection = connectToChildIframe<FixtureMethods>({
       iframe,
     });
 
     const child = await connection.promise;
-    // @ts-expect-error
     const value = await child.multiply(2, 5);
     expect(value).toEqual(10);
     connection.destroy();
@@ -53,7 +53,7 @@ describe('data URI support', () => {
     iframe.src = `data:text/html,${htmlSrcRedirect}`;
     document.body.appendChild(iframe);
 
-    const connection = connectToChildIframe({
+    const connection = connectToChildIframe<FixtureMethods>({
       iframe,
     });
 
@@ -76,19 +76,18 @@ describe('data URI support', () => {
       type: 'module',
     });
 
-    const connection = connectToChildWorker({
+    const connection = connectToChildWorker<FixtureMethods>({
       worker,
     });
 
     const child = await connection.promise;
-    // @ts-expect-error
     const value = await child.multiply(2, 5);
     expect(value).toEqual(10);
     connection.destroy();
   });
 });
 
-var supportsSrcDoc = !!('srcdoc' in document.createElement('iframe'));
+const supportsSrcDoc = !!('srcdoc' in document.createElement('iframe'));
 
 if (supportsSrcDoc) {
   describe('iframe srcdoc support', () => {
@@ -97,12 +96,11 @@ if (supportsSrcDoc) {
       iframe.srcdoc = htmlSrc;
       document.body.appendChild(iframe);
 
-      const connection = connectToChildIframe({
+      const connection = connectToChildIframe<FixtureMethods>({
         iframe,
       });
 
       const child = await connection.promise;
-      // @ts-expect-error
       const value = await child.multiply(2, 5);
       expect(value).toEqual(10);
       connection.destroy();
@@ -113,7 +111,7 @@ if (supportsSrcDoc) {
       iframe.srcdoc = htmlSrcRedirect;
       document.body.appendChild(iframe);
 
-      const connection = connectToChildIframe({
+      const connection = connectToChildIframe<FixtureMethods>({
         iframe,
       });
 

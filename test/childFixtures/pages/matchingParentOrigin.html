@@ -11,15 +11,22 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script type="text/javascript" src="penpal.js"></script>
+    <script type="text/javascript" src="/penpal.js"></script>
     <script type="text/javascript">
+      // A cheap way to get the parent origin for our tests.
+      var parentOrigin = document.referrer.substring(
+        0,
+        document.referrer.lastIndexOf('/')
+      );
+
       var methods = {
-        multiply: function (num1, num2) {
+        multiply(num1, num2) {
           return num1 * num2;
         },
       };
 
       Penpal.connectToParentFromIframe({
+        parentOrigin: parentOrigin,
         methods: methods,
       });
     </script>

@@ -1,4 +1,3 @@
-import { Destructor } from '../createDestructor';
 import {
   SynMessage,
   Methods,
@@ -6,6 +5,7 @@ import {
   CallSender,
   Remote,
   PenpalMessage,
+  Destructor,
 } from '../types';
 import { MessageType } from '../enums';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
@@ -37,7 +37,7 @@ type Connection<TCallSender extends object = CallSender> = {
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
    */
-  destroy: Function;
+  destroy: () => void;
 };
 
 /**
@@ -63,33 +63,29 @@ export default <TCallSender extends object = CallSender>(
     messenger.sendMessage(synMessage);
   };
 
-  const promise: Promise<Remote<TCallSender>> = new Promise(
-    (resolve, reject) => {
-      const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
-      const handleMessage = (message: PenpalMessage) => {
-        if (message.penpal === MessageType.SynAck) {
-          messenger.removeMessageHandler(handleMessage);
-          stopConnectionTimeout();
-          const callSender = handleSynAckMessage(message) as Remote<
-            TCallSender
-          >;
-          resolve(callSender);
-        }
-      };
-
-      messenger.addMessageHandler(handleMessage);
-
-      sendSynMessage();
-
-      onDestroy((error?: PenpalError) => {
+  const promise = new Promise<Remote<TCallSender>>((resolve, reject) => {
+    const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
+    const handleMessage = (message: PenpalMessage) => {
+      if (message.penpal === MessageType.SynAck) {
         messenger.removeMessageHandler(handleMessage);
+        stopConnectionTimeout();
+        const callSender = handleSynAckMessage(message) as Remote<TCallSender>;
+        resolve(callSender);
+      }
+    };
 
-        if (error) {
-          reject(error);
-        }
-      });
-    }
-  );
+    messenger.addMessageHandler(handleMessage);
+
+    sendSynMessage();
+
+    onDestroy((error?: PenpalError) => {
+      messenger.removeMessageHandler(handleMessage);
+
+      if (error) {
+        reject(error);
+      }
+    });
+  });
 
   return {
     promise,

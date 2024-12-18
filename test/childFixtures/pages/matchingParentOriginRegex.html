@@ -11,7 +11,7 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script type="text/javascript" src="penpal.js"></script>
+    <script type="text/javascript" src="/penpal.js"></script>
     <script type="text/javascript">
       var escapeRegExp = function (string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
@@ -26,7 +26,7 @@
       var parentOriginRegex = new RegExp(escapeRegExp(parentOrigin));
 
       var methods = {
-        multiply: function (num1, num2) {
+        multiply(num1, num2) {
           return num1 * num2;
         },
       };

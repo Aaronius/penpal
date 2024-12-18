@@ -5,7 +5,10 @@ import { ErrorCode } from './enums';
  * Starts a timeout and calls the callback with an error
  * if the timeout completes before the stop function is called.
  */
-export default (timeout: number | undefined, callback: Function): Function => {
+export default (
+  timeout: number | undefined,
+  callback: (error: PenpalError) => void
+) => {
   let timeoutId: number;
 
   if (timeout !== undefined) {

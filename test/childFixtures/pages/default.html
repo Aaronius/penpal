@@ -11,22 +11,22 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script type="text/javascript" src="penpal.js"></script>
+    <script type="text/javascript" src="/penpal.js"></script>
     <script type="text/javascript">
       var parentAPI;
       var parentReturnValue;
 
       var methods = {
-        multiply: function (num1, num2) {
+        multiply(num1, num2) {
           console.log('window origin', window.origin);
           return num1 * num2;
         },
-        multiplyAsync: function (num1, num2) {
+        multiplyAsync(num1, num2) {
           return new Promise(function (resolve) {
             resolve(num1 * num2);
           });
         },
-        multiplyUsingTransferables: function (num1DataView, num2DataView) {
+        multiplyUsingTransferables(num1DataView, num2DataView) {
           const num1 = num1DataView.getInt32(0);
           const num2 = num2DataView.getInt32(0);
           const returnValue = new DataView(new ArrayBuffer(4));
@@ -35,44 +35,44 @@
             transfer: [returnValue.buffer],
           });
         },
-        addUsingParent: function () {
+        addUsingParent() {
           parentAPI.add(3, 6).then(function (value) {
             parentReturnValue = value;
           });
         },
-        getParentReturnValue: function () {
+        getParentReturnValue() {
           return parentReturnValue;
         },
-        getRejectedPromiseString: function () {
+        getRejectedPromiseString() {
           return Promise.reject('test error string');
         },
-        getRejectedPromiseError: function () {
+        getRejectedPromiseError() {
           // TypeError instead of Error just to make sure "name" transfers properly.
           return Promise.reject(new TypeError('test error object'));
         },
-        throwError: function () {
+        throwError() {
           throw new Error('Oh nos!');
         },
-        getUnclonableValue: function () {
+        getUnclonableValue() {
           return window;
         },
-        reload: function () {
+        reload() {
           window.location.reload(true);
         },
-        navigate: function (to) {
+        navigate(to) {
           window.location.href = to;
         },
         nested: {
-          oneLevel: function (input) {
+          oneLevel(input) {
             return input;
           },
           by: {
-            twoLevels: function (input) {
+            twoLevels(input) {
               return input;
             },
           },
         },
-        neverResolve: function () {
+        neverResolve() {
           return new Promise(() => {});
         },
       };
@@ -81,7 +81,7 @@
         parentOrigin: '*',
         methods: methods,
         debug: true,
-      }).promise.then(function (parent) {
+      }).promise.then((parent) => {
         parentAPI = parent;
       });
 

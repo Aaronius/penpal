@@ -18,7 +18,7 @@ export const serializeError = ({
  */
 export const deserializeError = (obj: SerializedError): Error => {
   const deserializedError = new Error();
-  // @ts-ignore
+  // @ts-expect-error TS gets confused and I don't know a clean way around it.
   Object.keys(obj).forEach((key) => (deserializedError[key] = obj[key]));
   return deserializedError;
 };

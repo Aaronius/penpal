@@ -1,5 +1,6 @@
 import { serializeError } from './errorSerialization';
 import {
+  Log,
   PenpalMessage,
   ReplyMessage,
   SerializedMethods,
@@ -15,7 +16,7 @@ import Reply from './Reply';
 export default (
   info: WindowsInfo,
   serializedMethods: SerializedMethods,
-  log: Function
+  log: Log
 ) => {
   const { localName, messenger } = info;
   let destroyed = false;
@@ -96,7 +97,7 @@ export default (
     log(`${localName}: Received ${methodName}() call`);
 
     new Promise((resolve) =>
-      resolve(serializedMethods[methodName].apply(serializedMethods, args))
+      resolve(serializedMethods[methodName](...args))
     ).then(
       createMethodCallResultHandler(methodName, id, Resolution.Fulfilled),
       createMethodCallResultHandler(methodName, id, Resolution.Rejected)

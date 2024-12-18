@@ -1,8 +1,7 @@
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
 import getOriginFromSrc from './getOriginFromSrc';
-import { PenpalMessage } from '../types';
+import { Log, PenpalMessage, Destructor } from '../types';
 import { MessageType } from '../enums';
-import { Destructor } from '../createDestructor';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import Messenger from '../Messenger';
 
@@ -10,14 +9,14 @@ class ParentToIframeMessenger implements Messenger {
   private _iframe: HTMLIFrameElement;
   private _childOrigin: string | RegExp;
   private _validatedChildOrigin: string | undefined;
-  private _log: Function;
-  private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
+  private _log: Log;
+  private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port: MessagePort | undefined;
 
   constructor(
     iframe: HTMLIFrameElement,
     childOrigin: string | RegExp | undefined,
-    log: Function,
+    log: Log,
     destructor: Destructor
   ) {
     this._iframe = iframe;
@@ -61,12 +60,12 @@ class ParentToIframeMessenger implements Messenger {
 
     const penpalMessage: PenpalMessage = event.data;
     const { penpal: messageType } = penpalMessage;
-    let originQualifies =
-      this._childOrigin instanceof RegExp
-        ? this._childOrigin.test(event.origin)
-        : this._childOrigin === '*' || this._childOrigin === event.origin;
 
     if (messageType === MessageType.Syn) {
+      const originQualifies =
+        this._childOrigin instanceof RegExp
+          ? this._childOrigin.test(event.origin)
+          : this._childOrigin === '*' || this._childOrigin === event.origin;
       if (originQualifies) {
         this._clearPort();
         this._validatedChildOrigin = event.origin;

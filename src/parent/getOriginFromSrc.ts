@@ -1,4 +1,4 @@
-const DEFAULT_PORT_BY_PROTOCOL: { [index: string]: string } = {
+const DEFAULT_PORT_BY_PROTOCOL: Record<string, string> = {
   'http:': '80',
   'https:': '443',
 };

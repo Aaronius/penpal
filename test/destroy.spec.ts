@@ -10,6 +10,7 @@ import {
   ErrorCode,
   PenpalError,
 } from '../src/index';
+import FixtureMethods from './childFixtures/types/FixtureMethods';
 
 const variants = [
   {
@@ -27,7 +28,7 @@ for (const variant of variants) {
   describe(`[Child Type: ${childType}] destroy`, () => {
     // Issue #51
     it('does not resolve or reject promise', async () => {
-      const connection = createConnection();
+      const connection = createConnection<FixtureMethods>();
       connection.destroy();
 
       await expectAsync(connection.promise).toBePending();
@@ -44,8 +45,8 @@ for (const variant of variants) {
           'removeEventListener'
         ).and.callThrough();
 
-        const connection = connectToChildIframe({
-          iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+        const connection = connectToChildIframe<FixtureMethods>({
+          iframe: createAndAddIframe(`${CHILD_SERVER}/pages/default.html`),
         });
 
         // The method call message listener is set up after the connection has been established.
@@ -72,7 +73,7 @@ for (const variant of variants) {
           'removeEventListener'
         ).and.callThrough();
 
-        const connection = connectToChildWorker({
+        const connection = connectToChildWorker<FixtureMethods>({
           worker,
         });
 
@@ -88,7 +89,7 @@ for (const variant of variants) {
     }
 
     it('prevents method calls from being sent', async () => {
-      const connection = createConnection();
+      const connection = createConnection<FixtureMethods>();
 
       // The method call message listener is set up after the connection has been established.
 
@@ -97,8 +98,7 @@ for (const variant of variants) {
 
       let error;
       try {
-        // @ts-expect-error
-        child.multiply();
+        child.multiply(2, 3);
       } catch (e) {
         error = e;
       }
@@ -110,18 +110,16 @@ for (const variant of variants) {
     });
 
     it('supports multiple connections', async () => {
-      const connection1 = createConnection();
-      const connection2 = createConnection();
+      const connection1 = createConnection<FixtureMethods>();
+      const connection2 = createConnection<FixtureMethods>();
 
       await Promise.all([
         connection1.promise.then(async (child) => {
-          // @ts-expect-error
           const value = await child.multiplyAsync(2, 5);
           expect(value).toEqual(10);
           connection1.destroy();
         }),
         connection2.promise.then(async (child) => {
-          // @ts-expect-error
           const value = await child.multiplyAsync(3, 5);
           expect(value).toEqual(15);
           connection2.destroy();

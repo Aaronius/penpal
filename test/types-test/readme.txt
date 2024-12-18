@@ -1,0 +1,1 @@
+The files in this directory test the Penpal TypeScript types. These test files don't actually execute, but when running other tests, Karma will also transpile the files in this directory and fail if any of the type assertions fail.

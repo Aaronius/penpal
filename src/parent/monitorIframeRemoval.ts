@@ -1,4 +1,4 @@
-import { Destructor } from '../createDestructor';
+import { Destructor } from '../types';
 
 export const CHECK_IFRAME_IN_DOC_INTERVAL = 60000;
 

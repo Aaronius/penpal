@@ -11,7 +11,7 @@ module.exports = (config) => {
       // as the tests because the browser only lets workers from the
       // same origin or an opaque origin (null origin) be loaded.
       {
-        pattern: 'test/childFixtures/worker.ts',
+        pattern: 'test/childFixtures/workers/default.ts',
         watched: true,
         included: false,
         served: true,

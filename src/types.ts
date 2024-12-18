@@ -24,9 +24,7 @@ export type Remote<T> = {
 /**
  * Methods that may be called that will invoke methods on the remote window.
  */
-export type CallSender = {
-  [index: string]: Function;
-};
+export type CallSender = Record<string, (...args: unknown[]) => unknown>;
 
 /**
  * Connection object returned from calling connectToChild or connectToParent.
@@ -40,7 +38,7 @@ export type Connection<TCallSender extends object = CallSender> = {
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
    */
-  destroy: Function;
+  destroy: () => void;
 };
 
 /**
@@ -53,9 +51,7 @@ export type Methods = {
 /**
  * A map of key path to function. The flatted counterpart of Methods.
  */
-export type SerializedMethods = {
-  [index: string]: Function;
-};
+export type SerializedMethods = Record<string, Function>;
 
 export type SerializedError = {
   name: string;
@@ -126,4 +122,19 @@ export type WindowsInfo = {
   localName: 'Parent' | 'Child';
 
   messenger: Messenger;
+};
+
+export type Log = (...args: unknown[]) => void;
+
+export type DestructorCallback = (error?: PenpalError) => void;
+
+export type Destructor = {
+  /**
+   * Calls all onDestroy callbacks.
+   */
+  destroy(error?: PenpalError): void;
+  /**
+   * Registers a callback to be called when destroy is called.
+   */
+  onDestroy(callback: DestructorCallback): void;
 };

@@ -1,10 +1,11 @@
+import { Log } from './types';
+
 export default (debug: boolean) => {
-  /**
-   * Logs a message if debug is enabled.
-   */
-  return (...args: unknown[]) => {
+  const log: Log = (...args: unknown[]) => {
     if (debug) {
-      console.log('[Penpal]', ...args); // eslint-disable-line no-console
+      console.log('[Penpal]', ...args);
     }
   };
+
+  return log;
 };

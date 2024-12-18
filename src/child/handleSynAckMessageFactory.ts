@@ -1,14 +1,15 @@
 import {
   AckMessage,
   CallSender,
+  Log,
   SerializedMethods,
   SynAckMessage,
   WindowsInfo,
+  Destructor,
 } from '../types';
 import { MessageType } from '../enums';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
-import { Destructor } from '../createDestructor';
 import Messenger from '../Messenger';
 
 /**
@@ -18,7 +19,7 @@ const handleSynAckMessageFactory = (
   messenger: Messenger,
   serializedMethods: SerializedMethods,
   destructor: Destructor,
-  log: Function
+  log: Log
 ) => {
   const { onDestroy } = destructor;
 

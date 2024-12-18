@@ -4,6 +4,7 @@ import { deserializeMethods } from './methodSerialization';
 import {
   CallMessage,
   CallSender,
+  Log,
   PenpalError,
   PenpalMessage,
   SerializedError,
@@ -14,8 +15,8 @@ import MethodCallOptions from './MethodCallOptions';
 
 type ReplyHandler = {
   methodName: string;
-  resolve: (value: any) => void;
-  reject: (reason: any) => void;
+  resolve: (value: unknown) => void;
+  reject: (reason: unknown) => void;
   timeoutId: number | undefined;
 };
 
@@ -23,19 +24,19 @@ type ReplyHandler = {
  * Augments an object with methods that match those defined by the remote. When these methods are
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
- * @param {Object} callSender Sender object that should be augmented with methods.
- * @param {Object} info Information about the local and remote windows.
- * @param {Array} methodKeyPaths Key paths of methods available to be called on the remote.
- * @param {Promise} destructionPromise A promise resolved when destroy() is called on the penpal
+ * @param callSender Sender object that should be augmented with methods.
+ * @param info Information about the local and remote windows.
+ * @param methodKeyPaths Key paths of methods available to be called on the remote.
+ * @param destructionPromise A promise resolved when destroy() is called on the penpal
  * connection.
- * @param {Function} log Logs messages.
- * @returns {Object} The call sender object with methods that may be called.
+ * @param log Logs messages.
+ * @returns The call sender object with methods that may be called.
  */
 export default (
   callSender: CallSender,
   info: WindowsInfo,
   methodKeyPaths: string[],
-  log: Function
+  log: Log
 ) => {
   const { localName, messenger } = info;
   let destroyed = false;

@@ -1,4 +1,4 @@
-import { SerializedMethods, SynAckMessage } from '../types';
+import { Log, SerializedMethods, SynAckMessage } from '../types';
 import { MessageType } from '../enums';
 import Messenger from '../Messenger';
 
@@ -7,7 +7,7 @@ import Messenger from '../Messenger';
  */
 const handleSynMessageFactory = (
   messenger: Messenger,
-  log: Function,
+  log: Log,
   serializedMethods: SerializedMethods
 ) => {
   const handleSynMessage = () => {

@@ -1,13 +1,12 @@
-import { Destructor } from '../createDestructor';
-import { PenpalMessage } from '../types';
+import { Log, PenpalMessage, Destructor } from '../types';
 import Messenger from '../Messenger';
 
 class WorkerToParentMessenger implements Messenger {
-  private _log: Function;
-  private _messageCallbacks: Set<(message: PenpalMessage) => void> = new Set();
+  private _log: Log;
+  private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _originForSending: string | undefined;
 
-  constructor(log: Function, destructor: Destructor) {
+  constructor(log: Log, destructor: Destructor) {
     this._log = log;
 
     self.addEventListener('message', this._handleMessageFromParent);

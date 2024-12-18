@@ -1,9 +1,0 @@
-{
-  "env": {
-    "jasmine": true,
-    "browser": true
-  },
-  "globals": {
-    "Penpal": "readonly"
-  }
-}

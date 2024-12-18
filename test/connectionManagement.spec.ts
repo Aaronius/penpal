@@ -11,6 +11,7 @@ import {
   PenpalError,
 } from '../src/index';
 import { CHECK_IFRAME_IN_DOC_INTERVAL } from '../src/parent/monitorIframeRemoval';
+import FixtureMethods from './childFixtures/types/FixtureMethods';
 
 /**
  * Asserts that no connection is successfully made between the parent and the
@@ -41,7 +42,7 @@ describe('connection management', () => {
   });
 
   it('connects to iframe when no child origin is provided but src is set on iframe', async () => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/default.html`);
 
     const connection = connectToChildIframe({
       iframe,
@@ -61,7 +62,7 @@ describe('connection management', () => {
     // We're setting src after calling connectToChildIframe to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
-    iframe.src = `${CHILD_SERVER}/default.html`;
+    iframe.src = `${CHILD_SERVER}/pages/default.html`;
 
     await connection.promise;
   });
@@ -77,7 +78,7 @@ describe('connection management', () => {
     // We're setting src after calling connectToChildIframe to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
-    iframe.src = `${CHILD_SERVER}/default.html`;
+    iframe.src = `${CHILD_SERVER}/pages/default.html`;
 
     await connection.promise;
   });
@@ -93,7 +94,7 @@ describe('connection management', () => {
     // We're setting src after calling connectToChildIframe to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
-    iframe.src = `${CHILD_SERVER}/default.html`;
+    iframe.src = `${CHILD_SERVER}/pages/default.html`;
 
     await connection.promise;
   });
@@ -110,7 +111,7 @@ describe('connection management', () => {
 
   it('connects to iframe connecting to parent with matching origin', async () => {
     const iframe = createAndAddIframe();
-    iframe.src = `${CHILD_SERVER}/matchingParentOrigin.html`;
+    iframe.src = `${CHILD_SERVER}/pages/matchingParentOrigin.html`;
 
     const connection = connectToChildIframe({
       iframe,
@@ -121,7 +122,7 @@ describe('connection management', () => {
 
   it('connects to iframe connecting to parent with matching origin regex', async () => {
     const iframe = createAndAddIframe();
-    iframe.src = `${CHILD_SERVER}/matchingParentOriginRegex.html`;
+    iframe.src = `${CHILD_SERVER}/pages/matchingParentOriginRegex.html`;
 
     const connection = connectToChildIframe({
       iframe,
@@ -141,14 +142,14 @@ describe('connection management', () => {
     // We're setting src after calling connectToChildIframe to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
-    iframe.src = `${CHILD_SERVER}/default.html`;
+    iframe.src = `${CHILD_SERVER}/pages/default.html`;
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
   it("doesn't connect to iframe connecting to mismatched parent origin", async () => {
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/mismatchedParentOrigin.html`
+      `${CHILD_SERVER}/pages/mismatchedParentOrigin.html`
     );
 
     const connection = connectToChildIframe({
@@ -160,7 +161,7 @@ describe('connection management', () => {
 
   it("doesn't connect to iframe connecting to mismatched parent origin regex", async () => {
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/mismatchedParentOriginRegex.html`
+      `${CHILD_SERVER}/pages/mismatchedParentOriginRegex.html`
     );
 
     const connection = connectToChildIframe({
@@ -172,10 +173,10 @@ describe('connection management', () => {
 
   it('connects to iframe when child redirects to different origin and child origin is set to *', async () => {
     const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/default.html`
+      `${CHILD_SERVER_ALTERNATE}/pages/default.html`
     );
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
+      `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
     );
 
     const connection = connectToChildIframe({
@@ -188,10 +189,10 @@ describe('connection management', () => {
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is not set", async () => {
     const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/default.html`
+      `${CHILD_SERVER_ALTERNATE}/pages/default.html`
     );
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
+      `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
     );
 
     const connection = connectToChildIframe({
@@ -203,10 +204,10 @@ describe('connection management', () => {
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin", async () => {
     const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/default.html`
+      `${CHILD_SERVER_ALTERNATE}/pages/default.html`
     );
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
+      `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
     );
 
     const connection = connectToChildIframe({
@@ -219,10 +220,10 @@ describe('connection management', () => {
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin regex", async () => {
     const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/default.html`
+      `${CHILD_SERVER_ALTERNATE}/pages/default.html`
     );
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/redirect.html?to=${redirectToUrl}`
+      `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
     );
 
     const connection = connectToChildIframe({
@@ -234,7 +235,9 @@ describe('connection management', () => {
   });
 
   it("doesn't connect to iframe when child does not set parent origin", async () => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/noParentOrigin.html`);
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/noParentOrigin.html`
+    );
 
     const connection = connectToChildIframe({
       iframe,
@@ -244,8 +247,8 @@ describe('connection management', () => {
   });
 
   it('reconnects after child reloads', (done) => {
-    const connection = connectToChildIframe({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+    const connection = connectToChildIframe<FixtureMethods>({
+      iframe: createAndAddIframe(`${CHILD_SERVER}/pages/default.html`),
     });
 
     connection.promise.then((child) => {
@@ -255,7 +258,6 @@ describe('connection management', () => {
         // Detect reconnection
         if (child.multiply !== previousMultiply) {
           clearInterval(intervalId);
-          // @ts-expect-error
           child.multiply(2, 4).then((value: number) => {
             expect(value).toEqual(8);
             connection.destroy();
@@ -264,7 +266,6 @@ describe('connection management', () => {
         }
       }, 10);
 
-      // @ts-expect-error
       child.reload();
     });
   });
@@ -275,8 +276,8 @@ describe('connection management', () => {
       return num1 + num2;
     });
 
-    const connection = connectToChildIframe({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+    const connection = connectToChildIframe<FixtureMethods>({
+      iframe: createAndAddIframe(`${CHILD_SERVER}/pages/default.html`),
       methods: {
         add,
       },
@@ -289,7 +290,6 @@ describe('connection management', () => {
         // Detect reconnection
         if (child.addUsingParent !== previousAddUsingParent) {
           clearInterval(intervalId);
-          // @ts-expect-error
           child.addUsingParent().then(() => {
             expect(add.calls.count()).toEqual(1);
             connection.destroy();
@@ -298,33 +298,30 @@ describe('connection management', () => {
         }
       }, 10);
 
-      // @ts-expect-error
       child.reload();
     });
   });
 
   it('reconnects after child navigates to other page with different methods', (done) => {
-    const connection = connectToChildIframe({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/default.html`),
+    const connection = connectToChildIframe<FixtureMethods>({
+      iframe: createAndAddIframe(`${CHILD_SERVER}/pages/default.html`),
     });
 
     connection.promise.then((child) => {
       const intervalId = setInterval(function () {
         // Detect reconnection
-        if (child.divide) {
+        if (child.methodNotInDefaultPage) {
           clearInterval(intervalId);
           expect(child.multiply).not.toBeDefined();
-          // @ts-expect-error
-          child.divide(6, 3).then((value) => {
-            expect(value).toEqual(2);
+          child.methodNotInDefaultPage().then((value) => {
+            expect(value).toEqual('method not in the default page');
             connection.destroy();
             done();
           });
         }
       }, 10);
 
-      // @ts-expect-error
-      child.navigate('divideMethod.html');
+      child.navigate('/pages/methodNotInDefaultPage.html');
     });
   });
 
@@ -332,7 +329,7 @@ describe('connection management', () => {
     let error;
 
     try {
-      connectToChildIframe({
+      connectToChildIframe<FixtureMethods>({
         iframe: createAndAddIframe(),
       });
     } catch (e) {
@@ -347,7 +344,7 @@ describe('connection management', () => {
   });
 
   it('rejects promise if connectToChildIframe times out', async () => {
-    const connection = connectToChildIframe({
+    const connection = connectToChildIframe<FixtureMethods>({
       iframe: createAndAddIframe(
         'http://www.fakeresponse.com/api/?sleep=10000'
       ),
@@ -371,9 +368,9 @@ describe('connection management', () => {
     async () => {
       jasmine.clock().install();
 
-      const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+      const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/default.html`);
 
-      const connection = connectToChildIframe({
+      const connection = connectToChildIframe<FixtureMethods>({
         iframe,
         timeout: 100000,
       });
@@ -391,8 +388,8 @@ describe('connection management', () => {
     "doesn't destroy connection if connection succeeds then " +
       'timeout passes (connectToParent)',
     (done) => {
-      const connection = connectToChildIframe({
-        iframe: createAndAddIframe(`${CHILD_SERVER}/timeout.html`),
+      const connection = connectToChildIframe<FixtureMethods>({
+        iframe: createAndAddIframe(`${CHILD_SERVER}/pages/timeout.html`),
         methods: {
           reportStillConnected() {
             connection.destroy();
@@ -405,9 +402,9 @@ describe('connection management', () => {
 
   it('destroys connection if iframe has been removed from DOM', async () => {
     jasmine.clock().install();
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/default.html`);
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/default.html`);
 
-    const connection = connectToChildIframe({
+    const connection = connectToChildIframe<FixtureMethods>({
       iframe,
     });
 
@@ -418,7 +415,6 @@ describe('connection management', () => {
 
     let error;
     try {
-      // @ts-expect-error
       await child.multiply(2, 3);
     } catch (e) {
       error = e;

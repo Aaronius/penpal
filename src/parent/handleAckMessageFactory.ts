@@ -1,5 +1,10 @@
-import { CallSender, SerializedMethods, WindowsInfo } from '../types';
-import { Destructor } from '../createDestructor';
+import {
+  CallSender,
+  Log,
+  SerializedMethods,
+  WindowsInfo,
+  Destructor,
+} from '../types';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 import Messenger from '../Messenger';
@@ -11,11 +16,11 @@ const handleAckMessageFactory = (
   messenger: Messenger,
   serializedMethods: SerializedMethods,
   destructor: Destructor,
-  log: Function
+  log: Log
 ) => {
   const { onDestroy } = destructor;
-  let destroyCallReceiverConnection: Function;
-  let destroyCallSenderConnection: Function;
+  let destroyCallReceiverConnection: () => void;
+  let destroyCallSenderConnection: () => void;
   let receiverMethodNames: string[];
   // We resolve the promise with the call sender. If the child reconnects
   // (for example, after refreshing or navigating to another page that

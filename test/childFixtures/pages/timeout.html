@@ -11,21 +11,15 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script type="text/javascript" src="penpal.js"></script>
+    <script type="text/javascript" src="/penpal.js"></script>
     <script type="text/javascript">
-      var parentAPI;
-
-      var methods = {
-        divide: function (num1, num2) {
-          return num1 / num2;
-        },
-      };
-
       Penpal.connectToParentFromIframe({
-        methods: methods,
         parentOrigin: '*',
+        timeout: 30,
       }).promise.then(function (parent) {
-        parentAPI = parent;
+        setTimeout(function () {
+          parent.reportStillConnected();
+        }, 31);
       });
     </script>
   </body>
