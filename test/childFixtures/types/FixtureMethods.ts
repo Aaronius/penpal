@@ -1,4 +1,4 @@
-import Reply from '../../../src/Reply';
+import { Reply } from '../../../src/index';
 
 type FixtureMethods = {
   multiply(num1: number, num2: number): number;
@@ -7,10 +7,15 @@ type FixtureMethods = {
     num1DataView: DataView,
     num2DataView: DataView
   ): Reply<DataView>;
+  multiplyWithPromisedReplyInstanceAndPromisedReturnValue(
+    num1: number,
+    num2: number
+  ): Promise<Reply<Promise<number>>>;
   addUsingParent(): void;
   getParentReturnValue(): number | undefined;
-  getRejectedPromiseString(): Promise<void>;
-  getRejectedPromiseError(): Promise<void>;
+  getPromiseRejectedWithString(): Promise<void>;
+  getPromiseRejectedWithError(): Promise<void>;
+  getPromiseRejectedWithUndefined(): Promise<void>;
   throwError(): void;
   getUnclonableValue(): Window | typeof globalThis;
   reload(): void;

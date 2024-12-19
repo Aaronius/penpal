@@ -47,7 +47,7 @@ for (const variant of variants) {
       connection.destroy();
     });
 
-    it('calls a function on the child using transferables', async () => {
+    it('handles transferables', async () => {
       const input1DataView = new DataView(new ArrayBuffer(4));
       input1DataView.setInt32(0, 2);
 
@@ -88,6 +88,17 @@ for (const variant of variants) {
       connection.destroy();
     });
 
+    it('handles a promised reply instance with a promised return value', async () => {
+      const connection = createConnection<FixtureMethods>();
+      const child = await connection.promise;
+      const value = await child.multiplyWithPromisedReplyInstanceAndPromisedReturnValue(
+        2,
+        5
+      );
+      expect(value).toEqual(10);
+      connection.destroy();
+    });
+
     it('calls a function on the parent', async () => {
       const connection = createConnection<FixtureMethods>({
         methods: {
@@ -106,7 +117,7 @@ for (const variant of variants) {
     it('handles promises rejected with strings', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
-      await expectAsync(child.getRejectedPromiseString()).toBeRejectedWith(
+      await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
         'test error string'
       );
       connection.destroy();
@@ -117,7 +128,7 @@ for (const variant of variants) {
       const child = await connection.promise;
       let error;
       try {
-        await child.getRejectedPromiseError();
+        await child.getPromiseRejectedWithError();
       } catch (e) {
         error = e;
       }
@@ -125,6 +136,15 @@ for (const variant of variants) {
       expect((error as Error).name).toBe('TypeError');
       expect((error as Error).message).toBe('test error object');
       expect((error as Error).stack).toEqual(jasmine.any(String));
+      connection.destroy();
+    });
+
+    it('handles promises rejected with undefined', async () => {
+      const connection = createConnection<FixtureMethods>();
+      const child = await connection.promise;
+      await expectAsync(
+        child.getPromiseRejectedWithUndefined()
+      ).toBeRejectedWith(undefined);
       connection.destroy();
     });
 

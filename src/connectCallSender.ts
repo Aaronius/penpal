@@ -2,7 +2,6 @@ import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
 import { deserializeMethods } from './methodSerialization';
 import {
-  CallMessage,
   CallSender,
   Log,
   PenpalError,
@@ -10,14 +9,14 @@ import {
   SerializedError,
   WindowsInfo,
 } from './types';
-import { ErrorCode, MessageType, Resolution } from './enums';
+import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 
 type ReplyHandler = {
   methodName: string;
   resolve: (value: unknown) => void;
   reject: (reason: unknown) => void;
-  timeoutId: number | undefined;
+  timeoutId?: number;
 };
 
 /**
@@ -43,35 +42,31 @@ export default (
 
   log(`${localName}: Connecting call sender`);
 
-  const replyHandlerByMessageId = new Map<number, ReplyHandler>();
+  const replyHandlers = new Map<number, ReplyHandler>();
 
   const handleMessage = (message: PenpalMessage) => {
     if (message.penpal !== MessageType.Reply) {
       return;
     }
 
-    const replyHandler = replyHandlerByMessageId.get(message.id);
+    const replyHandler = replyHandlers.get(message.id);
 
     if (!replyHandler) {
       return;
     }
 
-    replyHandlerByMessageId.delete(message.id);
+    replyHandlers.delete(message.id);
 
     log(`${localName}: Received ${replyHandler.methodName}() reply`);
 
-    let returnValue = message.returnValue;
-
-    if (message.returnValueIsError) {
-      returnValue = deserializeError(returnValue as SerializedError);
+    if (message.isError) {
+      const error = message.isSerializedErrorInstance
+        ? deserializeError(message.error as SerializedError)
+        : message.error;
+      replyHandler.reject(error);
+    } else {
+      replyHandler.resolve(message.returnValue);
     }
-
-    const resolveOrReject =
-      message.resolution === Resolution.Fulfilled
-        ? replyHandler.resolve
-        : replyHandler.reject;
-
-    resolveOrReject(returnValue);
   };
 
   messenger.addMessageHandler(handleMessage);
@@ -90,54 +85,50 @@ export default (
       }
 
       const id = generateId();
-      let methodCallArgs = args;
-      let timeout: number | undefined;
-      let transferables: Transferable[] | undefined;
-
-      if (args.length) {
-        const lastArg = args[args.length - 1];
-        if (lastArg instanceof MethodCallOptions) {
-          ({ timeout, transfer: transferables } = lastArg);
-          methodCallArgs = args.slice(0, -1);
-        }
-      }
+      const lastArg = args[args.length - 1];
+      const lastArtIsOptions = lastArg instanceof MethodCallOptions;
+      const { timeout, transfer: transferables } = lastArtIsOptions
+        ? lastArg
+        : {};
+      const argsWithoutOptions = lastArtIsOptions ? args.slice(0, -1) : args;
 
       return new Promise((resolve, reject) => {
-        let timeoutId: number | undefined;
+        // We reference `window.setTimeout` instead of just `setTimeout`
+        // so that the TypeScript engine doesn't
+        // get confused when running tests. Something within
+        // Karma + @rollup/plugin-typescript leaks node types into source
+        // files when running tests. Node's setTimeout has a return type of
+        // Timeout rather than number, resulting in a build error when
+        // running tests if we don't disambiguate the browser setTimeout
+        // from node's setTimeout. There may be a better way to configure
+        // Karma + Rollup + Typescript to avoid node type leakage.
+        const timeoutId = timeout
+          ? window.setTimeout(() => {
+              const error: PenpalError = new Error(
+                `Method call ${methodName}() timed out after ${timeout}ms`
+              ) as PenpalError;
+              error.code = ErrorCode.MethodCallTimeout;
+              replyHandlers.delete(id);
+              reject(error);
+            }, timeout)
+          : undefined;
 
-        if (timeout !== undefined) {
-          // We reference `window` here so that the TypeScript engine doesn't
-          // get confused when running tests. Something within
-          // Karma + @rollup/plugin-typescript leaks node types into source
-          // files when running tests. Node's setTimeout has a return type of
-          // Timeout rather than number, resulting in a build error when
-          // running tests if we don't disambiguate the browser setTimeout
-          // from node's setTimeout. There may be a better way to configure
-          // Karma + Rollup + Typescript to avoid node type leakage.
-          timeoutId = window.setTimeout(() => {
-            const error: PenpalError = new Error(
-              `Method call ${methodName}() timed out after ${timeout}ms`
-            ) as PenpalError;
-            error.code = ErrorCode.MethodCallTimeout;
-            reject(error);
-            replyHandlerByMessageId.delete(id);
-          }, timeout);
-        }
-
-        replyHandlerByMessageId.set(id, {
+        replyHandlers.set(id, {
           methodName,
           resolve,
           reject,
           timeoutId,
         });
 
-        const callMessage: CallMessage = {
-          penpal: MessageType.Call,
-          id,
-          methodName,
-          args: methodCallArgs,
-        };
-        messenger.sendMessage(callMessage, transferables);
+        messenger.sendMessage(
+          {
+            penpal: MessageType.Call,
+            id,
+            methodName,
+            args: argsWithoutOptions,
+          },
+          transferables
+        );
       });
     };
   };
@@ -157,15 +148,16 @@ export default (
   return () => {
     destroyed = true;
     messenger.removeMessageHandler(handleMessage);
-    for (const [messageId, replyHandler] of replyHandlerByMessageId) {
-      const { methodName, reject } = replyHandler;
-      clearTimeout(replyHandler.timeoutId);
+
+    for (const { methodName, reject, timeoutId } of replyHandlers.values()) {
+      clearTimeout(timeoutId);
       const error: PenpalError = new Error(
         `Method call ${methodName}() cannot be resolved due to destroyed connection`
       ) as PenpalError;
       error.code = ErrorCode.ConnectionDestroyed;
       reject(error);
-      replyHandlerByMessageId.delete(messageId);
     }
+
+    replyHandlers.clear();
   };
 };

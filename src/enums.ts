@@ -6,11 +6,6 @@ export enum MessageType {
   Ack = 'ack',
 }
 
-export enum Resolution {
-  Fulfilled = 'fulfilled',
-  Rejected = 'rejected',
-}
-
 export enum ErrorCode {
   ConnectionDestroyed = 'ConnectionDestroyed',
   ConnectionTimeout = 'ConnectionTimeout',

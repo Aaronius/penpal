@@ -1,4 +1,4 @@
-import { ErrorCode, MessageType, Resolution } from './enums';
+import { ErrorCode, MessageType } from './enums';
 import Messenger from './Messenger';
 import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
@@ -103,10 +103,20 @@ export type CallMessage = {
 export type ReplyMessage = {
   penpal: MessageType.Reply;
   id: number;
-  resolution: Resolution;
-  returnValue: unknown;
-  returnValueIsError?: boolean;
-};
+} & (
+  | {
+      returnValue: unknown;
+      isError?: false;
+      error?: never;
+      isSerializedErrorInstance?: never;
+    }
+  | {
+      returnValue?: never;
+      isError: true;
+      error: unknown;
+      isSerializedErrorInstance: boolean;
+    }
+);
 
 export type PenpalMessage =
   | SynMessage

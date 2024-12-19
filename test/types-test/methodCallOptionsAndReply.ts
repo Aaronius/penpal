@@ -19,10 +19,13 @@ const childMethods = {
   multiplyWithPromisedReplyInstance(a: number, b: number) {
     return Promise.resolve(new Reply(a * b));
   },
-  multiplyWithReplyInstanceAndPromisedValue(a: number, b: number) {
+  multiplyWithReplyInstanceAndPromisedReturnValue(a: number, b: number) {
     return new Reply(Promise.resolve(a * b));
   },
-  multiplyWithPromisedReplyInstanceAndPromisedValue(a: number, b: number) {
+  multiplyWithPromisedReplyInstanceAndPromisedReturnValue(
+    a: number,
+    b: number
+  ) {
     return Promise.resolve(new Reply(Promise.resolve(a * b)));
   },
   multiplyWithReplyLikeObject(a: number, b: number) {
@@ -61,10 +64,10 @@ void child.multiply(2, 3, { transfer: [] });
 assertType<Promise<number>>(child.multiplyWithReplyInstance(2, 3));
 assertType<Promise<number>>(child.multiplyWithPromisedReplyInstance(2, 3));
 assertType<Promise<number>>(
-  child.multiplyWithReplyInstanceAndPromisedValue(2, 3)
+  child.multiplyWithReplyInstanceAndPromisedReturnValue(2, 3)
 );
 assertType<Promise<number>>(
-  child.multiplyWithPromisedReplyInstanceAndPromisedValue(2, 3)
+  child.multiplyWithPromisedReplyInstanceAndPromisedReturnValue(2, 3)
 );
 // A returned object with a reply-like structure should not be interpreted as a Reply instance, so the result here is correct.
 assertType<Promise<{ returnValue: number }>>(

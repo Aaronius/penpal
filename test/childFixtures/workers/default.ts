@@ -27,6 +27,9 @@ const methods: Omit<
       transfer: [returnValue.buffer],
     });
   },
+  multiplyWithPromisedReplyInstanceAndPromisedReturnValue(num1, num2) {
+    return Promise.resolve(new Reply(Promise.resolve(num1 * num2)));
+  },
   addUsingParent() {
     parentAPI.add(3, 6).then(function (value: number) {
       parentReturnValue = value;
@@ -35,12 +38,16 @@ const methods: Omit<
   getParentReturnValue() {
     return parentReturnValue;
   },
-  getRejectedPromiseString() {
+  getPromiseRejectedWithString() {
     return Promise.reject('test error string');
   },
-  getRejectedPromiseError() {
-    // TypeError instead of Error just to make sure "name" transfers properly.
+  getPromiseRejectedWithError() {
+    // Using TypeError instead of Error just to make sure the "name" property
+    // on the error instance gets properly serialized.
     return Promise.reject(new TypeError('test error object'));
+  },
+  getPromiseRejectedWithUndefined() {
+    return Promise.reject();
   },
   throwError() {
     throw new Error('Oh nos!');
