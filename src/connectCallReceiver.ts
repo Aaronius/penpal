@@ -10,11 +10,11 @@ import { MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
 
 const createErrorReplyMessage = (
-  messageId: number,
+  roundTripId: number,
   error: unknown
 ): ReplyMessage => ({
   penpal: MessageType.Reply,
-  id: messageId,
+  roundTripId,
   isError: true,
   error: error instanceof Error ? serializeError(error) : error,
   isSerializedErrorInstance: error instanceof Error,
@@ -34,7 +34,7 @@ export default (
   const handleMessage = async (message: PenpalMessage) => {
     if (message.penpal !== MessageType.Call) return;
 
-    const { methodName, args, id: messageId } = message;
+    const { methodName, args, roundTripId } = message;
 
     log(`${localName}: Received ${methodName}() call`);
 
@@ -51,11 +51,11 @@ export default (
 
       replyMessage = {
         penpal: MessageType.Reply,
-        id: messageId,
+        roundTripId,
         returnValue,
       };
     } catch (error) {
-      replyMessage = createErrorReplyMessage(messageId, error);
+      replyMessage = createErrorReplyMessage(roundTripId, error);
     }
 
     if (destroyed) {
@@ -79,7 +79,7 @@ export default (
       // we want to ensure the receiver's promise gets rejected.
       if ((error as Error).name === NativeErrorName.DataCloneError) {
         messenger.sendMessage(
-          createErrorReplyMessage(messageId, error as Error)
+          createErrorReplyMessage(roundTripId, error as Error)
         );
       }
       throw error;

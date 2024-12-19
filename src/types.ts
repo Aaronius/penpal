@@ -92,7 +92,7 @@ export type AckMessage = {
  */
 export type CallMessage = {
   penpal: MessageType.Call;
-  id: number;
+  roundTripId: number;
   methodName: string;
   args: unknown[];
 };
@@ -102,7 +102,7 @@ export type CallMessage = {
  */
 export type ReplyMessage = {
   penpal: MessageType.Reply;
-  id: number;
+  roundTripId: number;
 } & (
   | {
       returnValue: unknown;

@@ -49,13 +49,13 @@ export default (
       return;
     }
 
-    const replyHandler = replyHandlers.get(message.id);
+    const replyHandler = replyHandlers.get(message.roundTripId);
 
     if (!replyHandler) {
       return;
     }
 
-    replyHandlers.delete(message.id);
+    replyHandlers.delete(message.roundTripId);
 
     log(`${localName}: Received ${replyHandler.methodName}() reply`);
 
@@ -84,7 +84,7 @@ export default (
         throw error;
       }
 
-      const id = generateId();
+      const roundTripId = generateId();
       const lastArg = args[args.length - 1];
       const lastArtIsOptions = lastArg instanceof MethodCallOptions;
       const { timeout, transfer: transferables } = lastArtIsOptions
@@ -108,12 +108,12 @@ export default (
                 `Method call ${methodName}() timed out after ${timeout}ms`
               ) as PenpalError;
               error.code = ErrorCode.MethodCallTimeout;
-              replyHandlers.delete(id);
+              replyHandlers.delete(roundTripId);
               reject(error);
             }, timeout)
           : undefined;
 
-        replyHandlers.set(id, {
+        replyHandlers.set(roundTripId, {
           methodName,
           resolve,
           reject,
@@ -123,7 +123,7 @@ export default (
         messenger.sendMessage(
           {
             penpal: MessageType.Call,
-            id,
+            roundTripId,
             methodName,
             args: argsWithoutOptions,
           },
