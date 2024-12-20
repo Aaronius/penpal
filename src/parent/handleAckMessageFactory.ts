@@ -1,9 +1,10 @@
 import {
-  CallSender,
   Log,
   SerializedMethods,
   WindowsInfo,
   Destructor,
+  Remote,
+  Methods,
 } from '../types';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
@@ -12,7 +13,7 @@ import Messenger from '../Messenger';
 /**
  * Handles an ACK handshake message.
  */
-const handleAckMessageFactory = (
+const handleAckMessageFactory = <TMethods extends Methods>(
   messenger: Messenger,
   serializedMethods: SerializedMethods,
   destructor: Destructor,
@@ -26,9 +27,9 @@ const handleAckMessageFactory = (
   // (for example, after refreshing or navigating to another page that
   // uses Penpal, we'll update the call sender with methods that match the
   // latest provided by the child.
-  const callSender: CallSender = {};
+  const callSender = {} as Remote<TMethods>;
 
-  const handleAckMessage = (methodNames: string[]): CallSender => {
+  const handleAckMessage = (methodNames: string[]): Remote<TMethods> => {
     log('Parent: Handshake - Received ACK');
 
     const info: WindowsInfo = {

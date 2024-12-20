@@ -43,7 +43,7 @@ export default <TMethods extends Methods = Methods>(
     log,
     serializedMethods
   );
-  const handleAckMessage = handleAckMessageFactory(
+  const handleAckMessage = handleAckMessageFactory<TMethods>(
     messenger,
     serializedMethods,
     destructor,
@@ -61,7 +61,7 @@ export default <TMethods extends Methods = Methods>(
       if (message.type === MessageType.Ack) {
         const callSender = handleAckMessage(message.methodNames);
         stopConnectionTimeout();
-        resolve(callSender as Remote<TMethods>);
+        resolve(callSender);
         return;
       }
     };

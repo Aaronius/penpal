@@ -69,7 +69,7 @@ export default <TMethods extends Methods = Methods>(
       if (message.type === MessageType.SynAck) {
         messenger.removeMessageHandler(handleMessage);
         stopConnectionTimeout();
-        const callSender = handleSynAckMessage(message) as Remote<TMethods>;
+        const callSender = handleSynAckMessage<TMethods>(message);
         resolve(callSender);
       }
     };

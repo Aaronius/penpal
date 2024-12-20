@@ -12,20 +12,15 @@ type ExtractReturnValueFromReply<R> = R extends Reply
  * A mapped type to recursively convert sync methods into async methods and add
  * an optional MethodCallOptions argument.
  */
-export type Remote<TMethods> = {
+export type Remote<TMethods extends Methods = Methods> = {
   [K in keyof TMethods]: TMethods[K] extends (...args: infer A) => infer R
     ? (
         ...args: [...A, MethodCallOptions?]
       ) => Promise<ExtractReturnValueFromReply<Awaited<R>>>
-    : TMethods[K] extends object
+    : TMethods[K] extends Methods
     ? Remote<TMethods[K]>
     : never;
 };
-
-/**
- * Methods that may be called that will invoke methods on the remote window.
- */
-export type CallSender = Record<string, (...args: unknown[]) => unknown>;
 
 /**
  * Connection object returned from calling connectToChild or connectToParent.

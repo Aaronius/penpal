@@ -2,12 +2,12 @@ import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
 import { deserializeMethods } from './methodSerialization';
 import {
-  CallSender,
   Log,
   PenpalError,
   PenpalMessage,
   SerializedError,
   WindowsInfo,
+  Remote,
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
@@ -31,7 +31,7 @@ type ReplyHandler = {
  * @returns The call sender object with methods that may be called.
  */
 export default (
-  callSender: CallSender,
+  callSender: Remote,
   info: WindowsInfo,
   methodKeyPaths: string[],
   log: Log
