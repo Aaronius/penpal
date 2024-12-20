@@ -11,6 +11,7 @@ import {
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
+import namespace from './namespace';
 
 type ReplyHandler = {
   methodName: string;
@@ -26,8 +27,6 @@ type ReplyHandler = {
  * @param callSender Sender object that should be augmented with methods.
  * @param info Information about the local and remote windows.
  * @param methodKeyPaths Key paths of methods available to be called on the remote.
- * @param destructionPromise A promise resolved when destroy() is called on the penpal
- * connection.
  * @param log Logs messages.
  * @returns The call sender object with methods that may be called.
  */
@@ -45,7 +44,7 @@ export default (
   const replyHandlers = new Map<number, ReplyHandler>();
 
   const handleMessage = (message: PenpalMessage) => {
-    if (message.penpal !== MessageType.Reply) {
+    if (message.type !== MessageType.Reply) {
       return;
     }
 
@@ -122,7 +121,8 @@ export default (
 
         messenger.sendMessage(
           {
-            penpal: MessageType.Call,
+            namespace,
+            type: MessageType.Call,
             roundTripId,
             methodName,
             args: argsWithoutOptions,

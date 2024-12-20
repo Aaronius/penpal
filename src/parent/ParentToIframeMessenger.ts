@@ -4,6 +4,7 @@ import { Log, PenpalMessage, Destructor } from '../types';
 import { MessageType } from '../enums';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import Messenger from '../Messenger';
+import namespace from '../namespace';
 
 class ParentToIframeMessenger implements Messenger {
   private _iframe: HTMLIFrameElement;
@@ -53,13 +54,13 @@ class ParentToIframeMessenger implements Messenger {
     if (
       !event.source ||
       event.source !== this._iframe.contentWindow ||
-      !event.data?.penpal
+      event.data?.namespace !== namespace
     ) {
       return;
     }
 
     const penpalMessage: PenpalMessage = event.data;
-    const { penpal: messageType } = penpalMessage;
+    const { type: messageType } = penpalMessage;
 
     if (messageType === MessageType.Syn) {
       const originQualifies =
@@ -94,7 +95,7 @@ class ParentToIframeMessenger implements Messenger {
   };
 
   private _handleMessageFromPort = (event: MessageEvent): void => {
-    if (!event.data?.penpal) {
+    if (event.data?.namespace !== namespace) {
       return;
     }
 
@@ -109,7 +110,7 @@ class ParentToIframeMessenger implements Messenger {
     message: PenpalMessage,
     transferables?: Transferable[]
   ): void => {
-    const { penpal: messageType } = message;
+    const { type: messageType } = message;
 
     if (messageType === MessageType.SynAck) {
       if (!this._validatedChildOrigin) {

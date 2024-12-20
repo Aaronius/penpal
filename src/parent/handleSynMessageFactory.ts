@@ -1,6 +1,7 @@
 import { Log, SerializedMethods, SynAckMessage } from '../types';
 import { MessageType } from '../enums';
 import Messenger from '../Messenger';
+import namespace from '../namespace';
 
 /**
  * Handles a SYN handshake message.
@@ -14,7 +15,8 @@ const handleSynMessageFactory = (
     log('Parent: Handshake - Received SYN, responding with SYN-ACK');
 
     const synAckMessage: SynAckMessage = {
-      penpal: MessageType.SynAck,
+      namespace,
+      type: MessageType.SynAck,
       methodNames: Object.keys(serializedMethods),
     };
 

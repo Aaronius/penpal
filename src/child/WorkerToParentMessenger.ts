@@ -1,5 +1,6 @@
 import { Log, PenpalMessage, Destructor } from '../types';
 import Messenger from '../Messenger';
+import namespace from '../namespace';
 
 class WorkerToParentMessenger implements Messenger {
   private _log: Log;
@@ -18,7 +19,7 @@ class WorkerToParentMessenger implements Messenger {
   }
 
   private _handleMessageFromParent = (event: MessageEvent): void => {
-    if (!event.data?.penpal) {
+    if (event.data?.namespace !== namespace) {
       return;
     }
 

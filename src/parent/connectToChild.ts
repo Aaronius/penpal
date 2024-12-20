@@ -1,5 +1,4 @@
 import {
-  CallSender,
   PenpalError,
   Remote,
   Connection,
@@ -32,9 +31,9 @@ type Options = {
 /**
  * Attempts to establish communication with an iframe.
  */
-export default <TCallSender extends object = CallSender>(
+export default <TMethods extends Methods = Methods>(
   options: Options
-): Connection<TCallSender> => {
+): Connection<TMethods> => {
   const { messenger, methods = {}, timeout, log, destructor } = options;
   const { onDestroy, destroy } = destructor;
 
@@ -51,18 +50,18 @@ export default <TCallSender extends object = CallSender>(
     log
   );
 
-  const promise = new Promise<Remote<TCallSender>>((resolve, reject) => {
+  const promise = new Promise<Remote<TMethods>>((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (message: PenpalMessage) => {
-      if (message.penpal === MessageType.Syn) {
+      if (message.type === MessageType.Syn) {
         handleSynMessage();
         return;
       }
 
-      if (message.penpal === MessageType.Ack) {
+      if (message.type === MessageType.Ack) {
         const callSender = handleAckMessage(message.methodNames);
         stopConnectionTimeout();
-        resolve(callSender as Remote<TCallSender>);
+        resolve(callSender as Remote<TMethods>);
         return;
       }
     };

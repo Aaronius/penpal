@@ -14,25 +14,25 @@ export const createAndAddIframe = (url?: string) => {
   return iframe;
 };
 
-export const createIframeAndConnection = <TCallSender extends object>({
+export const createIframeAndConnection = <TMethods extends Methods>({
   methods,
 }: {
   methods?: Methods;
 } = {}) => {
-  const connection = connectToChildIframe<TCallSender>({
+  const connection = connectToChildIframe<TMethods>({
     iframe: createAndAddIframe(`${CHILD_SERVER}/pages/default.html`),
     methods,
   });
   return connection;
 };
 
-export const createWorkerAndConnection = <TCallSender extends object>({
+export const createWorkerAndConnection = <TMethods extends Methods>({
   methods = {},
 }: {
   methods?: Methods;
 } = {}) => {
   const worker = new Worker(WORKER_URL_PATH);
-  const connection = connectToChildWorker<TCallSender>({
+  const connection = connectToChildWorker<TMethods>({
     worker,
     methods,
   });

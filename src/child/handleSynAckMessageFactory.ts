@@ -11,6 +11,7 @@ import { MessageType } from '../enums';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 import Messenger from '../Messenger';
+import namespace from '../namespace';
 
 /**
  * Handles a SYN-ACK handshake message.
@@ -27,7 +28,8 @@ const handleSynAckMessageFactory = (
     log('Child: Handshake - Received SYN-ACK, responding with ACK');
 
     const ackMessage: AckMessage = {
-      penpal: MessageType.Ack,
+      namespace,
+      type: MessageType.Ack,
       methodNames: Object.keys(serializedMethods),
     };
 

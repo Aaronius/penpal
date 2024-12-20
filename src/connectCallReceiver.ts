@@ -8,12 +8,14 @@ import {
 } from './types';
 import { MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
+import namespace from './namespace';
 
 const createErrorReplyMessage = (
   roundTripId: number,
   error: unknown
 ): ReplyMessage => ({
-  penpal: MessageType.Reply,
+  namespace,
+  type: MessageType.Reply,
   roundTripId,
   isError: true,
   error: error instanceof Error ? serializeError(error) : error,
@@ -32,7 +34,7 @@ export default (
   let destroyed = false;
 
   const handleMessage = async (message: PenpalMessage) => {
-    if (message.penpal !== MessageType.Call) return;
+    if (message.type !== MessageType.Call) return;
 
     const { methodName, args, roundTripId } = message;
 
@@ -50,7 +52,8 @@ export default (
       }
 
       replyMessage = {
-        penpal: MessageType.Reply,
+        namespace,
+        type: MessageType.Reply,
         roundTripId,
         returnValue,
       };

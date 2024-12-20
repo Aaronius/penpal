@@ -2,7 +2,6 @@ import {
   SynMessage,
   Methods,
   PenpalError,
-  CallSender,
   Remote,
   PenpalMessage,
   Destructor,
@@ -12,6 +11,7 @@ import handleSynAckMessageFactory from './handleSynAckMessageFactory';
 import { serializeMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import Messenger from '../Messenger';
+import namespace from '../namespace';
 
 type Options = {
   messenger: Messenger;
@@ -28,11 +28,11 @@ type Options = {
   destructor: Destructor;
 };
 
-type Connection<TCallSender extends object = CallSender> = {
+type Connection<TMethods extends Methods = Methods> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<Remote<TCallSender>>;
+  promise: Promise<Remote<TMethods>>;
   /**
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
@@ -43,9 +43,9 @@ type Connection<TCallSender extends object = CallSender> = {
 /**
  * Attempts to establish communication with the parent window.
  */
-export default <TCallSender extends object = CallSender>(
+export default <TMethods extends Methods = Methods>(
   options: Options
-): Connection<TCallSender> => {
+): Connection<TMethods> => {
   const { messenger, methods = {}, timeout, log, destructor } = options;
   const { destroy, onDestroy } = destructor;
   const serializedMethods = serializeMethods(methods);
@@ -59,17 +59,17 @@ export default <TCallSender extends object = CallSender>(
 
   const sendSynMessage = () => {
     log('Child: Handshake - Sending SYN');
-    const synMessage: SynMessage = { penpal: MessageType.Syn };
+    const synMessage: SynMessage = { namespace, type: MessageType.Syn };
     messenger.sendMessage(synMessage);
   };
 
-  const promise = new Promise<Remote<TCallSender>>((resolve, reject) => {
+  const promise = new Promise<Remote<TMethods>>((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (message: PenpalMessage) => {
-      if (message.penpal === MessageType.SynAck) {
+      if (message.type === MessageType.SynAck) {
         messenger.removeMessageHandler(handleMessage);
         stopConnectionTimeout();
-        const callSender = handleSynAckMessage(message) as Remote<TCallSender>;
+        const callSender = handleSynAckMessage(message) as Remote<TMethods>;
         resolve(callSender);
       }
     };
