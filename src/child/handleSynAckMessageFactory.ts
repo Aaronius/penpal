@@ -6,7 +6,7 @@ import {
   WindowsInfo,
   Destructor,
   Methods,
-  Remote,
+  RemoteControl,
 } from '../types';
 import { MessageType } from '../enums';
 import connectCallReceiver from '../connectCallReceiver';
@@ -27,7 +27,7 @@ const handleSynAckMessageFactory = (
 
   const handleSynAckMessage = <TMethods extends Methods>(
     message: SynAckMessage
-  ): Remote<TMethods> => {
+  ): RemoteControl<TMethods> => {
     log('Child: Handshake - Received SYN-ACK, responding with ACK');
 
     const ackMessage: AckMessage = {
@@ -50,7 +50,7 @@ const handleSynAckMessageFactory = (
     );
     onDestroy(destroyCallReceiver);
 
-    const callSender = {} as Remote<TMethods>;
+    const callSender = {} as RemoteControl<TMethods>;
     const destroyCallSender = connectCallSender(
       callSender,
       info,

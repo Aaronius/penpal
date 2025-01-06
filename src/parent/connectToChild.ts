@@ -1,6 +1,6 @@
 import {
   PenpalError,
-  Remote,
+  RemoteControl,
   Connection,
   Methods,
   PenpalMessage,
@@ -50,7 +50,7 @@ export default <TMethods extends Methods = Methods>(
     log
   );
 
-  const promise = new Promise<Remote<TMethods>>((resolve, reject) => {
+  const promise = new Promise<RemoteControl<TMethods>>((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (message: PenpalMessage) => {
       if (message.type === MessageType.Syn) {

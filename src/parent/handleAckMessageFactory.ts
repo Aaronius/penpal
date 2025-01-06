@@ -3,7 +3,7 @@ import {
   FlattenedMethods,
   WindowsInfo,
   Destructor,
-  Remote,
+  RemoteControl,
   Methods,
 } from '../types';
 import connectCallReceiver from '../connectCallReceiver';
@@ -27,9 +27,9 @@ const handleAckMessageFactory = <TMethods extends Methods>(
   // (for example, after refreshing or navigating to another page that
   // uses Penpal, we'll update the call sender with methods that match the
   // latest provided by the child.
-  const callSender = {} as Remote<TMethods>;
+  const callSender = {} as RemoteControl<TMethods>;
 
-  const handleAckMessage = (methodPaths: string[]): Remote<TMethods> => {
+  const handleAckMessage = (methodPaths: string[]): RemoteControl<TMethods> => {
     log('Parent: Handshake - Received ACK');
 
     const info: WindowsInfo = {

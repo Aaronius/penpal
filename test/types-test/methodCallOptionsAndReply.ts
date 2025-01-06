@@ -2,7 +2,7 @@ import assertType from './assertType';
 import {
   connectToChildIframe,
   MethodCallOptions,
-  Remote,
+  RemoteControl,
   Reply,
 } from '../../src/index';
 
@@ -51,7 +51,7 @@ const connection = connectToChildIframe<ChildMethods>({
 });
 
 const child = await connection.promise;
-assertType<Remote<ChildMethods>>(child);
+assertType<RemoteControl<ChildMethods>>(child);
 assertType<Promise<number>>(child.multiply(2, 3));
 assertType<Promise<number>>(child.multiplyWithPromisedValue(2, 3));
 assertType<Promise<number>>(child.multiply(2, 3, new MethodCallOptions()));

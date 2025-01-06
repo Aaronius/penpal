@@ -7,7 +7,7 @@ import {
   PenpalMessage,
   SerializedError,
   WindowsInfo,
-  Remote,
+  RemoteControl,
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
@@ -31,7 +31,7 @@ type ReplyHandler = {
  * @returns The call sender object with methods that may be called.
  */
 export default (
-  callSender: Remote,
+  callSender: RemoteControl,
   info: WindowsInfo,
   methodPaths: string[],
   log: Log

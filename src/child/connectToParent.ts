@@ -2,7 +2,7 @@ import {
   SynMessage,
   Methods,
   PenpalError,
-  Remote,
+  RemoteControl,
   PenpalMessage,
   Destructor,
 } from '../types';
@@ -32,7 +32,7 @@ type Connection<TMethods extends Methods = Methods> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<Remote<TMethods>>;
+  promise: Promise<RemoteControl<TMethods>>;
   /**
    * A method that, when called, will disconnect any messaging channels.
    * You may call this even before a connection has been established.
@@ -63,7 +63,7 @@ export default <TMethods extends Methods = Methods>(
     messenger.sendMessage(synMessage);
   };
 
-  const promise = new Promise<Remote<TMethods>>((resolve, reject) => {
+  const promise = new Promise<RemoteControl<TMethods>>((resolve, reject) => {
     const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
     const handleMessage = (message: PenpalMessage) => {
       if (message.type === MessageType.SynAck) {
