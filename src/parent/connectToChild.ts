@@ -9,7 +9,7 @@ import {
 import { MessageType } from '../enums';
 import handleAckMessageFactory from './handleAckMessageFactory';
 import handleSynMessageFactory from './handleSynMessageFactory';
-import { serializeMethods } from '../methodSerialization';
+import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import Messenger from '../Messenger';
 
@@ -37,15 +37,15 @@ export default <TMethods extends Methods = Methods>(
   const { messenger, methods = {}, timeout, log, destructor } = options;
   const { onDestroy, destroy } = destructor;
 
-  const serializedMethods = serializeMethods(methods);
+  const flattenedMethods = flattenMethods(methods);
   const handleSynMessage = handleSynMessageFactory(
     messenger,
     log,
-    serializedMethods
+    flattenedMethods
   );
   const handleAckMessage = handleAckMessageFactory<TMethods>(
     messenger,
-    serializedMethods,
+    flattenedMethods,
     destructor,
     log
   );
@@ -59,7 +59,7 @@ export default <TMethods extends Methods = Methods>(
       }
 
       if (message.type === MessageType.Ack) {
-        const callSender = handleAckMessage(message.methodNames);
+        const callSender = handleAckMessage(message.methodPaths);
         stopConnectionTimeout();
         resolve(callSender);
         return;

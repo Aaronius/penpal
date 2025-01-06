@@ -3,7 +3,7 @@ import {
   Log,
   PenpalMessage,
   ReplyMessage,
-  SerializedMethods,
+  FlattenedMethods,
   WindowsInfo,
 } from './types';
 import { MessageType, NativeErrorName } from './enums';
@@ -28,7 +28,7 @@ const createErrorReplyMessage = (
  */
 export default (
   { localName, messenger }: WindowsInfo,
-  serializedMethods: SerializedMethods,
+  flattenedMethods: FlattenedMethods,
   log: Log
 ) => {
   let destroyed = false;
@@ -36,15 +36,15 @@ export default (
   const handleMessage = async (message: PenpalMessage) => {
     if (message.type !== MessageType.Call) return;
 
-    const { methodName, args, roundTripId } = message;
+    const { methodPath, args, roundTripId } = message;
 
-    log(`${localName}: Received ${methodName}() call`);
+    log(`${localName}: Received ${methodPath}() call`);
 
     let replyMessage: ReplyMessage;
     let transferables: Transferable[] | undefined;
 
     try {
-      let returnValue = await serializedMethods[methodName](...args);
+      let returnValue = await flattenedMethods[methodPath](...args);
 
       if (returnValue instanceof Reply) {
         transferables = returnValue.transfer;
@@ -68,12 +68,12 @@ export default (
       // that they could wrap in a try-catch. Even if the consumer were to catch the error,
       // the value of doing so is questionable. Instead, we'll just log a message.
       log(
-        `${localName}: Unable to send ${methodName}() reply due to destroyed connection`
+        `${localName}: Unable to send ${methodPath}() reply due to destroyed connection`
       );
       return;
     }
 
-    log(`${localName}: Sending ${methodName}() reply`);
+    log(`${localName}: Sending ${methodPath}() reply`);
 
     try {
       messenger.sendMessage(replyMessage, transferables);

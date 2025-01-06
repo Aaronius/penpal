@@ -8,7 +8,7 @@ import {
 } from '../types';
 import { MessageType } from '../enums';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
-import { serializeMethods } from '../methodSerialization';
+import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
@@ -48,11 +48,11 @@ export default <TMethods extends Methods = Methods>(
 ): Connection<TMethods> => {
   const { messenger, methods = {}, timeout, log, destructor } = options;
   const { destroy, onDestroy } = destructor;
-  const serializedMethods = serializeMethods(methods);
+  const flattenedMethods = flattenMethods(methods);
 
   const handleSynAckMessage = handleSynAckMessageFactory(
     messenger,
-    serializedMethods,
+    flattenedMethods,
     destructor,
     log
   );

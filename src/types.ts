@@ -38,7 +38,8 @@ export type Connection<TMethods extends Methods = Methods> = {
 };
 
 /**
- * Methods to expose to the remote window.
+ * Methods to expose to the remote window. May contain nested objects
+ * with methods as well.
  */
 export type Methods = {
   [index: string]: Methods | Function;
@@ -46,8 +47,15 @@ export type Methods = {
 
 /**
  * A map of key path to function. The flatted counterpart of Methods.
+ *
+ * @example
+ * If a Methods object were like this:
+ * { one: { two: () => {} } }
+ *
+ * it would flatten to this:
+ * { "one.two": () => {} }
  */
-export type SerializedMethods = Record<string, Function>;
+export type FlattenedMethods = Record<string, Function>;
 
 export type SerializedError = {
   name: string;
@@ -74,7 +82,7 @@ export type SynMessage = {
 export type SynAckMessage = {
   namespace: typeof namespace;
   type: MessageType.SynAck;
-  methodNames: string[];
+  methodPaths: string[];
 };
 
 /**
@@ -83,7 +91,7 @@ export type SynAckMessage = {
 export type AckMessage = {
   namespace: typeof namespace;
   type: MessageType.Ack;
-  methodNames: string[];
+  methodPaths: string[];
 };
 
 /**
@@ -93,7 +101,7 @@ export type CallMessage = {
   namespace: typeof namespace;
   type: MessageType.Call;
   roundTripId: number;
-  methodName: string;
+  methodPath: string;
   args: unknown[];
 };
 

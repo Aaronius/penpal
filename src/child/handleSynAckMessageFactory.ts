@@ -1,7 +1,7 @@
 import {
   AckMessage,
   Log,
-  SerializedMethods,
+  FlattenedMethods,
   SynAckMessage,
   WindowsInfo,
   Destructor,
@@ -19,7 +19,7 @@ import namespace from '../namespace';
  */
 const handleSynAckMessageFactory = (
   messenger: Messenger,
-  serializedMethods: SerializedMethods,
+  flattenedMethods: FlattenedMethods,
   destructor: Destructor,
   log: Log
 ) => {
@@ -33,7 +33,7 @@ const handleSynAckMessageFactory = (
     const ackMessage: AckMessage = {
       namespace,
       type: MessageType.Ack,
-      methodNames: Object.keys(serializedMethods),
+      methodPaths: Object.keys(flattenedMethods),
     };
 
     messenger.sendMessage(ackMessage);
@@ -45,7 +45,7 @@ const handleSynAckMessageFactory = (
 
     const destroyCallReceiver = connectCallReceiver(
       info,
-      serializedMethods,
+      flattenedMethods,
       log
     );
     onDestroy(destroyCallReceiver);
@@ -54,7 +54,7 @@ const handleSynAckMessageFactory = (
     const destroyCallSender = connectCallSender(
       callSender,
       info,
-      message.methodNames,
+      message.methodPaths,
       log
     );
     onDestroy(destroyCallSender);

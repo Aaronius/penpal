@@ -1,6 +1,6 @@
 import {
   Log,
-  SerializedMethods,
+  FlattenedMethods,
   WindowsInfo,
   Destructor,
   Remote,
@@ -15,21 +15,21 @@ import Messenger from '../Messenger';
  */
 const handleAckMessageFactory = <TMethods extends Methods>(
   messenger: Messenger,
-  serializedMethods: SerializedMethods,
+  flattenedMethods: FlattenedMethods,
   destructor: Destructor,
   log: Log
 ) => {
   const { onDestroy } = destructor;
   let destroyCallReceiverConnection: () => void;
   let destroyCallSenderConnection: () => void;
-  let receiverMethodNames: string[];
+  let receiverMethodPaths: string[];
   // We resolve the promise with the call sender. If the child reconnects
   // (for example, after refreshing or navigating to another page that
   // uses Penpal, we'll update the call sender with methods that match the
   // latest provided by the child.
   const callSender = {} as Remote<TMethods>;
 
-  const handleAckMessage = (methodNames: string[]): Remote<TMethods> => {
+  const handleAckMessage = (methodPaths: string[]): Remote<TMethods> => {
     log('Parent: Handshake - Received ACK');
 
     const info: WindowsInfo = {
@@ -51,25 +51,27 @@ const handleAckMessageFactory = <TMethods extends Methods>(
 
     destroyCallReceiverConnection = connectCallReceiver(
       info,
-      serializedMethods,
+      flattenedMethods,
       log
     );
     onDestroy(destroyCallReceiverConnection);
 
+    Object.keys(callSender).forEach((key) => {
+      delete callSender[key];
+    });
+
     // If the child reconnected, we need to remove the methods from the
     // previous call receiver off the sender.
-    if (receiverMethodNames) {
-      receiverMethodNames.forEach((receiverMethodName) => {
+    if (receiverMethodPaths) {
+      receiverMethodPaths.forEach((receiverMethodName) => {
         delete callSender[receiverMethodName];
       });
     }
 
-    receiverMethodNames = methodNames;
-
     destroyCallSenderConnection = connectCallSender(
       callSender,
       info,
-      methodNames,
+      methodPaths,
       log
     );
 

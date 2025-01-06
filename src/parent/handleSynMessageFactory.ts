@@ -1,4 +1,4 @@
-import { Log, SerializedMethods, SynAckMessage } from '../types';
+import { Log, FlattenedMethods, SynAckMessage } from '../types';
 import { MessageType } from '../enums';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
@@ -9,7 +9,7 @@ import namespace from '../namespace';
 const handleSynMessageFactory = (
   messenger: Messenger,
   log: Log,
-  serializedMethods: SerializedMethods
+  flattenedMethods: FlattenedMethods
 ) => {
   const handleSynMessage = () => {
     log('Parent: Handshake - Received SYN, responding with SYN-ACK');
@@ -17,7 +17,7 @@ const handleSynMessageFactory = (
     const synAckMessage: SynAckMessage = {
       namespace,
       type: MessageType.SynAck,
-      methodNames: Object.keys(serializedMethods),
+      methodPaths: Object.keys(flattenedMethods),
     };
 
     messenger.sendMessage(synAckMessage);
