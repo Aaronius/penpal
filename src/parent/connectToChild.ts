@@ -15,37 +15,37 @@ import Messenger from '../Messenger';
 
 type Options = {
   messenger: Messenger;
-  /**
-   * Methods that may be called by the iframe.
-   */
   methods?: Methods;
-  /**
-   * The amount of time, in milliseconds, Penpal should wait
-   * for the iframe to respond before rejecting the connection promise.
-   */
   timeout?: number;
+  channel?: string;
   log: (...args: unknown[]) => void;
   destructor: Destructor;
 };
 
-/**
- * Attempts to establish communication with an iframe.
- */
 export default <TMethods extends Methods = Methods>(
   options: Options
 ): Connection<TMethods> => {
-  const { messenger, methods = {}, timeout, log, destructor } = options;
+  const {
+    messenger,
+    methods = {},
+    timeout,
+    channel,
+    log,
+    destructor,
+  } = options;
   const { onDestroy, destroy } = destructor;
 
   const flattenedMethods = flattenMethods(methods);
   const handleSynMessage = handleSynMessageFactory(
     messenger,
+    channel,
     log,
     flattenedMethods
   );
   const handleAckMessage = handleAckMessageFactory<TMethods>(
     messenger,
     flattenedMethods,
+    channel,
     destructor,
     log
   );

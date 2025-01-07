@@ -34,6 +34,7 @@ export default (
   callSender: RemoteControl,
   info: WindowsInfo,
   methodPaths: string[],
+  channel: string | undefined,
   log: Log
 ) => {
   const { localName, messenger } = info;
@@ -122,6 +123,7 @@ export default (
         messenger.sendMessage(
           {
             namespace,
+            channel,
             type: MessageType.Call,
             roundTripId,
             methodPath,

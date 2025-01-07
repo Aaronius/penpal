@@ -4,11 +4,18 @@ import namespace from '../namespace';
 
 class ParentToWorkerMessenger implements Messenger {
   private _worker: Worker;
+  private _channel?: string;
   private _log: Log;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
 
-  constructor(worker: Worker, log: Log, destructor: Destructor) {
+  constructor(
+    worker: Worker,
+    channel: string | undefined,
+    log: Log,
+    destructor: Destructor
+  ) {
     this._worker = worker;
+    this._channel = channel;
     this._log = log;
 
     worker.addEventListener('message', this._handleMessageFromChild);
@@ -20,7 +27,10 @@ class ParentToWorkerMessenger implements Messenger {
   }
 
   private _handleMessageFromChild = (event: MessageEvent): void => {
-    if (event.data?.namespace !== namespace) {
+    if (
+      event.data?.namespace !== namespace ||
+      event.data?.channel !== this._channel
+    ) {
       return;
     }
 

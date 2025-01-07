@@ -15,15 +15,9 @@ import namespace from '../namespace';
 
 type Options = {
   messenger: Messenger;
-  /**
-   * Methods that may be called by the parent window.
-   */
   methods?: Methods;
-  /**
-   * The amount of time, in milliseconds, Penpal should wait
-   * for the parent to respond before rejecting the connection promise.
-   */
   timeout?: number;
+  channel?: string;
   log: (...args: unknown[]) => void;
   destructor: Destructor;
 };
@@ -46,12 +40,20 @@ type Connection<TMethods extends Methods = Methods> = {
 export default <TMethods extends Methods = Methods>(
   options: Options
 ): Connection<TMethods> => {
-  const { messenger, methods = {}, timeout, log, destructor } = options;
+  const {
+    messenger,
+    channel,
+    methods = {},
+    timeout,
+    log,
+    destructor,
+  } = options;
   const { destroy, onDestroy } = destructor;
   const flattenedMethods = flattenMethods(methods);
 
   const handleSynAckMessage = handleSynAckMessageFactory(
     messenger,
+    channel,
     flattenedMethods,
     destructor,
     log
@@ -59,7 +61,11 @@ export default <TMethods extends Methods = Methods>(
 
   const sendSynMessage = () => {
     log('Child: Handshake - Sending SYN');
-    const synMessage: SynMessage = { namespace, type: MessageType.Syn };
+    const synMessage: SynMessage = {
+      namespace,
+      channel,
+      type: MessageType.Syn,
+    };
     messenger.sendMessage(synMessage);
   };
 

@@ -8,7 +8,11 @@ let parentReturnValue: number;
 
 const methods: Omit<
   FixtureMethods,
-  'reload' | 'navigate' | 'methodNotInDefaultPage'
+  | 'reload'
+  | 'navigate'
+  | 'methodNotInDefaultPage'
+  | 'getChannel'
+  | 'getChannelFromParent'
 > = {
   multiply(num1: number, num2: number) {
     return num1 * num2;

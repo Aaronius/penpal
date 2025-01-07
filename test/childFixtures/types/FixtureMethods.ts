@@ -11,6 +11,8 @@ type FixtureMethods = {
     num1: number,
     num2: number
   ): Promise<Reply<Promise<number>>>;
+  getChannel(): string;
+  getChannelFromParent(): string;
   addUsingParent(): void;
   getParentReturnValue(): number | undefined;
   getPromiseRejectedWithString(): Promise<void>;

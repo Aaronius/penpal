@@ -8,6 +8,7 @@ import namespace from '../namespace';
  */
 const handleSynMessageFactory = (
   messenger: Messenger,
+  channel: string | undefined,
   log: Log,
   flattenedMethods: FlattenedMethods
 ) => {
@@ -16,6 +17,7 @@ const handleSynMessageFactory = (
 
     const synAckMessage: SynAckMessage = {
       namespace,
+      channel,
       type: MessageType.SynAck,
       methodPaths: Object.keys(flattenedMethods),
     };

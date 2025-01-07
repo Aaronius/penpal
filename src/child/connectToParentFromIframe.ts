@@ -19,6 +19,11 @@ type Options = {
    */
   timeout?: number;
   /**
+   * The channel to use to restrict communication. When specified, a connection
+   * will only be made when the parent is connecting using the same channel.
+   */
+  channel?: string;
+  /**
    * Whether log messages should be emitted to the console.
    */
   debug?: boolean;
@@ -27,14 +32,20 @@ type Options = {
 const connectToParentFromIframe = <TMethods extends Methods = Methods>(
   options: Options
 ) => {
-  const { parentOrigin, methods, timeout, debug = false } = options;
+  const { parentOrigin, methods, timeout, channel, debug = false } = options;
   const log = createLogger(debug);
   const destructor = createDestructor('Child', log);
-  const messenger = new IframeToParentMessenger(parentOrigin, log, destructor);
+  const messenger = new IframeToParentMessenger(
+    parentOrigin,
+    channel,
+    log,
+    destructor
+  );
   return connectToParent<TMethods>({
     messenger,
     methods,
     timeout,
+    channel,
     log,
     destructor,
   });

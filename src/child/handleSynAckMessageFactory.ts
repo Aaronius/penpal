@@ -19,6 +19,7 @@ import namespace from '../namespace';
  */
 const handleSynAckMessageFactory = (
   messenger: Messenger,
+  channel: string | undefined,
   flattenedMethods: FlattenedMethods,
   destructor: Destructor,
   log: Log
@@ -32,6 +33,7 @@ const handleSynAckMessageFactory = (
 
     const ackMessage: AckMessage = {
       namespace,
+      channel,
       type: MessageType.Ack,
       methodPaths: Object.keys(flattenedMethods),
     };
@@ -45,6 +47,7 @@ const handleSynAckMessageFactory = (
 
     const destroyCallReceiver = connectCallReceiver(
       info,
+      channel,
       flattenedMethods,
       log
     );
@@ -55,6 +58,7 @@ const handleSynAckMessageFactory = (
       callSender,
       info,
       message.methodPaths,
+      channel,
       log
     );
     onDestroy(destroyCallSender);

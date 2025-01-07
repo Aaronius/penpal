@@ -3,7 +3,7 @@ import {
   connectToChildWorker,
   Methods,
 } from '../src/index';
-import { CHILD_SERVER, WORKER_URL_PATH } from './constants';
+import { CHILD_SERVER } from './constants';
 
 export const createAndAddIframe = (url?: string) => {
   const iframe = document.createElement('iframe');
@@ -31,10 +31,14 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
 }: {
   methods?: Methods;
 } = {}) => {
-  const worker = new Worker(WORKER_URL_PATH);
+  const worker = new Worker(getWorkerFixtureUrl('default'));
   const connection = connectToChildWorker<TMethods>({
     worker,
     methods,
   });
   return connection;
+};
+
+export const getWorkerFixtureUrl = (name: string) => {
+  return `/base/test/childFixtures/workers/${name}.js`;
 };

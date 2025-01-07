@@ -3,11 +3,13 @@ import Messenger from '../Messenger';
 import namespace from '../namespace';
 
 class WorkerToParentMessenger implements Messenger {
+  private _channel?: string;
   private _log: Log;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
-  private _originForSending: string | undefined;
+  private _originForSending?: string;
 
-  constructor(log: Log, destructor: Destructor) {
+  constructor(channel: string | undefined, log: Log, destructor: Destructor) {
+    this._channel = channel;
     this._log = log;
 
     self.addEventListener('message', this._handleMessageFromParent);
@@ -19,7 +21,10 @@ class WorkerToParentMessenger implements Messenger {
   }
 
   private _handleMessageFromParent = (event: MessageEvent): void => {
-    if (event.data?.namespace !== namespace) {
+    if (
+      event.data?.namespace !== namespace ||
+      event.data?.channel !== this._channel
+    ) {
       return;
     }
 

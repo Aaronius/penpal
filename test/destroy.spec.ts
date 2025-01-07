@@ -1,8 +1,9 @@
-import { CHILD_SERVER, WORKER_URL_PATH } from './constants';
+import { CHILD_SERVER } from './constants';
 import {
   createAndAddIframe,
   createIframeAndConnection,
   createWorkerAndConnection,
+  getWorkerFixtureUrl,
 } from './utils';
 import {
   connectToChildIframe,
@@ -62,7 +63,7 @@ for (const variant of variants) {
 
     if (childType === 'worker') {
       it('removes method listener from worker', async () => {
-        const worker = new Worker(WORKER_URL_PATH);
+        const worker = new Worker(getWorkerFixtureUrl('default'));
 
         const addEventListenerSpy = spyOn(
           worker,

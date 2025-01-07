@@ -1,9 +1,5 @@
-import {
-  CHILD_SERVER,
-  CHILD_SERVER_ALTERNATE,
-  WORKER_URL_PATH,
-} from './constants';
-import { createAndAddIframe } from './utils';
+import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants';
+import { createAndAddIframe, getWorkerFixtureUrl } from './utils';
 import {
   connectToChildIframe,
   connectToChildWorker,
@@ -100,7 +96,7 @@ describe('connection management', () => {
   });
 
   it('connects to worker', async () => {
-    const worker = new Worker(WORKER_URL_PATH);
+    const worker = new Worker(getWorkerFixtureUrl('default'));
 
     const connection = connectToChildWorker({
       worker,
@@ -386,7 +382,7 @@ describe('connection management', () => {
 
   it(
     "doesn't destroy connection if connection succeeds then " +
-      'timeout passes (connectToParent)',
+      'timeout passes (connectToParentFromIframe)',
     (done) => {
       const connection = connectToChildIframe<FixtureMethods>({
         iframe: createAndAddIframe(`${CHILD_SERVER}/pages/timeout.html`),
@@ -424,5 +420,95 @@ describe('connection management', () => {
     expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
 
     connection.destroy();
+  });
+
+  it('connects to child iframe with same channel', async () => {
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/channels.html`);
+
+    // We try to connect and make method calls on both
+    // children as simultaneous as possible to make the test more robust by
+    // trying to trip up the logic in our code.
+
+    const channelAConnection = connectToChildIframe<FixtureMethods>({
+      iframe,
+      channel: 'A',
+      methods: {
+        getChannel() {
+          return 'A';
+        },
+      },
+    });
+
+    const channelBConnection = connectToChildIframe<FixtureMethods>({
+      iframe,
+      channel: 'B',
+      methods: {
+        getChannel() {
+          return 'B';
+        },
+      },
+    });
+
+    const [channelAChild, channelBChild] = await Promise.all([
+      channelAConnection.promise,
+      channelBConnection.promise,
+    ]);
+
+    const results = await Promise.all([
+      channelAChild.getChannel(),
+      channelBChild.getChannel(),
+      channelAChild.getChannelFromParent(),
+      channelBChild.getChannelFromParent(),
+    ]);
+
+    expect(results).toEqual(['A', 'B', 'A', 'B']);
+
+    channelAConnection.destroy();
+    channelBConnection.destroy();
+  });
+
+  it('connects to worker with same channel', async () => {
+    const worker = new Worker(getWorkerFixtureUrl('channels'));
+
+    // We try to connect and make method calls on both
+    // children as simultaneous as possible to make the test more robust by
+    // trying to trip up the logic in our code.
+
+    const channelAConnection = connectToChildWorker<FixtureMethods>({
+      worker,
+      channel: 'A',
+      methods: {
+        getChannel() {
+          return 'A';
+        },
+      },
+    });
+
+    const channelBConnection = connectToChildWorker<FixtureMethods>({
+      worker,
+      channel: 'B',
+      methods: {
+        getChannel() {
+          return 'B';
+        },
+      },
+    });
+
+    const [channelAChild, channelBChild] = await Promise.all([
+      channelAConnection.promise,
+      channelBConnection.promise,
+    ]);
+
+    const results = await Promise.all([
+      channelAChild.getChannel(),
+      channelBChild.getChannel(),
+      channelAChild.getChannelFromParent(),
+      channelBChild.getChannelFromParent(),
+    ]);
+
+    expect(results).toEqual(['A', 'B', 'A', 'B']);
+
+    channelAConnection.destroy();
+    channelBConnection.destroy();
   });
 });

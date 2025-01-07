@@ -1,6 +1,7 @@
-import { CHILD_SERVER, WORKER_URL_PATH } from './constants';
+import { CHILD_SERVER } from './constants';
 import { connectToChildIframe, connectToChildWorker } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
+import { getWorkerFixtureUrl } from './utils';
 
 const htmlSrc = `
 <!DOCTYPE html>
@@ -70,7 +71,7 @@ describe('data URI support', () => {
   });
 
   it('connects and calls a function on the child worker', async () => {
-    const response = await fetch(WORKER_URL_PATH);
+    const response = await fetch(getWorkerFixtureUrl('default'));
     const code = await response.text();
     const worker = new Worker(`data:text/javascript;base64,${btoa(code)}`, {
       type: 'module',

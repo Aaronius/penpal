@@ -9,18 +9,21 @@ import namespace from '../namespace';
 class ParentToIframeMessenger implements Messenger {
   private _iframe: HTMLIFrameElement;
   private _childOrigin: string | RegExp;
-  private _validatedChildOrigin: string | undefined;
+  private _validatedChildOrigin?: string;
+  private _channel?: string;
   private _log: Log;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
-  private _port: MessagePort | undefined;
+  private _port?: MessagePort;
 
   constructor(
     iframe: HTMLIFrameElement,
     childOrigin: string | RegExp | undefined,
+    channel: string | undefined,
     log: Log,
     destructor: Destructor
   ) {
     this._iframe = iframe;
+    this._channel = channel;
     this._log = log;
 
     if (!childOrigin) {
@@ -54,7 +57,8 @@ class ParentToIframeMessenger implements Messenger {
     if (
       !event.source ||
       event.source !== this._iframe.contentWindow ||
-      event.data?.namespace !== namespace
+      event.data?.namespace !== namespace ||
+      event.data?.channel !== this._channel
     ) {
       return;
     }
@@ -95,7 +99,10 @@ class ParentToIframeMessenger implements Messenger {
   };
 
   private _handleMessageFromPort = (event: MessageEvent): void => {
-    if (event.data?.namespace !== namespace) {
+    if (
+      event.data?.namespace !== namespace ||
+      event.data?.channel !== this._channel
+    ) {
       return;
     }
 
