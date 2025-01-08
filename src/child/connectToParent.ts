@@ -11,13 +11,11 @@ import handleSynAckMessageFactory from './handleSynAckMessageFactory';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import Messenger from '../Messenger';
-import namespace from '../namespace';
 
 type Options = {
   messenger: Messenger;
   methods?: Methods;
   timeout?: number;
-  channel?: string;
   log: (...args: unknown[]) => void;
   destructor: Destructor;
 };
@@ -28,7 +26,7 @@ type Connection<TMethods extends Methods = Methods> = {
    */
   promise: Promise<RemoteControl<TMethods>>;
   /**
-   * A method that, when called, will disconnect any messaging channels.
+   * A method that, when called, will disconnect any communication.
    * You may call this even before a connection has been established.
    */
   destroy: () => void;
@@ -40,20 +38,12 @@ type Connection<TMethods extends Methods = Methods> = {
 export default <TMethods extends Methods = Methods>(
   options: Options
 ): Connection<TMethods> => {
-  const {
-    messenger,
-    channel,
-    methods = {},
-    timeout,
-    log,
-    destructor,
-  } = options;
+  const { messenger, methods = {}, timeout, log, destructor } = options;
   const { destroy, onDestroy } = destructor;
   const flattenedMethods = flattenMethods(methods);
 
   const handleSynAckMessage = handleSynAckMessageFactory(
     messenger,
-    channel,
     flattenedMethods,
     destructor,
     log
@@ -62,8 +52,6 @@ export default <TMethods extends Methods = Methods>(
   const sendSynMessage = () => {
     log('Child: Handshake - Sending SYN');
     const synMessage: SynMessage = {
-      namespace,
-      channel,
       type: MessageType.Syn,
     };
     messenger.sendMessage(synMessage);

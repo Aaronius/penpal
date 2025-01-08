@@ -1,5 +1,11 @@
 import { ErrorCode, MessageType } from '../enums';
-import { Log, PenpalError, PenpalMessage, Destructor } from '../types';
+import {
+  Log,
+  PenpalError,
+  PenpalMessage,
+  Destructor,
+  PenpalMessageEnvelope,
+} from '../types';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
 
@@ -54,7 +60,7 @@ class IframeToParentMessenger implements Messenger {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data;
+    const penpalMessage: PenpalMessage = event.data.message;
     const { type: messageType } = penpalMessage;
 
     const originQualifies =
@@ -84,7 +90,7 @@ class IframeToParentMessenger implements Messenger {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data;
+    const penpalMessage: PenpalMessage = event.data.message;
 
     for (const callback of this._messageCallbacks) {
       callback(penpalMessage);
@@ -93,17 +99,24 @@ class IframeToParentMessenger implements Messenger {
 
   sendMessage = (message: PenpalMessage, transferables?: Transferable[]) => {
     const { type: messageType } = message;
+
+    const envelope: PenpalMessageEnvelope = {
+      namespace,
+      channel: this._channel,
+      message,
+    };
+
     if (messageType === MessageType.Syn || messageType === MessageType.Ack) {
       const parentOriginForPostMessage =
         this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
-      window.parent.postMessage(message, {
+      window.parent.postMessage(envelope, {
         targetOrigin: parentOriginForPostMessage,
         transfer: messageType === MessageType.Ack ? [this._port2] : undefined,
       });
       return;
     }
 
-    this._port1.postMessage(message, {
+    this._port1.postMessage(envelope, {
       transfer: transferables,
     });
   };

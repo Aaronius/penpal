@@ -11,7 +11,6 @@ import {
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
-import namespace from './namespace';
 
 type ReplyHandler = {
   methodPath: string;
@@ -34,7 +33,6 @@ export default (
   callSender: RemoteControl,
   info: WindowsInfo,
   methodPaths: string[],
-  channel: string | undefined,
   log: Log
 ) => {
   const { localName, messenger } = info;
@@ -122,8 +120,6 @@ export default (
 
         messenger.sendMessage(
           {
-            namespace,
-            channel,
             type: MessageType.Call,
             roundTripId,
             methodPath,

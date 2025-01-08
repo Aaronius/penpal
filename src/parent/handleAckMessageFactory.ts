@@ -16,7 +16,6 @@ import Messenger from '../Messenger';
 const handleAckMessageFactory = <TMethods extends Methods>(
   messenger: Messenger,
   flattenedMethods: FlattenedMethods,
-  channel: string | undefined,
   destructor: Destructor,
   log: Log
 ) => {
@@ -52,7 +51,6 @@ const handleAckMessageFactory = <TMethods extends Methods>(
 
     destroyCallReceiverConnection = connectCallReceiver(
       info,
-      channel,
       flattenedMethods,
       log
     );
@@ -74,7 +72,6 @@ const handleAckMessageFactory = <TMethods extends Methods>(
       callSender,
       info,
       methodPaths,
-      channel,
       log
     );
 

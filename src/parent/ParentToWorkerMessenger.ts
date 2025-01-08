@@ -1,4 +1,9 @@
-import { Log, PenpalMessage, Destructor } from '../types';
+import {
+  Log,
+  PenpalMessage,
+  Destructor,
+  PenpalMessageEnvelope,
+} from '../types';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
 
@@ -34,7 +39,7 @@ class ParentToWorkerMessenger implements Messenger {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data;
+    const penpalMessage: PenpalMessage = event.data.message;
 
     for (const callback of this._messageCallbacks) {
       callback(penpalMessage);
@@ -45,7 +50,13 @@ class ParentToWorkerMessenger implements Messenger {
     message: PenpalMessage,
     transferables?: Transferable[]
   ): void => {
-    this._worker.postMessage(message, {
+    const envelope: PenpalMessageEnvelope = {
+      namespace,
+      channel: this._channel,
+      message,
+    };
+
+    this._worker.postMessage(envelope, {
       transfer: transferables,
     });
   };

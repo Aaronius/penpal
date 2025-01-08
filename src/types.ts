@@ -31,7 +31,7 @@ export type Connection<TMethods extends Methods = Methods> = {
    */
   promise: Promise<RemoteControl<TMethods>>;
   /**
-   * A method that, when called, will disconnect any messaging channels.
+   * A method that, when called, will disconnect any communication.
    * You may call this even before a connection has been established.
    */
   destroy: () => void;
@@ -63,72 +63,49 @@ export type SerializedError = {
   stack?: string;
 };
 
-/**
- * A Penpal-specific error.
- */
 export type PenpalError = Error & { code: ErrorCode };
 
-type PenpalMessageBase = {
-  namespace: typeof namespace;
-  channel?: string;
-};
-
-/**
- * A SYN handshake message.
- */
-export type SynMessage = PenpalMessageBase & {
+export type SynMessage = {
   type: MessageType.Syn;
 };
 
-/**
- * A SYN-ACK handshake message.
- */
-export type SynAckMessage = PenpalMessageBase & {
+export type SynAckMessage = {
   type: MessageType.SynAck;
   methodPaths: string[];
 };
 
-/**
- * An ACK handshake message.
- */
-export type AckMessage = PenpalMessageBase & {
+export type AckMessage = {
   type: MessageType.Ack;
   methodPaths: string[];
 };
 
-/**
- * A method call message.
- */
-export type CallMessage = PenpalMessageBase & {
+export type CallMessage = {
   type: MessageType.Call;
   roundTripId: number;
   methodPath: string;
   args: unknown[];
 };
 
-/**
- * A method response message.
- */
-export type ReplyMessage = PenpalMessageBase & {
+export type ReplyMessage = {
   type: MessageType.Reply;
   roundTripId: number;
 } & (
-    | {
-        isError?: false;
-        returnValue: unknown;
-        error?: never;
-        isSerializedErrorInstance?: never;
-      }
-    | {
-        isError: true;
-        returnValue?: never;
-        // Note that error may be undefined, for example, if the consumer
-        // returns a rejected promise without specifying an error.
-        // (e.g., return Promise.reject())
-        error: unknown;
-        isSerializedErrorInstance: boolean;
-      }
-  );
+  | {
+      isError?: false;
+      returnValue: unknown;
+      error?: never;
+      isSerializedErrorInstance?: never;
+    }
+  | {
+      isError: true;
+      returnValue?: never;
+      // Note that error may be undefined, for example, if the consumer
+      // returns a rejected promise without specifying an error.
+      // (e.g., return Promise.reject())
+      error: unknown;
+      isSerializedErrorInstance: boolean;
+    }
+);
 
 export type PenpalMessage =
   | SynMessage
@@ -136,6 +113,12 @@ export type PenpalMessage =
   | AckMessage
   | CallMessage
   | ReplyMessage;
+
+export type PenpalMessageEnvelope = {
+  namespace: typeof namespace;
+  channel?: string;
+  message: PenpalMessage;
+};
 
 export type WindowsInfo = {
   /**

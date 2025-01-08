@@ -12,14 +12,12 @@ import { MessageType } from '../enums';
 import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 import Messenger from '../Messenger';
-import namespace from '../namespace';
 
 /**
  * Handles a SYN-ACK handshake message.
  */
 const handleSynAckMessageFactory = (
   messenger: Messenger,
-  channel: string | undefined,
   flattenedMethods: FlattenedMethods,
   destructor: Destructor,
   log: Log
@@ -32,8 +30,6 @@ const handleSynAckMessageFactory = (
     log('Child: Handshake - Received SYN-ACK, responding with ACK');
 
     const ackMessage: AckMessage = {
-      namespace,
-      channel,
       type: MessageType.Ack,
       methodPaths: Object.keys(flattenedMethods),
     };
@@ -47,7 +43,6 @@ const handleSynAckMessageFactory = (
 
     const destroyCallReceiver = connectCallReceiver(
       info,
-      channel,
       flattenedMethods,
       log
     );
@@ -58,7 +53,6 @@ const handleSynAckMessageFactory = (
       callSender,
       info,
       message.methodPaths,
-      channel,
       log
     );
     onDestroy(destroyCallSender);

@@ -1,6 +1,11 @@
 import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
 import getOriginFromSrc from './getOriginFromSrc';
-import { Log, PenpalMessage, Destructor } from '../types';
+import {
+  Log,
+  PenpalMessage,
+  Destructor,
+  PenpalMessageEnvelope,
+} from '../types';
 import { MessageType } from '../enums';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import Messenger from '../Messenger';
@@ -63,7 +68,7 @@ class ParentToIframeMessenger implements Messenger {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data;
+    const penpalMessage: PenpalMessage = event.data.message;
     const { type: messageType } = penpalMessage;
 
     if (messageType === MessageType.Syn) {
@@ -106,7 +111,7 @@ class ParentToIframeMessenger implements Messenger {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data;
+    const penpalMessage: PenpalMessage = event.data.message;
 
     for (const callback of this._messageCallbacks) {
       callback(penpalMessage);
@@ -118,6 +123,12 @@ class ParentToIframeMessenger implements Messenger {
     transferables?: Transferable[]
   ): void => {
     const { type: messageType } = message;
+
+    const envelope: PenpalMessageEnvelope = {
+      namespace,
+      channel: this._channel,
+      message,
+    };
 
     if (messageType === MessageType.SynAck) {
       if (!this._validatedChildOrigin) {
@@ -138,12 +149,12 @@ class ParentToIframeMessenger implements Messenger {
       // event.origin will always be empty when the child receives the event.
       // This is insufficient, because the child needs to validate that the
       // event's origin matches options.parentOrigin before continuing the handshake.
-      this._iframe.contentWindow?.postMessage(message, originForSending);
+      this._iframe.contentWindow?.postMessage(envelope, originForSending);
       return;
     }
 
     if (this._port) {
-      this._port.postMessage(message, {
+      this._port.postMessage(envelope, {
         transfer: transferables,
       });
     } else {

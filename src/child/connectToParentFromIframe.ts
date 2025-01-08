@@ -45,7 +45,6 @@ const connectToParentFromIframe = <TMethods extends Methods = Methods>(
     messenger,
     methods,
     timeout,
-    channel,
     log,
     destructor,
   });

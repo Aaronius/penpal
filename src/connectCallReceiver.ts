@@ -8,15 +8,11 @@ import {
 } from './types';
 import { MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
-import namespace from './namespace';
 
 const createErrorReplyMessage = (
-  channel: string | undefined,
   roundTripId: number,
   error: unknown
 ): ReplyMessage => ({
-  namespace,
-  channel,
   type: MessageType.Reply,
   roundTripId,
   isError: true,
@@ -30,7 +26,6 @@ const createErrorReplyMessage = (
  */
 export default (
   { localName, messenger }: WindowsInfo,
-  channel: string | undefined,
   flattenedMethods: FlattenedMethods,
   log: Log
 ) => {
@@ -55,14 +50,12 @@ export default (
       }
 
       replyMessage = {
-        namespace,
-        channel,
         type: MessageType.Reply,
         roundTripId,
         returnValue,
       };
     } catch (error) {
-      replyMessage = createErrorReplyMessage(channel, roundTripId, error);
+      replyMessage = createErrorReplyMessage(roundTripId, error);
     }
 
     if (destroyed) {
@@ -86,7 +79,7 @@ export default (
       // we want to ensure the receiver's promise gets rejected.
       if ((error as Error).name === NativeErrorName.DataCloneError) {
         messenger.sendMessage(
-          createErrorReplyMessage(channel, roundTripId, error as Error)
+          createErrorReplyMessage(roundTripId, error as Error)
         );
       }
       throw error;
