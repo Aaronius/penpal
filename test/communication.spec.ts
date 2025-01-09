@@ -61,7 +61,7 @@ for (const variant of variants) {
         input1DataView,
         input2DataView,
         new MethodCallOptions({
-          transfer: [input1DataView.buffer, input2DataView.buffer],
+          transferables: [input1DataView.buffer, input2DataView.buffer],
         })
       );
 

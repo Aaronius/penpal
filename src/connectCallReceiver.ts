@@ -45,7 +45,7 @@ export default (
       let returnValue = await flattenedMethods[methodPath](...args);
 
       if (returnValue instanceof Reply) {
-        transferables = returnValue.transfer;
+        transferables = returnValue.transferables;
         returnValue = await returnValue.returnValue;
       }
 

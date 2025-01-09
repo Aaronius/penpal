@@ -1,7 +1,7 @@
 const brand: unique symbol = Symbol('MethodCallOptions');
 
 class MethodCallOptions {
-  readonly transfer?: Transferable[];
+  readonly transferables?: Transferable[];
   readonly timeout?: number;
 
   // This ensures that the class cannot be faked by structural typing.
@@ -10,13 +10,8 @@ class MethodCallOptions {
   // being structurally similar.
   private [brand] = brand;
 
-  constructor(options?: {
-    // Named transfer instead of transferables to match the native
-    // postMessage API
-    transfer?: Transferable[];
-    timeout?: number;
-  }) {
-    this.transfer = options?.transfer;
+  constructor(options?: { transferables?: Transferable[]; timeout?: number }) {
+    this.transferables = options?.transferables;
     this.timeout = options?.timeout;
   }
 }

@@ -39,7 +39,7 @@ const childMethods = {
     const returnValue = new DataView(new ArrayBuffer(4));
     returnValue.setInt32(0, a * b);
     return new Reply(returnValue, {
-      transfer: [returnValue.buffer],
+      transferables: [returnValue.buffer],
     });
   },
 };
@@ -57,10 +57,10 @@ assertType<Promise<number>>(child.multiplyWithPromisedValue(2, 3));
 assertType<Promise<number>>(child.multiply(2, 3, new MethodCallOptions()));
 assertType<Promise<number>>(child.multiply(2, 3, new MethodCallOptions({})));
 assertType<Promise<number>>(
-  child.multiply(2, 3, new MethodCallOptions({ transfer: [] }))
+  child.multiply(2, 3, new MethodCallOptions({ transferables: [] }))
 );
 // @ts-expect-error Message options must be an instance of MethodCallOptions.
-void child.multiply(2, 3, { transfer: [] });
+void child.multiply(2, 3, { transferables: [] });
 assertType<Promise<number>>(child.multiplyWithReplyInstance(2, 3));
 assertType<Promise<number>>(child.multiplyWithPromisedReplyInstance(2, 3));
 assertType<Promise<number>>(
@@ -83,7 +83,7 @@ assertType<Promise<DataView>>(
     input1DataView,
     input2DataView,
     new MethodCallOptions({
-      transfer: [input1DataView.buffer, input2DataView.buffer],
+      transferables: [input1DataView.buffer, input2DataView.buffer],
     })
   )
 );

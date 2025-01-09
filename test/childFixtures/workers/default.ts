@@ -28,7 +28,7 @@ const methods: Omit<
     const returnValue = new DataView(new ArrayBuffer(4));
     returnValue.setInt32(0, num1 * num2);
     return new Reply(returnValue, {
-      transfer: [returnValue.buffer],
+      transferables: [returnValue.buffer],
     });
   },
   multiplyWithPromisedReplyInstanceAndPromisedReturnValue(num1, num2) {

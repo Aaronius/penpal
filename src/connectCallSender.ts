@@ -84,11 +84,9 @@ export default (
 
       const roundTripId = generateId();
       const lastArg = args[args.length - 1];
-      const lastArtIsOptions = lastArg instanceof MethodCallOptions;
-      const { timeout, transfer: transferables } = lastArtIsOptions
-        ? lastArg
-        : {};
-      const argsWithoutOptions = lastArtIsOptions ? args.slice(0, -1) : args;
+      const lastArgIsOptions = lastArg instanceof MethodCallOptions;
+      const { timeout, transferables } = lastArgIsOptions ? lastArg : {};
+      const argsWithoutOptions = lastArgIsOptions ? args.slice(0, -1) : args;
 
       return new Promise((resolve, reject) => {
         // We reference `window.setTimeout` instead of just `setTimeout`
