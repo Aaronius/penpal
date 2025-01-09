@@ -22,7 +22,6 @@ const handleAckMessageFactory = <TMethods extends Methods>(
   const { onDestroy } = destructor;
   let destroyCallReceiverConnection: () => void;
   let destroyCallSenderConnection: () => void;
-  let receiverMethodPaths: string[];
   // We resolve the promise with the call sender. If the child reconnects
   // (for example, after refreshing or navigating to another page that
   // uses Penpal, we'll update the call sender with methods that match the
@@ -59,14 +58,6 @@ const handleAckMessageFactory = <TMethods extends Methods>(
     Object.keys(callSender).forEach((key) => {
       delete callSender[key];
     });
-
-    // If the child reconnected, we need to remove the methods from the
-    // previous call receiver off the sender.
-    if (receiverMethodPaths) {
-      receiverMethodPaths.forEach((receiverMethodName) => {
-        delete callSender[receiverMethodName];
-      });
-    }
 
     destroyCallSenderConnection = connectCallSender(
       callSender,
