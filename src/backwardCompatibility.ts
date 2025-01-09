@@ -106,7 +106,7 @@ export const upgradeMessage = (
       upgradedMessage = {
         type: MessageType.Reply,
         roundTripId: message.id,
-        returnValue: message.returnValue,
+        value: message.returnValue,
       };
     } else {
       upgradedMessage = {
@@ -172,7 +172,7 @@ export const downgradeMessageEnvelope = (
       resolution: message.isError
         ? DeprecatedResolution.Rejected
         : DeprecatedResolution.Fulfilled,
-      returnValue: message.isError ? message.error : message.returnValue,
+      returnValue: message.isError ? message.error : message.value,
       returnValueIsError: message.isError && message.isSerializedErrorInstance,
     };
   }

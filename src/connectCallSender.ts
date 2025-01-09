@@ -63,7 +63,7 @@ export default (
         : message.error;
       replyHandler.reject(error);
     } else {
-      replyHandler.resolve(message.returnValue);
+      replyHandler.resolve(message.value);
     }
   };
 

@@ -1,7 +1,7 @@
 const brand: unique symbol = Symbol('Reply');
 
 class Reply<T = unknown> {
-  readonly returnValue: T;
+  readonly value: T;
   readonly transferables?: Transferable[];
 
   // This ensures that the class cannot be faked by structural typing.
@@ -11,12 +11,12 @@ class Reply<T = unknown> {
   private [brand] = brand;
 
   constructor(
-    returnValue: T,
+    value: T,
     options?: {
       transferables?: Transferable[];
     }
   ) {
-    this.returnValue = returnValue;
+    this.value = value;
     this.transferables = options?.transferables;
   }
 }

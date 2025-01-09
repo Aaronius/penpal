@@ -42,17 +42,17 @@ export default (
     let transferables: Transferable[] | undefined;
 
     try {
-      let returnValue = await flattenedMethods[methodPath](...args);
+      let value = await flattenedMethods[methodPath](...args);
 
-      if (returnValue instanceof Reply) {
-        transferables = returnValue.transferables;
-        returnValue = await returnValue.returnValue;
+      if (value instanceof Reply) {
+        transferables = value.transferables;
+        value = await value.value;
       }
 
       replyMessage = {
         type: MessageType.Reply,
         roundTripId,
-        returnValue,
+        value,
       };
     } catch (error) {
       replyMessage = createErrorReplyMessage(roundTripId, error);

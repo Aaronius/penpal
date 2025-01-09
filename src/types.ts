@@ -4,9 +4,7 @@ import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
 import namespace from './namespace';
 
-type ExtractReturnValueFromReply<R> = R extends Reply
-  ? Awaited<R['returnValue']>
-  : R;
+type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 
 /**
  * A mapped type to recursively convert sync methods into async methods and add
@@ -16,7 +14,7 @@ export type RemoteControl<TMethods extends Methods = Methods> = {
   [K in keyof TMethods]: TMethods[K] extends (...args: infer A) => infer R
     ? (
         ...args: [...A, MethodCallOptions?]
-      ) => Promise<ExtractReturnValueFromReply<Awaited<R>>>
+      ) => Promise<ExtractValueFromReply<Awaited<R>>>
     : TMethods[K] extends Methods
     ? RemoteControl<TMethods[K]>
     : never;
@@ -92,13 +90,13 @@ export type ReplyMessage = {
 } & (
   | {
       isError?: false;
-      returnValue: unknown;
+      value: unknown;
       error?: never;
       isSerializedErrorInstance?: never;
     }
   | {
       isError: true;
-      returnValue?: never;
+      value?: never;
       // Note that error may be undefined, for example, if the consumer
       // returns a rejected promise without specifying an error.
       // (e.g., return Promise.reject())
