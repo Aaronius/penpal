@@ -26,17 +26,18 @@ class WorkerToParentMessenger implements Messenger {
   }
 
   private _handleMessageFromParent = (event: MessageEvent): void => {
-    if (
-      event.data?.namespace !== namespace ||
-      event.data?.channel !== this._channel
-    ) {
+    if (event.data?.namespace !== namespace) {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data.message;
+    const { channel, message } = event.data as PenpalMessageEnvelope;
+
+    if (channel !== this._channel) {
+      return;
+    }
 
     for (const callback of this._messageCallbacks) {
-      callback(penpalMessage);
+      callback(message);
     }
   };
 

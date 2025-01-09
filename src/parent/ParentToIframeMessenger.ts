@@ -10,6 +10,12 @@ import { MessageType } from '../enums';
 import monitorIframeRemoval from './monitorIframeRemoval';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
+import {
+  DeprecatedPenpalMessage,
+  downgradeMessageEnvelope,
+  isDeprecatedMessage,
+  upgradeMessage,
+} from '../backwardCompatibility';
 
 class ParentToIframeMessenger implements Messenger {
   private _iframe: HTMLIFrameElement;
@@ -19,6 +25,7 @@ class ParentToIframeMessenger implements Messenger {
   private _log: Log;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port?: MessagePort;
+  private _isChildUsingDeprecatedProtocol = false;
 
   constructor(
     iframe: HTMLIFrameElement,
@@ -59,19 +66,35 @@ class ParentToIframeMessenger implements Messenger {
     // whose source is null. This seems to happen when the child iframe is
     // removed from the DOM about the same time it sends a message.
     // https://github.com/Aaronius/penpal/issues/85
-    if (
-      !event.source ||
-      event.source !== this._iframe.contentWindow ||
-      event.data?.namespace !== namespace ||
-      event.data?.channel !== this._channel
-    ) {
+    if (!event.source || event.source !== this._iframe.contentWindow) {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data.message;
-    const { type: messageType } = penpalMessage;
+    let messageEnvelope: PenpalMessageEnvelope;
 
-    if (messageType === MessageType.Syn) {
+    if (event.data?.namespace === namespace) {
+      messageEnvelope = event.data;
+    } else if (isDeprecatedMessage(event.data)) {
+      this._log(
+        'Parent: The child is using an older version of Penpal which will be ' +
+          'incompatible when the parent upgrades to the next major version of ' +
+          'Penpal. Please upgrade the child to the latest version of Penpal.'
+      );
+
+      this._isChildUsingDeprecatedProtocol = true;
+      messageEnvelope = upgradeMessage(event.data as DeprecatedPenpalMessage);
+    } else {
+      // The received event doesn't pertain to Penpal.
+      return;
+    }
+
+    if (messageEnvelope.channel !== this._channel) {
+      return;
+    }
+
+    const { message } = messageEnvelope;
+
+    if (message.type === MessageType.Syn) {
       const originQualifies =
         this._childOrigin instanceof RegExp
           ? this._childOrigin.test(event.origin)
@@ -87,7 +110,13 @@ class ParentToIframeMessenger implements Messenger {
       }
     }
 
-    if (messageType === MessageType.Ack) {
+    if (
+      message.type === MessageType.Ack &&
+      // Previous versions of Penpal don't use MessagePorts so they won't be
+      // sending a MessagePort on the event. We instead do all communication
+      // through the window rather than a port.
+      !this._isChildUsingDeprecatedProtocol
+    ) {
       this._port = event.ports[0];
 
       if (!this._port) {
@@ -99,22 +128,26 @@ class ParentToIframeMessenger implements Messenger {
     }
 
     for (const callback of this._messageCallbacks) {
-      callback(penpalMessage);
+      callback(message);
     }
   };
 
   private _handleMessageFromPort = (event: MessageEvent): void => {
-    if (
-      event.data?.namespace !== namespace ||
-      event.data?.channel !== this._channel
-    ) {
+    // Unlike in _handleMessageFromWindow, we don't have to check if
+    // the message is from a deprecated version of Penpal because older versions
+    // of Penpal don't use MessagePorts.
+    if (event.data?.namespace !== namespace) {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data.message;
+    const { channel, message } = event.data as PenpalMessageEnvelope;
+
+    if (channel !== this._channel) {
+      return;
+    }
 
     for (const callback of this._messageCallbacks) {
-      callback(penpalMessage);
+      callback(message);
     }
   };
 
@@ -122,15 +155,19 @@ class ParentToIframeMessenger implements Messenger {
     message: PenpalMessage,
     transferables?: Transferable[]
   ): void => {
-    const { type: messageType } = message;
-
     const envelope: PenpalMessageEnvelope = {
       namespace,
       channel: this._channel,
       message,
     };
 
-    if (messageType === MessageType.SynAck) {
+    if (
+      message.type === MessageType.SynAck ||
+      // If the child is using a previous version of Penpal, we need to
+      // downgrade the message and send it through the window rather than
+      // the port because older versions of Penpal don't use MessagePorts.
+      this._isChildUsingDeprecatedProtocol
+    ) {
       if (!this._validatedChildOrigin) {
         // This should never be the case.
         throw new Error('Child origin has not been validated');
@@ -144,12 +181,20 @@ class ParentToIframeMessenger implements Messenger {
           ? '*'
           : this._validatedChildOrigin;
 
+      const payload = this._isChildUsingDeprecatedProtocol
+        ? downgradeMessageEnvelope(envelope)
+        : envelope;
+
       // We have to send the SynAck message through the iframe window and not
-      // the MessagePort because when the event is sent through MessagePort,
-      // event.origin will always be empty when the child receives the event.
+      // the MessagePort because if the event were sent through MessagePort,
+      // event.origin would always be empty when the child receives the event.
       // This is insufficient, because the child needs to validate that the
-      // event's origin matches options.parentOrigin before continuing the handshake.
-      this._iframe.contentWindow?.postMessage(envelope, originForSending);
+      // event's origin matches the child's options.parentOrigin before
+      // continuing the handshake.
+      this._iframe.contentWindow?.postMessage(payload, {
+        targetOrigin: originForSending,
+        transfer: transferables,
+      });
       return;
     }
 

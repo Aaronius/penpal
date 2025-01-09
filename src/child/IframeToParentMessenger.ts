@@ -53,15 +53,15 @@ class IframeToParentMessenger implements Messenger {
   }
 
   private _handleMessageFromWindow = (event: MessageEvent): void => {
-    if (
-      event.data?.namespace !== namespace ||
-      event.data?.channel !== this._channel
-    ) {
+    if (event.data?.namespace !== namespace) {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data.message;
-    const { type: messageType } = penpalMessage;
+    const { channel, message } = event.data as PenpalMessageEnvelope;
+
+    if (channel !== this._channel) {
+      return;
+    }
 
     const originQualifies =
       this._parentOrigin instanceof RegExp
@@ -69,7 +69,7 @@ class IframeToParentMessenger implements Messenger {
         : this._parentOrigin === '*' || this._parentOrigin === event.origin;
 
     if (!originQualifies) {
-      if (messageType === MessageType.SynAck) {
+      if (message.type === MessageType.SynAck) {
         this._log(
           `Child: Handshake - Received SYN-ACK from origin ${event.origin} which did not match expected origin ${this._parentOrigin}`
         );
@@ -78,22 +78,23 @@ class IframeToParentMessenger implements Messenger {
     }
 
     for (const callback of this._messageCallbacks) {
-      callback(penpalMessage);
+      callback(message);
     }
   };
 
   private _handleMessageFromPort = (event: MessageEvent): void => {
-    if (
-      event.data?.namespace !== namespace ||
-      event.data?.channel !== this._channel
-    ) {
+    if (event.data?.namespace !== namespace) {
       return;
     }
 
-    const penpalMessage: PenpalMessage = event.data.message;
+    const { channel, message } = event.data as PenpalMessageEnvelope;
+
+    if (channel !== this._channel) {
+      return;
+    }
 
     for (const callback of this._messageCallbacks) {
-      callback(penpalMessage);
+      callback(message);
     }
   };
 

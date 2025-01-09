@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Iframe</title>
+  </head>
+  <body>
+    Test Iframe
+
+    <script>
+      window.onerror = function () {
+        console.log.apply(console, arguments);
+      };
+    </script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/penpal@^6/dist/penpal.min.js"
+    ></script>
+    <script type="text/javascript">
+      Penpal.connectToParent({
+        parentOrigin: 'http://example.com',
+      }).promise.then(function (parent) {
+        parentAPI = parent;
+      });
+    </script>
+  </body>
+</html>

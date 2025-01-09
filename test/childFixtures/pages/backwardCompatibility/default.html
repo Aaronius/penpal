@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Iframe</title>
+  </head>
+  <body>
+    Test Iframe
+
+    <script>
+      window.onerror = function () {
+        console.log.apply(console, arguments);
+      };
+    </script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/penpal@^6/dist/penpal.min.js"
+    ></script>
+    <script type="text/javascript">
+      var parentAPI;
+      var parentReturnValue;
+
+      var methods = {
+        multiply: function (num1, num2) {
+          return num1 * num2;
+        },
+        multiplyAsync: function (num1, num2) {
+          return new Promise(function (resolve) {
+            resolve(num1 * num2);
+          });
+        },
+        addUsingParent: function () {
+          parentAPI.add(3, 6).then(function (value) {
+            parentReturnValue = value;
+          });
+        },
+        getParentReturnValue: function () {
+          return parentReturnValue;
+        },
+        getPromiseRejectedWithString() {
+          return Promise.reject('test error string');
+        },
+        getPromiseRejectedWithError() {
+          // Using TypeError instead of Error just to make sure the "name" property
+          // on the error instance gets properly serialized.
+          return Promise.reject(new TypeError('test error object'));
+        },
+        getPromiseRejectedWithUndefined() {
+          return Promise.reject();
+        },
+        throwError: function () {
+          throw new Error('Oh nos!');
+        },
+        getUnclonableValue: function () {
+          return window;
+        },
+        reload: function () {
+          window.location.reload(true);
+        },
+        navigate: function () {
+          window.location.href = 'divideMethod.html';
+        },
+        nested: {
+          oneLevel: function (input) {
+            return input;
+          },
+          by: {
+            twoLevels: function (input) {
+              return input;
+            },
+          },
+        },
+        neverResolve() {
+          return new Promise(() => {});
+        },
+      };
+
+      Penpal.connectToParent({
+        methods: methods,
+      }).promise.then(function (parent) {
+        parentAPI = parent;
+      });
+    </script>
+  </body>
+</html>
