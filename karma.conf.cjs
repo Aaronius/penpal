@@ -40,7 +40,7 @@ module.exports = (config) => {
             // Fail testing if types are wrong.
             noEmitOnError: true,
             include: ['test/**/*', 'src/**/*'],
-          })
+          }),
         ],
       },
     },

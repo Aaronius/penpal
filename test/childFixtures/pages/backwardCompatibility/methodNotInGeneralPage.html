@@ -11,10 +11,19 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script src="/penpal.js"></script>
+    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
     <script>
-      Penpal.connectToParentFromIframe({
-        parentOrigin: 'http://example.com',
+      let parentAPI;
+
+      const methods = {
+        methodNotInGeneralPage() {
+          return 'method not in the general page';
+        },
+      };
+
+      Penpal.connectToParent({
+        methods: methods,
+        parentOrigin: '*',
       }).promise.then(function (parent) {
         parentAPI = parent;
       });

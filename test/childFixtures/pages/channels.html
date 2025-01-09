@@ -11,11 +11,11 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script type="text/javascript" src="/penpal.js"></script>
-    <script type="text/javascript">
-      var channelBParent;
+    <script src="/penpal.js"></script>
+    <script>
+      let channelBParent;
 
-      var channelBMethods = {
+      const channelBMethods = {
         getChannel() {
           return 'B';
         },
@@ -33,9 +33,9 @@
         channelBParent = parent;
       });
 
-      var channelAParent;
+      let channelAParent;
 
-      var channelAMethods = {
+      const channelAMethods = {
         getChannel() {
           return 'A';
         },

@@ -11,13 +11,13 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script type="text/javascript" src="/penpal.js"></script>
-    <script type="text/javascript">
-      var parentAPI;
+    <script src="/penpal.js"></script>
+    <script>
+      let parentAPI;
 
-      var methods = {
-        methodNotInDefaultPage() {
-          return 'method not in the default page';
+      const methods = {
+        methodNotInGeneralPage() {
+          return 'method not in the general page';
         },
       };
 

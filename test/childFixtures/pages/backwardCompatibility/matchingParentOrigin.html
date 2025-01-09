@@ -11,18 +11,15 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script
-      type="text/javascript"
-      src="https://unpkg.com/penpal@^6/dist/penpal.min.js"
-    ></script>
-    <script type="text/javascript">
+    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
+    <script>
       // A cheap way to get the parent origin for our tests.
-      var parentOrigin = document.referrer.substring(
+      const parentOrigin = document.referrer.substring(
         0,
         document.referrer.lastIndexOf('/')
       );
 
-      var methods = {
+      const methods = {
         multiply: function (num1, num2) {
           return num1 * num2;
         },

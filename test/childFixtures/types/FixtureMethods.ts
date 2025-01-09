@@ -29,7 +29,7 @@ type FixtureMethods = {
     };
   };
   neverResolve(): Promise<void>;
-  methodNotInDefaultPage: () => 'string';
+  methodNotInGeneralPage: () => 'string';
 };
 
 export default FixtureMethods;

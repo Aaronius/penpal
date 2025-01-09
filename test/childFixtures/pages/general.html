@@ -11,12 +11,12 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script type="text/javascript" src="/penpal.js"></script>
-    <script type="text/javascript">
-      var parentAPI;
-      var parentReturnValue;
+    <script src="/penpal.js"></script>
+    <script>
+      let parentAPI;
+      let parentReturnValue;
 
-      var methods = {
+      const methods = {
         multiply(num1, num2) {
           console.log('window origin', window.origin);
           return num1 * num2;

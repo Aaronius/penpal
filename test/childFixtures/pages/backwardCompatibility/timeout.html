@@ -11,11 +11,8 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script
-      type="text/javascript"
-      src="https://unpkg.com/penpal@^6/dist/penpal.min.js"
-    ></script>
-    <script type="text/javascript">
+    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
+    <script>
       Penpal.connectToParent({
         timeout: 30,
       }).promise.then(function (parent) {

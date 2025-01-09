@@ -47,7 +47,7 @@ for (const variant of variants) {
         ).and.callThrough();
 
         const connection = connectToChildIframe<FixtureMethods>({
-          iframe: createAndAddIframe(`${CHILD_SERVER}/pages/default.html`),
+          iframe: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
         });
 
         // The method call message listener is set up after the connection has been established.
@@ -63,7 +63,7 @@ for (const variant of variants) {
 
     if (childType === 'worker') {
       it('removes method listener from worker', async () => {
-        const worker = new Worker(getWorkerFixtureUrl('default'));
+        const worker = new Worker(getWorkerFixtureUrl('general'));
 
         const addEventListenerSpy = spyOn(
           worker,

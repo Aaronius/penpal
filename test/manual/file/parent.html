@@ -2,11 +2,11 @@
 <html>
   <head>
     <script src="../../../dist/penpal.js"></script>
-    <script type="text/javascript">
+    <script>
       window.addEventListener('load', function () {
         const iframe = document.createElement('iframe');
         iframe.src =
-          'file:///Users/aahardy/dev/penpal/test/manual/file/default.html';
+          'file:///Users/aahardy/dev/penpal/test/manual/file/general.html';
         document.body.appendChild(iframe);
 
         const connection = Penpal.connectToChild({
@@ -15,7 +15,7 @@
 
         connection.promise.then(function (child) {
           child.multiply(3, 2).then((result) => {
-            var div = document.createElement('div');
+            const div = document.createElement('div');
             div.textContent = '3 X 2 = ' + result;
             document.body.appendChild(div);
           });

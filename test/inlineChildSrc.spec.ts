@@ -7,8 +7,8 @@ const htmlSrc = `
 <!DOCTYPE html>
 <html>
   <body>
-    <script type="text/javascript" src="${CHILD_SERVER}/penpal.js"></script>
-    <script type="text/javascript">
+    <script  src="${CHILD_SERVER}/penpal.js"></script>
+    <script >
       Penpal.connectToParentFromIframe({
         parentOrigin: "*",
         methods: {
@@ -27,7 +27,7 @@ const htmlSrcRedirect = `
 <html>
   <head>
     <script>
-      document.location = '${CHILD_SERVER}/pages/default.html'
+      document.location = '${CHILD_SERVER}/pages/general.html'
     </script>
   </head>
 </html>
@@ -71,7 +71,7 @@ describe('data URI support', () => {
   });
 
   it('connects and calls a function on the child worker', async () => {
-    const response = await fetch(getWorkerFixtureUrl('default'));
+    const response = await fetch(getWorkerFixtureUrl('general'));
     const code = await response.text();
     const worker = new Worker(`data:text/javascript;base64,${btoa(code)}`, {
       type: 'module',

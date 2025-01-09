@@ -11,14 +11,11 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script
-      type="text/javascript"
-      src="https://unpkg.com/penpal@^6/dist/penpal.min.js"
-    ></script>
-    <script type="text/javascript">
-      var parentAPI;
+    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
+    <script>
+      let parentAPI;
 
-      var methods = {
+      const methods = {
         divide: function (num1, num2) {
           return num1 / num2;
         },

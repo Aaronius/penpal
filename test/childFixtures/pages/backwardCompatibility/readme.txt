@@ -1,0 +1,1 @@
+These fixtures load the previous major version of Penpal. They are used to test whether a parent using the current version of Penpal can communicate with a child using the previous major version of Penpal.

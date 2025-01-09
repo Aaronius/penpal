@@ -15,12 +15,14 @@ export const createAndAddIframe = (url?: string) => {
 };
 
 export const createIframeAndConnection = <TMethods extends Methods>({
-  methods,
+  methods = {},
+  pageName = 'general',
 }: {
   methods?: Methods;
+  pageName?: string;
 } = {}) => {
   const connection = connectToChildIframe<TMethods>({
-    iframe: createAndAddIframe(`${CHILD_SERVER}/pages/default.html`),
+    iframe: createAndAddIframe(getPageFixtureUrl(pageName)),
     methods,
   });
   return connection;
@@ -28,10 +30,12 @@ export const createIframeAndConnection = <TMethods extends Methods>({
 
 export const createWorkerAndConnection = <TMethods extends Methods>({
   methods = {},
+  workerName = 'general',
 }: {
   methods?: Methods;
+  workerName?: string;
 } = {}) => {
-  const worker = new Worker(getWorkerFixtureUrl('default'));
+  const worker = new Worker(getWorkerFixtureUrl(workerName));
   const connection = connectToChildWorker<TMethods>({
     worker,
     methods,
@@ -39,6 +43,10 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   return connection;
 };
 
-export const getWorkerFixtureUrl = (name: string) => {
-  return `/base/test/childFixtures/workers/${name}.js`;
+export const getPageFixtureUrl = (pageName: string, server = CHILD_SERVER) => {
+  return `${server}/pages/${pageName}.html`;
+};
+
+export const getWorkerFixtureUrl = (workerName: string) => {
+  return `/base/test/childFixtures/workers/${workerName}.js`;
 };

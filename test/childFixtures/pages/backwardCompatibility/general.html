@@ -11,15 +11,12 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script
-      type="text/javascript"
-      src="https://unpkg.com/penpal@^6/dist/penpal.min.js"
-    ></script>
-    <script type="text/javascript">
-      var parentAPI;
-      var parentReturnValue;
+    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
+    <script>
+      let parentAPI;
+      let parentReturnValue;
 
-      var methods = {
+      const methods = {
         multiply: function (num1, num2) {
           return num1 * num2;
         },
@@ -56,8 +53,8 @@
         reload: function () {
           window.location.reload(true);
         },
-        navigate: function () {
-          window.location.href = 'divideMethod.html';
+        navigate: function (to) {
+          window.location.href = to;
         },
         nested: {
           oneLevel: function (input) {

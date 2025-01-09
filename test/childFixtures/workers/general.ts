@@ -10,7 +10,7 @@ const methods: Omit<
   FixtureMethods,
   | 'reload'
   | 'navigate'
-  | 'methodNotInDefaultPage'
+  | 'methodNotInGeneralPage'
   | 'getChannel'
   | 'getChannelFromParent'
 > = {

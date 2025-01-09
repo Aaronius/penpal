@@ -11,21 +11,21 @@
         console.log.apply(console, arguments);
       };
     </script>
-    <script type="text/javascript" src="/penpal.js"></script>
-    <script type="text/javascript">
-      var escapeRegExp = function (string) {
+    <script src="/penpal.js"></script>
+    <script>
+      const escapeRegExp = function (string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
       };
 
       // A cheap way to get the parent origin for our tests.
-      var parentOrigin = document.referrer.substring(
+      const parentOrigin = document.referrer.substring(
         0,
         document.referrer.lastIndexOf('/')
       );
 
-      var parentOriginRegex = new RegExp(escapeRegExp(parentOrigin));
+      const parentOriginRegex = new RegExp(escapeRegExp(parentOrigin));
 
-      var methods = {
+      const methods = {
         multiply(num1, num2) {
           return num1 * num2;
         },
