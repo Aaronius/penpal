@@ -5,15 +5,12 @@
     <script>
       window.addEventListener('load', function () {
         const iframe = document.createElement('iframe');
-        iframe.src =
-          'file:///Users/aahardy/dev/penpal/test/manual/file/general.html';
+        iframe.src = 'child.html';
         document.body.appendChild(iframe);
 
-        const connection = Penpal.connectToChild({
+        Penpal.connectToChildIframe({
           iframe,
-        });
-
-        connection.promise.then(function (child) {
+        }).promise.then(function (child) {
           child.multiply(3, 2).then((result) => {
             const div = document.createElement('div');
             div.textContent = '3 X 2 = ' + result;
