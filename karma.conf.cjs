@@ -24,6 +24,8 @@ module.exports = (config) => {
       'karma-jasmine',
       'karma-chrome-launcher',
       'karma-firefox-launcher',
+      'karma-safari-launcher',
+      '@chiragrupani/karma-chromium-edge-launcher'
     ],
     preprocessors: {
       'test/**/*.ts': ['rollup'],
