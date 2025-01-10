@@ -6,4 +6,4 @@ export { default as MethodCallOptions } from './MethodCallOptions';
 export { default as Reply } from './Reply';
 
 export { ErrorCode } from './enums';
-export { Connection, RemoteControl, Methods, PenpalError } from './types';
+export { Connection, RemoteMethodProxies, Methods, PenpalError } from './types';

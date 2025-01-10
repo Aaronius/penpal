@@ -2,7 +2,7 @@ import {
   SynMessage,
   Methods,
   PenpalError,
-  RemoteControl,
+  RemoteMethodProxies,
   PenpalMessage,
   Destructor,
 } from '../types';
@@ -24,7 +24,7 @@ type Connection<TMethods extends Methods = Methods> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<RemoteControl<TMethods>>;
+  promise: Promise<RemoteMethodProxies<TMethods>>;
   /**
    * A method that, when called, will disconnect any communication.
    * You may call this even before a connection has been established.
@@ -57,29 +57,31 @@ export default <TMethods extends Methods = Methods>(
     messenger.sendMessage(synMessage);
   };
 
-  const promise = new Promise<RemoteControl<TMethods>>((resolve, reject) => {
-    const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
-    const handleMessage = (message: PenpalMessage) => {
-      if (message.type === MessageType.SynAck) {
+  const promise = new Promise<RemoteMethodProxies<TMethods>>(
+    (resolve, reject) => {
+      const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
+      const handleMessage = (message: PenpalMessage) => {
+        if (message.type === MessageType.SynAck) {
+          messenger.removeMessageHandler(handleMessage);
+          stopConnectionTimeout();
+          const remoteMethodProxies = handleSynAckMessage<TMethods>(message);
+          resolve(remoteMethodProxies);
+        }
+      };
+
+      messenger.addMessageHandler(handleMessage);
+
+      sendSynMessage();
+
+      onDestroy((error?: PenpalError) => {
         messenger.removeMessageHandler(handleMessage);
-        stopConnectionTimeout();
-        const callSender = handleSynAckMessage<TMethods>(message);
-        resolve(callSender);
-      }
-    };
 
-    messenger.addMessageHandler(handleMessage);
-
-    sendSynMessage();
-
-    onDestroy((error?: PenpalError) => {
-      messenger.removeMessageHandler(handleMessage);
-
-      if (error) {
-        reject(error);
-      }
-    });
-  });
+        if (error) {
+          reject(error);
+        }
+      });
+    }
+  );
 
   return {
     promise,

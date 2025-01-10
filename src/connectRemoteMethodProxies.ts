@@ -7,7 +7,7 @@ import {
   PenpalMessage,
   SerializedError,
   WindowsInfo,
-  RemoteControl,
+  RemoteMethodProxies,
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
@@ -23,14 +23,14 @@ type ReplyHandler = {
  * Augments an object with methods that match those defined by the remote. When these methods are
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
- * @param callSender Sender object that should be augmented with methods.
+ * @param remoteMethodProxies Object that should be augmented with remote method proxies.
  * @param info Information about the local and remote windows.
  * @param methodPaths Key paths of methods available to be called on the remote.
  * @param log Logs messages.
  * @returns The call sender object with methods that may be called.
  */
 export default (
-  callSender: RemoteControl,
+  remoteMethodProxies: RemoteMethodProxies,
   info: WindowsInfo,
   methodPaths: string[],
   log: Log
@@ -130,16 +130,14 @@ export default (
   };
 
   // Wrap each method in a proxy which sends it to the corresponding receiver.
-  const flattenedMethods = methodPaths.reduce<
+  const flattedMethodProxies = methodPaths.reduce<
     Record<string, () => Promise<unknown>>
   >((memo, methodPath) => {
     memo[methodPath] = createMethodProxy(methodPath);
     return memo;
   }, {});
 
-  // Unpack the structure of the provided methods object onto the CallSender, exposing
-  // the methods in the same shape they were provided.
-  Object.assign(callSender, unflattenMethods(flattenedMethods));
+  Object.assign(remoteMethodProxies, unflattenMethods(flattedMethodProxies));
 
   return () => {
     destroyed = true;

@@ -3,11 +3,11 @@ import {
   FlattenedMethods,
   WindowsInfo,
   Destructor,
-  RemoteControl,
+  RemoteMethodProxies,
   Methods,
 } from '../types';
-import connectCallReceiver from '../connectCallReceiver';
-import connectCallSender from '../connectCallSender';
+import connectCallHandler from '../connectCallHandler';
+import connectRemoteMethodProxies from '../connectRemoteMethodProxies';
 import Messenger from '../Messenger';
 
 /**
@@ -20,15 +20,17 @@ const handleAckMessageFactory = <TMethods extends Methods>(
   log: Log
 ) => {
   const { onDestroy } = destructor;
-  let destroyCallReceiverConnection: () => void;
-  let destroyCallSenderConnection: () => void;
+  let destroyCallHandler: () => void;
+  let destroyRemoteMethodProxies: () => void;
   // We resolve the promise with the call sender. If the child reconnects
   // (for example, after refreshing or navigating to another page that
   // uses Penpal, we'll update the call sender with methods that match the
   // latest provided by the child.
-  const callSender = {} as RemoteControl<TMethods>;
+  const remoteMethodProxies = {} as RemoteMethodProxies<TMethods>;
 
-  const handleAckMessage = (methodPaths: string[]): RemoteControl<TMethods> => {
+  const handleAckMessage = (
+    methodPaths: string[]
+  ): RemoteMethodProxies<TMethods> => {
     log('Parent: Handshake - Received ACK');
 
     const info: WindowsInfo = {
@@ -38,37 +40,33 @@ const handleAckMessageFactory = <TMethods extends Methods>(
 
     // If the child reconnected, we need to destroy the prior call receiver
     // connection before setting up a new one.
-    if (destroyCallReceiverConnection) {
-      destroyCallReceiverConnection();
+    if (destroyCallHandler) {
+      destroyCallHandler();
     }
 
     // If the child reconnected, we need to destroy the prior call sender
     // connection before setting up a new one.
-    if (destroyCallSenderConnection) {
-      destroyCallSenderConnection();
+    if (destroyRemoteMethodProxies) {
+      destroyRemoteMethodProxies();
     }
 
-    destroyCallReceiverConnection = connectCallReceiver(
-      info,
-      flattenedMethods,
-      log
-    );
-    onDestroy(destroyCallReceiverConnection);
+    destroyCallHandler = connectCallHandler(info, flattenedMethods, log);
+    onDestroy(destroyCallHandler);
 
-    Object.keys(callSender).forEach((key) => {
-      delete callSender[key];
+    Object.keys(remoteMethodProxies).forEach((key) => {
+      delete remoteMethodProxies[key];
     });
 
-    destroyCallSenderConnection = connectCallSender(
-      callSender,
+    destroyRemoteMethodProxies = connectRemoteMethodProxies(
+      remoteMethodProxies,
       info,
       methodPaths,
       log
     );
 
-    onDestroy(destroyCallSenderConnection);
+    onDestroy(destroyRemoteMethodProxies);
 
-    return callSender;
+    return remoteMethodProxies;
   };
 
   return handleAckMessage;

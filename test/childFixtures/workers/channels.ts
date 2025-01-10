@@ -1,7 +1,10 @@
-import { connectToParentFromWorker, RemoteControl } from '../../../src/index';
+import {
+  connectToParentFromWorker,
+  RemoteMethodProxies,
+} from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
 
-let channelBParent: RemoteControl<Pick<FixtureMethods, 'getChannel'>>;
+let channelBParent: RemoteMethodProxies<Pick<FixtureMethods, 'getChannel'>>;
 
 const channelBMethods = {
   getChannel() {
@@ -22,7 +25,7 @@ connectToParentFromWorker<
   channelBParent = parent;
 });
 
-let channelAParent: RemoteControl<Pick<
+let channelAParent: RemoteMethodProxies<Pick<
   FixtureMethods,
   'getChannel' | 'getChannelFromParent'
 >>;

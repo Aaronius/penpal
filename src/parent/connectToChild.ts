@@ -1,6 +1,6 @@
 import {
   PenpalError,
-  RemoteControl,
+  RemoteMethodProxies,
   Connection,
   Methods,
   PenpalMessage,
@@ -40,34 +40,36 @@ export default <TMethods extends Methods = Methods>(
     log
   );
 
-  const promise = new Promise<RemoteControl<TMethods>>((resolve, reject) => {
-    const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
-    const handleMessage = (message: PenpalMessage) => {
-      if (message.type === MessageType.Syn) {
-        handleSynMessage();
-        return;
-      }
+  const promise = new Promise<RemoteMethodProxies<TMethods>>(
+    (resolve, reject) => {
+      const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
+      const handleMessage = (message: PenpalMessage) => {
+        if (message.type === MessageType.Syn) {
+          handleSynMessage();
+          return;
+        }
 
-      if (message.type === MessageType.Ack) {
-        const callSender = handleAckMessage(message.methodPaths);
-        stopConnectionTimeout();
-        resolve(callSender);
-        return;
-      }
-    };
+        if (message.type === MessageType.Ack) {
+          const remoteMethodProxies = handleAckMessage(message.methodPaths);
+          stopConnectionTimeout();
+          resolve(remoteMethodProxies);
+          return;
+        }
+      };
 
-    messenger.addMessageHandler(handleMessage);
+      messenger.addMessageHandler(handleMessage);
 
-    log('Parent: Awaiting handshake');
+      log('Parent: Awaiting handshake');
 
-    onDestroy((error?: PenpalError) => {
-      messenger.removeMessageHandler(handleMessage);
+      onDestroy((error?: PenpalError) => {
+        messenger.removeMessageHandler(handleMessage);
 
-      if (error) {
-        reject(error);
-      }
-    });
-  });
+        if (error) {
+          reject(error);
+        }
+      });
+    }
+  );
 
   return {
     promise,
