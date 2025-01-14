@@ -21,7 +21,7 @@
         },
       };
 
-      Penpal.connectToParentFromIframe({
+      Penpal.connectToParent({
         methods: methods,
         parentOrigin: '*',
       }).promise.then(function (parent) {

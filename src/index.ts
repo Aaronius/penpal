@@ -1,7 +1,5 @@
-export { default as connectToChildIframe } from './parent/connectToChildIframe';
-export { default as connectToParentFromIframe } from './child/connectToParentFromIframe';
-export { default as connectToChildWorker } from './parent/connectToChildWorker';
-export { default as connectToParentFromWorker } from './child/connectToParentFromWorker';
+export { default as connectToChild } from './parent/connectToChild';
+export { default as connectToParent } from './child/connectToParent';
 export { default as MethodCallOptions } from './MethodCallOptions';
 export { default as Reply } from './Reply';
 

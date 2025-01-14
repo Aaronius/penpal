@@ -1,6 +1,6 @@
 import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from '../constants';
 import { createAndAddIframe } from '../utils';
-import { connectToChildIframe, ErrorCode, PenpalError } from '../../src/index';
+import { connectToChild, ErrorCode, PenpalError } from '../../src/index';
 import { CHECK_IFRAME_IN_DOC_INTERVAL } from '../../src/parent/monitorIframeRemoval';
 import FixtureMethods from '../childFixtures/types/FixtureMethods';
 
@@ -37,8 +37,8 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await connection.promise;
@@ -47,12 +47,12 @@ describe('backward compatibility - connection management', () => {
   it('connects to iframe when correct child origin provided', async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: CHILD_SERVER,
     });
 
-    // We're setting src after calling connectToChildIframe to ensure
+    // We're setting src after calling connectToChild to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/pages/backwardCompatibility/general.html`;
@@ -63,12 +63,12 @@ describe('backward compatibility - connection management', () => {
   it('connects to iframe when correct child origin regex provided', async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: /^http/,
     });
 
-    // We're setting src after calling connectToChildIframe to ensure
+    // We're setting src after calling connectToChild to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/pages/backwardCompatibility/general.html`;
@@ -79,12 +79,12 @@ describe('backward compatibility - connection management', () => {
   it('connects to iframe when correct child origin regex provided', async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: /^http/,
     });
 
-    // We're setting src after calling connectToChildIframe to ensure
+    // We're setting src after calling connectToChild to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/pages/backwardCompatibility/general.html`;
@@ -96,8 +96,8 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe();
     iframe.src = `${CHILD_SERVER}/pages/backwardCompatibility/matchingParentOrigin.html`;
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await connection.promise;
@@ -107,8 +107,8 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe();
     iframe.src = `${CHILD_SERVER}/pages/backwardCompatibility/matchingParentOriginRegex.html`;
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await connection.promise;
@@ -117,12 +117,12 @@ describe('backward compatibility - connection management', () => {
   it("doesn't connect to iframe when incorrect child origin provided", async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: 'http://bogus.com',
     });
 
-    // We're setting src after calling connectToChildIframe to ensure
+    // We're setting src after calling connectToChild to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/pages/backwardCompatibility/general.html`;
@@ -135,8 +135,8 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/mismatchedParentOrigin.html`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -147,8 +147,8 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/mismatchedParentOriginRegex.html`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -162,8 +162,8 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: '*',
     });
 
@@ -178,8 +178,8 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -193,8 +193,8 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: CHILD_SERVER,
     });
 
@@ -209,8 +209,8 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: /example\.com/,
     });
 
@@ -222,16 +222,16 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/noParentOrigin.html`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
   it('reconnects after child reloads', (done) => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -261,8 +261,8 @@ describe('backward compatibility - connection management', () => {
       return num1 + num2;
     });
 
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
       methods: {
@@ -290,8 +290,8 @@ describe('backward compatibility - connection management', () => {
   });
 
   it('reconnects after child navigates to other page with different methods', (done) => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -320,8 +320,8 @@ describe('backward compatibility - connection management', () => {
     let error;
 
     try {
-      connectToChildIframe<FixtureMethods>({
-        iframe: createAndAddIframe(),
+      connectToChild<FixtureMethods>({
+        child: createAndAddIframe(),
       });
     } catch (e) {
       error = e;
@@ -334,11 +334,9 @@ describe('backward compatibility - connection management', () => {
     expect((error as PenpalError).code).toBe(ErrorCode.OriginRequired);
   });
 
-  it('rejects promise if connectToChildIframe times out', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
-        'http://www.fakeresponse.com/api/?sleep=10000'
-      ),
+  it('rejects promise if connectToChild times out', async () => {
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe('http://www.fakeresponse.com/api/?sleep=10000'),
       timeout: 0,
     });
 
@@ -355,7 +353,7 @@ describe('backward compatibility - connection management', () => {
 
   it(
     "doesn't destroy connection if connection succeeds then " +
-      'timeout passes (connectToChildIframe)',
+      'timeout passes (connectToChild)',
     async () => {
       jasmine.clock().install();
 
@@ -363,8 +361,8 @@ describe('backward compatibility - connection management', () => {
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       );
 
-      const connection = connectToChildIframe<FixtureMethods>({
-        iframe,
+      const connection = connectToChild<FixtureMethods>({
+        child: iframe,
         timeout: 100000,
       });
 
@@ -379,10 +377,10 @@ describe('backward compatibility - connection management', () => {
 
   it(
     "doesn't destroy connection if connection succeeds then " +
-      'timeout passes (connectToParentFromIframe)',
+      'timeout passes (connectToParent)',
     (done) => {
-      const connection = connectToChildIframe<FixtureMethods>({
-        iframe: createAndAddIframe(
+      const connection = connectToChild<FixtureMethods>({
+        child: createAndAddIframe(
           `${CHILD_SERVER}/pages/backwardCompatibility/timeout.html`
         ),
         methods: {
@@ -401,8 +399,8 @@ describe('backward compatibility - connection management', () => {
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
 
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe,
+    const connection = connectToChild<FixtureMethods>({
+      child: iframe,
     });
 
     const child = await connection.promise;

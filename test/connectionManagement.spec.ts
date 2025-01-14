@@ -1,11 +1,6 @@
 import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants';
 import { createAndAddIframe, getWorkerFixtureUrl } from './utils';
-import {
-  connectToChildIframe,
-  connectToChildWorker,
-  ErrorCode,
-  PenpalError,
-} from '../src/index';
+import { connectToChild, ErrorCode, PenpalError } from '../src/index';
 import { CHECK_IFRAME_IN_DOC_INTERVAL } from '../src/parent/monitorIframeRemoval';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 
@@ -40,8 +35,8 @@ describe('connection management', () => {
   it('connects to iframe when no child origin is provided but src is set on iframe', async () => {
     const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await connection.promise;
@@ -50,12 +45,12 @@ describe('connection management', () => {
   it('connects to iframe when correct child origin provided', async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: CHILD_SERVER,
     });
 
-    // We're setting src after calling connectToChildIframe to ensure
+    // We're setting src after calling connectToChild to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/pages/general.html`;
@@ -66,28 +61,12 @@ describe('connection management', () => {
   it('connects to iframe when correct child origin regex provided', async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: /^http/,
     });
 
-    // We're setting src after calling connectToChildIframe to ensure
-    // that we don't throw an error in such a case. src is only
-    // needed when childOrigin is not passed.
-    iframe.src = `${CHILD_SERVER}/pages/general.html`;
-
-    await connection.promise;
-  });
-
-  it('connects to iframe when correct child origin regex provided', async () => {
-    const iframe = createAndAddIframe();
-
-    const connection = connectToChildIframe({
-      iframe,
-      childOrigin: /^http/,
-    });
-
-    // We're setting src after calling connectToChildIframe to ensure
+    // We're setting src after calling connectToChild to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/pages/general.html`;
@@ -98,8 +77,8 @@ describe('connection management', () => {
   it('connects to worker', async () => {
     const worker = new Worker(getWorkerFixtureUrl('general'));
 
-    const connection = connectToChildWorker({
-      worker,
+    const connection = connectToChild({
+      child: worker,
     });
 
     await connection.promise;
@@ -109,8 +88,8 @@ describe('connection management', () => {
     const iframe = createAndAddIframe();
     iframe.src = `${CHILD_SERVER}/pages/matchingParentOrigin.html`;
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await connection.promise;
@@ -120,8 +99,8 @@ describe('connection management', () => {
     const iframe = createAndAddIframe();
     iframe.src = `${CHILD_SERVER}/pages/matchingParentOriginRegex.html`;
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await connection.promise;
@@ -130,12 +109,12 @@ describe('connection management', () => {
   it("doesn't connect to iframe when incorrect child origin provided", async () => {
     const iframe = createAndAddIframe();
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: 'http://bogus.com',
     });
 
-    // We're setting src after calling connectToChildIframe to ensure
+    // We're setting src after calling connectToChild to ensure
     // that we don't throw an error in such a case. src is only
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/pages/general.html`;
@@ -148,8 +127,8 @@ describe('connection management', () => {
       `${CHILD_SERVER}/pages/mismatchedParentOrigin.html`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -160,8 +139,8 @@ describe('connection management', () => {
       `${CHILD_SERVER}/pages/mismatchedParentOriginRegex.html`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -175,8 +154,8 @@ describe('connection management', () => {
       `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: '*',
     });
 
@@ -191,8 +170,8 @@ describe('connection management', () => {
       `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
@@ -206,8 +185,8 @@ describe('connection management', () => {
       `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: CHILD_SERVER,
     });
 
@@ -222,8 +201,8 @@ describe('connection management', () => {
       `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
       childOrigin: /example\.com/,
     });
 
@@ -235,16 +214,16 @@ describe('connection management', () => {
       `${CHILD_SERVER}/pages/noParentOrigin.html`
     );
 
-    const connection = connectToChildIframe({
-      iframe,
+    const connection = connectToChild({
+      child: iframe,
     });
 
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
   it('reconnects after child reloads', (done) => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
     });
 
     connection.promise.then((child) => {
@@ -272,8 +251,8 @@ describe('connection management', () => {
       return num1 + num2;
     });
 
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
       methods: {
         add,
       },
@@ -299,8 +278,8 @@ describe('connection management', () => {
   });
 
   it('reconnects after child navigates to other page with different methods', (done) => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
     });
 
     connection.promise.then((child) => {
@@ -325,8 +304,8 @@ describe('connection management', () => {
     let error;
 
     try {
-      connectToChildIframe<FixtureMethods>({
-        iframe: createAndAddIframe(),
+      connectToChild<FixtureMethods>({
+        child: createAndAddIframe(),
       });
     } catch (e) {
       error = e;
@@ -339,11 +318,9 @@ describe('connection management', () => {
     expect((error as PenpalError).code).toBe(ErrorCode.OriginRequired);
   });
 
-  it('rejects promise if connectToChildIframe times out', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
-        'http://www.fakeresponse.com/api/?sleep=10000'
-      ),
+  it('rejects promise if connectToChild times out', async () => {
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe('http://www.fakeresponse.com/api/?sleep=10000'),
       timeout: 0,
     });
 
@@ -360,14 +337,14 @@ describe('connection management', () => {
 
   it(
     "doesn't destroy connection if connection succeeds then " +
-      'timeout passes (connectToChildIframe)',
+      'timeout passes (connectToChild)',
     async () => {
       jasmine.clock().install();
 
       const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
 
-      const connection = connectToChildIframe<FixtureMethods>({
-        iframe,
+      const connection = connectToChild<FixtureMethods>({
+        child: iframe,
         timeout: 100000,
       });
 
@@ -382,10 +359,10 @@ describe('connection management', () => {
 
   it(
     "doesn't destroy connection if connection succeeds then " +
-      'timeout passes (connectToParentFromIframe)',
+      'timeout passes (connectToParent)',
     (done) => {
-      const connection = connectToChildIframe<FixtureMethods>({
-        iframe: createAndAddIframe(`${CHILD_SERVER}/pages/timeout.html`),
+      const connection = connectToChild<FixtureMethods>({
+        child: createAndAddIframe(`${CHILD_SERVER}/pages/timeout.html`),
         methods: {
           reportStillConnected() {
             connection.destroy();
@@ -400,8 +377,8 @@ describe('connection management', () => {
     jasmine.clock().install();
     const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
 
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe,
+    const connection = connectToChild<FixtureMethods>({
+      child: iframe,
     });
 
     const child = await connection.promise;
@@ -429,8 +406,8 @@ describe('connection management', () => {
     // children as simultaneous as possible to make the test more robust by
     // trying to trip up the logic in our code.
 
-    const channelAConnection = connectToChildIframe<FixtureMethods>({
-      iframe,
+    const channelAConnection = connectToChild<FixtureMethods>({
+      child: iframe,
       channel: 'A',
       methods: {
         getChannel() {
@@ -439,8 +416,8 @@ describe('connection management', () => {
       },
     });
 
-    const channelBConnection = connectToChildIframe<FixtureMethods>({
-      iframe,
+    const channelBConnection = connectToChild<FixtureMethods>({
+      child: iframe,
       channel: 'B',
       methods: {
         getChannel() {
@@ -474,8 +451,8 @@ describe('connection management', () => {
     // children as simultaneous as possible to make the test more robust by
     // trying to trip up the logic in our code.
 
-    const channelAConnection = connectToChildWorker<FixtureMethods>({
-      worker,
+    const channelAConnection = connectToChild<FixtureMethods>({
+      child: worker,
       channel: 'A',
       methods: {
         getChannel() {
@@ -484,8 +461,8 @@ describe('connection management', () => {
       },
     });
 
-    const channelBConnection = connectToChildWorker<FixtureMethods>({
-      worker,
+    const channelBConnection = connectToChild<FixtureMethods>({
+      child: worker,
       channel: 'B',
       methods: {
         getChannel() {

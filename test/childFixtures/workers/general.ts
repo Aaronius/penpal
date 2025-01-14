@@ -1,4 +1,4 @@
-import { connectToParentFromWorker, Reply } from '../../../src/index';
+import { connectToParent, Reply } from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
 console.log('web worker origin', self.location.origin);
 type ParentAPI = Record<'add', (num1: number, num2: number) => Promise<number>>;
@@ -75,7 +75,7 @@ const methods: Omit<
   },
 };
 
-connectToParentFromWorker<ParentAPI>({
+connectToParent<ParentAPI>({
   methods: methods,
   debug: true,
 }).promise.then((parent) => {

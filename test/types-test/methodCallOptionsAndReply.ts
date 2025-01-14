@@ -1,6 +1,6 @@
 import assertType from './assertType';
 import {
-  connectToChildIframe,
+  connectToChild,
   MethodCallOptions,
   RemoteMethodProxies,
   Reply,
@@ -46,8 +46,8 @@ const childMethods = {
 
 type ChildMethods = typeof childMethods;
 
-const connection = connectToChildIframe<ChildMethods>({
-  iframe: document.createElement('iframe'),
+const connection = connectToChild<ChildMethods>({
+  child: document.createElement('iframe'),
 });
 
 const child = await connection.promise;

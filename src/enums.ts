@@ -17,6 +17,7 @@ export enum NativeErrorName {
   DataCloneError = 'DataCloneError',
 }
 
-export enum NativeEventType {
-  Message = 'message',
+export enum ContextType {
+  Window = 'Window',
+  Worker = 'Worker',
 }

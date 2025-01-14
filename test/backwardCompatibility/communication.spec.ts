@@ -1,6 +1,6 @@
 import { createAndAddIframe, createIframeAndConnection } from '../utils';
 import {
-  connectToChildIframe,
+  connectToChild,
   ErrorCode,
   MethodCallOptions,
   PenpalError,
@@ -14,8 +14,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('calls a function on the child', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -26,8 +26,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('calls nested functions on the child', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -40,8 +40,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('calls an asynchronous function on the child', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -52,8 +52,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('calls a function on the parent', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
       methods: {
@@ -70,8 +70,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles promises rejected with strings', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -83,8 +83,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles promises rejected with error objects', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -112,8 +112,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles thrown errors', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -130,8 +130,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles unclonable values', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -149,8 +149,8 @@ describe(`backward compatibility - communication between parent and child iframe
 
   it('rejects method call promise if method call timeout reached', async () => {
     jasmine.clock().install();
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });
@@ -180,8 +180,8 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('rejects method call promise if connection is destroyed before reply is received', async () => {
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe: createAndAddIframe(
+    const connection = connectToChild<FixtureMethods>({
+      child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       ),
     });

@@ -13,7 +13,7 @@
     </script>
     <script src="/penpal.js"></script>
     <script>
-      Penpal.connectToParentFromIframe({
+      Penpal.connectToParent({
         parentOrigin: 'http://example.com',
       }).promise.then(function (parent) {
         parentAPI = parent;

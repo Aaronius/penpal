@@ -17,9 +17,12 @@ import {
   upgradeMessage,
 } from '../backwardCompatibility';
 
-class ParentToIframeMessenger implements Messenger {
-  private _iframe: HTMLIFrameElement;
-  private _childOrigin: string | RegExp;
+/**
+ * Handles communication between the parent and a remote (either an iframe or a worker).
+ */
+class ParentToChildMessenger implements Messenger {
+  private _child: HTMLIFrameElement | Worker;
+  private _childOrigin: string | RegExp | undefined;
   private _validatedChildOrigin?: string;
   private _channel?: string;
   private _log: Log;
@@ -28,46 +31,66 @@ class ParentToIframeMessenger implements Messenger {
   private _isChildUsingDeprecatedProtocol = false;
 
   constructor(
-    iframe: HTMLIFrameElement,
+    child: HTMLIFrameElement | Worker,
     childOrigin: string | RegExp | undefined,
     channel: string | undefined,
     log: Log,
     destructor: Destructor
   ) {
-    this._iframe = iframe;
+    this._child = child;
     this._channel = channel;
     this._log = log;
 
-    if (!childOrigin) {
-      validateIframeHasSrcOrSrcDoc(iframe);
-      childOrigin = getOriginFromSrc(iframe.src);
+    let messageDispatcher: Worker | Window;
+
+    if (child instanceof Worker) {
+      messageDispatcher = child;
+    } else {
+      if (!childOrigin) {
+        validateIframeHasSrcOrSrcDoc(child);
+        childOrigin = getOriginFromSrc(child.src);
+      }
+      this._childOrigin = childOrigin;
+      monitorIframeRemoval(child, destructor);
+      messageDispatcher = window;
     }
 
-    this._childOrigin = childOrigin;
-    monitorIframeRemoval(iframe, destructor);
-
-    window.addEventListener('message', this._handleMessageFromWindow);
+    messageDispatcher.addEventListener(
+      'message',
+      this._handleMessageFromChild as EventListener
+    );
 
     destructor.onDestroy(() => {
-      window.removeEventListener('message', this._handleMessageFromWindow);
-      this._clearPort();
+      messageDispatcher.removeEventListener(
+        'message',
+        this._handleMessageFromChild as EventListener
+      );
+      this._destroyPort();
       this._messageCallbacks.clear();
     });
   }
 
-  private _clearPort = () => {
+  private _destroyPort = () => {
     this._port?.removeEventListener('message', this._handleMessageFromPort);
     this._port?.close();
     this._port = undefined;
   };
 
-  private _handleMessageFromWindow = (event: MessageEvent): void => {
-    // Under specific timing circumstances, we can receive an event
-    // whose source is null. This seems to happen when the child iframe is
-    // removed from the DOM about the same time it sends a message.
-    // https://github.com/Aaronius/penpal/issues/85
-    if (!event.source || event.source !== this._iframe.contentWindow) {
-      return;
+  private _handleMessageFromChild = (event: MessageEvent): void => {
+    // event.source is always null when receiving an event from a worker,
+    // so we don't have to check it in that case.
+    if (this._child instanceof HTMLIFrameElement) {
+      if (
+        // Under specific timing circumstances, we can receive an event
+        // whose source is null at this point. This seems to happen when the
+        // child iframe is removed from the DOM about the same time it
+        // sends a message.
+        // https://github.com/Aaronius/penpal/issues/85
+        !event.source ||
+        event.source !== this._child.contentWindow
+      ) {
+        return;
+      }
     }
 
     let messageEnvelope: PenpalMessageEnvelope;
@@ -92,22 +115,20 @@ class ParentToIframeMessenger implements Messenger {
       return;
     }
 
+    if (!this._isEventFromValidOrigin(event)) {
+      this._log(
+        `Parent: Received a message from ${event.origin} which did not match expected origin ${this._childOrigin}`
+      );
+      return;
+    }
+
     const { message } = messageEnvelope;
 
     if (message.type === MessageType.Syn) {
-      const originQualifies =
-        this._childOrigin instanceof RegExp
-          ? this._childOrigin.test(event.origin)
-          : this._childOrigin === '*' || this._childOrigin === event.origin;
-      if (originQualifies) {
-        this._clearPort();
-        this._validatedChildOrigin = event.origin;
-      } else {
-        this._log(
-          `Parent: Handshake - Received SYN message from origin ${event.origin} which did not match expected origin ${this._childOrigin}`
-        );
-        return;
-      }
+      // We destroy the port if one is already set, because it's possible a
+      // child is re-connecting.
+      this._destroyPort();
+      this._validatedChildOrigin = event.origin;
     }
 
     if (
@@ -120,6 +141,7 @@ class ParentToIframeMessenger implements Messenger {
       this._port = event.ports[0];
 
       if (!this._port) {
+        // If this ever happens, it's a bug in Penpal.
         throw new Error('Parent: Handshake - No port received on ACK');
       }
 
@@ -131,6 +153,19 @@ class ParentToIframeMessenger implements Messenger {
       callback(message);
     }
   };
+
+  private _isEventFromValidOrigin(event: MessageEvent): boolean {
+    if (
+      // In both cases, origins are irrelevant.
+      this._child instanceof Worker ||
+      event.currentTarget instanceof MessagePort
+    ) {
+      return true;
+    }
+    return this._childOrigin instanceof RegExp
+      ? this._childOrigin.test(event.origin)
+      : this._childOrigin === '*' || this._childOrigin === event.origin;
+  }
 
   private _handleMessageFromPort = (event: MessageEvent): void => {
     // Unlike in _handleMessageFromWindow, we don't have to check if
@@ -168,33 +203,33 @@ class ParentToIframeMessenger implements Messenger {
       // the port because older versions of Penpal don't use MessagePorts.
       this._isChildUsingDeprecatedProtocol
     ) {
-      if (!this._validatedChildOrigin) {
-        // This should never be the case.
-        throw new Error('Child origin has not been validated');
-      }
-
-      // If the child origin is "null", the remote protocol is file: or data: and we
-      // must post messages with "*" as the targetOrigin when using postMessage().
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
-      const originForSending =
-        this._validatedChildOrigin === 'null'
-          ? '*'
-          : this._validatedChildOrigin;
-
       const payload = this._isChildUsingDeprecatedProtocol
         ? downgradeMessageEnvelope(envelope)
         : envelope;
 
-      // We have to send the SynAck message through the iframe window and not
-      // the MessagePort because if the event were sent through MessagePort,
-      // event.origin would always be empty when the child receives the event.
-      // This is insufficient, because the child needs to validate that the
-      // event's origin matches the child's options.parentOrigin before
-      // continuing the handshake.
-      this._iframe.contentWindow?.postMessage(payload, {
-        targetOrigin: originForSending,
-        transfer: transferables,
-      });
+      if (this._child instanceof HTMLIFrameElement) {
+        if (!this._validatedChildOrigin) {
+          // If this ever happens, it's a bug in Penpal.
+          throw new Error('Child origin has not been validated');
+        }
+
+        // Previous versions of Penpal don't use MessagePorts so they won't be
+        // sending a MessagePort on the event. We instead do all communication
+        // through the window rather than a port.
+        const originForSending =
+          this._validatedChildOrigin === 'null'
+            ? '*'
+            : this._validatedChildOrigin;
+
+        this._child.contentWindow?.postMessage(payload, {
+          targetOrigin: originForSending,
+          transfer: transferables,
+        });
+      } else {
+        this._child.postMessage(payload, {
+          transfer: transferables,
+        });
+      }
       return;
     }
 
@@ -203,7 +238,8 @@ class ParentToIframeMessenger implements Messenger {
         transfer: transferables,
       });
     } else {
-      this._log(`Parent: Unable to send message during handshake`, message);
+      // If this ever happens, it's a bug in Penpal.
+      throw new Error('Port has not been received from child');
     }
   };
 
@@ -216,4 +252,4 @@ class ParentToIframeMessenger implements Messenger {
   };
 }
 
-export default ParentToIframeMessenger;
+export default ParentToChildMessenger;

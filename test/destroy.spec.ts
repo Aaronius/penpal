@@ -5,12 +5,7 @@ import {
   createWorkerAndConnection,
   getWorkerFixtureUrl,
 } from './utils';
-import {
-  connectToChildIframe,
-  connectToChildWorker,
-  ErrorCode,
-  PenpalError,
-} from '../src/index';
+import { connectToChild, ErrorCode, PenpalError } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 
 const variants = [
@@ -46,8 +41,8 @@ for (const variant of variants) {
           'removeEventListener'
         ).and.callThrough();
 
-        const connection = connectToChildIframe<FixtureMethods>({
-          iframe: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
+        const connection = connectToChild<FixtureMethods>({
+          child: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
         });
 
         // The method call message listener is set up after the connection has been established.
@@ -74,8 +69,8 @@ for (const variant of variants) {
           'removeEventListener'
         ).and.callThrough();
 
-        const connection = connectToChildWorker<FixtureMethods>({
-          worker,
+        const connection = connectToChild<FixtureMethods>({
+          child: worker,
         });
 
         // The method call message listener is set up after the connection has been established.

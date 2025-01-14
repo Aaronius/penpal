@@ -1,5 +1,5 @@
 import { CHILD_SERVER } from './constants';
-import { connectToChildIframe, connectToChildWorker } from '../src/index';
+import { connectToChild } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import { getWorkerFixtureUrl } from './utils';
 
@@ -9,7 +9,7 @@ const htmlSrc = `
   <body>
     <script  src="${CHILD_SERVER}/penpal.js"></script>
     <script >
-      Penpal.connectToParentFromIframe({
+      Penpal.connectToParent({
         parentOrigin: "*",
         methods: {
           multiply: function(num1, num2) {
@@ -39,8 +39,8 @@ describe('data URI support', () => {
     iframe.src = `data:text/html,${htmlSrc}`;
     document.body.appendChild(iframe);
 
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe,
+    const connection = connectToChild<FixtureMethods>({
+      child: iframe,
     });
 
     const child = await connection.promise;
@@ -54,8 +54,8 @@ describe('data URI support', () => {
     iframe.src = `data:text/html,${htmlSrcRedirect}`;
     document.body.appendChild(iframe);
 
-    const connection = connectToChildIframe<FixtureMethods>({
-      iframe,
+    const connection = connectToChild<FixtureMethods>({
+      child: iframe,
     });
 
     const connectionResolved = jasmine.createSpy().and.callFake(() => {
@@ -77,8 +77,8 @@ describe('data URI support', () => {
       type: 'module',
     });
 
-    const connection = connectToChildWorker<FixtureMethods>({
-      worker,
+    const connection = connectToChild<FixtureMethods>({
+      child: worker,
     });
 
     const child = await connection.promise;
@@ -97,8 +97,8 @@ if (supportsSrcDoc) {
       iframe.srcdoc = htmlSrc;
       document.body.appendChild(iframe);
 
-      const connection = connectToChildIframe<FixtureMethods>({
-        iframe,
+      const connection = connectToChild<FixtureMethods>({
+        child: iframe,
       });
 
       const child = await connection.promise;
@@ -112,8 +112,8 @@ if (supportsSrcDoc) {
       iframe.srcdoc = htmlSrcRedirect;
       document.body.appendChild(iframe);
 
-      const connection = connectToChildIframe<FixtureMethods>({
-        iframe,
+      const connection = connectToChild<FixtureMethods>({
+        child: iframe,
       });
 
       const connectionResolved = jasmine.createSpy().and.callFake(() => {

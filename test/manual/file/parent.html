@@ -8,8 +8,8 @@
         iframe.src = 'child.html';
         document.body.appendChild(iframe);
 
-        Penpal.connectToChildIframe({
-          iframe,
+        Penpal.connectToChild({
+          child: iframe,
         }).promise.then(function (child) {
           child.multiply(3, 2).then((result) => {
             const div = document.createElement('div');

@@ -4,20 +4,39 @@ import {
   PenpalError,
   RemoteMethodProxies,
   PenpalMessage,
-  Destructor,
 } from '../types';
-import { MessageType } from '../enums';
+import { ContextType, ErrorCode, MessageType } from '../enums';
 import handleSynAckMessageFactory from './handleSynAckMessageFactory';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
-import Messenger from '../Messenger';
+import createLogger from '../createLogger';
+import createDestructor from '../createDestructor';
+import ChildToParentMessenger from './ChildToParentMessenger';
+import contextType from './contextType';
 
 type Options = {
-  messenger: Messenger;
+  /**
+   * Valid parent origin used to restrict communication.
+   */
+  parentOrigin?: string | RegExp;
+  /**
+   * Methods that may be called by the parent window.
+   */
   methods?: Methods;
+  /**
+   * The amount of time, in milliseconds, Penpal should wait
+   * for the parent to respond before rejecting the connection promise.
+   */
   timeout?: number;
-  log: (...args: unknown[]) => void;
-  destructor: Destructor;
+  /**
+   * The channel to use to restrict communication. When specified, a connection
+   * will only be made when the parent is connecting using the same channel.
+   */
+  channel?: string;
+  /**
+   * Whether log messages should be emitted to the console.
+   */
+  debug?: boolean;
 };
 
 type Connection<TMethods extends Methods = Methods> = {
@@ -38,7 +57,40 @@ type Connection<TMethods extends Methods = Methods> = {
 export default <TMethods extends Methods = Methods>(
   options: Options
 ): Connection<TMethods> => {
-  const { messenger, methods = {}, timeout, log, destructor } = options;
+  const {
+    parentOrigin,
+    methods = {},
+    timeout,
+    channel,
+    debug = false,
+  } = options;
+
+  const log = createLogger(debug);
+
+  if (contextType === ContextType.Worker) {
+    if (parentOrigin) {
+      log(
+        'Child: parentOrigin was specified, but is ignored when connecting from a worker'
+      );
+    }
+  } else {
+    if (!parentOrigin) {
+      const error: PenpalError = new Error(
+        `The parentOrigin option must be specified when connecting to a parent`
+      ) as PenpalError;
+      error.code = ErrorCode.OriginRequired;
+      throw error;
+    }
+  }
+
+  const destructor = createDestructor('Child', log);
+  const messenger = new ChildToParentMessenger(
+    parentOrigin,
+    channel,
+    log,
+    destructor
+  );
+
   const { destroy, onDestroy } = destructor;
   const flattenedMethods = flattenMethods(methods);
 

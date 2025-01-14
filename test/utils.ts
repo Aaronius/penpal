@@ -1,8 +1,4 @@
-import {
-  connectToChildIframe,
-  connectToChildWorker,
-  Methods,
-} from '../src/index';
+import { connectToChild, Methods } from '../src/index';
 import { CHILD_SERVER } from './constants';
 
 export const createAndAddIframe = (url?: string) => {
@@ -21,8 +17,8 @@ export const createIframeAndConnection = <TMethods extends Methods>({
   methods?: Methods;
   pageName?: string;
 } = {}) => {
-  const connection = connectToChildIframe<TMethods>({
-    iframe: createAndAddIframe(getPageFixtureUrl(pageName)),
+  const connection = connectToChild<TMethods>({
+    child: createAndAddIframe(getPageFixtureUrl(pageName)),
     methods,
   });
   return connection;
@@ -36,8 +32,8 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   workerName?: string;
 } = {}) => {
   const worker = new Worker(getWorkerFixtureUrl(workerName));
-  const connection = connectToChildWorker<TMethods>({
-    worker,
+  const connection = connectToChild<TMethods>({
+    child: worker,
     methods,
   });
   return connection;
