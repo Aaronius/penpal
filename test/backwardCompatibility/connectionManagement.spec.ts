@@ -217,18 +217,6 @@ describe('backward compatibility - connection management', () => {
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
-  // it("doesn't connect to iframe when child does not set parent origin", async () => {
-  //   const iframe = createAndAddIframe(
-  //     `${CHILD_SERVER}/pages/backwardCompatibility/noParentOrigin.html`
-  //   );
-  //
-  //   const connection = connectToChild({
-  //     child: iframe,
-  //   });
-  //
-  //   await expectNoSuccessfulConnection(connection.promise, iframe);
-  // });
-
   it('reconnects after child reloads', (done) => {
     const connection = connectToChild<FixtureMethods>({
       child: createAndAddIframe(
