@@ -55,7 +55,6 @@ export default <TMethods extends Methods = Methods>(
 ): Connection<TMethods> => {
   const { child, methods = {}, timeout, channel, debug = false } = options;
   let { childOrigin } = options;
-
   const log = createLogger(debug);
   const destructor = createDestructor('Parent', log);
 

@@ -29,7 +29,7 @@ const handleSynMessageFactory = (
       const penpalError: PenpalError = new Error(
         (error as Error).message
       ) as PenpalError;
-      penpalError.code = ErrorCode.TransmitFailed;
+      penpalError.code = ErrorCode.TransmissionFailed;
       destructor.destroy(penpalError);
     }
   };

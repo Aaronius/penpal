@@ -100,7 +100,7 @@ describe('connection management', () => {
     // needed when childOrigin is not passed.
     iframe.src = `${CHILD_SERVER}/pages/general.html`;
 
-    await expectNeverFulfilledIframeConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe connecting to mismatched parent origin", async () => {
@@ -112,7 +112,7 @@ describe('connection management', () => {
       child: iframe,
     });
 
-    await expectNeverFulfilledIframeConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe connecting to mismatched parent origin regex", async () => {
@@ -124,7 +124,7 @@ describe('connection management', () => {
       child: iframe,
     });
 
-    await expectNeverFulfilledIframeConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it('connects to iframe when child redirects to different origin and child origin is set to *', async () => {
@@ -155,7 +155,7 @@ describe('connection management', () => {
       child: iframe,
     });
 
-    await expectNeverFulfilledIframeConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin", async () => {
@@ -171,7 +171,7 @@ describe('connection management', () => {
       childOrigin: CHILD_SERVER,
     });
 
-    await expectNeverFulfilledIframeConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin regex", async () => {
@@ -187,7 +187,7 @@ describe('connection management', () => {
       childOrigin: /example\.com/,
     });
 
-    await expectNeverFulfilledIframeConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe when child does not set parent origin", async () => {
@@ -199,7 +199,7 @@ describe('connection management', () => {
       child: iframe,
     });
 
-    await expectNeverFulfilledIframeConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it('reconnects after child reloads', (done) => {
@@ -451,4 +451,57 @@ describe('connection management', () => {
     channelAConnection.destroy();
     channelBConnection.destroy();
   });
+
+  const invalidOrigins = [
+    'localhost',
+    'null',
+    'http://:8080',
+    '://example.com',
+  ];
+
+  for (const invalidOrigin of invalidOrigins) {
+    // This test is only valid when setting an invalid parent origin when
+    // calling connectToParent and not when setting an invalid child origin
+    // when calling connectToChild. To understand why, it's important to
+    // consider that it is the underlying postMessage call that throws the error
+    // stating that the origin is invalid. The child is the first to call
+    // postMessage when it sends the SYN handshake message. If the child were
+    // to use a valid parent origin, the parent would receive the SYN call,
+    // but the parent would see that the event.origin doesn't match the
+    // configured (invalid) child origin and just ignore the message.
+    // It wouldn't _fail_ the connection in this case, because it must consider
+    // that the SYN message could legitimately be intended for a different
+    // penpal connection. The parent would also never call postMessage, because
+    // it's still waiting to receive a valid SYN message. Because postMessage
+    // would never be called by the parent, nothing would cause the parent's
+    // connection to be rejected unless there's a connection timeout configured.
+    fit(`rejects connection in child iframe when invalid childOrigin of ${invalidOrigin} is used`, async () => {
+      const iframe = createAndAddIframe(
+        `${CHILD_SERVER}/pages/invalidParentOrigin.html?invalidParentOrigin=${invalidOrigin}`
+      );
+
+      const connection = connectToChild<FixtureMethods>({
+        child: iframe,
+      });
+
+      const childConnectionAssertionPromise = new Promise<void>((resolve) => {
+        window.addEventListener('message', (message) => {
+          if (message.data.errorCode) {
+            expect(message.data.errorCode).toBe(ErrorCode.TransmissionFailed);
+            resolve();
+          }
+        });
+      });
+
+      const parentConnectionAssertionPromise = expectNeverFulfilledIframeConnection(
+        connection,
+        iframe
+      );
+
+      return Promise.all([
+        childConnectionAssertionPromise,
+        parentConnectionAssertionPromise,
+      ]);
+    });
+  }
 });

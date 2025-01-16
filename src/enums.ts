@@ -10,7 +10,7 @@ export enum ErrorCode {
   ConnectionDestroyed = 'ConnectionDestroyed',
   ConnectionTimeout = 'ConnectionTimeout',
   MethodCallTimeout = 'MethodCallTimeout',
-  TransmitFailed = 'TransmitFailed',
+  TransmissionFailed = 'TransmissionFailed',
 }
 
 export enum NativeErrorName {

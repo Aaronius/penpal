@@ -1,4 +1,10 @@
-import { connectToChild, ErrorCode, Methods, PenpalError } from '../src/index';
+import {
+  Connection,
+  connectToChild,
+  ErrorCode,
+  Methods,
+  PenpalError,
+} from '../src/index';
 import { CHILD_SERVER } from './constants';
 
 export const createAndAddIframe = (url?: string) => {
@@ -53,12 +59,12 @@ export const getWorkerFixtureUrl = (workerName: string) => {
  * remote's origin or if the remote isn't running Penpal.
  */
 export const expectNeverFulfilledIframeConnection = (
-  connectionPromise: Promise<unknown>,
+  connection: Connection,
   iframe: HTMLIFrameElement
 ) => {
   const spy = jasmine.createSpy();
 
-  connectionPromise.then(spy, spy);
+  connection.promise.then(spy, spy);
 
   return new Promise<void>((resolve) => {
     iframe.addEventListener('load', function () {
@@ -72,11 +78,11 @@ export const expectNeverFulfilledIframeConnection = (
 };
 
 export const expectRejectedConnection = async (
-  connectionPromise: Promise<unknown>,
+  connection: Connection,
   expectedErrorCode: ErrorCode
 ) => {
   const spy = jasmine.createSpy();
-  await connectionPromise.catch(spy);
+  await connection.promise.catch(spy);
   expect(spy).toHaveBeenCalled();
   const error = spy.calls.mostRecent().args[0] as PenpalError;
   expect(error.code).toEqual(expectedErrorCode);

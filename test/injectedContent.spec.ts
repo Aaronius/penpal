@@ -6,13 +6,19 @@ import { expectRejectedConnection, getWorkerFixtureUrl } from './utils';
 const htmlSrc = `
 <!DOCTYPE html>
 <html>
+  <head>
+    <title>Test Iframe</title>
+  </head>
   <body>
-    // When this HTML is loaded into an iframe usng a data URI, the browser
-    // treats the HTML as an inline resource. Any external URLs 
-    // (such as /penpal.js) will be relative to the inline resource itself and
-    // not relative to the parent document that contains the iframe. 
-    // This is why we must specify a server in this script's src rather than
-    // just specify a path of /penpal.js.
+    Test Iframe
+    <!--
+    When this HTML is loaded into an iframe usng a data URI, the browser
+    treats the HTML as an inline resource. Any external URLs 
+    (such as /penpal.js) will be relative to the inline resource itself and
+    not relative to the parent document that contains the iframe. 
+    This is why we must specify a server in this script's src rather than
+    just specify a path of /penpal.js.
+    -->
     <script  src="${CHILD_SERVER}/penpal.js"></script>
     <script >
       Penpal.connectToParent({
@@ -65,10 +71,7 @@ describe('data URI support', () => {
       child: iframe,
     });
 
-    await expectRejectedConnection(
-      connection.promise,
-      ErrorCode.TransmitFailed
-    );
+    await expectRejectedConnection(connection, ErrorCode.TransmissionFailed);
   });
 
   it('connects and calls a function on the child worker', async () => {

@@ -203,7 +203,6 @@ class ParentToChildMessenger implements Messenger {
           this._childOrigin instanceof RegExp
             ? this._concreteChildOrigin
             : this._childOrigin;
-
         this._child.contentWindow?.postMessage(payload, {
           targetOrigin: originForSending,
           transfer: transferables,

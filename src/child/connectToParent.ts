@@ -104,7 +104,7 @@ export default <TMethods extends Methods = Methods>(
       const penpalError: PenpalError = new Error(
         (error as Error).message
       ) as PenpalError;
-      penpalError.code = ErrorCode.TransmitFailed;
+      penpalError.code = ErrorCode.TransmissionFailed;
       destroy(penpalError);
     }
   };
@@ -123,8 +123,6 @@ export default <TMethods extends Methods = Methods>(
 
       messenger.addMessageHandler(handleMessage);
 
-      sendSynMessage();
-
       onDestroy((error?: PenpalError) => {
         messenger.removeMessageHandler(handleMessage);
 
@@ -132,6 +130,8 @@ export default <TMethods extends Methods = Methods>(
           reject(error);
         }
       });
+
+      sendSynMessage();
     }
   );
 
