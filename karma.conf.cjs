@@ -1,6 +1,11 @@
 const typescript = require('@rollup/plugin-typescript');
 
-const browsers = ['Chrome'];
+const browsers = [
+  'Chrome',
+  // 'Firefox',
+  // 'Edge',
+  // 'Safari'
+];
 const reporters = ['dots'];
 
 module.exports = (config) => {

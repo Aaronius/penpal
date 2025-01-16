@@ -475,7 +475,7 @@ describe('connection management', () => {
     // it's still waiting to receive a valid SYN message. Because postMessage
     // would never be called by the parent, nothing would cause the parent's
     // connection to be rejected unless there's a connection timeout configured.
-    fit(`rejects connection in child iframe when invalid childOrigin of ${invalidOrigin} is used`, async () => {
+    it(`rejects connection in child iframe when invalid childOrigin of ${invalidOrigin} is used`, async () => {
       const iframe = createAndAddIframe(
         `${CHILD_SERVER}/pages/invalidParentOrigin.html?invalidParentOrigin=${invalidOrigin}`
       );
