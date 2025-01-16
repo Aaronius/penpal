@@ -6,45 +6,28 @@ import {
   Reply,
 } from '../../src/index';
 
-const childMethods = {
-  multiply(a: number, b: number) {
-    return a * b;
-  },
-  multiplyWithPromisedValue(a: number, b: number) {
-    return Promise.resolve(a * b);
-  },
-  multiplyWithReplyInstance(a: number, b: number) {
-    return new Reply(a * b);
-  },
-  multiplyWithPromisedReplyInstance(a: number, b: number) {
-    return Promise.resolve(new Reply(a * b));
-  },
-  multiplyWithReplyInstanceAndPromisedReturnValue(a: number, b: number) {
-    return new Reply(Promise.resolve(a * b));
-  },
+type ChildMethods = {
+  multiply(a: number, b: number): number;
+  multiplyWithPromisedValue(a: number, b: number): Promise<number>;
+  multiplyWithReplyInstance(a: number, b: number): Reply<number>;
+  multiplyWithPromisedReplyInstance(
+    a: number,
+    b: number
+  ): Promise<Reply<number>>;
+  multiplyWithReplyInstanceAndPromisedReturnValue(
+    a: number,
+    b: number
+  ): Reply<Promise<number>>;
   multiplyWithPromisedReplyInstanceAndPromisedReturnValue(
     a: number,
     b: number
-  ) {
-    return Promise.resolve(new Reply(Promise.resolve(a * b)));
-  },
-  multiplyWithReplyLikeObject(a: number, b: number) {
-    return {
-      returnValue: a * b,
-    };
-  },
-  multiplyWithTransferables(aDataView: DataView, bDataView: DataView) {
-    const a = aDataView.getInt32(0);
-    const b = bDataView.getInt32(0);
-    const returnValue = new DataView(new ArrayBuffer(4));
-    returnValue.setInt32(0, a * b);
-    return new Reply(returnValue, {
-      transferables: [returnValue.buffer],
-    });
-  },
+  ): Promise<Reply<Promise<number>>>;
+  multiplyWithReplyLikeObject(a: number, b: number): { value: number };
+  multiplyWithTransferables(
+    aDataView: DataView,
+    bDataView: DataView
+  ): Reply<DataView>;
 };
-
-type ChildMethods = typeof childMethods;
 
 const connection = connectToChild<ChildMethods>({
   child: document.createElement('iframe'),
@@ -70,9 +53,7 @@ assertType<Promise<number>>(
   child.multiplyWithPromisedReplyInstanceAndPromisedReturnValue(2, 3)
 );
 // A returned object with a reply-like structure should not be interpreted as a Reply instance, so the result here is correct.
-assertType<Promise<{ returnValue: number }>>(
-  child.multiplyWithReplyLikeObject(2, 3)
-);
+assertType<Promise<{ value: number }>>(child.multiplyWithReplyLikeObject(2, 3));
 
 const input1DataView = new DataView(new ArrayBuffer(4));
 input1DataView.setInt32(0, 2);

@@ -7,8 +7,9 @@ import {
   Destructor,
   Methods,
   RemoteMethodProxies,
+  PenpalError,
 } from '../types';
-import { MessageType } from '../enums';
+import { ErrorCode, MessageType } from '../enums';
 import connectCallHandler from '../connectCallHandler';
 import connectRemoteMethodProxies from '../connectRemoteMethodProxies';
 import Messenger from '../Messenger';
@@ -22,7 +23,7 @@ const handleSynAckMessageFactory = (
   destructor: Destructor,
   log: Log
 ) => {
-  const { onDestroy } = destructor;
+  const { onDestroy, destroy } = destructor;
 
   const handleSynAckMessage = <TMethods extends Methods>(
     message: SynAckMessage
@@ -34,7 +35,15 @@ const handleSynAckMessageFactory = (
       methodPaths: Object.keys(flattenedMethods),
     };
 
-    messenger.sendMessage(ackMessage);
+    try {
+      messenger.sendMessage(ackMessage);
+    } catch (error) {
+      const penpalError: PenpalError = new Error(
+        (error as Error).message
+      ) as PenpalError;
+      penpalError.code = ErrorCode.TransmitFailed;
+      destroy(penpalError);
+    }
 
     const info: WindowsInfo = {
       localName: 'Child',

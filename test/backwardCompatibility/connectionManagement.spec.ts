@@ -316,24 +316,6 @@ describe('backward compatibility - connection management', () => {
     });
   });
 
-  it('throws error if childOrigin is not specified and cannot be derived from iframe src or srcdoc', async () => {
-    let error;
-
-    try {
-      connectToChild<FixtureMethods>({
-        child: createAndAddIframe(),
-      });
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toEqual(jasmine.any(Error));
-    expect((error as Error).message).toBe(
-      'The childOrigin option must be specified or the iframe must have src or srcdoc property defined'
-    );
-    expect((error as PenpalError).code).toBe(ErrorCode.OriginRequired);
-  });
-
   it('rejects promise if connectToChild times out', async () => {
     const connection = connectToChild<FixtureMethods>({
       child: createAndAddIframe('http://www.fakeresponse.com/api/?sleep=10000'),

@@ -57,13 +57,8 @@ type Connection<TMethods extends Methods = Methods> = {
 export default <TMethods extends Methods = Methods>(
   options: Options
 ): Connection<TMethods> => {
-  const {
-    parentOrigin,
-    methods = {},
-    timeout,
-    channel,
-    debug = false,
-  } = options;
+  const { methods = {}, timeout, channel, debug = false } = options;
+  let { parentOrigin } = options;
 
   const log = createLogger(debug);
 
@@ -75,11 +70,7 @@ export default <TMethods extends Methods = Methods>(
     }
   } else {
     if (!parentOrigin) {
-      const error: PenpalError = new Error(
-        `The parentOrigin option must be specified when connecting to a parent`
-      ) as PenpalError;
-      error.code = ErrorCode.OriginRequired;
-      throw error;
+      parentOrigin = window.origin;
     }
   }
 
@@ -106,7 +97,16 @@ export default <TMethods extends Methods = Methods>(
     const synMessage: SynMessage = {
       type: MessageType.Syn,
     };
-    messenger.sendMessage(synMessage);
+
+    try {
+      messenger.sendMessage(synMessage);
+    } catch (error) {
+      const penpalError: PenpalError = new Error(
+        (error as Error).message
+      ) as PenpalError;
+      penpalError.code = ErrorCode.TransmitFailed;
+      destroy(penpalError);
+    }
   };
 
   const promise = new Promise<RemoteMethodProxies<TMethods>>(

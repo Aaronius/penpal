@@ -9,8 +9,8 @@ export enum MessageType {
 export enum ErrorCode {
   ConnectionDestroyed = 'ConnectionDestroyed',
   ConnectionTimeout = 'ConnectionTimeout',
-  OriginRequired = 'OriginRequired',
   MethodCallTimeout = 'MethodCallTimeout',
+  TransmitFailed = 'TransmitFailed',
 }
 
 export enum NativeErrorName {

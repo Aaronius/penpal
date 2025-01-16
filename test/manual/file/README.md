@@ -5,3 +5,5 @@ This tests whether a parent loading a local file can connect and communicate app
 ```
 
 If so, the connection and communication succeeded.
+
+If you change the source code, you'll need to rebuild (`npm run build`) before testing again to see the changes.

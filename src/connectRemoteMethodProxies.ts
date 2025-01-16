@@ -116,15 +116,23 @@ export default (
           timeoutId,
         });
 
-        messenger.sendMessage(
-          {
-            type: MessageType.Call,
-            roundTripId,
-            methodPath,
-            args: argsWithoutOptions,
-          },
-          transferables
-        );
+        try {
+          messenger.sendMessage(
+            {
+              type: MessageType.Call,
+              roundTripId,
+              methodPath,
+              args: argsWithoutOptions,
+            },
+            transferables
+          );
+        } catch (error) {
+          const penpalError: PenpalError = new Error(
+            (error as Error).message
+          ) as PenpalError;
+          penpalError.code = ErrorCode.TransmitFailed;
+          reject(penpalError);
+        }
       });
     };
   };

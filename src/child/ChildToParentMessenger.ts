@@ -1,8 +1,8 @@
 import { ContextType, MessageType } from '../enums';
 import {
+  Destructor,
   Log,
   PenpalMessage,
-  Destructor,
   PenpalMessageEnvelope,
 } from '../types';
 import Messenger from '../Messenger';
@@ -13,6 +13,7 @@ class ChildToParentMessenger implements Messenger {
   private _parentOrigin: string | RegExp | undefined;
   private _channel?: string;
   private _log: Log;
+  private _concreteParentOrigin?: string;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port1: MessagePort;
   private _port2: MessagePort;
@@ -74,6 +75,10 @@ class ChildToParentMessenger implements Messenger {
       return;
     }
 
+    if (message.type === MessageType.SynAck) {
+      this._concreteParentOrigin = event.origin;
+    }
+
     for (const callback of this._messageCallbacks) {
       callback(message);
     }
@@ -88,9 +93,7 @@ class ChildToParentMessenger implements Messenger {
       message,
     };
 
-    if (messageType === MessageType.Syn || messageType === MessageType.Ack) {
-      const transferables =
-        messageType === MessageType.Ack ? [this._port2] : undefined;
+    if (messageType === MessageType.Syn) {
       if (contextType === ContextType.Worker) {
         // Workers are always on the same origin as the parent window, so
         // we shouldn't specify a targetOrigin as it's irrelevant.
@@ -98,10 +101,38 @@ class ChildToParentMessenger implements Messenger {
           transfer: transferables,
         });
       } else {
+        const originForSending =
+          this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
         window.parent.postMessage(envelope, {
-          targetOrigin:
-            this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin,
+          targetOrigin: originForSending,
           transfer: transferables,
+        });
+      }
+      return;
+    }
+
+    if (messageType === MessageType.Ack) {
+      const transferablesToSend = [this._port2, ...(transferables || [])];
+      if (contextType === ContextType.Worker) {
+        // Workers are always on the same origin as the parent window, so
+        // we shouldn't specify a targetOrigin as it's irrelevant.
+        self.postMessage(envelope, {
+          transfer: transferablesToSend,
+        });
+      } else {
+        if (!this._concreteParentOrigin) {
+          // If this ever happens, it's a bug in Penpal.
+          throw new Error('Concrete child origin not set');
+        }
+
+        const originForSending =
+          this._parentOrigin instanceof RegExp
+            ? this._concreteParentOrigin
+            : this._parentOrigin;
+        console.log('ack', this._parentOrigin, originForSending);
+        window.parent.postMessage(envelope, {
+          targetOrigin: originForSending,
+          transfer: transferablesToSend,
         });
       }
       return;

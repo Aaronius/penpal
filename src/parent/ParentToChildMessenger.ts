@@ -1,5 +1,3 @@
-import validateIframeHasSrcOrSrcDoc from './validateIframeHasSrcOrSrcDoc';
-import getOriginFromSrc from './getOriginFromSrc';
 import {
   Log,
   PenpalMessage,
@@ -7,7 +5,6 @@ import {
   PenpalMessageEnvelope,
 } from '../types';
 import { MessageType } from '../enums';
-import monitorIframeRemoval from './monitorIframeRemoval';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
 import {
@@ -23,9 +20,9 @@ import {
 class ParentToChildMessenger implements Messenger {
   private _child: HTMLIFrameElement | Worker;
   private _childOrigin: string | RegExp | undefined;
-  private _validatedChildOrigin?: string;
   private _channel?: string;
   private _log: Log;
+  private _concreteChildOrigin?: string;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port?: MessagePort;
   private _isChildUsingDeprecatedProtocol = false;
@@ -38,22 +35,11 @@ class ParentToChildMessenger implements Messenger {
     destructor: Destructor
   ) {
     this._child = child;
+    this._childOrigin = childOrigin;
     this._channel = channel;
     this._log = log;
 
-    let messageDispatcher: Worker | Window;
-
-    if (child instanceof Worker) {
-      messageDispatcher = child;
-    } else {
-      if (!childOrigin) {
-        validateIframeHasSrcOrSrcDoc(child);
-        childOrigin = getOriginFromSrc(child.src);
-      }
-      this._childOrigin = childOrigin;
-      monitorIframeRemoval(child, destructor);
-      messageDispatcher = window;
-    }
+    const messageDispatcher = child instanceof Worker ? child : window;
 
     messageDispatcher.addEventListener(
       'message',
@@ -128,7 +114,7 @@ class ParentToChildMessenger implements Messenger {
       // We destroy the port if one is already set, because it's possible a
       // child is re-connecting.
       this._destroyPort();
-      this._validatedChildOrigin = event.origin;
+      this._concreteChildOrigin = event.origin;
     }
 
     if (
@@ -208,18 +194,15 @@ class ParentToChildMessenger implements Messenger {
         : envelope;
 
       if (this._child instanceof HTMLIFrameElement) {
-        if (!this._validatedChildOrigin) {
+        if (!this._concreteChildOrigin) {
           // If this ever happens, it's a bug in Penpal.
-          throw new Error('Child origin has not been validated');
+          throw new Error('Concrete child origin not set');
         }
 
-        // Previous versions of Penpal don't use MessagePorts so they won't be
-        // sending a MessagePort on the event. We instead do all communication
-        // through the window rather than a port.
         const originForSending =
-          this._validatedChildOrigin === 'null'
-            ? '*'
-            : this._validatedChildOrigin;
+          this._childOrigin instanceof RegExp
+            ? this._concreteChildOrigin
+            : this._childOrigin;
 
         this._child.contentWindow?.postMessage(payload, {
           targetOrigin: originForSending,

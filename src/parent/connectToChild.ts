@@ -13,6 +13,8 @@ import startConnectionTimeout from '../startConnectionTimeout';
 import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
 import ParentToChildMessenger from './ParentToChildMessenger';
+import deriveOriginFromIframe from './deriveOriginFromIframe';
+import monitorIframeRemoval from './monitorIframeRemoval';
 
 type Options = {
   /**
@@ -45,27 +47,34 @@ type Options = {
   debug?: boolean;
 };
 
+/**
+ * Attempts to establish communication with the child iframe or worker.
+ */
 export default <TMethods extends Methods = Methods>(
   options: Options
 ): Connection<TMethods> => {
-  const {
-    child,
-    methods = {},
-    childOrigin,
-    timeout,
-    channel,
-    debug = false,
-  } = options;
+  const { child, methods = {}, timeout, channel, debug = false } = options;
+  let { childOrigin } = options;
 
   const log = createLogger(debug);
+  const destructor = createDestructor('Parent', log);
 
-  if (childOrigin && child instanceof Worker) {
-    log(
-      'Parent: childOrigin was specified, but is ignored when connecting to a worker'
-    );
+  if (child instanceof Worker) {
+    if (childOrigin) {
+      log(
+        'Parent: childOrigin was specified, but is ignored when connecting to a worker'
+      );
+    }
+  } else {
+    if (!childOrigin) {
+      childOrigin = deriveOriginFromIframe(child);
+      log(
+        `Parent: childOrigin was not specified, so using inferred origin of ${childOrigin}`
+      );
+    }
+    monitorIframeRemoval(child, destructor);
   }
 
-  const destructor = createDestructor('Parent', log);
   const messenger = new ParentToChildMessenger(
     child,
     childOrigin,
@@ -79,8 +88,9 @@ export default <TMethods extends Methods = Methods>(
   const flattenedMethods = flattenMethods(methods);
   const handleSynMessage = handleSynMessageFactory(
     messenger,
-    log,
-    flattenedMethods
+    flattenedMethods,
+    destructor,
+    log
   );
   const handleAckMessage = handleAckMessageFactory<TMethods>(
     messenger,
