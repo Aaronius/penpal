@@ -70,7 +70,7 @@ class ChildToParentMessenger implements Messenger {
 
     if (!this._isEventFromValidOrigin(event)) {
       this._log(
-        `Child: Received a message from ${event.origin} which did not match expected origin ${this._parentOrigin}`
+        `Received a message from origin "${event.origin} which did not match expected origin "${this._parentOrigin}"`
       );
       return;
     }
@@ -129,7 +129,6 @@ class ChildToParentMessenger implements Messenger {
           this._parentOrigin instanceof RegExp
             ? this._concreteParentOrigin
             : this._parentOrigin;
-        console.log('ack', this._parentOrigin, originForSending);
         window.parent.postMessage(envelope, {
           targetOrigin: originForSending,
           transfer: transferablesToSend,

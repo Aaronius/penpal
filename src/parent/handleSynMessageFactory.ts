@@ -16,7 +16,7 @@ const handleSynMessageFactory = (
   log: Log
 ) => {
   const handleSynMessage = () => {
-    log('Parent: Handshake - Received SYN, responding with SYN-ACK');
+    log('Handshake - Received SYN, responding with SYN-ACK');
 
     const synAckMessage: SynAckMessage = {
       type: MessageType.SynAck,

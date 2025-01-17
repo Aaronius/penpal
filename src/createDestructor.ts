@@ -1,6 +1,6 @@
 import { Destructor, DestructorCallback, Log, PenpalError } from './types';
 
-export default (localName: 'Parent' | 'Child', log: Log): Destructor => {
+export default (log: Log): Destructor => {
   const callbacks: DestructorCallback[] = [];
   let destroyed = false;
 
@@ -8,7 +8,7 @@ export default (localName: 'Parent' | 'Child', log: Log): Destructor => {
     destroy(error?: PenpalError) {
       if (!destroyed) {
         destroyed = true;
-        log(`${localName}: Destroying connection`);
+        log(`Destroying connection`);
         callbacks.forEach((callback) => {
           callback(error);
         });

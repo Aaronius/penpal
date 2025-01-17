@@ -3,7 +3,6 @@ import {
   Log,
   FlattenedMethods,
   SynAckMessage,
-  WindowsInfo,
   Destructor,
   Methods,
   RemoteMethodProxies,
@@ -28,7 +27,7 @@ const handleSynAckMessageFactory = (
   const handleSynAckMessage = <TMethods extends Methods>(
     message: SynAckMessage
   ): RemoteMethodProxies<TMethods> => {
-    log('Child: Handshake - Received SYN-ACK, responding with ACK');
+    log('Handshake - Received SYN-ACK, responding with ACK');
 
     const ackMessage: AckMessage = {
       type: MessageType.Ack,
@@ -45,18 +44,17 @@ const handleSynAckMessageFactory = (
       destroy(penpalError);
     }
 
-    const info: WindowsInfo = {
-      localName: 'Child',
-      messenger: messenger,
-    };
-
-    const destroyCallHandler = connectCallHandler(info, flattenedMethods, log);
+    const destroyCallHandler = connectCallHandler(
+      messenger,
+      flattenedMethods,
+      log
+    );
     onDestroy(destroyCallHandler);
 
     const remoteMethodProxies = {} as RemoteMethodProxies<TMethods>;
     const destroyRemoteMethodProxies = connectRemoteMethodProxies(
       remoteMethodProxies,
-      info,
+      messenger,
       message.methodPaths,
       log
     );

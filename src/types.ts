@@ -1,5 +1,4 @@
 import { ErrorCode, MessageType } from './enums';
-import Messenger from './Messenger';
 import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
 import namespace from './namespace';
@@ -116,15 +115,6 @@ export type PenpalMessageEnvelope = {
   namespace: typeof namespace;
   channel?: string;
   message: PenpalMessage;
-};
-
-export type WindowsInfo = {
-  /**
-   * A friendly name for the local window.
-   */
-  localName: 'Parent' | 'Child';
-
-  messenger: Messenger;
 };
 
 export type Log = (...args: unknown[]) => void;

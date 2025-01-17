@@ -6,11 +6,11 @@ import {
   PenpalError,
   PenpalMessage,
   SerializedError,
-  WindowsInfo,
   RemoteMethodProxies,
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
+import Messenger from './Messenger';
 
 type ReplyHandler = {
   methodPath: string;
@@ -23,22 +23,14 @@ type ReplyHandler = {
  * Augments an object with methods that match those defined by the remote. When these methods are
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
- * @param remoteMethodProxies Object that should be augmented with remote method proxies.
- * @param info Information about the local and remote windows.
- * @param methodPaths Key paths of methods available to be called on the remote.
- * @param log Logs messages.
- * @returns The call sender object with methods that may be called.
  */
 export default (
   remoteMethodProxies: RemoteMethodProxies,
-  info: WindowsInfo,
+  messenger: Messenger,
   methodPaths: string[],
   log: Log
 ) => {
-  const { localName, messenger } = info;
   let destroyed = false;
-
-  log(`${localName}: Connecting call sender`);
 
   const replyHandlers = new Map<number, ReplyHandler>();
 
@@ -55,7 +47,7 @@ export default (
 
     replyHandlers.delete(message.roundTripId);
 
-    log(`${localName}: Received ${replyHandler.methodPath}() reply`);
+    log(`Received ${replyHandler.methodPath}() reply`);
 
     if (message.isError) {
       const error = message.isSerializedErrorInstance
@@ -71,7 +63,7 @@ export default (
 
   const createMethodProxy = (methodPath: string) => {
     return (...args: unknown[]) => {
-      log(`${localName}: Sending ${methodPath}() call`);
+      log(`Sending ${methodPath}() call`);
 
       if (destroyed) {
         const error: PenpalError = new Error(

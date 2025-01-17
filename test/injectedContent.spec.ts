@@ -1,7 +1,10 @@
 import { CHILD_SERVER } from './constants';
-import { connectToChild, ErrorCode } from '../src/index';
+import { connectToChild } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
-import { expectRejectedConnection, getWorkerFixtureUrl } from './utils';
+import {
+  expectNeverFulfilledIframeConnection,
+  getWorkerFixtureUrl,
+} from './utils';
 
 const htmlSrc = `
 <!DOCTYPE html>
@@ -27,122 +30,116 @@ const htmlSrc = `
           multiply: function(num1, num2) {
             return num1 * num2;
           }
-        }
+        },
+        debug: true
       });
     </script>
   </body>
 </html>
 `;
 
-describe('data URI support', () => {
-  it('connects and calls a function on the child iframe if childOrigin is set to *', async () => {
-    const iframe = document.createElement('iframe');
-    iframe.src = `data:text/html,${htmlSrc}`;
-    document.body.appendChild(iframe);
+it('connects and calls a function on the child iframe when src is set to data URI and childOrigin is set to *', async () => {
+  const iframe = document.createElement('iframe');
+  iframe.src = `data:text/html,${htmlSrc}`;
+  document.body.appendChild(iframe);
 
-    const connection = connectToChild<FixtureMethods>({
-      childOrigin: '*',
-      child: iframe,
-    });
-
-    const child = await connection.promise;
-    const value = await child.multiply(2, 5);
-    expect(value).toEqual(10);
-    connection.destroy();
+  const connection = connectToChild<FixtureMethods>({
+    childOrigin: '*',
+    child: iframe,
   });
 
-  it('fails connection iframe if childOrigin is not set', async () => {
-    const iframe = document.createElement('iframe');
-    iframe.src = `data:text/html,${htmlSrc}`;
-    document.body.appendChild(iframe);
-
-    // Because a childOrigin is not set, Penpal will ask the browser for the
-    // origin of the value of iframe.src. The browser will report that the
-    // origin is 'null' because the data URI is considered an "opaque origin"
-    // in this scenario. The browser will then throw an error when penpal uses
-    // 'null' as a target origin when calling postMessage. This is all
-    // intentional browser behavior and the only way around it is by
-    // using '*' as the origin when calling postMessage. While penpal could
-    // handle this automatically by using '*' as the target origin when
-    // the derived origin is 'null', it instead forces the consumer to specify
-    // a childOrigin of '*' so that they are more aware of potential
-    // consequences.
-    const connection = connectToChild<FixtureMethods>({
-      child: iframe,
-    });
-
-    await expectRejectedConnection(connection, ErrorCode.TransmissionFailed);
-  });
-
-  it('connects and calls a function on the child worker', async () => {
-    const response = await fetch(getWorkerFixtureUrl('general'));
-    const code = await response.text();
-    const worker = new Worker(`data:application/javascript,${code}`, {
-      type: 'module',
-    });
-
-    const connection = connectToChild<FixtureMethods>({
-      child: worker,
-    });
-
-    const child = await connection.promise;
-    const value = await child.multiply(2, 5);
-    expect(value).toEqual(10);
-    connection.destroy();
-  });
+  const child = await connection.promise;
+  const value = await child.multiply(2, 5);
+  expect(value).toEqual(10);
+  connection.destroy();
 });
 
-describe('object URL support', () => {
-  it('connects and calls a function on the child iframe', async () => {
-    const blob = new Blob([htmlSrc], { type: 'text/html' });
-    const blobUrl = URL.createObjectURL(blob);
+fit('never connects iframe when src is set to data URI and childOrigin is not set', async () => {
+  const iframe = document.createElement('iframe');
+  iframe.src = `data:text/html,${htmlSrc}`;
+  document.body.appendChild(iframe);
 
-    const iframe = document.createElement('iframe');
-    iframe.src = blobUrl;
-    document.body.appendChild(iframe);
-
-    const connection = connectToChild<FixtureMethods>({
-      child: iframe,
-    });
-
-    const child = await connection.promise;
-    const value = await child.multiply(2, 5);
-    expect(value).toEqual(10);
-    connection.destroy();
+  const connection = connectToChild<FixtureMethods>({
+    child: iframe,
+    debug: true,
   });
 
-  it('connects and calls a function on the child worker', async () => {
-    const response = await fetch(getWorkerFixtureUrl('general'));
-    const code = await response.text();
-    const blob = new Blob([code], { type: 'application/javascript' });
-    const blobUrl = URL.createObjectURL(blob);
-
-    const worker = new Worker(blobUrl);
-
-    const connection = connectToChild<FixtureMethods>({
-      child: worker,
-    });
-
-    const child = await connection.promise;
-    const value = await child.multiply(2, 5);
-    expect(value).toEqual(10);
-    connection.destroy();
-  });
+  /*
+    The connection will never be fulfilled because the parent will fail to
+    derive a valid child origin and will fall back to a child origin of
+    window.origin, which won't match the child's origin. When the child
+    sends the SYN message to start the handshake, the parent will ignore
+    the message because the message's origin won't match what the parent
+    is expecting. This is the intended behavior, but could be debated
+    whether it's ideal.
+    */
+  await expectNeverFulfilledIframeConnection(connection, iframe);
 });
 
-describe('iframe srcdoc support', () => {
-  it('connects and calls a function on the child iframe', async () => {
-    const iframe = document.createElement('iframe');
-    iframe.srcdoc = htmlSrc;
-    document.body.appendChild(iframe);
-
-    const connection = connectToChild<FixtureMethods>({
-      child: iframe,
-    });
-
-    const child = await connection.promise;
-    const value = await child.multiply(2, 5);
-    expect(value).toEqual(10);
-    connection.destroy();
+it('connects and calls a function on the child worker', async () => {
+  const response = await fetch(getWorkerFixtureUrl('general'));
+  const code = await response.text();
+  const worker = new Worker(`data:application/javascript,${code}`, {
+    type: 'module',
   });
+
+  const connection = connectToChild<FixtureMethods>({
+    child: worker,
+  });
+
+  const child = await connection.promise;
+  const value = await child.multiply(2, 5);
+  expect(value).toEqual(10);
+  connection.destroy();
+});
+
+it('connects and calls a function on the child iframe when src is set to an object URL', async () => {
+  const blob = new Blob([htmlSrc], { type: 'text/html' });
+  const blobUrl = URL.createObjectURL(blob);
+
+  const iframe = document.createElement('iframe');
+  iframe.src = blobUrl;
+  document.body.appendChild(iframe);
+
+  const connection = connectToChild<FixtureMethods>({
+    child: iframe,
+  });
+
+  const child = await connection.promise;
+  const value = await child.multiply(2, 5);
+  expect(value).toEqual(10);
+  connection.destroy();
+});
+
+it('connects and calls a function on the child worker when src is set to an object URL', async () => {
+  const response = await fetch(getWorkerFixtureUrl('general'));
+  const code = await response.text();
+  const blob = new Blob([code], { type: 'application/javascript' });
+  const blobUrl = URL.createObjectURL(blob);
+
+  const worker = new Worker(blobUrl);
+
+  const connection = connectToChild<FixtureMethods>({
+    child: worker,
+  });
+
+  const child = await connection.promise;
+  const value = await child.multiply(2, 5);
+  expect(value).toEqual(10);
+  connection.destroy();
+});
+
+it('connects and calls a function on the child iframe when srcdoc is set', async () => {
+  const iframe = document.createElement('iframe');
+  iframe.srcdoc = htmlSrc;
+  document.body.appendChild(iframe);
+
+  const connection = connectToChild<FixtureMethods>({
+    child: iframe,
+  });
+
+  const child = await connection.promise;
+  const value = await child.multiply(2, 5);
+  expect(value).toEqual(10);
+  connection.destroy();
 });

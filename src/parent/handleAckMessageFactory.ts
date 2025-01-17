@@ -1,7 +1,6 @@
 import {
   Log,
   FlattenedMethods,
-  WindowsInfo,
   Destructor,
   RemoteMethodProxies,
   Methods,
@@ -31,12 +30,7 @@ const handleAckMessageFactory = <TMethods extends Methods>(
   const handleAckMessage = (
     methodPaths: string[]
   ): RemoteMethodProxies<TMethods> => {
-    log('Parent: Handshake - Received ACK');
-
-    const info: WindowsInfo = {
-      localName: 'Parent',
-      messenger,
-    };
+    log('Handshake - Received ACK');
 
     // If the child reconnected, we need to destroy the prior call receiver
     // connection before setting up a new one.
@@ -50,7 +44,7 @@ const handleAckMessageFactory = <TMethods extends Methods>(
       destroyRemoteMethodProxies();
     }
 
-    destroyCallHandler = connectCallHandler(info, flattenedMethods, log);
+    destroyCallHandler = connectCallHandler(messenger, flattenedMethods, log);
     onDestroy(destroyCallHandler);
 
     Object.keys(remoteMethodProxies).forEach((key) => {
@@ -59,7 +53,7 @@ const handleAckMessageFactory = <TMethods extends Methods>(
 
     destroyRemoteMethodProxies = connectRemoteMethodProxies(
       remoteMethodProxies,
-      info,
+      messenger,
       methodPaths,
       log
     );

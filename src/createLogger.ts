@@ -1,9 +1,9 @@
 import { Log } from './types';
 
-export default (debug: boolean) => {
+export default (prefix: 'Parent' | 'Child', debug: boolean) => {
   const log: Log = (...args: unknown[]) => {
     if (debug) {
-      console.log('[Penpal]', ...args);
+      console.log(`[Penpal] ${prefix}:`, ...args);
     }
   };
 

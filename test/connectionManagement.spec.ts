@@ -471,10 +471,11 @@ describe('connection management', () => {
     // configured (invalid) child origin and just ignore the message.
     // It wouldn't _fail_ the connection in this case, because it must consider
     // that the SYN message could legitimately be intended for a different
-    // penpal connection. The parent would also never call postMessage, because
-    // it's still waiting to receive a valid SYN message. Because postMessage
-    // would never be called by the parent, nothing would cause the parent's
-    // connection to be rejected unless there's a connection timeout configured.
+    // penpal connection. The parent would also never call postMessage in this
+    // case, because it's still waiting to receive a valid SYN message. Because
+    // postMessage would never be called by the parent, nothing would cause the
+    // parent's connection to be rejected unless there's a connection timeout
+    // configured and the timeout were reached.
     it(`rejects connection in child iframe when invalid childOrigin of ${invalidOrigin} is used`, async () => {
       const iframe = createAndAddIframe(
         `${CHILD_SERVER}/pages/invalidParentOrigin.html?invalidParentOrigin=${invalidOrigin}`

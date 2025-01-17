@@ -1,13 +1,8 @@
 import { serializeError } from './errorSerialization';
-import {
-  Log,
-  PenpalMessage,
-  ReplyMessage,
-  FlattenedMethods,
-  WindowsInfo,
-} from './types';
+import { Log, PenpalMessage, ReplyMessage, FlattenedMethods } from './types';
 import { MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
+import Messenger from './Messenger';
 
 const createErrorReplyMessage = (
   roundTripId: number,
@@ -25,7 +20,7 @@ const createErrorReplyMessage = (
  * and responds with the return value or error.
  */
 export default (
-  { localName, messenger }: WindowsInfo,
+  messenger: Messenger,
   flattenedMethods: FlattenedMethods,
   log: Log
 ) => {
@@ -36,7 +31,7 @@ export default (
 
     const { methodPath, args, roundTripId } = message;
 
-    log(`${localName}: Received ${methodPath}() call`);
+    log(`Received ${methodPath}() call`);
 
     let replyMessage: ReplyMessage;
     let transferables: Transferable[] | undefined;
@@ -64,13 +59,11 @@ export default (
       // is merely returning a value from their method and not calling any function
       // that they could wrap in a try-catch. Even if the consumer were to catch the error,
       // the value of doing so is questionable. Instead, we'll just log a message.
-      log(
-        `${localName}: Unable to send ${methodPath}() reply due to destroyed connection`
-      );
+      log(`Unable to send ${methodPath}() reply due to destroyed connection`);
       return;
     }
 
-    log(`${localName}: Sending ${methodPath}() reply`);
+    log(`Sending ${methodPath}() reply`);
 
     try {
       messenger.sendMessage(replyMessage, transferables);

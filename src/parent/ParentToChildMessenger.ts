@@ -85,7 +85,7 @@ class ParentToChildMessenger implements Messenger {
       messageEnvelope = event.data;
     } else if (isDeprecatedMessage(event.data)) {
       this._log(
-        'Parent: The child is using an older version of Penpal which will be ' +
+        'The child is using an older version of Penpal which will be ' +
           'incompatible when the parent upgrades to the next major version of ' +
           'Penpal. Please upgrade the child to the latest version of Penpal.'
       );
@@ -103,7 +103,7 @@ class ParentToChildMessenger implements Messenger {
 
     if (!this._isEventFromValidOrigin(event)) {
       this._log(
-        `Parent: Received a message from ${event.origin} which did not match expected origin ${this._childOrigin}`
+        `Received a message from origin "${event.origin}" which did not match expected origin "${this._childOrigin}"`
       );
       return;
     }
@@ -128,7 +128,7 @@ class ParentToChildMessenger implements Messenger {
 
       if (!this._port) {
         // If this ever happens, it's a bug in Penpal.
-        throw new Error('Parent: Handshake - No port received on ACK');
+        throw new Error('Handshake - No port received on ACK');
       }
 
       this._port.addEventListener('message', this._handleMessageFromPort);

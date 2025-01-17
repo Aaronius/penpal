@@ -60,12 +60,12 @@ export default <TMethods extends Methods = Methods>(
   const { methods = {}, timeout, channel, debug = false } = options;
   let { parentOrigin } = options;
 
-  const log = createLogger(debug);
+  const log = createLogger('Child', debug);
 
   if (contextType === ContextType.Worker) {
     if (parentOrigin) {
       log(
-        'Child: parentOrigin was specified, but is ignored when connecting from a worker'
+        'parentOrigin was specified, but is ignored when connecting from a worker'
       );
     }
   } else {
@@ -74,7 +74,7 @@ export default <TMethods extends Methods = Methods>(
     }
   }
 
-  const destructor = createDestructor('Child', log);
+  const destructor = createDestructor(log);
   const messenger = new ChildToParentMessenger(
     parentOrigin,
     channel,
@@ -93,7 +93,7 @@ export default <TMethods extends Methods = Methods>(
   );
 
   const sendSynMessage = () => {
-    log('Child: Handshake - Sending SYN');
+    log('Handshake - Sending SYN');
     const synMessage: SynMessage = {
       type: MessageType.Syn,
     };

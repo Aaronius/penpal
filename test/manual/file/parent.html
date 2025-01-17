@@ -10,8 +10,8 @@
 
         Penpal.connectToChild({
           child: iframe,
-          debug: true,
           childOrigin: '*',
+          debug: true,
         }).promise.then(function (child) {
           child.multiply(3, 2).then((result) => {
             const div = document.createElement('div');

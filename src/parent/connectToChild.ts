@@ -55,21 +55,18 @@ export default <TMethods extends Methods = Methods>(
 ): Connection<TMethods> => {
   const { child, methods = {}, timeout, channel, debug = false } = options;
   let { childOrigin } = options;
-  const log = createLogger(debug);
-  const destructor = createDestructor('Parent', log);
+  const log = createLogger('Parent', debug);
+  const destructor = createDestructor(log);
 
   if (child instanceof Worker) {
     if (childOrigin) {
       log(
-        'Parent: childOrigin was specified, but is ignored when connecting to a worker'
+        'childOrigin was specified, but is ignored when connecting to a worker'
       );
     }
   } else {
     if (!childOrigin) {
-      childOrigin = deriveOriginFromIframe(child);
-      log(
-        `Parent: childOrigin was not specified, so using inferred origin of ${childOrigin}`
-      );
+      childOrigin = deriveOriginFromIframe(child, log);
     }
     monitorIframeRemoval(child, destructor);
   }
@@ -117,7 +114,7 @@ export default <TMethods extends Methods = Methods>(
 
       messenger.addMessageHandler(handleMessage);
 
-      log('Parent: Awaiting handshake');
+      log('Awaiting handshake');
 
       onDestroy((error?: PenpalError) => {
         messenger.removeMessageHandler(handleMessage);
