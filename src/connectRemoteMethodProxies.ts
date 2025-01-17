@@ -3,7 +3,6 @@ import { deserializeError } from './errorSerialization';
 import { unflattenMethods } from './methodSerialization';
 import {
   Log,
-  PenpalError,
   PenpalMessage,
   SerializedError,
   RemoteMethodProxies,
@@ -11,6 +10,7 @@ import {
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Messenger from './Messenger';
+import PenpalError from './PenpalError';
 
 type ReplyHandler = {
   methodPath: string;
@@ -66,12 +66,10 @@ export default (
       log(`Sending ${methodPath}() call`);
 
       if (destroyed) {
-        const error: PenpalError = new Error(
+        throw new PenpalError(
+          ErrorCode.ConnectionDestroyed,
           `Unable to send ${methodPath}() call due ` + `to destroyed connection`
-        ) as PenpalError;
-
-        error.code = ErrorCode.ConnectionDestroyed;
-        throw error;
+        );
       }
 
       const roundTripId = generateId();
@@ -92,12 +90,13 @@ export default (
         // Karma + Rollup + Typescript to avoid node type leakage.
         const timeoutId = timeout
           ? window.setTimeout(() => {
-              const error: PenpalError = new Error(
-                `Method call ${methodPath}() timed out after ${timeout}ms`
-              ) as PenpalError;
-              error.code = ErrorCode.MethodCallTimeout;
               replyHandlers.delete(roundTripId);
-              reject(error);
+              reject(
+                new PenpalError(
+                  ErrorCode.MethodCallTimeout,
+                  `Method call ${methodPath}() timed out after ${timeout}ms`
+                )
+              );
             }, timeout)
           : undefined;
 
@@ -119,11 +118,12 @@ export default (
             transferables
           );
         } catch (error) {
-          const penpalError: PenpalError = new Error(
-            (error as Error).message
-          ) as PenpalError;
-          penpalError.code = ErrorCode.TransmissionFailed;
-          reject(penpalError);
+          reject(
+            new PenpalError(
+              ErrorCode.TransmissionFailed,
+              (error as Error).message
+            )
+          );
         }
       });
     };
@@ -145,11 +145,12 @@ export default (
 
     for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {
       clearTimeout(timeoutId);
-      const error: PenpalError = new Error(
-        `Method call ${methodPath}() cannot be resolved due to destroyed connection`
-      ) as PenpalError;
-      error.code = ErrorCode.ConnectionDestroyed;
-      reject(error);
+      reject(
+        new PenpalError(
+          ErrorCode.ConnectionDestroyed,
+          `Method call ${methodPath}() cannot be resolved due to destroyed connection`
+        )
+      );
     }
 
     replyHandlers.clear();

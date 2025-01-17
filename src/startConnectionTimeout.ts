@@ -1,5 +1,5 @@
-import { PenpalError } from './types';
 import { ErrorCode } from './enums';
+import PenpalError from './PenpalError';
 
 /**
  * Starts a timeout and calls the callback with an error
@@ -13,11 +13,12 @@ export default (
 
   if (timeout !== undefined) {
     timeoutId = self.setTimeout(() => {
-      const error: PenpalError = new Error(
-        `Connection timed out after ${timeout}ms`
-      ) as PenpalError;
-      error.code = ErrorCode.ConnectionTimeout;
-      callback(error);
+      callback(
+        new PenpalError(
+          ErrorCode.ConnectionTimeout,
+          `Connection timed out after ${timeout}ms`
+        )
+      );
     }, timeout);
   }
 

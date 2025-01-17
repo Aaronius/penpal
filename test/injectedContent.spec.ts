@@ -54,14 +54,13 @@ it('connects and calls a function on the child iframe when src is set to data UR
   connection.destroy();
 });
 
-fit('never connects iframe when src is set to data URI and childOrigin is not set', async () => {
+it('never connects iframe when src is set to data URI and childOrigin is not set', async () => {
   const iframe = document.createElement('iframe');
   iframe.src = `data:text/html,${htmlSrc}`;
   document.body.appendChild(iframe);
 
   const connection = connectToChild<FixtureMethods>({
     child: iframe,
-    debug: true,
   });
 
   /*

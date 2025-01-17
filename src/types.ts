@@ -1,7 +1,8 @@
-import { ErrorCode, MessageType } from './enums';
+import { MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
 import namespace from './namespace';
+import PenpalError from './PenpalError';
 
 type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 
@@ -59,8 +60,6 @@ export type SerializedError = {
   message: string;
   stack?: string;
 };
-
-export type PenpalError = Error & { code: ErrorCode };
 
 export type SynMessage = {
   type: MessageType.Syn;

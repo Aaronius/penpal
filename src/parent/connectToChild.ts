@@ -1,5 +1,4 @@
 import {
-  PenpalError,
   RemoteMethodProxies,
   Connection,
   Methods,
@@ -15,6 +14,7 @@ import createDestructor from '../createDestructor';
 import ParentToChildMessenger from './ParentToChildMessenger';
 import deriveOriginFromIframe from './deriveOriginFromIframe';
 import monitorIframeRemoval from './monitorIframeRemoval';
+import PenpalError from '../PenpalError';
 
 type Options = {
   /**

@@ -1,4 +1,5 @@
-import { Destructor, DestructorCallback, Log, PenpalError } from './types';
+import { Destructor, DestructorCallback, Log } from './types';
+import PenpalError from './PenpalError';
 
 export default (log: Log): Destructor => {
   const callbacks: DestructorCallback[] = [];

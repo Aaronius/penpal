@@ -1,14 +1,8 @@
-import {
-  Log,
-  FlattenedMethods,
-  SynAckMessage,
-  PenpalError,
-  Destructor,
-} from '../types';
+import { Log, FlattenedMethods, SynAckMessage, Destructor } from '../types';
 import { ErrorCode, MessageType } from '../enums';
-/**
- * Handles a SYN handshake message.
- */
+import Messenger from '../Messenger';
+import PenpalError from '../PenpalError';
+
 const handleSynMessageFactory = (
   messenger: Messenger,
   flattenedMethods: FlattenedMethods,
@@ -26,17 +20,13 @@ const handleSynMessageFactory = (
     try {
       messenger.sendMessage(synAckMessage);
     } catch (error) {
-      const penpalError: PenpalError = new Error(
-        (error as Error).message
-      ) as PenpalError;
-      penpalError.code = ErrorCode.TransmissionFailed;
-      destructor.destroy(penpalError);
+      destructor.destroy(
+        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
+      );
     }
   };
 
   return handleSynMessage;
 };
-
-import Messenger from '../Messenger';
 
 export default handleSynMessageFactory;

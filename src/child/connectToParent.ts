@@ -1,7 +1,6 @@
 import {
   SynMessage,
   Methods,
-  PenpalError,
   RemoteMethodProxies,
   PenpalMessage,
 } from '../types';
@@ -13,6 +12,7 @@ import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
 import ChildToParentMessenger from './ChildToParentMessenger';
 import contextType from './contextType';
+import PenpalError from '../PenpalError';
 
 type Options = {
   /**
@@ -101,11 +101,9 @@ export default <TMethods extends Methods = Methods>(
     try {
       messenger.sendMessage(synMessage);
     } catch (error) {
-      const penpalError: PenpalError = new Error(
-        (error as Error).message
-      ) as PenpalError;
-      penpalError.code = ErrorCode.TransmissionFailed;
-      destroy(penpalError);
+      destroy(
+        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
+      );
     }
   };
 

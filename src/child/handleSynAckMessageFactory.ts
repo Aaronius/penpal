@@ -6,12 +6,12 @@ import {
   Destructor,
   Methods,
   RemoteMethodProxies,
-  PenpalError,
 } from '../types';
 import { ErrorCode, MessageType } from '../enums';
 import connectCallHandler from '../connectCallHandler';
 import connectRemoteMethodProxies from '../connectRemoteMethodProxies';
 import Messenger from '../Messenger';
+import PenpalError from '../PenpalError';
 
 /**
  * Handles a SYN-ACK handshake message.
@@ -37,11 +37,9 @@ const handleSynAckMessageFactory = (
     try {
       messenger.sendMessage(ackMessage);
     } catch (error) {
-      const penpalError: PenpalError = new Error(
-        (error as Error).message
-      ) as PenpalError;
-      penpalError.code = ErrorCode.TransmissionFailed;
-      destroy(penpalError);
+      destroy(
+        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
+      );
     }
 
     const destroyCallHandler = connectCallHandler(
