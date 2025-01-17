@@ -48,7 +48,7 @@ type Connection<TMethods extends Methods = Methods> = {
    * A method that, when called, will disconnect any communication.
    * You may call this even before a connection has been established.
    */
-  destroy: () => void;
+  close: () => void;
 };
 
 /**
@@ -135,7 +135,7 @@ export default <TMethods extends Methods = Methods>(
 
   return {
     promise,
-    destroy() {
+    close() {
       // Don't allow consumer to pass an error into destroy.
       destroy();
     },

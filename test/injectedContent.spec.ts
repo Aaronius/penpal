@@ -51,7 +51,7 @@ it('connects and calls a function on the child iframe when src is set to data UR
   const child = await connection.promise;
   const value = await child.multiply(2, 5);
   expect(value).toEqual(10);
-  connection.destroy();
+  connection.close();
 });
 
 it('never connects iframe when src is set to data URI and childOrigin is not set', async () => {
@@ -89,7 +89,7 @@ it('connects and calls a function on the child worker', async () => {
   const child = await connection.promise;
   const value = await child.multiply(2, 5);
   expect(value).toEqual(10);
-  connection.destroy();
+  connection.close();
 });
 
 it('connects and calls a function on the child iframe when src is set to an object URL', async () => {
@@ -107,7 +107,7 @@ it('connects and calls a function on the child iframe when src is set to an obje
   const child = await connection.promise;
   const value = await child.multiply(2, 5);
   expect(value).toEqual(10);
-  connection.destroy();
+  connection.close();
 });
 
 it('connects and calls a function on the child worker when src is set to an object URL', async () => {
@@ -125,7 +125,7 @@ it('connects and calls a function on the child worker when src is set to an obje
   const child = await connection.promise;
   const value = await child.multiply(2, 5);
   expect(value).toEqual(10);
-  connection.destroy();
+  connection.close();
 });
 
 it('connects and calls a function on the child iframe when srcdoc is set', async () => {
@@ -140,5 +140,5 @@ it('connects and calls a function on the child iframe when srcdoc is set', async
   const child = await connection.promise;
   const value = await child.multiply(2, 5);
   expect(value).toEqual(10);
-  connection.destroy();
+  connection.close();
 });

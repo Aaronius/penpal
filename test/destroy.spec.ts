@@ -21,11 +21,11 @@ const variants = [
 
 for (const variant of variants) {
   const { childType, createConnection } = variant;
-  describe(`[Child Type: ${childType}] destroy`, () => {
+  describe(`[Child Type: ${childType}] close`, () => {
     // Issue #51
     it('does not resolve or reject promise', async () => {
       const connection = createConnection<FixtureMethods>();
-      connection.destroy();
+      connection.close();
 
       await expectAsync(connection.promise).toBePending();
     });
@@ -47,7 +47,7 @@ for (const variant of variants) {
 
         // The method call message listener is set up after the connection has been established.
         await connection.promise;
-        connection.destroy();
+        connection.close();
 
         expect(addEventListenerSpy.calls.count()).toBe(1);
         addEventListenerSpy.calls.allArgs().forEach((args) => {
@@ -75,7 +75,7 @@ for (const variant of variants) {
 
         // The method call message listener is set up after the connection has been established.
         await connection.promise;
-        connection.destroy();
+        connection.close();
 
         expect(addEventListenerSpy.calls.count()).toBe(1);
         addEventListenerSpy.calls.allArgs().forEach((args) => {
@@ -90,7 +90,7 @@ for (const variant of variants) {
       // The method call message listener is set up after the connection has been established.
 
       const child = await connection.promise;
-      connection.destroy();
+      connection.close();
 
       let error;
       try {
@@ -100,9 +100,9 @@ for (const variant of variants) {
       }
       expect(error).toEqual(jasmine.any(Error));
       expect((error as Error).message).toBe(
-        'Unable to send multiply() call due to destroyed connection'
+        'Unable to send multiply() call due to closed connection'
       );
-      expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
+      expect((error as PenpalError).code).toBe(ErrorCode.ConnectionClosed);
     });
 
     it('supports multiple connections', async () => {
@@ -113,12 +113,12 @@ for (const variant of variants) {
         connection1.promise.then(async (child) => {
           const value = await child.multiplyAsync(2, 5);
           expect(value).toEqual(10);
-          connection1.destroy();
+          connection1.close();
         }),
         connection2.promise.then(async (child) => {
           const value = await child.multiplyAsync(3, 5);
           expect(value).toEqual(15);
-          connection2.destroy();
+          connection2.close();
         }),
       ]);
     });

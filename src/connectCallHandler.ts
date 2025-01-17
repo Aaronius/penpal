@@ -59,7 +59,7 @@ export default (
       // is merely returning a value from their method and not calling any function
       // that they could wrap in a try-catch. Even if the consumer were to catch the error,
       // the value of doing so is questionable. Instead, we'll just log a message.
-      log(`Unable to send ${methodPath}() reply due to destroyed connection`);
+      log(`Unable to send ${methodPath}() reply due to closed connection`);
       return;
     }
 

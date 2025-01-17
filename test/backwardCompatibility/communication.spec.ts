@@ -22,7 +22,7 @@ describe(`backward compatibility - communication between parent and child iframe
     const child = await connection.promise;
     const value = await child.multiply(2, 5);
     expect(value).toEqual(10);
-    connection.destroy();
+    connection.close();
   });
 
   it('calls nested functions on the child', async () => {
@@ -36,7 +36,7 @@ describe(`backward compatibility - communication between parent and child iframe
     expect(oneLevel).toEqual('pen');
     const twoLevels = await child.nested.by.twoLevels('pal');
     expect(twoLevels).toEqual('pal');
-    connection.destroy();
+    connection.close();
   });
 
   it('calls an asynchronous function on the child', async () => {
@@ -48,7 +48,7 @@ describe(`backward compatibility - communication between parent and child iframe
     const child = await connection.promise;
     const value = await child.multiply(2, 5);
     expect(value).toEqual(10);
-    connection.destroy();
+    connection.close();
   });
 
   it('calls a function on the parent', async () => {
@@ -66,7 +66,7 @@ describe(`backward compatibility - communication between parent and child iframe
     await child.addUsingParent();
     const value = await child.getParentReturnValue();
     expect(value).toEqual(9);
-    connection.destroy();
+    connection.close();
   });
 
   it('handles promises rejected with strings', async () => {
@@ -79,7 +79,7 @@ describe(`backward compatibility - communication between parent and child iframe
     await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
       'test error string'
     );
-    connection.destroy();
+    connection.close();
   });
 
   it('handles promises rejected with error objects', async () => {
@@ -99,7 +99,7 @@ describe(`backward compatibility - communication between parent and child iframe
     expect((error as Error).name).toBe('TypeError');
     expect((error as Error).message).toBe('test error object');
     expect((error as Error).stack).toEqual(jasmine.any(String));
-    connection.destroy();
+    connection.close();
   });
 
   it('handles promises rejected with undefined', async () => {
@@ -108,7 +108,7 @@ describe(`backward compatibility - communication between parent and child iframe
     await expectAsync(child.getPromiseRejectedWithUndefined()).toBeRejectedWith(
       undefined
     );
-    connection.destroy();
+    connection.close();
   });
 
   it('handles thrown errors', async () => {
@@ -126,7 +126,7 @@ describe(`backward compatibility - communication between parent and child iframe
     }
     expect(error).toEqual(jasmine.any(Error));
     expect((error as Error).message).toBe('Oh nos!');
-    connection.destroy();
+    connection.close();
   });
 
   it('handles unclonable values', async () => {
@@ -144,7 +144,7 @@ describe(`backward compatibility - communication between parent and child iframe
     }
     expect(error).toEqual(jasmine.any(Error));
     expect((error as Error).name).toBe('DataCloneError');
-    connection.destroy();
+    connection.close();
   });
 
   it('rejects method call promise if method call timeout reached', async () => {
@@ -176,10 +176,10 @@ describe(`backward compatibility - communication between parent and child iframe
       'Method call neverResolve() timed out after 1000ms'
     );
     expect((error as PenpalError).code).toBe(ErrorCode.MethodCallTimeout);
-    connection.destroy();
+    connection.close();
   });
 
-  it('rejects method call promise if connection is destroyed before reply is received', async () => {
+  it('rejects method call promise if connection is closed before reply is received', async () => {
     const connection = connectToChild<FixtureMethods>({
       child: createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
@@ -192,16 +192,16 @@ describe(`backward compatibility - communication between parent and child iframe
     child.neverResolve().catch((e) => {
       error = e;
     });
-    connection.destroy();
+    connection.close();
 
     // Wait for microtask queue to drain
     await Promise.resolve();
 
     expect(error!).toEqual(jasmine.any(Error));
     expect(error!.message).toBe(
-      'Method call neverResolve() cannot be resolved due to destroyed connection'
+      'Method call neverResolve() cannot be resolved due to closed connection'
     );
-    expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
-    connection.destroy();
+    expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionClosed);
+    connection.close();
   });
 });

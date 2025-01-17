@@ -26,7 +26,7 @@ for (const variant of variants) {
       const child = await connection.promise;
       const value = await child.multiply(2, 5);
       expect(value).toEqual(10);
-      connection.destroy();
+      connection.close();
     });
 
     it('calls nested functions on the child', async () => {
@@ -36,7 +36,7 @@ for (const variant of variants) {
       expect(oneLevel).toEqual('pen');
       const twoLevels = await child.nested.by.twoLevels('pal');
       expect(twoLevels).toEqual('pal');
-      connection.destroy();
+      connection.close();
     });
 
     it('calls an asynchronous function on the child', async () => {
@@ -44,7 +44,7 @@ for (const variant of variants) {
       const child = await connection.promise;
       const value = await child.multiply(2, 5);
       expect(value).toEqual(10);
-      connection.destroy();
+      connection.close();
     });
 
     it('handles transferables', async () => {
@@ -85,7 +85,7 @@ for (const variant of variants) {
 
       const returnValue = await returnValuePromise;
       expect(returnValue.getInt32(0)).toBe(10);
-      connection.destroy();
+      connection.close();
     });
 
     it('handles a promised reply instance with a promised return value', async () => {
@@ -96,7 +96,7 @@ for (const variant of variants) {
         5
       );
       expect(value).toEqual(10);
-      connection.destroy();
+      connection.close();
     });
 
     it('calls a function on the parent', async () => {
@@ -111,7 +111,7 @@ for (const variant of variants) {
       await child.addUsingParent();
       const value = await child.getParentReturnValue();
       expect(value).toEqual(9);
-      connection.destroy();
+      connection.close();
     });
 
     it('handles promises rejected with strings', async () => {
@@ -120,7 +120,7 @@ for (const variant of variants) {
       await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
         'test error string'
       );
-      connection.destroy();
+      connection.close();
     });
 
     it('handles promises rejected with error objects', async () => {
@@ -136,7 +136,7 @@ for (const variant of variants) {
       expect((error as Error).name).toBe('TypeError');
       expect((error as Error).message).toBe('test error object');
       expect((error as Error).stack).toEqual(jasmine.any(String));
-      connection.destroy();
+      connection.close();
     });
 
     it('handles promises rejected with undefined', async () => {
@@ -145,7 +145,7 @@ for (const variant of variants) {
       await expectAsync(
         child.getPromiseRejectedWithUndefined()
       ).toBeRejectedWith(undefined);
-      connection.destroy();
+      connection.close();
     });
 
     it('handles thrown errors', async () => {
@@ -159,7 +159,7 @@ for (const variant of variants) {
       }
       expect(error).toEqual(jasmine.any(Error));
       expect((error as Error).message).toBe('Oh nos!');
-      connection.destroy();
+      connection.close();
     });
 
     it('handles unclonable values', async () => {
@@ -173,7 +173,7 @@ for (const variant of variants) {
       }
       expect(error).toEqual(jasmine.any(Error));
       expect((error as Error).name).toBe('DataCloneError');
-      connection.destroy();
+      connection.close();
     });
 
     it('rejects method call promise if method call timeout reached', async () => {
@@ -201,10 +201,10 @@ for (const variant of variants) {
         'Method call neverResolve() timed out after 1000ms'
       );
       expect((error as PenpalError).code).toBe(ErrorCode.MethodCallTimeout);
-      connection.destroy();
+      connection.close();
     });
 
-    it('rejects method call promise if connection is destroyed before reply is received', async () => {
+    it('rejects method call promise if connection is closed before reply is received', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
 
@@ -213,17 +213,17 @@ for (const variant of variants) {
       child.neverResolve().catch((e) => {
         error = e;
       });
-      connection.destroy();
+      connection.close();
 
       // Wait for microtask queue to drain
       await Promise.resolve();
 
       expect(error!).toEqual(jasmine.any(Error));
       expect(error!.message).toBe(
-        'Method call neverResolve() cannot be resolved due to destroyed connection'
+        'Method call neverResolve() cannot be resolved due to closed connection'
       );
-      expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
-      connection.destroy();
+      expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionClosed);
+      connection.close();
     });
   });
 }

@@ -9,7 +9,7 @@ export default (log: Log): Destructor => {
     destroy(error?: PenpalError) {
       if (!destroyed) {
         destroyed = true;
-        log(`Destroying connection`);
+        log(`Closing connection`);
         callbacks.forEach((callback) => {
           callback(error);
         });

@@ -67,8 +67,8 @@ export default (
 
       if (destroyed) {
         throw new PenpalError(
-          ErrorCode.ConnectionDestroyed,
-          `Unable to send ${methodPath}() call due ` + `to destroyed connection`
+          ErrorCode.ConnectionClosed,
+          `Unable to send ${methodPath}() call due ` + `to closed connection`
         );
       }
 
@@ -147,8 +147,8 @@ export default (
       clearTimeout(timeoutId);
       reject(
         new PenpalError(
-          ErrorCode.ConnectionDestroyed,
-          `Method call ${methodPath}() cannot be resolved due to destroyed connection`
+          ErrorCode.ConnectionClosed,
+          `Method call ${methodPath}() cannot be resolved due to closed connection`
         )
       );
     }

@@ -232,7 +232,7 @@ describe('backward compatibility - connection management', () => {
           clearInterval(intervalId);
           child.multiply(2, 4).then((value: number) => {
             expect(value).toEqual(8);
-            connection.destroy();
+            connection.close();
             done();
           });
         }
@@ -266,7 +266,7 @@ describe('backward compatibility - connection management', () => {
           clearInterval(intervalId);
           child.addUsingParent().then(() => {
             expect(add.calls.count()).toEqual(1);
-            connection.destroy();
+            connection.close();
             done();
           });
         }
@@ -291,7 +291,7 @@ describe('backward compatibility - connection management', () => {
           expect(child.multiply).not.toBeDefined();
           child.methodNotInGeneralPage().then((value) => {
             expect(value).toEqual('method not in the general page');
-            connection.destroy();
+            connection.close();
             done();
           });
         }
@@ -321,7 +321,7 @@ describe('backward compatibility - connection management', () => {
   });
 
   it(
-    "doesn't destroy connection if connection succeeds then " +
+    "doesn't close connection if connection succeeds then " +
       'timeout passes (connectToChild)',
     async () => {
       jasmine.clock().install();
@@ -340,12 +340,12 @@ describe('backward compatibility - connection management', () => {
 
       expect(iframe.parentNode).not.toBeNull();
 
-      connection.destroy();
+      connection.close();
     }
   );
 
   it(
-    "doesn't destroy connection if connection succeeds then " +
+    "doesn't close connection if connection succeeds then " +
       'timeout passes (connectToParent)',
     (done) => {
       const connection = connectToChild<FixtureMethods>({
@@ -354,7 +354,7 @@ describe('backward compatibility - connection management', () => {
         ),
         methods: {
           reportStillConnected() {
-            connection.destroy();
+            connection.close();
             done();
           },
         },

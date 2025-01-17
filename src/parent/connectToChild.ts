@@ -126,7 +126,7 @@ export default <TMethods extends Methods = Methods>(
 
   return {
     promise,
-    destroy() {
+    close() {
       // Don't allow consumer to pass an error into destroy.
       destroy();
     },

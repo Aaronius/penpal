@@ -7,7 +7,7 @@ export enum MessageType {
 }
 
 export enum ErrorCode {
-  ConnectionDestroyed = 'ConnectionDestroyed',
+  ConnectionClosed = 'ConnectionClosed',
   ConnectionTimeout = 'ConnectionTimeout',
   MethodCallTimeout = 'MethodCallTimeout',
   TransmissionFailed = 'TransmissionFailed',
