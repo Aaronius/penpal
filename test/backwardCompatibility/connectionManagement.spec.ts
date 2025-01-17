@@ -1,7 +1,6 @@
 import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from '../constants';
 import { createAndAddIframe } from '../utils';
 import { connectToChild, ErrorCode, PenpalError } from '../../src/index';
-import { CHECK_IFRAME_IN_DOC_INTERVAL } from '../../src/parent/monitorIframeRemoval';
 import FixtureMethods from '../childFixtures/types/FixtureMethods';
 
 /**
@@ -362,32 +361,4 @@ describe('backward compatibility - connection management', () => {
       });
     }
   );
-
-  it('destroys connection if iframe has been removed from DOM', async () => {
-    jasmine.clock().install();
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-
-    const connection = connectToChild<FixtureMethods>({
-      child: iframe,
-    });
-
-    const child = await connection.promise;
-    document.body.removeChild(iframe);
-
-    jasmine.clock().tick(CHECK_IFRAME_IN_DOC_INTERVAL);
-
-    let error;
-    try {
-      await child.multiply(2, 3);
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toBeDefined();
-    expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
-
-    connection.destroy();
-  });
 });

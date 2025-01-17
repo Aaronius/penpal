@@ -13,7 +13,6 @@ import createLogger from '../createLogger';
 import createDestructor from '../createDestructor';
 import ParentToChildMessenger from './ParentToChildMessenger';
 import deriveOriginFromIframe from './deriveOriginFromIframe';
-import monitorIframeRemoval from './monitorIframeRemoval';
 import PenpalError from '../PenpalError';
 
 type Options = {
@@ -68,7 +67,6 @@ export default <TMethods extends Methods = Methods>(
     if (!childOrigin) {
       childOrigin = deriveOriginFromIframe(child, log);
     }
-    monitorIframeRemoval(child, destructor);
   }
 
   const messenger = new ParentToChildMessenger(

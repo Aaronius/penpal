@@ -5,7 +5,6 @@ import {
   expectNeverFulfilledIframeConnection,
 } from './utils';
 import { connectToChild, ErrorCode, PenpalError } from '../src/index';
-import { CHECK_IFRAME_IN_DOC_INTERVAL } from '../src/parent/monitorIframeRemoval';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 
 describe('connection management', () => {
@@ -335,32 +334,6 @@ describe('connection management', () => {
       });
     }
   );
-
-  it('destroys connection if iframe has been removed from DOM', async () => {
-    jasmine.clock().install();
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
-
-    const connection = connectToChild<FixtureMethods>({
-      child: iframe,
-    });
-
-    const child = await connection.promise;
-    document.body.removeChild(iframe);
-
-    jasmine.clock().tick(CHECK_IFRAME_IN_DOC_INTERVAL);
-
-    let error;
-    try {
-      await child.multiply(2, 3);
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toBeDefined();
-    expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
-
-    connection.destroy();
-  });
 
   it('connects to child iframe with same channel', async () => {
     const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/channels.html`);
