@@ -1,13 +1,9 @@
 import { ContextType, MessageType } from '../enums';
-import {
-  Destructor,
-  Log,
-  PenpalMessage,
-  PenpalMessageEnvelope,
-} from '../types';
+import { Log, PenpalMessage, PenpalMessageEnvelope } from '../types';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
 import contextType from './contextType';
+import Destructor from '../Destructor';
 
 class ChildToParentMessenger implements Messenger {
   private _parentOrigin: string | RegExp | undefined;

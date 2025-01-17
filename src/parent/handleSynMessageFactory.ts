@@ -1,7 +1,8 @@
-import { Log, FlattenedMethods, SynAckMessage, Destructor } from '../types';
+import { Log, FlattenedMethods, SynAckMessage } from '../types';
 import { ErrorCode, MessageType } from '../enums';
 import Messenger from '../Messenger';
 import PenpalError from '../PenpalError';
+import Destructor from '../Destructor';
 
 const handleSynMessageFactory = (
   messenger: Messenger,
@@ -20,9 +21,13 @@ const handleSynMessageFactory = (
     try {
       messenger.sendMessage(synAckMessage);
     } catch (error) {
-      destructor.destroy(
-        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
-      );
+      destructor.destroy({
+        isConsumerInitiated: false,
+        error: new PenpalError(
+          ErrorCode.TransmissionFailed,
+          (error as Error).message
+        ),
+      });
     }
   };
 

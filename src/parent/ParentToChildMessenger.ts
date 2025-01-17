@@ -1,9 +1,4 @@
-import {
-  Log,
-  PenpalMessage,
-  Destructor,
-  PenpalMessageEnvelope,
-} from '../types';
+import { Log, PenpalMessage, PenpalMessageEnvelope } from '../types';
 import { MessageType } from '../enums';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
@@ -13,6 +8,7 @@ import {
   isDeprecatedMessage,
   upgradeMessage,
 } from '../backwardCompatibility';
+import Destructor from '../Destructor';
 
 /**
  * Handles communication between the parent and a remote (either an iframe or a worker).

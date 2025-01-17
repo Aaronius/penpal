@@ -1,13 +1,8 @@
-import {
-  Log,
-  FlattenedMethods,
-  Destructor,
-  RemoteMethodProxies,
-  Methods,
-} from '../types';
+import { Log, FlattenedMethods, RemoteMethodProxies, Methods } from '../types';
 import connectCallHandler from '../connectCallHandler';
 import connectRemoteMethodProxies from '../connectRemoteMethodProxies';
 import Messenger from '../Messenger';
+import Destructor from '../Destructor';
 
 /**
  * Handles an ACK handshake message.
@@ -45,7 +40,7 @@ const handleAckMessageFactory = <TMethods extends Methods>(
     }
 
     destroyCallHandler = connectCallHandler(messenger, flattenedMethods, log);
-    onDestroy(destroyCallHandler);
+    onDestroy(() => destroyCallHandler());
 
     Object.keys(remoteMethodProxies).forEach((key) => {
       delete remoteMethodProxies[key];
@@ -58,7 +53,7 @@ const handleAckMessageFactory = <TMethods extends Methods>(
       log
     );
 
-    onDestroy(destroyRemoteMethodProxies);
+    onDestroy(() => destroyRemoteMethodProxies());
 
     return remoteMethodProxies;
   };

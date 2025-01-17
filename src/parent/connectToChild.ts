@@ -10,7 +10,7 @@ import handleSynMessageFactory from './handleSynMessageFactory';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import createLogger from '../createLogger';
-import createDestructor from '../createDestructor';
+import Destructor, { DestructionDetails } from '../Destructor';
 import ParentToChildMessenger from './ParentToChildMessenger';
 import deriveOriginFromIframe from './deriveOriginFromIframe';
 import PenpalError from '../PenpalError';
@@ -55,7 +55,7 @@ export default <TMethods extends Methods = Methods>(
   const { child, methods = {}, timeout, channel, debug = false } = options;
   let { childOrigin } = options;
   const log = createLogger('Parent', debug);
-  const destructor = createDestructor(log);
+  const destructor = new Destructor();
 
   if (child instanceof Worker) {
     if (childOrigin) {
@@ -95,7 +95,15 @@ export default <TMethods extends Methods = Methods>(
 
   const promise = new Promise<RemoteMethodProxies<TMethods>>(
     (resolve, reject) => {
-      const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
+      const stopConnectionTimeout = startConnectionTimeout(
+        timeout,
+        (error: PenpalError) => {
+          destroy({
+            isConsumerInitiated: false,
+            error,
+          });
+        }
+      );
       const handleMessage = (message: PenpalMessage) => {
         if (message.type === MessageType.Syn) {
           handleSynMessage();
@@ -114,12 +122,16 @@ export default <TMethods extends Methods = Methods>(
 
       log('Awaiting handshake');
 
-      onDestroy((error?: PenpalError) => {
+      onDestroy((destructionDetails: DestructionDetails) => {
         messenger.removeMessageHandler(handleMessage);
 
-        if (error) {
-          reject(error);
+        // Why we don't reject if it's consumer-initiated:
+        // https://github.com/Aaronius/penpal/issues/51
+        if (!destructionDetails.isConsumerInitiated) {
+          reject(destructionDetails.error);
         }
+
+        log('Connection closed');
       });
     }
   );
@@ -127,8 +139,9 @@ export default <TMethods extends Methods = Methods>(
   return {
     promise,
     close() {
-      // Don't allow consumer to pass an error into destroy.
-      destroy();
+      destroy({
+        isConsumerInitiated: true,
+      });
     },
   };
 };

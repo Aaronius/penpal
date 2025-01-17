@@ -3,7 +3,6 @@ import {
   Log,
   FlattenedMethods,
   SynAckMessage,
-  Destructor,
   Methods,
   RemoteMethodProxies,
 } from '../types';
@@ -12,6 +11,7 @@ import connectCallHandler from '../connectCallHandler';
 import connectRemoteMethodProxies from '../connectRemoteMethodProxies';
 import Messenger from '../Messenger';
 import PenpalError from '../PenpalError';
+import Destructor from '../Destructor';
 
 /**
  * Handles a SYN-ACK handshake message.
@@ -37,9 +37,13 @@ const handleSynAckMessageFactory = (
     try {
       messenger.sendMessage(ackMessage);
     } catch (error) {
-      destroy(
-        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
-      );
+      destroy({
+        isConsumerInitiated: false,
+        error: new PenpalError(
+          ErrorCode.TransmissionFailed,
+          (error as Error).message
+        ),
+      });
     }
 
     const destroyCallHandler = connectCallHandler(
@@ -47,7 +51,7 @@ const handleSynAckMessageFactory = (
       flattenedMethods,
       log
     );
-    onDestroy(destroyCallHandler);
+    onDestroy(() => destroyCallHandler());
 
     const remoteMethodProxies = {} as RemoteMethodProxies<TMethods>;
     const destroyRemoteMethodProxies = connectRemoteMethodProxies(
@@ -56,7 +60,7 @@ const handleSynAckMessageFactory = (
       message.methodPaths,
       log
     );
-    onDestroy(destroyRemoteMethodProxies);
+    onDestroy(() => destroyRemoteMethodProxies());
 
     return remoteMethodProxies;
   };

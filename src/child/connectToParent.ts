@@ -9,10 +9,10 @@ import handleSynAckMessageFactory from './handleSynAckMessageFactory';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import createLogger from '../createLogger';
-import createDestructor from '../createDestructor';
 import ChildToParentMessenger from './ChildToParentMessenger';
 import contextType from './contextType';
 import PenpalError from '../PenpalError';
+import Destructor, { DestructionDetails } from '../Destructor';
 
 type Options = {
   /**
@@ -74,7 +74,7 @@ export default <TMethods extends Methods = Methods>(
     }
   }
 
-  const destructor = createDestructor(log);
+  const destructor = new Destructor();
   const messenger = new ChildToParentMessenger(
     parentOrigin,
     channel,
@@ -101,15 +101,27 @@ export default <TMethods extends Methods = Methods>(
     try {
       messenger.sendMessage(synMessage);
     } catch (error) {
-      destroy(
-        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
-      );
+      destroy({
+        isConsumerInitiated: false,
+        error: new PenpalError(
+          ErrorCode.TransmissionFailed,
+          (error as Error).message
+        ),
+      });
     }
   };
 
   const promise = new Promise<RemoteMethodProxies<TMethods>>(
     (resolve, reject) => {
-      const stopConnectionTimeout = startConnectionTimeout(timeout, destroy);
+      const stopConnectionTimeout = startConnectionTimeout(
+        timeout,
+        (error: PenpalError) => {
+          destroy({
+            isConsumerInitiated: false,
+            error,
+          });
+        }
+      );
       const handleMessage = (message: PenpalMessage) => {
         if (message.type === MessageType.SynAck) {
           messenger.removeMessageHandler(handleMessage);
@@ -121,12 +133,16 @@ export default <TMethods extends Methods = Methods>(
 
       messenger.addMessageHandler(handleMessage);
 
-      onDestroy((error?: PenpalError) => {
+      onDestroy((destructionDetails: DestructionDetails) => {
         messenger.removeMessageHandler(handleMessage);
+        // Why we don't reject if it's consumer-initiated:
 
-        if (error) {
-          reject(error);
+        // https://github.com/Aaronius/penpal/issues/51
+        if (!destructionDetails.isConsumerInitiated) {
+          reject(destructionDetails.error);
         }
+
+        log('Connection closed');
       });
 
       sendSynMessage();
@@ -136,8 +152,9 @@ export default <TMethods extends Methods = Methods>(
   return {
     promise,
     close() {
-      // Don't allow consumer to pass an error into destroy.
-      destroy();
+      destroy({
+        isConsumerInitiated: true,
+      });
     },
   };
 };

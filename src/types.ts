@@ -2,7 +2,6 @@ import { MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
 import namespace from './namespace';
-import PenpalError from './PenpalError';
 
 type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 
@@ -117,16 +116,3 @@ export type PenpalMessageEnvelope = {
 };
 
 export type Log = (...args: unknown[]) => void;
-
-export type DestructorCallback = (error?: PenpalError) => void;
-
-export type Destructor = {
-  /**
-   * Calls all onDestroy callbacks.
-   */
-  destroy(error?: PenpalError): void;
-  /**
-   * Registers a callback to be called when destroy is called.
-   */
-  onDestroy(callback: DestructorCallback): void;
-};
