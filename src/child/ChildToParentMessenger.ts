@@ -3,7 +3,6 @@ import { Log, PenpalMessage, PenpalMessageEnvelope } from '../types';
 import Messenger from '../Messenger';
 import namespace from '../namespace';
 import contextType from './contextType';
-import Destructor from '../Destructor';
 
 class ChildToParentMessenger implements Messenger {
   private _parentOrigin: string | RegExp | undefined;
@@ -17,8 +16,7 @@ class ChildToParentMessenger implements Messenger {
   constructor(
     parentOrigin: string | RegExp | undefined,
     channel: string | undefined,
-    log: Log,
-    destructor: Destructor
+    log: Log
   ) {
     this._parentOrigin = parentOrigin;
     this._channel = channel;
@@ -31,13 +29,6 @@ class ChildToParentMessenger implements Messenger {
     this._port2 = port2;
     port1.addEventListener('message', this._handleMessage);
     port1.start();
-
-    destructor.onDestroy(() => {
-      self.removeEventListener('message', this._handleMessage);
-      this._port1.removeEventListener('message', this._handleMessage);
-      this._port1.close();
-      this._messageCallbacks.clear();
-    });
   }
 
   private _isEventFromValidOrigin(event: MessageEvent): boolean {
@@ -142,6 +133,13 @@ class ChildToParentMessenger implements Messenger {
 
   removeMessageHandler = (callback: (message: PenpalMessage) => void): void => {
     this._messageCallbacks.delete(callback);
+  };
+
+  close = () => {
+    self.removeEventListener('message', this._handleMessage);
+    this._port1.removeEventListener('message', this._handleMessage);
+    this._port1.close();
+    this._messageCallbacks.clear();
   };
 }
 

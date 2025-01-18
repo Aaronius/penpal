@@ -24,7 +24,7 @@ export default (
   flattenedMethods: FlattenedMethods,
   log: Log
 ) => {
-  let destroyed = false;
+  let isClosed = false;
 
   const handleMessage = async (message: PenpalMessage) => {
     if (message.type !== MessageType.Call) return;
@@ -53,12 +53,12 @@ export default (
       replyMessage = createErrorReplyMessage(roundTripId, error);
     }
 
-    if (destroyed) {
-      // It's possible to throw an error here, but it would need to be thrown asynchronously
-      // and would only be catchable using window.onerror. This is because the consumer
-      // is merely returning a value from their method and not calling any function
-      // that they could wrap in a try-catch. Even if the consumer were to catch the error,
-      // the value of doing so is questionable. Instead, we'll just log a message.
+    if (isClosed) {
+      // It's possible to throw an error here, but it would catchable using
+      // window.onerror since we're in an asynchronously called function. There
+      // is no method call the consumer is making that they could wrap in
+      // a try-catch. Even if the consumer were to catch the error somehow,
+      // the value of doing so is questionable.
       log(`Unable to send ${methodPath}() reply due to closed connection`);
       return;
     }
@@ -68,8 +68,9 @@ export default (
     try {
       messenger.sendMessage(replyMessage, transferables);
     } catch (error) {
-      // If a consumer attempts to send an object that's not cloneable (e.g., window),
-      // we want to ensure the receiver's promise gets rejected.
+      // If a consumer attempts to send an object that's not
+      // cloneable (e.g., window), we want to ensure the receiver's promise
+      // gets rejected.
       if ((error as Error).name === NativeErrorName.DataCloneError) {
         messenger.sendMessage(
           createErrorReplyMessage(roundTripId, error as Error)
@@ -82,7 +83,7 @@ export default (
   messenger.addMessageHandler(handleMessage);
 
   return () => {
-    destroyed = true;
+    isClosed = true;
     messenger.removeMessageHandler(handleMessage);
   };
 };

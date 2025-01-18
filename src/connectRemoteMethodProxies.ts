@@ -30,7 +30,7 @@ export default (
   methodPaths: string[],
   log: Log
 ) => {
-  let destroyed = false;
+  let isClosed = false;
 
   const replyHandlers = new Map<number, ReplyHandler>();
 
@@ -65,7 +65,7 @@ export default (
     return (...args: unknown[]) => {
       log(`Sending ${methodPath}() call`);
 
-      if (destroyed) {
+      if (isClosed) {
         throw new PenpalError(
           ErrorCode.ConnectionClosed,
           `Unable to send ${methodPath}() call due ` + `to closed connection`
@@ -140,7 +140,7 @@ export default (
   Object.assign(remoteMethodProxies, unflattenMethods(flattedMethodProxies));
 
   return () => {
-    destroyed = true;
+    isClosed = true;
     messenger.removeMessageHandler(handleMessage);
 
     for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {

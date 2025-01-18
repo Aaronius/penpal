@@ -8,7 +8,6 @@ import {
   isDeprecatedMessage,
   upgradeMessage,
 } from '../backwardCompatibility';
-import Destructor from '../Destructor';
 
 /**
  * Handles communication between the parent and a remote (either an iframe or a worker).
@@ -18,6 +17,7 @@ class ParentToChildMessenger implements Messenger {
   private _childOrigin: string | RegExp | undefined;
   private _channel?: string;
   private _log: Log;
+  private _messageDispatcher: Worker | Window;
   private _concreteChildOrigin?: string;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port?: MessagePort;
@@ -27,29 +27,19 @@ class ParentToChildMessenger implements Messenger {
     child: HTMLIFrameElement | Worker,
     childOrigin: string | RegExp | undefined,
     channel: string | undefined,
-    log: Log,
-    destructor: Destructor
+    log: Log
   ) {
     this._child = child;
     this._childOrigin = childOrigin;
     this._channel = channel;
     this._log = log;
 
-    const messageDispatcher = child instanceof Worker ? child : window;
+    this._messageDispatcher = child instanceof Worker ? child : window;
 
-    messageDispatcher.addEventListener(
+    this._messageDispatcher.addEventListener(
       'message',
       this._handleMessageFromChild as EventListener
     );
-
-    destructor.onDestroy(() => {
-      messageDispatcher.removeEventListener(
-        'message',
-        this._handleMessageFromChild as EventListener
-      );
-      this._destroyPort();
-      this._messageCallbacks.clear();
-    });
   }
 
   private _destroyPort = () => {
@@ -227,6 +217,15 @@ class ParentToChildMessenger implements Messenger {
 
   removeMessageHandler = (callback: (message: PenpalMessage) => void): void => {
     this._messageCallbacks.delete(callback);
+  };
+
+  close = () => {
+    this._messageDispatcher.removeEventListener(
+      'message',
+      this._handleMessageFromChild as EventListener
+    );
+    this._destroyPort();
+    this._messageCallbacks.clear();
   };
 }
 

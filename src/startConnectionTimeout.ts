@@ -22,7 +22,9 @@ export default (
     }, timeout);
   }
 
-  return () => {
+  const stop = () => {
     clearTimeout(timeoutId);
   };
+
+  return stop;
 };

@@ -1,18 +1,12 @@
-import {
-  SynMessage,
-  Methods,
-  RemoteMethodProxies,
-  PenpalMessage,
-} from '../types';
-import { ContextType, ErrorCode, MessageType } from '../enums';
-import handleSynAckMessageFactory from './handleSynAckMessageFactory';
+import { Methods, RemoteMethodProxies } from '../types';
+import { ContextType } from '../enums';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import createLogger from '../createLogger';
 import ChildToParentMessenger from './ChildToParentMessenger';
 import contextType from './contextType';
 import PenpalError from '../PenpalError';
-import Destructor, { DestructionDetails } from '../Destructor';
+import ChildHandleshaker from './ChildHandleshaker';
 
 type Options = {
   /**
@@ -74,87 +68,58 @@ export default <TMethods extends Methods = Methods>(
     }
   }
 
-  const destructor = new Destructor();
-  const messenger = new ChildToParentMessenger(
-    parentOrigin,
-    channel,
-    log,
-    destructor
-  );
-
-  const { destroy, onDestroy } = destructor;
   const flattenedMethods = flattenMethods(methods);
+  const connectionClosedHandlers: (() => void)[] = [];
 
-  const handleSynAckMessage = handleSynAckMessageFactory(
-    messenger,
-    flattenedMethods,
-    destructor,
-    log
-  );
-
-  const sendSynMessage = () => {
-    log('Handshake - Sending SYN');
-    const synMessage: SynMessage = {
-      type: MessageType.Syn,
-    };
-
-    try {
-      messenger.sendMessage(synMessage);
-    } catch (error) {
-      destroy({
-        isConsumerInitiated: false,
-        error: new PenpalError(
-          ErrorCode.TransmissionFailed,
-          (error as Error).message
-        ),
-      });
+  const closeConnectionWithoutRejection = () => {
+    for (const connectionClosedHandler of connectionClosedHandlers) {
+      connectionClosedHandler();
     }
+
+    log('Connection closed');
   };
 
   const promise = new Promise<RemoteMethodProxies<TMethods>>(
     (resolve, reject) => {
-      const stopConnectionTimeout = startConnectionTimeout(
-        timeout,
-        (error: PenpalError) => {
-          destroy({
-            isConsumerInitiated: false,
-            error,
-          });
-        }
-      );
-      const handleMessage = (message: PenpalMessage) => {
-        if (message.type === MessageType.SynAck) {
-          messenger.removeMessageHandler(handleMessage);
-          stopConnectionTimeout();
-          const remoteMethodProxies = handleSynAckMessage<TMethods>(message);
-          resolve(remoteMethodProxies);
-        }
+      const closeConnection = (error: PenpalError) => {
+        closeConnectionWithoutRejection();
+        reject(error);
       };
 
-      messenger.addMessageHandler(handleMessage);
+      const messenger = new ChildToParentMessenger(parentOrigin, channel, log);
+      connectionClosedHandlers.push(messenger.close);
 
-      onDestroy((destructionDetails: DestructionDetails) => {
-        messenger.removeMessageHandler(handleMessage);
-        // Why we don't reject if it's consumer-initiated:
+      const stopConnectionTimeout = startConnectionTimeout(
+        timeout,
+        closeConnection
+      );
 
-        // https://github.com/Aaronius/penpal/issues/51
-        if (!destructionDetails.isConsumerInitiated) {
-          reject(destructionDetails.error);
-        }
+      const onRemoteMethodProxiesCreated = (
+        remoteMethodProxies: RemoteMethodProxies<TMethods>
+      ) => {
+        stopConnectionTimeout();
+        resolve(remoteMethodProxies);
+      };
 
-        log('Connection closed');
-      });
+      const handshaker = new ChildHandleshaker<TMethods>(
+        messenger,
+        flattenedMethods,
+        closeConnection,
+        onRemoteMethodProxiesCreated,
+        log
+      );
 
-      sendSynMessage();
+      connectionClosedHandlers.push(handshaker.close);
+      handshaker.shake();
     }
   );
 
   return {
     promise,
     close() {
-      destroy({
-        isConsumerInitiated: true,
-      });
+      // Why we close the connection without rejecting the connection promise:
+      // https://github.com/Aaronius/penpal/issues/51
+      closeConnectionWithoutRejection();
     },
   };
 };

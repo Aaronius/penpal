@@ -1,19 +1,11 @@
-import {
-  RemoteMethodProxies,
-  Connection,
-  Methods,
-  PenpalMessage,
-} from '../types';
-import { MessageType } from '../enums';
-import handleAckMessageFactory from './handleAckMessageFactory';
-import handleSynMessageFactory from './handleSynMessageFactory';
+import { RemoteMethodProxies, Connection, Methods } from '../types';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import createLogger from '../createLogger';
-import Destructor, { DestructionDetails } from '../Destructor';
 import ParentToChildMessenger from './ParentToChildMessenger';
 import deriveOriginFromIframe from './deriveOriginFromIframe';
 import PenpalError from '../PenpalError';
+import ParentHandshaker from './ParentHandshaker';
 
 type Options = {
   /**
@@ -55,7 +47,6 @@ export default <TMethods extends Methods = Methods>(
   const { child, methods = {}, timeout, channel, debug = false } = options;
   let { childOrigin } = options;
   const log = createLogger('Parent', debug);
-  const destructor = new Destructor();
 
   if (child instanceof Worker) {
     if (childOrigin) {
@@ -69,79 +60,64 @@ export default <TMethods extends Methods = Methods>(
     }
   }
 
-  const messenger = new ParentToChildMessenger(
-    child,
-    childOrigin,
-    channel,
-    log,
-    destructor
-  );
-
-  const { onDestroy, destroy } = destructor;
-
+  // Move into handshaker? Same with ChildHandshaker?
   const flattenedMethods = flattenMethods(methods);
-  const handleSynMessage = handleSynMessageFactory(
-    messenger,
-    flattenedMethods,
-    destructor,
-    log
-  );
-  const handleAckMessage = handleAckMessageFactory<TMethods>(
-    messenger,
-    flattenedMethods,
-    destructor,
-    log
-  );
+  const connectionClosedHandlers: (() => void)[] = [];
+
+  const closeConnectionWithoutRejection = () => {
+    for (const connectionClosedHandler of connectionClosedHandlers) {
+      connectionClosedHandler();
+    }
+
+    log('Connection closed');
+  };
 
   const promise = new Promise<RemoteMethodProxies<TMethods>>(
     (resolve, reject) => {
-      const stopConnectionTimeout = startConnectionTimeout(
-        timeout,
-        (error: PenpalError) => {
-          destroy({
-            isConsumerInitiated: false,
-            error,
-          });
-        }
-      );
-      const handleMessage = (message: PenpalMessage) => {
-        if (message.type === MessageType.Syn) {
-          handleSynMessage();
-          return;
-        }
-
-        if (message.type === MessageType.Ack) {
-          const remoteMethodProxies = handleAckMessage(message.methodPaths);
-          stopConnectionTimeout();
-          resolve(remoteMethodProxies);
-          return;
-        }
+      const closeConnection = (error: PenpalError) => {
+        closeConnectionWithoutRejection();
+        reject(error);
       };
 
-      messenger.addMessageHandler(handleMessage);
+      const messenger = new ParentToChildMessenger(
+        child,
+        childOrigin,
+        channel,
+        log
+      );
+      connectionClosedHandlers.push(messenger.close);
+
+      const stopConnectionTimeout = startConnectionTimeout(
+        timeout,
+        closeConnection
+      );
+
+      const onRemoteMethodProxiesCreated = (
+        remoteMethodProxies: RemoteMethodProxies<TMethods>
+      ) => {
+        stopConnectionTimeout();
+        resolve(remoteMethodProxies);
+      };
+
+      const handshaker = new ParentHandshaker<TMethods>(
+        messenger,
+        flattenedMethods,
+        closeConnection,
+        onRemoteMethodProxiesCreated,
+        log
+      );
+      connectionClosedHandlers.push(handshaker.close);
 
       log('Awaiting handshake');
-
-      onDestroy((destructionDetails: DestructionDetails) => {
-        messenger.removeMessageHandler(handleMessage);
-
-        // Why we don't reject if it's consumer-initiated:
-        // https://github.com/Aaronius/penpal/issues/51
-        if (!destructionDetails.isConsumerInitiated) {
-          reject(destructionDetails.error);
-        }
-
-        log('Connection closed');
-      });
     }
   );
 
   return {
     promise,
     close() {
-      destroy({
-        isConsumerInitiated: true,
-      });
+      // Why we close the connection without rejecting the connection promise:
+      // https://github.com/Aaronius/penpal/issues/51
+      closeConnectionWithoutRejection();
     },
   };
 };
