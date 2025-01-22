@@ -3,6 +3,8 @@ import {
   connectToChild,
   ErrorCode,
   Methods,
+  ParentToChildWorkerMessenger,
+  ParentToChildWindowMessenger,
   PenpalError,
 } from '../src/index';
 import { CHILD_SERVER } from './constants';
@@ -13,7 +15,7 @@ export const createAndAddIframe = (url?: string) => {
     iframe.src = url;
   }
   document.body.appendChild(iframe);
-  return iframe;
+  return iframe!;
 };
 
 export const createIframeAndConnection = <TMethods extends Methods>({
@@ -23,8 +25,13 @@ export const createIframeAndConnection = <TMethods extends Methods>({
   methods?: Methods;
   pageName?: string;
 } = {}) => {
+  const iframe = createAndAddIframe(getPageFixtureUrl(pageName, CHILD_SERVER));
+  const messenger = new ParentToChildWindowMessenger({
+    childWindow: () => iframe.contentWindow!,
+    childOrigin: CHILD_SERVER,
+  });
   const connection = connectToChild<TMethods>({
-    child: createAndAddIframe(getPageFixtureUrl(pageName)),
+    messenger,
     methods,
   });
   return connection;
@@ -38,8 +45,11 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   workerName?: string;
 } = {}) => {
   const worker = new Worker(getWorkerFixtureUrl(workerName));
+  const messenger = new ParentToChildWorkerMessenger({
+    childWorker: worker,
+  });
   const connection = connectToChild<TMethods>({
-    child: worker,
+    messenger,
     methods,
   });
   return connection;

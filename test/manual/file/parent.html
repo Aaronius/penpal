@@ -8,9 +8,13 @@
         iframe.src = 'child.html';
         document.body.appendChild(iframe);
 
-        Penpal.connectToChild({
-          child: iframe,
+        const messenger = new Penpal.ParentToChildWindowMessenger({
+          childWindow: iframe.contentWindow,
           childOrigin: '*',
+        });
+
+        Penpal.connectToChild({
+          messenger,
           debug: true,
         }).promise.then(function (child) {
           child.multiply(3, 2).then((result) => {

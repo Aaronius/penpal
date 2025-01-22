@@ -1,8 +1,9 @@
-import { createAndAddIframe, createIframeAndConnection } from '../utils';
+import { createAndAddIframe } from '../utils';
 import {
   connectToChild,
   ErrorCode,
   MethodCallOptions,
+  ParentToChildWindowMessenger,
   PenpalError,
 } from '../../src/index';
 import FixtureMethods from '../childFixtures/types/FixtureMethods';
@@ -14,10 +15,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('calls a function on the child', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
     const value = await child.multiply(2, 5);
@@ -26,10 +32,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('calls nested functions on the child', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
     const oneLevel = await child.nested.oneLevel('pen');
@@ -40,10 +51,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('calls an asynchronous function on the child', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
     const value = await child.multiply(2, 5);
@@ -52,10 +68,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('calls a function on the parent', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
       methods: {
         add: (num1: number, num2: number) => {
           return num1 + num2;
@@ -70,10 +91,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles promises rejected with strings', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
     await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
@@ -83,10 +109,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles promises rejected with error objects', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
     let error;
@@ -103,7 +134,16 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles promises rejected with undefined', async () => {
-    const connection = createIframeAndConnection<FixtureMethods>();
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
+    const connection = connectToChild<FixtureMethods>({
+      messenger,
+    });
     const child = await connection.promise;
     await expectAsync(child.getPromiseRejectedWithUndefined()).toBeRejectedWith(
       undefined
@@ -112,10 +152,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles thrown errors', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
     let error;
@@ -130,10 +175,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('handles unclonable values', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
     let error;
@@ -149,10 +199,15 @@ describe(`backward compatibility - communication between parent and child iframe
 
   it('rejects method call promise if method call timeout reached', async () => {
     jasmine.clock().install();
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
     const promise = child.neverResolve(
@@ -180,10 +235,15 @@ describe(`backward compatibility - communication between parent and child iframe
   });
 
   it('rejects method call promise if connection is closed before reply is received', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: () => iframe.contentWindow!,
+      childOrigin: CHILD_SERVER,
+    });
     const connection = connectToChild<FixtureMethods>({
-      child: createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      ),
+      messenger,
     });
     const child = await connection.promise;
 

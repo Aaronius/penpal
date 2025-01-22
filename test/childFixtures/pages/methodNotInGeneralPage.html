@@ -15,6 +15,10 @@
     <script>
       let parentAPI;
 
+      const messenger = new Penpal.ChildWindowToParentMessenger({
+        parentOrigin: '*',
+      });
+
       const methods = {
         methodNotInGeneralPage() {
           return 'method not in the general page';
@@ -22,8 +26,8 @@
       };
 
       Penpal.connectToParent({
+        messenger,
         methods: methods,
-        parentOrigin: '*',
       }).promise.then(function (parent) {
         parentAPI = parent;
       });

@@ -13,8 +13,12 @@
     </script>
     <script src="/penpal.js"></script>
     <script>
-      Penpal.connectToParent({
+      const messenger = new Penpal.ChildWindowToParentMessenger({
         parentOrigin: '*',
+      });
+
+      Penpal.connectToParent({
+        messenger,
         timeout: 30,
       }).promise.then(function (parent) {
         setTimeout(function () {

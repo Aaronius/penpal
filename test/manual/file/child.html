@@ -3,8 +3,12 @@
   <head>
     <script src="../../../dist/penpal.js"></script>
     <script>
-      Penpal.connectToParent({
+      const messenger = new Penpal.ChildWindowToParentMessenger({
         parentOrigin: '*',
+      });
+
+      Penpal.connectToParent({
+        messenger,
         methods: {
           multiply: function (num1, num2) {
             return num1 * num2;

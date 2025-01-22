@@ -20,6 +20,7 @@
       };
 
       Penpal.connectToParent({
+        messenger: new Penpal.ChildWindowToParentMessenger(),
         methods: methods,
       });
     </script>

@@ -51,8 +51,10 @@ export type DeprecatedPenpalMessage =
   | DeprecatedCallMessage
   | DeprecatedReplyMessage;
 
-export const isDeprecatedMessage = (data: unknown) => {
-  return typeof data === 'object' && data !== null && 'penpal' in data;
+export const isDeprecatedMessage = (
+  data: unknown
+): data is DeprecatedPenpalMessage => {
+  return !!data && typeof data === 'object' && 'penpal' in data;
 };
 
 export const upgradeMessage = (

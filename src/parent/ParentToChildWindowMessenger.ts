@@ -1,45 +1,54 @@
 import { Log, PenpalMessage, PenpalMessageEnvelope } from '../types';
-import { MessageType } from '../enums';
-import Messenger from '../Messenger';
+import Messenger, { InitializeOptions, MessageHandler } from '../Messenger';
 import namespace from '../namespace';
 import {
-  DeprecatedPenpalMessage,
   downgradeMessageEnvelope,
   isDeprecatedMessage,
   upgradeMessage,
 } from '../backwardCompatibility';
+import {
+  isAckMessage,
+  isPenpalMessageEnvelope,
+  isSynAckMessage,
+  isSynMessage,
+  isWindow,
+} from '../guards';
+import PenpalError from '../PenpalError';
+import { ErrorCode } from '../enums';
 
-/**
- * Handles communication between the parent and a remote (either an iframe or a worker).
- */
-class ParentToChildMessenger implements Messenger {
-  private _child: HTMLIFrameElement | Worker;
-  private _childOrigin: string | RegExp | undefined;
+type Options = {
+  childWindow: Window | (() => Window);
+  childOrigin?: string | RegExp;
+  channel?: string;
+};
+
+class ParentToChildWindowMessenger implements Messenger {
+  private _childWindow: Window | (() => Window);
+  private _cachedChildWindow?: Window;
+  private _childOrigin: string | RegExp;
   private _channel?: string;
-  private _log: Log;
-  private _messageDispatcher: Worker | Window;
   private _concreteChildOrigin?: string;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port?: MessagePort;
   private _isChildUsingDeprecatedProtocol = false;
+  private _log?: Log;
 
-  constructor(
-    child: HTMLIFrameElement | Worker,
-    childOrigin: string | RegExp | undefined,
-    channel: string | undefined,
-    log: Log
-  ) {
-    this._child = child;
+  constructor({ childWindow, childOrigin = window.origin, channel }: Options) {
+    if (
+      !childWindow ||
+      (!isWindow(childWindow) && !(typeof childWindow === 'function'))
+    ) {
+      throw new PenpalError(
+        ErrorCode.InvalidArgument,
+        'childWindow must be a Window or function that returns a Window'
+      );
+    }
+
+    this._childWindow = childWindow;
     this._childOrigin = childOrigin;
     this._channel = channel;
-    this._log = log;
 
-    this._messageDispatcher = child instanceof Worker ? child : window;
-
-    this._messageDispatcher.addEventListener(
-      'message',
-      this._handleMessageFromChild as EventListener
-    );
+    window.addEventListener('message', this._handleMessageFromChild);
   }
 
   private _destroyPort = () => {
@@ -48,36 +57,50 @@ class ParentToChildMessenger implements Messenger {
     this._port = undefined;
   };
 
-  private _handleMessageFromChild = (event: MessageEvent): void => {
-    // event.source is always null when receiving an event from a worker,
-    // so we don't have to check it in that case.
-    if (this._child instanceof HTMLIFrameElement) {
-      if (
-        // Under specific timing circumstances, we can receive an event
-        // whose source is null at this point. This seems to happen when the
-        // child iframe is removed from the DOM about the same time it
-        // sends a message.
-        // https://github.com/Aaronius/penpal/issues/85
-        !event.source ||
-        event.source !== this._child.contentWindow
-      ) {
-        return;
+  private _getDefinedChildWindow = () => {
+    if (!this._cachedChildWindow) {
+      if (isWindow(this._childWindow)) {
+        this._cachedChildWindow = this._childWindow;
+      } else {
+        const childWindow = this._childWindow();
+
+        if (!isWindow(childWindow)) {
+          throw new PenpalError(
+            ErrorCode.InvalidArgument,
+            'childWindow did not return a Window object'
+          );
+        }
+
+        this._cachedChildWindow = childWindow;
       }
+    }
+
+    return this._cachedChildWindow;
+  };
+
+  private _handleMessageFromChild = (event: MessageEvent): void => {
+    if (
+      // Under specific timing circumstances, we can receive an event
+      // whose source is null at this point. This seems to happen when the
+      // child iframe is removed from the DOM about the same time it
+      // sends a message.
+      // https://github.com/Aaronius/penpal/issues/85
+      !event.source ||
+      event.source !== this._getDefinedChildWindow()
+    ) {
+      return;
     }
 
     let messageEnvelope: PenpalMessageEnvelope;
 
-    if (event.data?.namespace === namespace) {
+    if (isPenpalMessageEnvelope(event.data)) {
       messageEnvelope = event.data;
     } else if (isDeprecatedMessage(event.data)) {
-      this._log(
-        'The child is using an older version of Penpal which will be ' +
-          'incompatible when the parent upgrades to the next major version of ' +
-          'Penpal. Please upgrade the child to the latest version of Penpal.'
+      this._log?.(
+        'Please upgrade the child window to the latest version of Penpal.'
       );
-
       this._isChildUsingDeprecatedProtocol = true;
-      messageEnvelope = upgradeMessage(event.data as DeprecatedPenpalMessage);
+      messageEnvelope = upgradeMessage(event.data);
     } else {
       // The received event doesn't pertain to Penpal.
       return;
@@ -88,7 +111,7 @@ class ParentToChildMessenger implements Messenger {
     }
 
     if (!this._isEventFromValidOrigin(event)) {
-      this._log(
+      this._log?.(
         `Received a message from origin "${event.origin}" which did not match expected origin "${this._childOrigin}"`
       );
       return;
@@ -96,15 +119,15 @@ class ParentToChildMessenger implements Messenger {
 
     const { message } = messageEnvelope;
 
-    if (message.type === MessageType.Syn) {
+    if (isSynMessage(message)) {
       // We destroy the port if one is already set, because it's possible a
-      // child is re-connecting.
+      // child is re-connecting and we'll receive a new port.
       this._destroyPort();
       this._concreteChildOrigin = event.origin;
     }
 
     if (
-      message.type === MessageType.Ack &&
+      isAckMessage(message) &&
       // Previous versions of Penpal don't use MessagePorts so they won't be
       // sending a MessagePort on the event. We instead do all communication
       // through the window rather than a port.
@@ -127,11 +150,7 @@ class ParentToChildMessenger implements Messenger {
   };
 
   private _isEventFromValidOrigin(event: MessageEvent): boolean {
-    if (
-      // In both cases, origins are irrelevant.
-      this._child instanceof Worker ||
-      event.currentTarget instanceof MessagePort
-    ) {
+    if (event.currentTarget instanceof MessagePort) {
       return true;
     }
     return this._childOrigin instanceof RegExp
@@ -143,11 +162,11 @@ class ParentToChildMessenger implements Messenger {
     // Unlike in _handleMessageFromWindow, we don't have to check if
     // the message is from a deprecated version of Penpal because older versions
     // of Penpal don't use MessagePorts.
-    if (event.data?.namespace !== namespace) {
+    if (!isPenpalMessageEnvelope(event.data)) {
       return;
     }
 
-    const { channel, message } = event.data as PenpalMessageEnvelope;
+    const { channel, message } = event.data;
 
     if (channel !== this._channel) {
       return;
@@ -169,7 +188,7 @@ class ParentToChildMessenger implements Messenger {
     };
 
     if (
-      message.type === MessageType.SynAck ||
+      isSynAckMessage(message) ||
       // If the child is using a previous version of Penpal, we need to
       // downgrade the message and send it through the window rather than
       // the port because older versions of Penpal don't use MessagePorts.
@@ -179,25 +198,19 @@ class ParentToChildMessenger implements Messenger {
         ? downgradeMessageEnvelope(envelope)
         : envelope;
 
-      if (this._child instanceof HTMLIFrameElement) {
-        if (!this._concreteChildOrigin) {
-          // If this ever happens, it's a bug in Penpal.
-          throw new Error('Concrete child origin not set');
-        }
-
-        const originForSending =
-          this._childOrigin instanceof RegExp
-            ? this._concreteChildOrigin
-            : this._childOrigin;
-        this._child.contentWindow?.postMessage(payload, {
-          targetOrigin: originForSending,
-          transfer: transferables,
-        });
-      } else {
-        this._child.postMessage(payload, {
-          transfer: transferables,
-        });
+      if (!this._concreteChildOrigin) {
+        // If this ever happens, it's a bug in Penpal.
+        throw new Error('Concrete child origin not set');
       }
+
+      const originForSending =
+        this._childOrigin instanceof RegExp
+          ? this._concreteChildOrigin
+          : this._childOrigin;
+      this._getDefinedChildWindow().postMessage(payload, {
+        targetOrigin: originForSending,
+        transfer: transferables,
+      });
       return;
     }
 
@@ -211,22 +224,23 @@ class ParentToChildMessenger implements Messenger {
     }
   };
 
-  addMessageHandler = (callback: (message: PenpalMessage) => void): void => {
+  addMessageHandler = (callback: MessageHandler): void => {
     this._messageCallbacks.add(callback);
   };
 
-  removeMessageHandler = (callback: (message: PenpalMessage) => void): void => {
+  removeMessageHandler = (callback: MessageHandler): void => {
     this._messageCallbacks.delete(callback);
   };
 
+  initialize = ({ log }: InitializeOptions) => {
+    this._log = log;
+  };
+
   close = () => {
-    this._messageDispatcher.removeEventListener(
-      'message',
-      this._handleMessageFromChild as EventListener
-    );
+    window.removeEventListener('message', this._handleMessageFromChild);
     this._destroyPort();
     this._messageCallbacks.clear();
   };
 }
 
-export default ParentToChildMessenger;
+export default ParentToChildWindowMessenger;

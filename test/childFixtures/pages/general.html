@@ -16,6 +16,10 @@
       let parentAPI;
       let parentReturnValue;
 
+      const messenger = new Penpal.ChildWindowToParentMessenger({
+        parentOrigin: '*',
+      });
+
       const methods = {
         multiply(num1, num2) {
           return num1 * num2;
@@ -86,7 +90,7 @@
       };
 
       Penpal.connectToParent({
-        parentOrigin: '*',
+        messenger,
         methods: methods,
         debug: true,
       }).promise.then((parent) => {

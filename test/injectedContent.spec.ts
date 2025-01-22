@@ -1,10 +1,11 @@
 import { CHILD_SERVER } from './constants';
-import { connectToChild } from '../src/index';
+import { connectToChild, ParentToChildWindowMessenger } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import {
   expectNeverFulfilledIframeConnection,
   getWorkerFixtureUrl,
 } from './utils';
+import ParentToChildWorkerMessenger from '../src/parent/ParentToChildWorkerMessenger';
 
 const htmlSrc = `
 <!DOCTYPE html>
@@ -22,10 +23,14 @@ const htmlSrc = `
     This is why we must specify a server in this script's src rather than
     just specify a path of /penpal.js.
     -->
-    <script  src="${CHILD_SERVER}/penpal.js"></script>
-    <script >
+    <script src="${CHILD_SERVER}/penpal.js"></script>
+    <script>
+      const messenger = new Penpal.ChildWindowToParentMessenger({
+        parentOrigin: '*'
+      });
+      
       Penpal.connectToParent({
-        parentOrigin: "*",
+        messenger,
         methods: {
           multiply: function(num1, num2) {
             return num1 * num2;
@@ -43,9 +48,13 @@ it('connects and calls a function on the child iframe when src is set to data UR
   iframe.src = `data:text/html,${htmlSrc}`;
   document.body.appendChild(iframe);
 
-  const connection = connectToChild<FixtureMethods>({
+  const messenger = new ParentToChildWindowMessenger({
+    childWindow: () => iframe.contentWindow!,
     childOrigin: '*',
-    child: iframe,
+  });
+
+  const connection = connectToChild<FixtureMethods>({
+    messenger,
   });
 
   const child = await connection.promise;
@@ -59,19 +68,19 @@ it('never connects iframe when src is set to data URI and childOrigin is not set
   iframe.src = `data:text/html,${htmlSrc}`;
   document.body.appendChild(iframe);
 
-  const connection = connectToChild<FixtureMethods>({
-    child: iframe,
+  const messenger = new ParentToChildWindowMessenger({
+    childWindow: () => iframe.contentWindow!,
   });
 
-  /*
-    The connection will never be fulfilled because the parent will fail to
-    derive a valid child origin and will fall back to a child origin of
-    window.origin, which won't match the child's origin. When the child
-    sends the SYN message to start the handshake, the parent will ignore
-    the message because the message's origin won't match what the parent
-    is expecting. This is the intended behavior, but could be debated
-    whether it's ideal.
-    */
+  const connection = connectToChild<FixtureMethods>({
+    messenger,
+  });
+
+  // The connection will never be fulfilled because the child origin will
+  // default to window.origin, which won't match the child's origin. When
+  // the child sends the SYN message to start the handshake, the parent will
+  // ignore the message because the message's origin won't match what the parent
+  // is expecting.
   await expectNeverFulfilledIframeConnection(connection, iframe);
 });
 
@@ -82,8 +91,12 @@ it('connects and calls a function on the child worker', async () => {
     type: 'module',
   });
 
+  const messenger = new ParentToChildWorkerMessenger({
+    childWorker: worker,
+  });
+
   const connection = connectToChild<FixtureMethods>({
-    child: worker,
+    messenger,
   });
 
   const child = await connection.promise;
@@ -100,8 +113,12 @@ it('connects and calls a function on the child iframe when src is set to an obje
   iframe.src = blobUrl;
   document.body.appendChild(iframe);
 
+  const messenger = new ParentToChildWindowMessenger({
+    childWindow: () => iframe.contentWindow!,
+  });
+
   const connection = connectToChild<FixtureMethods>({
-    child: iframe,
+    messenger,
   });
 
   const child = await connection.promise;
@@ -118,8 +135,12 @@ it('connects and calls a function on the child worker when src is set to an obje
 
   const worker = new Worker(blobUrl);
 
+  const messenger = new ParentToChildWorkerMessenger({
+    childWorker: worker,
+  });
+
   const connection = connectToChild<FixtureMethods>({
-    child: worker,
+    messenger,
   });
 
   const child = await connection.promise;
@@ -133,8 +154,12 @@ it('connects and calls a function on the child iframe when srcdoc is set', async
   iframe.srcdoc = htmlSrc;
   document.body.appendChild(iframe);
 
+  const messenger = new ParentToChildWindowMessenger({
+    childWindow: () => iframe.contentWindow!,
+  });
+
   const connection = connectToChild<FixtureMethods>({
-    child: iframe,
+    messenger,
   });
 
   const child = await connection.promise;

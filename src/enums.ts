@@ -11,13 +11,9 @@ export enum ErrorCode {
   ConnectionTimeout = 'ConnectionTimeout',
   MethodCallTimeout = 'MethodCallTimeout',
   TransmissionFailed = 'TransmissionFailed',
+  InvalidArgument = 'InvalidArgument',
 }
 
 export enum NativeErrorName {
   DataCloneError = 'DataCloneError',
-}
-
-export enum ContextType {
-  Window = 'Window',
-  Worker = 'Worker',
 }

@@ -1,18 +1,14 @@
 import { Methods, RemoteMethodProxies } from '../types';
-import { ContextType } from '../enums';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import createLogger from '../createLogger';
-import ChildToParentMessenger from './ChildToParentMessenger';
-import contextType from './contextType';
 import PenpalError from '../PenpalError';
 import ChildHandleshaker from './ChildHandleshaker';
+import Messenger from '../Messenger';
+import { ErrorCode } from '../enums';
 
 type Options = {
-  /**
-   * Valid parent origin used to restrict communication.
-   */
-  parentOrigin?: string | RegExp;
+  messenger: Messenger;
   /**
    * Methods that may be called by the parent window.
    */
@@ -48,26 +44,20 @@ type Connection<TMethods extends Methods = Methods> = {
 /**
  * Attempts to establish communication with the parent window.
  */
-export default <TMethods extends Methods = Methods>(
-  options: Options
-): Connection<TMethods> => {
-  const { methods = {}, timeout, channel, debug = false } = options;
-  let { parentOrigin } = options;
-
-  const log = createLogger('Child', debug);
-
-  if (contextType === ContextType.Worker) {
-    if (parentOrigin) {
-      log(
-        'parentOrigin was specified, but is ignored when connecting from a worker'
-      );
-    }
-  } else {
-    if (!parentOrigin) {
-      parentOrigin = window.origin;
-    }
+export default <TMethods extends Methods = Methods>({
+  messenger,
+  methods = {},
+  timeout,
+  debug = false,
+}: Options): Connection<TMethods> => {
+  if (!messenger) {
+    throw new PenpalError(
+      ErrorCode.InvalidArgument,
+      'messenger must be defined'
+    );
   }
 
+  const log = createLogger('Child', debug);
   const flattenedMethods = flattenMethods(methods);
   const connectionClosedHandlers: (() => void)[] = [];
 
@@ -86,8 +76,8 @@ export default <TMethods extends Methods = Methods>(
         reject(error);
       };
 
-      const messenger = new ChildToParentMessenger(parentOrigin, channel, log);
       connectionClosedHandlers.push(messenger.close);
+      messenger.initialize({ log });
 
       const stopConnectionTimeout = startConnectionTimeout(
         timeout,

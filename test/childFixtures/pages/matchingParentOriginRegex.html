@@ -25,6 +25,10 @@
 
       const parentOriginRegex = new RegExp(escapeRegExp(parentOrigin));
 
+      const messenger = new Penpal.ChildWindowToParentMessenger({
+        parentOrigin: parentOriginRegex,
+      });
+
       const methods = {
         multiply(num1, num2) {
           return num1 * num2;
@@ -32,7 +36,7 @@
       };
 
       Penpal.connectToParent({
-        parentOrigin: parentOriginRegex,
+        messenger,
         methods: methods,
       });
     </script>

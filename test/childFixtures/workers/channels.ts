@@ -1,7 +1,15 @@
-import { connectToParent, RemoteMethodProxies } from '../../../src/index';
+import {
+  connectToParent,
+  ChildWorkerToParentMessenger,
+  RemoteMethodProxies,
+} from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
 
 let channelBParent: RemoteMethodProxies<Pick<FixtureMethods, 'getChannel'>>;
+
+const channelBMessenger = new ChildWorkerToParentMessenger({
+  channel: 'B',
+});
 
 const channelBMethods = {
   getChannel() {
@@ -13,7 +21,7 @@ const channelBMethods = {
 };
 
 connectToParent<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
-  channel: 'B',
+  messenger: channelBMessenger,
   methods: channelBMethods,
   debug: true,
 }).promise.then((parent) => {
@@ -25,6 +33,10 @@ let channelAParent: RemoteMethodProxies<Pick<
   'getChannel' | 'getChannelFromParent'
 >>;
 
+const channelAMessenger = new ChildWorkerToParentMessenger({
+  channel: 'A',
+});
+
 const channelAMethods = {
   getChannel() {
     return 'A';
@@ -35,7 +47,7 @@ const channelAMethods = {
 };
 
 connectToParent<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
-  channel: 'A',
+  messenger: channelAMessenger,
   methods: channelAMethods,
   debug: true,
 }).promise.then((parent) => {

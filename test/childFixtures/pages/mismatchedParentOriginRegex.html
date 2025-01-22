@@ -13,6 +13,10 @@
     </script>
     <script src="/penpal.js"></script>
     <script>
+      const messenger = new Penpal.ChildWindowToParentMessenger({
+        parentOrigin: /example\.com/,
+      });
+
       const methods = {
         multiply(num1, num2) {
           return num1 * num2;
@@ -20,7 +24,7 @@
       };
 
       Penpal.connectToParent({
-        parentOrigin: /example\.com/,
+        messenger,
         methods: methods,
       });
     </script>

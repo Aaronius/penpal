@@ -5,7 +5,13 @@ import {
   createWorkerAndConnection,
   getWorkerFixtureUrl,
 } from './utils';
-import { connectToChild, ErrorCode, PenpalError } from '../src/index';
+import {
+  connectToChild,
+  ErrorCode,
+  ParentToChildWindowMessenger,
+  ParentToChildWorkerMessenger,
+  PenpalError,
+} from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 
 const variants = [
@@ -41,8 +47,15 @@ for (const variant of variants) {
           'removeEventListener'
         ).and.callThrough();
 
+        const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
+
+        const messenger = new ParentToChildWindowMessenger({
+          childWindow: () => iframe.contentWindow!,
+          childOrigin: CHILD_SERVER,
+        });
+
         const connection = connectToChild<FixtureMethods>({
-          child: createAndAddIframe(`${CHILD_SERVER}/pages/general.html`),
+          messenger,
         });
 
         // The method call message listener is set up after the connection has been established.
@@ -69,8 +82,12 @@ for (const variant of variants) {
           'removeEventListener'
         ).and.callThrough();
 
+        const messenger = new ParentToChildWorkerMessenger({
+          childWorker: worker,
+        });
+
         const connection = connectToChild<FixtureMethods>({
-          child: worker,
+          messenger,
         });
 
         // The method call message listener is set up after the connection has been established.

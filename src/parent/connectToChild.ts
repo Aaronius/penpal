@@ -2,36 +2,22 @@ import { RemoteMethodProxies, Connection, Methods } from '../types';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
 import createLogger from '../createLogger';
-import ParentToChildMessenger from './ParentToChildMessenger';
-import deriveOriginFromIframe from './deriveOriginFromIframe';
 import PenpalError from '../PenpalError';
 import ParentHandshaker from './ParentHandshaker';
+import Messenger from '../Messenger';
+import { ErrorCode } from '../enums';
 
 type Options = {
-  /**
-   * The iframe or worker to which a connection should be made.
-   */
-  child: HTMLIFrameElement | Worker;
+  messenger: Messenger;
   /**
    * Methods that may be called by the iframe.
    */
   methods?: Methods;
   /**
-   * The child origin to use to secure communication. If
-   * not provided, the child origin will be derived from the
-   * iframe's src or srcdoc value.
-   */
-  childOrigin?: string | RegExp;
-  /**
    * The amount of time, in milliseconds, Penpal should wait
    * for the iframe to respond before rejecting the connection promise.
    */
   timeout?: number;
-  /**
-   * The channel to use to restrict communication. When specified, a connection
-   * will only be made when the child is connecting using the same channel.
-   */
-  channel?: string;
   /**
    * Whether log messages should be emitted to the console.
    */
@@ -41,26 +27,20 @@ type Options = {
 /**
  * Attempts to establish communication with the child iframe or worker.
  */
-export default <TMethods extends Methods = Methods>(
-  options: Options
-): Connection<TMethods> => {
-  const { child, methods = {}, timeout, channel, debug = false } = options;
-  let { childOrigin } = options;
-  const log = createLogger('Parent', debug);
-
-  if (child instanceof Worker) {
-    if (childOrigin) {
-      log(
-        'childOrigin was specified, but is ignored when connecting to a worker'
-      );
-    }
-  } else {
-    if (!childOrigin) {
-      childOrigin = deriveOriginFromIframe(child, log);
-    }
+export default <TMethods extends Methods = Methods>({
+  messenger,
+  methods = {},
+  timeout,
+  debug = false,
+}: Options): Connection<TMethods> => {
+  if (!messenger) {
+    throw new PenpalError(
+      ErrorCode.InvalidArgument,
+      'messenger must be defined'
+    );
   }
 
-  // Move into handshaker? Same with ChildHandshaker?
+  const log = createLogger('Parent', debug);
   const flattenedMethods = flattenMethods(methods);
   const connectionClosedHandlers: (() => void)[] = [];
 
@@ -79,13 +59,8 @@ export default <TMethods extends Methods = Methods>(
         reject(error);
       };
 
-      const messenger = new ParentToChildMessenger(
-        child,
-        childOrigin,
-        channel,
-        log
-      );
       connectionClosedHandlers.push(messenger.close);
+      messenger.initialize({ log });
 
       const stopConnectionTimeout = startConnectionTimeout(
         timeout,
