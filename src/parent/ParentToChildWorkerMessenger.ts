@@ -10,11 +10,21 @@ import PenpalError from '../PenpalError';
 import { ErrorCode } from '../enums';
 
 type Options = {
+  /**
+   * The child web worker with which the parent will communicate.
+   */
   childWorker: Worker;
+  /**
+   * A string identifier that locks down communication to a child worker
+   * attempting to connect on the same channel.
+   */
   channel?: string;
 };
 
-class ParentToChildWindowMessenger implements Messenger {
+/**
+ * Handles the details of communicating with a child web worker.
+ */
+class ParentToChildWorkerMessenger implements Messenger {
   private _childWorker: Worker;
   private _channel?: string;
   private _messageCallbacks = new Set<MessageHandler>();
@@ -139,4 +149,4 @@ class ParentToChildWindowMessenger implements Messenger {
   };
 }
 
-export default ParentToChildWindowMessenger;
+export default ParentToChildWorkerMessenger;

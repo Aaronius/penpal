@@ -8,6 +8,9 @@ import Messenger from '../Messenger';
 import { ErrorCode } from '../enums';
 
 type Options = {
+  /**
+   * Messenger in charge of handling communication with the parent.
+   */
   messenger: Messenger;
   /**
    * Methods that may be called by the parent window.

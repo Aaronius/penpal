@@ -1,7 +1,7 @@
 {
   "name": "penpal",
   "version": "6.2.2",
-  "description": "A promise-based library for communicating with iframes via postMessage.",
+  "description": "A promise-based library for easily communicating with windows (including iframes) and web workers via postMessage.",
   "author": "Aaron Hardy <aaron@aaronhardy.com>",
   "license": "MIT",
   "bugs": {
@@ -12,8 +12,16 @@
     "url": "git+https://github.com/Aaronius/penpal.git"
   },
   "keywords": [
+    "window",
+    "windows",
     "iframe",
+    "iframes",
+    "worker",
+    "workers",
+    "web-worker",
+    "web-workers",
     "postMessage",
+    "communication",
     "promise"
   ],
   "type": "module",

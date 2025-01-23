@@ -17,11 +17,28 @@ import PenpalError from '../PenpalError';
 import { ErrorCode } from '../enums';
 
 type Options = {
+  /**
+   * The child window with which the parent will communicate.
+   */
   childWindow: Window | (() => Window);
+  /**
+   * The origin of the child window. Communication will be restricted to
+   * this origin. You may use a value of `*` to not restrict communication to
+   * a particular origin, but beware of the risks of doing so.
+   *
+   * Defaults to the value of `window.origin`.
+   */
   childOrigin?: string | RegExp;
+  /**
+   * A string identifier that locks down communication to a child window
+   * attempting to connect on the same channel.
+   */
   channel?: string;
 };
 
+/**
+ * Handles the details of communicating with a child window.
+ */
 class ParentToChildWindowMessenger implements Messenger {
   private _childWindow: Window | (() => Window);
   private _cachedChildWindow?: Window;

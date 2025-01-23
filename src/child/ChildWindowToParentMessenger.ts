@@ -9,13 +9,25 @@ import {
 } from '../guards';
 
 type Options = {
+  /**
+   * The origin of the parent window. Communication will be restricted to
+   * this origin. You may use a value of `*` to not restrict communication to
+   * a particular origin, but beware of the risks of doing so.
+   *
+   * Defaults to the value of `window.origin`.
+   */
   parentOrigin?: string | RegExp;
+  /**
+   * A string identifier that locks down communication to a parent window
+   * attempting to connect on the same channel.
+   */
   channel?: string;
 };
 
 class ChildWindowToParentMessenger implements Messenger {
   private _parentOrigin: string | RegExp;
   private _channel?: string;
+  private _parentWindow: Window;
   private _concreteParentOrigin?: string;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port1: MessagePort;
@@ -25,6 +37,7 @@ class ChildWindowToParentMessenger implements Messenger {
   constructor({ parentOrigin = window.origin, channel }: Options = {}) {
     this._parentOrigin = parentOrigin;
     this._channel = channel;
+    this._parentWindow = window.opener ?? window.parent;
 
     window.addEventListener('message', this._handleMessage);
 
@@ -78,7 +91,7 @@ class ChildWindowToParentMessenger implements Messenger {
     if (isSynMessage(message)) {
       const originForSending =
         this._parentOrigin instanceof RegExp ? '*' : this._parentOrigin;
-      window.parent.postMessage(envelope, {
+      this._parentWindow.postMessage(envelope, {
         targetOrigin: originForSending,
         transfer: transferables,
       });
@@ -96,7 +109,7 @@ class ChildWindowToParentMessenger implements Messenger {
         this._parentOrigin instanceof RegExp
           ? this._concreteParentOrigin
           : this._parentOrigin;
-      window.parent.postMessage(envelope, {
+      this._parentWindow.postMessage(envelope, {
         targetOrigin: originForSending,
         transfer: transferablesToSend,
       });

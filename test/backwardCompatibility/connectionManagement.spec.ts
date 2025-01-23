@@ -48,11 +48,6 @@ describe('backward compatibility - connection management', () => {
       messenger,
     });
 
-    // We're setting src after calling connectToChild to ensure
-    // that we don't throw an error in such a case. src is only
-    // needed when childOrigin is not passed.
-    iframe.src = `${CHILD_SERVER}/pages/backwardCompatibility/general.html`;
-
     await connection.promise;
   });
 

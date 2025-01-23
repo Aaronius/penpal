@@ -4,6 +4,10 @@ import namespace from '../namespace';
 import { isAckMessage, isPenpalMessageEnvelope, isSynMessage } from '../guards';
 
 type Options = {
+  /**
+   * A string identifier that locks down communication to a parent window
+   * attempting to connect on the same channel.
+   */
   channel?: string;
 };
 

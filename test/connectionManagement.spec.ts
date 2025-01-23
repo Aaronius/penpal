@@ -3,6 +3,7 @@ import {
   createAndAddIframe,
   getWorkerFixtureUrl,
   expectNeverFulfilledIframeConnection,
+  getPageFixtureUrl,
 } from './utils';
 import {
   connectToChild,
@@ -19,7 +20,7 @@ describe('connection management', () => {
   });
 
   it('connects to iframe when correct child origin provided', async () => {
-    const iframe = createAndAddIframe();
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
 
     const messenger = new ParentToChildWindowMessenger({
       childWindow: () => iframe.contentWindow!,
@@ -30,16 +31,11 @@ describe('connection management', () => {
       messenger,
     });
 
-    // We're setting src after calling connectToChild to ensure
-    // that we don't throw an error in such a case. src is only
-    // needed when childOrigin is not passed.
-    iframe.src = `${CHILD_SERVER}/pages/general.html`;
-
     await connection.promise;
   });
 
   it('connects to iframe when correct child origin regex provided', async () => {
-    const iframe = createAndAddIframe();
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
 
     const messenger = new ParentToChildWindowMessenger({
       childWindow: () => iframe.contentWindow!,
@@ -49,11 +45,6 @@ describe('connection management', () => {
     const connection = connectToChild({
       messenger,
     });
-
-    // We're setting src after calling connectToChild to ensure
-    // that we don't throw an error in such a case. src is only
-    // needed when childOrigin is not passed.
-    iframe.src = `${CHILD_SERVER}/pages/general.html`;
 
     await connection.promise;
   });
@@ -73,8 +64,9 @@ describe('connection management', () => {
   });
 
   it('connects to iframe connecting to parent with matching origin', async () => {
-    const iframe = createAndAddIframe();
-    iframe.src = `${CHILD_SERVER}/pages/matchingParentOrigin.html`;
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/matchingParentOrigin.html`
+    );
 
     const messenger = new ParentToChildWindowMessenger({
       childWindow: () => iframe.contentWindow!,
@@ -89,8 +81,9 @@ describe('connection management', () => {
   });
 
   it('connects to iframe connecting to parent with matching origin regex', async () => {
-    const iframe = createAndAddIframe();
-    iframe.src = `${CHILD_SERVER}/pages/matchingParentOriginRegex.html`;
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/matchingParentOriginRegex.html`
+    );
 
     const messenger = new ParentToChildWindowMessenger({
       childWindow: () => iframe.contentWindow!,
@@ -105,7 +98,7 @@ describe('connection management', () => {
   });
 
   it("doesn't connect to iframe when incorrect child origin provided", async () => {
-    const iframe = createAndAddIframe();
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
 
     const messenger = new ParentToChildWindowMessenger({
       childWindow: () => iframe.contentWindow!,
@@ -115,8 +108,6 @@ describe('connection management', () => {
     const connection = connectToChild({
       messenger,
     });
-
-    iframe.src = `${CHILD_SERVER}/pages/general.html`;
 
     await expectNeverFulfilledIframeConnection(connection, iframe);
   });
@@ -592,4 +583,20 @@ describe('connection management', () => {
       ]);
     });
   }
+
+  it('connects to window created with window.open()', async () => {
+    const url = getPageFixtureUrl('general');
+    const childWindow = window.open(url);
+
+    const messenger = new ParentToChildWindowMessenger({
+      childWindow: childWindow!,
+      childOrigin: CHILD_SERVER,
+    });
+
+    const connection = connectToChild({
+      messenger,
+    });
+
+    await connection.promise;
+  });
 });

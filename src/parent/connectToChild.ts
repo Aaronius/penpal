@@ -8,6 +8,9 @@ import Messenger from '../Messenger';
 import { ErrorCode } from '../enums';
 
 type Options = {
+  /**
+   * Messenger in charge of handling communication with the child.
+   */
   messenger: Messenger;
   /**
    * Methods that may be called by the iframe.
@@ -25,7 +28,7 @@ type Options = {
 };
 
 /**
- * Attempts to establish communication with the child iframe or worker.
+ * Attempts to establish communication with the child iframe or web worker.
  */
 export default <TMethods extends Methods = Methods>({
   messenger,

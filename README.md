@@ -1,14 +1,13 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
-### Upgrading from version 5? See [version 6 release notes](https://github.com/Aaronius/penpal/releases/tag/v6.0.0) for details.
-
+[See documentation for 6.x](https://github.com/Aaronius/penpal/tree/master)  
 [See documentation for 5.x](https://github.com/Aaronius/penpal/tree/5.x)  
 [See documentation for 4.x](https://github.com/Aaronius/penpal/tree/4.x)  
 [See documentation for 3.x](https://github.com/Aaronius/penpal/tree/3.x)
 
 # Penpal
 
-Penpal is a promise-based library for securely communicating with iframes via postMessage. The parent window can call methods exposed by iframes, pass arguments, and receive a return value. Similarly, iframes can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
+Penpal is a promise-based library for easily communicating with windows (including iframes) and web workers via postMessage. The parent window can call methods exposed by child windows or web workers, pass arguments, and receive a return value. Similarly, child windows and web workers can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
 
 This library has no dependencies.
 
@@ -16,55 +15,39 @@ This library has no dependencies.
 
 ### Using npm
 
-Preferably, you'll be able to use Penpal from npm with a bundler like [Webpack](https://webpack.github.io/), [Rollup](https://rollupjs.org), or [Parcel](https://parceljs.org/). If you use npm for client package management, you can install Penpal with:
+Install Penpal from npm as follows:
 
 `npm install penpal`
 
 ### Using a CDN
 
-If you don't want to use npm to manage client packages, Penpal also provides a UMD distribution in a `dist` folder which is hosted on a CDN:
+Alternatively, load a build of Penpal that is already hosted on a CDN:
 
 `<script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>`
 
-Penpal will then be installed on `window.Penpal`. `window.Penpal` will contain the following properties:
+Penpal will then be installed on `window.Penpal`. Usage is similar to if you were using a bundler, which is documented below, but instead of importing each module, you would access it on the `Penpal` global instead (e.g., `Penpal.connectToChild`).
 
-```
-Penpal.connectToChild
-Penpal.connectToParent
-Penpal.ErrorCode.ConnectionDestroyed
-Penpal.ErrorCode.ConnectionTimeout
-Penpal.ErrorCode.NoIframeSrc
-```
-
-Usage is similar to if you were using a bundler, which is documented below, but instead of importing each module, you would access it on the `Penpal` global instead.
-
-## Usage
+## Usage with Iframes
 
 ### Parent Window
 
 ```javascript
-import { connectToChild } from 'penpal';
+import { ParentToChildWindowMessenger, connectToChild } from 'penpal';
 
 const iframe = document.createElement('iframe');
-iframe.src = 'http://example.com/iframe.html';
+iframe.src = 'https://childorigin.example.com/iframe.html';
+document.body.appendChild(iframe);
 
-// This conditional is not Penpal-specific. It's merely
-// an example of how you can add an iframe to the document.
-if (
-  document.readyState === 'complete' ||
-  document.readyState === 'interactive'
-) {
-  document.body.appendChild(iframe);
-} else {
-  document.addEventListener('DOMContentLoaded', () => {
-    document.body.appendChild(iframe);
-  });
-}
+const messenger = new ParentToChildWindowMessenger({
+  // Alternatively, if iframe.contentWindow is undefined, provide a function
+  // that Penpal will use to lazily reference the content window later:
+  // childWindow: () => iframe.contentWindow
+  childWindow: iframe.contentWindow,
+  childOrigin: 'https://childorigin.example.com',
+});
 
-// This is where the magic begins.
 const connection = connectToChild({
-  // The iframe to which a connection should be made.
-  iframe,
+  messenger,
   // Methods the parent is exposing to the child.
   methods: {
     add(num1, num2) {
@@ -79,12 +62,77 @@ connection.promise.then((child) => {
 });
 ```
 
-### Child Iframe
+### Child Iframe Window
 
 ```javascript
-import { connectToParent } from 'penpal';
+import { ChildWindowToParentMessenger, connectToParent } from 'penpal';
+
+const messenger = new ChildWindowToParentMessenger({
+  parentOrigin: 'https://parentorigin.example.com',
+});
 
 const connection = connectToParent({
+  messenger,
+  // Methods child is exposing to parent.
+  methods: {
+    multiply(num1, num2) {
+      return num1 * num2;
+    },
+    divide(num1, num2) {
+      // Return a promise if the value being
+      // returned requires asynchronous processing.
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(num1 / num2);
+        }, 1000);
+      });
+    },
+  },
+});
+
+connection.promise.then((parent) => {
+  parent.add(3, 1).then((total) => console.log(total));
+});
+```
+
+## Usage with Web Workers
+
+### Parent Window
+
+```javascript
+import { ParentToChildWorkerMessenger, connectToChild } from 'penpal';
+
+const worker = new Worker('worker.js');
+
+const messenger = new ParentToChildWorkerMessenger({
+  childWorker: worker,
+});
+
+const connection = connectToChild({
+  messenger,
+  // Methods the parent is exposing to the child.
+  methods: {
+    add(num1, num2) {
+      return num1 + num2;
+    },
+  },
+});
+
+connection.promise.then((child) => {
+  child.multiply(2, 6).then((total) => console.log(total));
+  child.divide(12, 4).then((total) => console.log(total));
+});
+```
+
+### Child Web Worker
+
+```javascript
+import { ChildWorkerToParentMessenger, connectToParent } from 'penpal';
+
+const messenger = new ChildWorkerToParentMessenger();
+
+const connection = connectToParent({
+  messenger,
   // Methods child is exposing to parent.
   methods: {
     multiply(num1, num2) {

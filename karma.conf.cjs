@@ -21,7 +21,12 @@ module.exports = (config) => {
         included: false,
         served: true,
       },
-      'dist/penpal.js',
+      {
+        pattern: 'dist/penpal.js',
+        watched: true,
+        included: false,
+        served: true,
+      },
       'test/**/*.spec.ts',
     ],
     plugins: [
@@ -30,7 +35,7 @@ module.exports = (config) => {
       'karma-chrome-launcher',
       'karma-firefox-launcher',
       'karma-safari-launcher',
-      '@chiragrupani/karma-chromium-edge-launcher'
+      '@chiragrupani/karma-chromium-edge-launcher',
     ],
     preprocessors: {
       'test/**/*.ts': ['rollup'],
