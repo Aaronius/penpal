@@ -86,6 +86,15 @@ class WindowMessenger implements Messenger {
     this._port = undefined;
   };
 
+  private _isEventFromValidOrigin(event: MessageEvent): boolean {
+    if (event.currentTarget instanceof MessagePort) {
+      return true;
+    }
+    return this._remoteOrigin instanceof RegExp
+      ? this._remoteOrigin.test(event.origin)
+      : this._remoteOrigin === '*' || this._remoteOrigin === event.origin;
+  }
+
   private _handleMessageFromRemoteWindow = (event: MessageEvent): void => {
     if (
       // Under specific timing circumstances, we can receive an event
@@ -162,15 +171,6 @@ class WindowMessenger implements Messenger {
       callback(message);
     }
   };
-
-  private _isEventFromValidOrigin(event: MessageEvent): boolean {
-    if (event.currentTarget instanceof MessagePort) {
-      return true;
-    }
-    return this._remoteOrigin instanceof RegExp
-      ? this._remoteOrigin.test(event.origin)
-      : this._remoteOrigin === '*' || this._remoteOrigin === event.origin;
-  }
 
   private _handleMessageFromPort = (event: MessageEvent): void => {
     // Unlike in _handleMessageFromWindow, we don't have to check if

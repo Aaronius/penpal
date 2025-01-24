@@ -166,6 +166,20 @@ describe('connection management', () => {
     await connection.promise;
   });
 
+  it('connects to window when parent and child are on the same origin and origin is not set in parent or child', async () => {
+    const iframe = createAndAddIframe('/pages/noParentOrigin.html');
+
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+    });
+
+    const connection = connectToChild({
+      messenger,
+    });
+
+    await connection.promise;
+  });
+
   it("doesn't connect to window when child redirects to different origin and origin is not set in parent", async () => {
     const redirectToUrl = encodeURIComponent(
       getPageFixtureUrl('general', CHILD_SERVER_ALTERNATE)

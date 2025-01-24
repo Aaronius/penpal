@@ -12,11 +12,8 @@ module.exports = (config) => {
   config.set({
     frameworks: ['jasmine'],
     files: [
-      // Unlike our HTML fixtures, the worker fixtures must be served from the
-      // same host as the tests because the browser only lets a page load
-      // workers from the same origin or an opaque origin (null origin).
       {
-        pattern: 'test/childFixtures/workers/*.ts',
+        pattern: 'test/childFixtures/**',
         watched: true,
         included: false,
         served: true,
@@ -29,6 +26,11 @@ module.exports = (config) => {
       },
       'test/**/*.spec.ts',
     ],
+    proxies: {
+      '/penpal.js': '/base/dist/penpal.js',
+      '/pages': '/base/test/childFixtures/pages',
+      '/workers': '/base/test/childFixtures/workers'
+    },
     plugins: [
       '@metahub/karma-rollup-preprocessor',
       'karma-jasmine',

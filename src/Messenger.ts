@@ -1,7 +1,6 @@
-import { Log, PenpalMessage } from './types';
+import { PenpalMessage } from './types';
 
 export type MessageHandler = (message: PenpalMessage) => void;
-export type InitializeOptions = { log: Log };
 
 interface Messenger {
   sendMessage: (message: PenpalMessage, transferables?: Transferable[]) => void;

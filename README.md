@@ -25,7 +25,7 @@ Alternatively, load a build of Penpal that is already hosted on a CDN:
 
 `<script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>`
 
-Penpal will then be installed on `window.Penpal`. Usage is similar to if you were using a bundler, which is documented below, but instead of importing each module, you would access it on the `Penpal` global instead (e.g., `Penpal.connectToChild`).
+Penpal will then be installed on `window.Penpal`. Usage is similar to if you were using it from npm, which is documented below, but instead of importing each module, you would access it on the `Penpal` global instead (e.g., `Penpal.connectToChild`).
 
 ## Usage with Iframes
 

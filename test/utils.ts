@@ -58,7 +58,7 @@ export const getPageFixtureUrl = (pageName: string, server = CHILD_SERVER) => {
 };
 
 export const getWorkerFixtureUrl = (workerName: string) => {
-  return `/base/test/childFixtures/workers/${workerName}.js`;
+  return `/workers/${workerName}.js`;
 };
 
 /**
