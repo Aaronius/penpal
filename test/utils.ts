@@ -3,11 +3,11 @@ import {
   connectToChild,
   ErrorCode,
   Methods,
-  ParentToChildWorkerMessenger,
-  ParentToChildWindowMessenger,
   PenpalError,
+  WindowMessenger,
 } from '../src/index';
 import { CHILD_SERVER } from './constants';
+import WorkerMessenger from '../src/WorkerMessenger';
 
 export const createAndAddIframe = (url: string) => {
   const iframe = document.createElement('iframe');
@@ -24,9 +24,9 @@ export const createIframeAndConnection = <TMethods extends Methods>({
   pageName?: string;
 } = {}) => {
   const iframe = createAndAddIframe(getPageFixtureUrl(pageName, CHILD_SERVER));
-  const messenger = new ParentToChildWindowMessenger({
-    childWindow: () => iframe.contentWindow!,
-    childOrigin: CHILD_SERVER,
+  const messenger = new WindowMessenger({
+    remoteWindow: iframe.contentWindow!,
+    remoteOrigin: CHILD_SERVER,
   });
   const connection = connectToChild<TMethods>({
     messenger,
@@ -43,8 +43,8 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   workerName?: string;
 } = {}) => {
   const worker = new Worker(getWorkerFixtureUrl(workerName));
-  const messenger = new ParentToChildWorkerMessenger({
-    childWorker: worker,
+  const messenger = new WorkerMessenger({
+    worker,
   });
   const connection = connectToChild<TMethods>({
     messenger,

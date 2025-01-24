@@ -7,7 +7,6 @@ interface Messenger {
   sendMessage: (message: PenpalMessage, transferables?: Transferable[]) => void;
   addMessageHandler: (callback: MessageHandler) => void;
   removeMessageHandler: (callback: MessageHandler) => void;
-  initialize: (options: InitializeOptions) => void;
   close: () => void;
 }
 

@@ -1,21 +1,19 @@
 import connectToChild from './parent/connectToChild';
 import connectToParent from './child/connectToParent';
-import ParentToChildWindowMessenger from './parent/ParentToChildWindowMessenger';
-import ParentToChildWorkerMessenger from './parent/ParentToChildWorkerMessenger';
-import ChildWindowToParentMessenger from './child/ChildWindowToParentMessenger';
-import ChildWorkerToParentMessenger from './child/ChildWorkerToParentMessenger';
+import WindowMessenger from './WindowMessenger';
+import WorkerMessenger from './WorkerMessenger';
 import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
+import debug from './debug';
 import { ErrorCode } from './enums';
 
 export default {
   connectToChild,
   connectToParent,
-  ParentToChildWindowMessenger,
-  ParentToChildWorkerMessenger,
-  ChildWindowToParentMessenger,
-  ChildWorkerToParentMessenger,
+  WindowMessenger,
+  WorkerMessenger,
   MethodCallOptions,
   Reply,
+  debug,
   ErrorCode,
 };

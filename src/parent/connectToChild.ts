@@ -1,7 +1,6 @@
 import { RemoteMethodProxies, Connection, Methods } from '../types';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
-import createLogger from '../createLogger';
 import PenpalError from '../PenpalError';
 import ParentHandshaker from './ParentHandshaker';
 import Messenger from '../Messenger';
@@ -21,10 +20,6 @@ type Options = {
    * for the iframe to respond before rejecting the connection promise.
    */
   timeout?: number;
-  /**
-   * Whether log messages should be emitted to the console.
-   */
-  debug?: boolean;
 };
 
 /**
@@ -34,7 +29,6 @@ export default <TMethods extends Methods = Methods>({
   messenger,
   methods = {},
   timeout,
-  debug = false,
 }: Options): Connection<TMethods> => {
   if (!messenger) {
     throw new PenpalError(
@@ -43,7 +37,6 @@ export default <TMethods extends Methods = Methods>({
     );
   }
 
-  const log = createLogger('Parent', debug);
   const flattenedMethods = flattenMethods(methods);
   const connectionClosedHandlers: (() => void)[] = [];
 
@@ -51,8 +44,6 @@ export default <TMethods extends Methods = Methods>({
     for (const connectionClosedHandler of connectionClosedHandlers) {
       connectionClosedHandler();
     }
-
-    log('Connection closed');
   };
 
   const promise = new Promise<RemoteMethodProxies<TMethods>>(
@@ -63,7 +54,6 @@ export default <TMethods extends Methods = Methods>({
       };
 
       connectionClosedHandlers.push(messenger.close);
-      messenger.initialize({ log });
 
       const stopConnectionTimeout = startConnectionTimeout(
         timeout,
@@ -81,12 +71,9 @@ export default <TMethods extends Methods = Methods>({
         messenger,
         flattenedMethods,
         closeConnection,
-        onRemoteMethodProxiesCreated,
-        log
+        onRemoteMethodProxiesCreated
       );
       connectionClosedHandlers.push(handshaker.close);
-
-      log('Awaiting handshake');
     }
   );
 

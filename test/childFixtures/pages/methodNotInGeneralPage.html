@@ -15,8 +15,10 @@
     <script>
       let parentAPI;
 
-      const messenger = new Penpal.ChildWindowToParentMessenger({
-        parentOrigin: '*',
+      const messenger = new Penpal.WindowMessenger({
+        remoteWindow: window.parent,
+        remoteOrigin: '*',
+        log: Penpal.debug('Child'),
       });
 
       const methods = {

@@ -13,8 +13,10 @@
     </script>
     <script src="/penpal.js"></script>
     <script>
-      const messenger = new Penpal.ChildWindowToParentMessenger({
-        parentOrigin: 'http://example.com',
+      const messenger = new Penpal.WindowMessenger({
+        remoteWindow: window.parent,
+        remoteOrigin: 'http://example.com',
+        log: Penpal.debug('Child'),
       });
 
       Penpal.connectToParent({

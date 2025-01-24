@@ -2,7 +2,6 @@ import Messenger from '../Messenger';
 import {
   AckMessage,
   FlattenedMethods,
-  Log,
   Methods,
   PenpalMessage,
   RemoteMethodProxies,
@@ -24,8 +23,7 @@ class ChildHandleshaker<TMethods extends Methods> {
     private _closeConnection: (error: PenpalError) => void,
     private _onRemoteMethodProxiesCreated: (
       remoteMethodProxies: RemoteMethodProxies<TMethods>
-    ) => void,
-    private _log: Log
+    ) => void
   ) {
     this._messenger.addMessageHandler(this._handleMessage);
   }
@@ -40,7 +38,6 @@ class ChildHandleshaker<TMethods extends Methods> {
     // We should only receive a single SynAck message from the parent,
     // so we can stop listening for more.
     this._messenger.removeMessageHandler(this._handleMessage);
-    this._log('Handshake - Received SYN-ACK, responding with ACK');
 
     const ackMessage: AckMessage = {
       type: MessageType.Ack,
@@ -58,8 +55,7 @@ class ChildHandleshaker<TMethods extends Methods> {
 
     this._closeCallHandler = connectCallHandler(
       this._messenger,
-      this._flattenedMethods,
-      this._log
+      this._flattenedMethods
     );
 
     const remoteMethodProxies = {} as RemoteMethodProxies<TMethods>;
@@ -67,15 +63,13 @@ class ChildHandleshaker<TMethods extends Methods> {
     this._closeRemoteMethodProxies = connectRemoteMethodProxies(
       remoteMethodProxies,
       this._messenger,
-      message.methodPaths,
-      this._log
+      message.methodPaths
     );
 
     this._onRemoteMethodProxiesCreated(remoteMethodProxies);
   };
 
   shake = () => {
-    this._log('Handshake - Sending SYN');
     const synMessage: SynMessage = {
       type: MessageType.Syn,
     };

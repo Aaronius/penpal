@@ -1,7 +1,6 @@
 import { Methods, RemoteMethodProxies } from '../types';
 import { flattenMethods } from '../methodSerialization';
 import startConnectionTimeout from '../startConnectionTimeout';
-import createLogger from '../createLogger';
 import PenpalError from '../PenpalError';
 import ChildHandleshaker from './ChildHandleshaker';
 import Messenger from '../Messenger';
@@ -26,10 +25,6 @@ type Options = {
    * will only be made when the parent is connecting using the same channel.
    */
   channel?: string;
-  /**
-   * Whether log messages should be emitted to the console.
-   */
-  debug?: boolean;
 };
 
 type Connection<TMethods extends Methods = Methods> = {
@@ -51,7 +46,6 @@ export default <TMethods extends Methods = Methods>({
   messenger,
   methods = {},
   timeout,
-  debug = false,
 }: Options): Connection<TMethods> => {
   if (!messenger) {
     throw new PenpalError(
@@ -60,7 +54,6 @@ export default <TMethods extends Methods = Methods>({
     );
   }
 
-  const log = createLogger('Child', debug);
   const flattenedMethods = flattenMethods(methods);
   const connectionClosedHandlers: (() => void)[] = [];
 
@@ -68,8 +61,6 @@ export default <TMethods extends Methods = Methods>({
     for (const connectionClosedHandler of connectionClosedHandlers) {
       connectionClosedHandler();
     }
-
-    log('Connection closed');
   };
 
   const promise = new Promise<RemoteMethodProxies<TMethods>>(
@@ -80,7 +71,6 @@ export default <TMethods extends Methods = Methods>({
       };
 
       connectionClosedHandlers.push(messenger.close);
-      messenger.initialize({ log });
 
       const stopConnectionTimeout = startConnectionTimeout(
         timeout,
@@ -98,8 +88,7 @@ export default <TMethods extends Methods = Methods>({
         messenger,
         flattenedMethods,
         closeConnection,
-        onRemoteMethodProxiesCreated,
-        log
+        onRemoteMethodProxiesCreated
       );
 
       connectionClosedHandlers.push(handshaker.close);

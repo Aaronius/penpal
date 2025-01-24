@@ -1,7 +1,8 @@
 import {
   connectToParent,
+  debug,
   Reply,
-  ChildWorkerToParentMessenger,
+  WorkerMessenger,
 } from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
 console.log('web worker origin', self.location.origin);
@@ -9,6 +10,11 @@ type ParentAPI = Record<'add', (num1: number, num2: number) => Promise<number>>;
 
 let parentAPI: ParentAPI;
 let parentReturnValue: number;
+
+const messenger = new WorkerMessenger({
+  worker: self,
+  log: debug('Child'),
+});
 
 const methods: Omit<
   FixtureMethods,
@@ -80,9 +86,8 @@ const methods: Omit<
 };
 
 connectToParent<ParentAPI>({
-  messenger: new ChildWorkerToParentMessenger(),
+  messenger,
   methods: methods,
-  debug: true,
 }).promise.then((parent) => {
   parentAPI = parent;
 });

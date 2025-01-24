@@ -16,8 +16,10 @@
       const urlParams = new URLSearchParams(window.location.search);
       const invalidParentOrigin = urlParams.get('invalidParentOrigin');
 
-      const messenger = new Penpal.ChildWindowToParentMessenger({
-        parentOrigin: invalidParentOrigin,
+      const messenger = new Penpal.WindowMessenger({
+        remoteWindow: window.parent,
+        remoteOrigin: invalidParentOrigin,
+        log: Penpal.debug('Child'),
       });
 
       Penpal.connectToParent({

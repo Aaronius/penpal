@@ -19,8 +19,10 @@
         document.referrer.lastIndexOf('/')
       );
 
-      const messenger = new Penpal.ChildWindowToParentMessenger({
-        parentOrigin,
+      const messenger = new Penpal.WindowMessenger({
+        remoteWindow: window.parent,
+        remoteOrigin: parentOrigin,
+        log: Penpal.debug('Child'),
       });
 
       const methods = {

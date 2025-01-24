@@ -14,18 +14,15 @@
     <script src="/penpal.js"></script>
     <script>
       const messenger = new Penpal.WindowMessenger({
-        remoteWindow: window.parent,
+        remoteWindow: window.opener,
         remoteOrigin: '*',
         log: Penpal.debug('Child'),
       });
 
       Penpal.connectToParent({
         messenger,
-        timeout: 30,
-      }).promise.then(function (parent) {
-        setTimeout(function () {
-          parent.reportStillConnected();
-        }, 31);
+      }).promise.then((parent) => {
+        parentAPI = parent;
       });
     </script>
   </body>

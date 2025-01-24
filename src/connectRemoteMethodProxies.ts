@@ -1,12 +1,7 @@
 import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
 import { unflattenMethods } from './methodSerialization';
-import {
-  Log,
-  PenpalMessage,
-  SerializedError,
-  RemoteMethodProxies,
-} from './types';
+import { PenpalMessage, SerializedError, RemoteMethodProxies } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Messenger from './Messenger';
@@ -27,8 +22,7 @@ type ReplyHandler = {
 export default (
   remoteMethodProxies: RemoteMethodProxies,
   messenger: Messenger,
-  methodPaths: string[],
-  log: Log
+  methodPaths: string[]
 ) => {
   let isClosed = false;
 
@@ -39,15 +33,13 @@ export default (
       return;
     }
 
-    const replyHandler = replyHandlers.get(message.roundTripId);
+    const replyHandler = replyHandlers.get(message.sessionId);
 
     if (!replyHandler) {
       return;
     }
 
-    replyHandlers.delete(message.roundTripId);
-
-    log(`Received ${replyHandler.methodPath}() reply`);
+    replyHandlers.delete(message.sessionId);
 
     if (message.isError) {
       const error = message.isSerializedErrorInstance
@@ -63,8 +55,6 @@ export default (
 
   const createMethodProxy = (methodPath: string) => {
     return (...args: unknown[]) => {
-      log(`Sending ${methodPath}() call`);
-
       if (isClosed) {
         throw new PenpalError(
           ErrorCode.ConnectionClosed,
@@ -72,7 +62,7 @@ export default (
         );
       }
 
-      const roundTripId = generateId();
+      const sessionId = generateId();
       const lastArg = args[args.length - 1];
       const lastArgIsOptions = lastArg instanceof MethodCallOptions;
       const { timeout, transferables } = lastArgIsOptions ? lastArg : {};
@@ -90,7 +80,7 @@ export default (
         // Karma + Rollup + Typescript to avoid node type leakage.
         const timeoutId = timeout
           ? window.setTimeout(() => {
-              replyHandlers.delete(roundTripId);
+              replyHandlers.delete(sessionId);
               reject(
                 new PenpalError(
                   ErrorCode.MethodCallTimeout,
@@ -100,7 +90,7 @@ export default (
             }, timeout)
           : undefined;
 
-        replyHandlers.set(roundTripId, {
+        replyHandlers.set(sessionId, {
           methodPath,
           resolve,
           reject,
@@ -111,7 +101,7 @@ export default (
           messenger.sendMessage(
             {
               type: MessageType.Call,
-              roundTripId,
+              sessionId,
               methodPath,
               args: argsWithoutOptions,
             },

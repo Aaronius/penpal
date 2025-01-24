@@ -1,26 +1,30 @@
-import { Log, PenpalMessage, PenpalMessageEnvelope } from '../types';
-import Messenger, { InitializeOptions, MessageHandler } from '../Messenger';
-import namespace from '../namespace';
+import { Log, PenpalMessage, PenpalMessageEnvelope } from './types';
+import Messenger, { MessageHandler } from './Messenger';
+import namespace from './namespace';
 import {
   downgradeMessageEnvelope,
   isDeprecatedMessage,
   upgradeMessage,
-} from '../backwardCompatibility';
+} from './backwardCompatibility';
 import {
   isAckMessage,
   isPenpalMessageEnvelope,
   isSynAckMessage,
   isSynMessage,
-  isWindow,
-} from '../guards';
-import PenpalError from '../PenpalError';
-import { ErrorCode } from '../enums';
+} from './guards';
+import PenpalError from './PenpalError';
+import { ErrorCode } from './enums';
+import {
+  logReceivedMessage,
+  logSendingMessage,
+  LOG_MESSAGE_CONNECTION_CLOSED,
+} from './commonLogging';
 
 type Options = {
   /**
-   * The child window with which the parent will communicate.
+   * The window with which the current window will communicate.
    */
-  childWindow: Window | (() => Window);
+  remoteWindow: Window;
   /**
    * The origin of the child window. Communication will be restricted to
    * this origin. You may use a value of `*` to not restrict communication to
@@ -28,44 +32,52 @@ type Options = {
    *
    * Defaults to the value of `window.origin`.
    */
-  childOrigin?: string | RegExp;
+  remoteOrigin?: string | RegExp;
   /**
-   * A string identifier that locks down communication to a child window
-   * attempting to connect on the same channel.
+   * A string identifier that restricts communication to a specific channel.
+   * This is only useful when setting up multiple, parallel connections
+   * between a parent window and a single child window.
    */
   channel?: string;
+  /**
+   * A function for logging debug messages. When provided, messages will
+   * be logged.
+   */
+  log?: Log;
 };
 
 /**
  * Handles the details of communicating with a child window.
  */
-class ParentToChildWindowMessenger implements Messenger {
-  private _childWindow: Window | (() => Window);
-  private _cachedChildWindow?: Window;
-  private _childOrigin: string | RegExp;
+class WindowMessenger implements Messenger {
+  private _remoteWindow: Window;
+  private _remoteOrigin: string | RegExp;
+  private _log?: Log;
   private _channel?: string;
-  private _concreteChildOrigin?: string;
+  private _concreteRemoteOrigin?: string;
   private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
   private _port?: MessagePort;
   private _isChildUsingDeprecatedProtocol = false;
-  private _log?: Log;
 
-  constructor({ childWindow, childOrigin = window.origin, channel }: Options) {
-    if (
-      !childWindow ||
-      (!isWindow(childWindow) && !(typeof childWindow === 'function'))
-    ) {
+  constructor({
+    remoteWindow,
+    remoteOrigin = window.origin,
+    channel,
+    log,
+  }: Options) {
+    if (!remoteWindow) {
       throw new PenpalError(
         ErrorCode.InvalidArgument,
-        'childWindow must be a Window or function that returns a Window'
+        'remoteWindow must be defined'
       );
     }
 
-    this._childWindow = childWindow;
-    this._childOrigin = childOrigin;
+    this._remoteWindow = remoteWindow;
+    this._remoteOrigin = remoteOrigin;
     this._channel = channel;
+    this._log = log;
 
-    window.addEventListener('message', this._handleMessageFromChild);
+    window.addEventListener('message', this._handleMessageFromRemoteWindow);
   }
 
   private _destroyPort = () => {
@@ -74,28 +86,7 @@ class ParentToChildWindowMessenger implements Messenger {
     this._port = undefined;
   };
 
-  private _getDefinedChildWindow = () => {
-    if (!this._cachedChildWindow) {
-      if (isWindow(this._childWindow)) {
-        this._cachedChildWindow = this._childWindow;
-      } else {
-        const childWindow = this._childWindow();
-
-        if (!isWindow(childWindow)) {
-          throw new PenpalError(
-            ErrorCode.InvalidArgument,
-            'childWindow did not return a Window object'
-          );
-        }
-
-        this._cachedChildWindow = childWindow;
-      }
-    }
-
-    return this._cachedChildWindow;
-  };
-
-  private _handleMessageFromChild = (event: MessageEvent): void => {
+  private _handleMessageFromRemoteWindow = (event: MessageEvent): void => {
     if (
       // Under specific timing circumstances, we can receive an event
       // whose source is null at this point. This seems to happen when the
@@ -103,44 +94,50 @@ class ParentToChildWindowMessenger implements Messenger {
       // sends a message.
       // https://github.com/Aaronius/penpal/issues/85
       !event.source ||
-      event.source !== this._getDefinedChildWindow()
+      event.source !== this._remoteWindow
     ) {
       return;
     }
 
-    let messageEnvelope: PenpalMessageEnvelope;
+    let envelope: PenpalMessageEnvelope;
 
     if (isPenpalMessageEnvelope(event.data)) {
-      messageEnvelope = event.data;
+      envelope = event.data;
     } else if (isDeprecatedMessage(event.data)) {
       this._log?.(
         'Please upgrade the child window to the latest version of Penpal.'
       );
       this._isChildUsingDeprecatedProtocol = true;
-      messageEnvelope = upgradeMessage(event.data);
+      envelope = upgradeMessage(event.data);
     } else {
       // The received event doesn't pertain to Penpal.
       return;
     }
 
-    if (messageEnvelope.channel !== this._channel) {
+    const { channel, message } = envelope;
+
+    if (channel !== this._channel) {
       return;
     }
 
     if (!this._isEventFromValidOrigin(event)) {
       this._log?.(
-        `Received a message from origin "${event.origin}" which did not match expected origin "${this._childOrigin}"`
+        `Received a message from origin "${event.origin}" which did not match expected origin "${this._remoteOrigin}"`
       );
       return;
     }
 
-    const { message } = messageEnvelope;
+    logReceivedMessage(envelope, this._log);
 
     if (isSynMessage(message)) {
       // We destroy the port if one is already set, because it's possible a
       // child is re-connecting and we'll receive a new port.
       this._destroyPort();
-      this._concreteChildOrigin = event.origin;
+      this._concreteRemoteOrigin = event.origin;
+    }
+
+    if (isSynAckMessage(message)) {
+      this._concreteRemoteOrigin = event.origin;
     }
 
     if (
@@ -154,7 +151,7 @@ class ParentToChildWindowMessenger implements Messenger {
 
       if (!this._port) {
         // If this ever happens, it's a bug in Penpal.
-        throw new Error('Handshake - No port received on ACK');
+        throw new Error('No port received on ACK');
       }
 
       this._port.addEventListener('message', this._handleMessageFromPort);
@@ -170,9 +167,9 @@ class ParentToChildWindowMessenger implements Messenger {
     if (event.currentTarget instanceof MessagePort) {
       return true;
     }
-    return this._childOrigin instanceof RegExp
-      ? this._childOrigin.test(event.origin)
-      : this._childOrigin === '*' || this._childOrigin === event.origin;
+    return this._remoteOrigin instanceof RegExp
+      ? this._remoteOrigin.test(event.origin)
+      : this._remoteOrigin === '*' || this._remoteOrigin === event.origin;
   }
 
   private _handleMessageFromPort = (event: MessageEvent): void => {
@@ -183,11 +180,14 @@ class ParentToChildWindowMessenger implements Messenger {
       return;
     }
 
-    const { channel, message } = event.data;
+    const envelope = event.data;
+    const { channel, message } = envelope;
 
     if (channel !== this._channel) {
       return;
     }
+
+    logReceivedMessage(envelope, this._log);
 
     for (const callback of this._messageCallbacks) {
       callback(message);
@@ -204,6 +204,18 @@ class ParentToChildWindowMessenger implements Messenger {
       message,
     };
 
+    logSendingMessage(envelope, this._log);
+
+    if (isSynMessage(message)) {
+      const originForSending =
+        this._remoteOrigin instanceof RegExp ? '*' : this._remoteOrigin;
+      this._remoteWindow.postMessage(envelope, {
+        targetOrigin: originForSending,
+        transfer: transferables,
+      });
+      return;
+    }
+
     if (
       isSynAckMessage(message) ||
       // If the child is using a previous version of Penpal, we need to
@@ -215,18 +227,41 @@ class ParentToChildWindowMessenger implements Messenger {
         ? downgradeMessageEnvelope(envelope)
         : envelope;
 
-      if (!this._concreteChildOrigin) {
+      if (!this._concreteRemoteOrigin) {
         // If this ever happens, it's a bug in Penpal.
         throw new Error('Concrete child origin not set');
       }
 
       const originForSending =
-        this._childOrigin instanceof RegExp
-          ? this._concreteChildOrigin
-          : this._childOrigin;
-      this._getDefinedChildWindow().postMessage(payload, {
+        this._remoteOrigin instanceof RegExp
+          ? this._concreteRemoteOrigin
+          : this._remoteOrigin;
+      this._remoteWindow.postMessage(payload, {
         targetOrigin: originForSending,
         transfer: transferables,
+      });
+      return;
+    }
+
+    if (isAckMessage(message)) {
+      const { port1, port2 } = new MessageChannel();
+      this._port = port1;
+      port1.addEventListener('message', this._handleMessageFromPort);
+      port1.start();
+
+      const transferablesToSend = [port2, ...(transferables || [])];
+      if (!this._concreteRemoteOrigin) {
+        // If this ever happens, it's a bug in Penpal.
+        throw new Error('Concrete child origin not set');
+      }
+
+      const originForSending =
+        this._remoteOrigin instanceof RegExp
+          ? this._concreteRemoteOrigin
+          : this._remoteOrigin;
+      this._remoteWindow.postMessage(envelope, {
+        targetOrigin: originForSending,
+        transfer: transferablesToSend,
       });
       return;
     }
@@ -249,15 +284,12 @@ class ParentToChildWindowMessenger implements Messenger {
     this._messageCallbacks.delete(callback);
   };
 
-  initialize = ({ log }: InitializeOptions) => {
-    this._log = log;
-  };
-
   close = () => {
-    window.removeEventListener('message', this._handleMessageFromChild);
+    window.removeEventListener('message', this._handleMessageFromRemoteWindow);
     this._destroyPort();
     this._messageCallbacks.clear();
+    this._log?.(LOG_MESSAGE_CONNECTION_CLOSED);
   };
 }
 
-export default ParentToChildWindowMessenger;
+export default WindowMessenger;

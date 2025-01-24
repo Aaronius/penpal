@@ -15,9 +15,11 @@
     <script>
       let channelBParent;
 
-      const channelBMessenger = new Penpal.ChildWindowToParentMessenger({
-        parentOrigin: '*',
+      const channelBMessenger = new Penpal.WindowMessenger({
+        remoteWindow: window.parent,
+        remoteOrigin: '*',
         channel: 'B',
+        log: Penpal.debug('Child Connection B'),
       });
 
       const channelBMethods = {
@@ -32,16 +34,17 @@
       Penpal.connectToParent({
         messenger: channelBMessenger,
         methods: channelBMethods,
-        debug: true,
       }).promise.then((parent) => {
         channelBParent = parent;
       });
 
       let channelAParent;
 
-      const channelAMessenger = new Penpal.ChildWindowToParentMessenger({
-        parentOrigin: '*',
+      const channelAMessenger = new Penpal.WindowMessenger({
+        remoteWindow: window.parent,
+        remoteOrigin: '*',
         channel: 'A',
+        log: Penpal.debug('Child Connection A'),
       });
 
       const channelAMethods = {
@@ -56,7 +59,6 @@
       Penpal.connectToParent({
         messenger: channelAMessenger,
         methods: channelAMethods,
-        debug: true,
       }).promise.then((parent) => {
         channelAParent = parent;
       });

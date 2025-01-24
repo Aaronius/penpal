@@ -3,8 +3,8 @@ import { createAndAddIframe } from '../utils';
 import {
   connectToChild,
   ErrorCode,
-  ParentToChildWindowMessenger,
   PenpalError,
+  WindowMessenger,
 } from '../../src/index';
 import FixtureMethods from '../childFixtures/types/FixtureMethods';
 
@@ -40,9 +40,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -55,9 +55,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: /^http/,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: /^http/,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -70,9 +70,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/matchingParentOrigin.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -85,9 +85,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/matchingParentOriginRegex.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -100,9 +100,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: 'http://bogus.com',
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: 'http://bogus.com',
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -115,9 +115,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/mismatchedParentOrigin.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -130,9 +130,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/mismatchedParentOriginRegex.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -148,9 +148,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: '*',
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: '*',
     });
     const connection = connectToChild({
       messenger,
@@ -166,8 +166,8 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -183,9 +183,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -201,9 +201,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: /example\.com/,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: /example\.com/,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -216,9 +216,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -252,9 +252,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -286,9 +286,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -318,9 +318,9 @@ describe('backward compatibility - connection management', () => {
     const iframe = createAndAddIframe(
       'http://www.fakeresponse.com/api/?sleep=10000'
     );
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
     const connection = connectToChild<FixtureMethods>({
       messenger,
@@ -346,9 +346,9 @@ describe('backward compatibility - connection management', () => {
       const iframe = createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
       );
-      const messenger = new ParentToChildWindowMessenger({
-        childWindow: () => iframe.contentWindow!,
-        childOrigin: CHILD_SERVER,
+      const messenger = new WindowMessenger({
+        remoteWindow: iframe.contentWindow!,
+        remoteOrigin: CHILD_SERVER,
       });
       const connection = connectToChild<FixtureMethods>({
         messenger,
@@ -371,9 +371,9 @@ describe('backward compatibility - connection management', () => {
       const iframe = createAndAddIframe(
         `${CHILD_SERVER}/pages/backwardCompatibility/timeout.html`
       );
-      const messenger = new ParentToChildWindowMessenger({
-        childWindow: () => iframe.contentWindow!,
-        childOrigin: CHILD_SERVER,
+      const messenger = new WindowMessenger({
+        remoteWindow: iframe.contentWindow!,
+        remoteOrigin: CHILD_SERVER,
       });
       const connection = connectToChild<FixtureMethods>({
         messenger,

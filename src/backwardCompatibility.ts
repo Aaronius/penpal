@@ -94,7 +94,7 @@ export const upgradeMessage = (
       namespace,
       message: {
         type: MessageType.Call,
-        roundTripId: message.id,
+        sessionId: message.id,
         methodPath: message.methodName,
         args: message.args,
       },
@@ -107,13 +107,13 @@ export const upgradeMessage = (
     if (message.resolution === DeprecatedResolution.Fulfilled) {
       upgradedMessage = {
         type: MessageType.Reply,
-        roundTripId: message.id,
+        sessionId: message.id,
         value: message.returnValue,
       };
     } else {
       upgradedMessage = {
         type: MessageType.Reply,
-        roundTripId: message.id,
+        sessionId: message.id,
         isError: true,
         error: message.returnValue,
         isSerializedErrorInstance: !!message.returnValueIsError,
@@ -161,7 +161,7 @@ export const downgradeMessageEnvelope = (
   if (message.type === MessageType.Call) {
     return {
       penpal: DeprecatedMessageType.Call,
-      id: message.roundTripId,
+      id: message.sessionId,
       methodName: message.methodPath,
       args: message.args,
     };
@@ -170,7 +170,7 @@ export const downgradeMessageEnvelope = (
   if (message.type === MessageType.Reply) {
     return {
       penpal: DeprecatedMessageType.Reply,
-      id: message.roundTripId,
+      id: message.sessionId,
       resolution: message.isError
         ? DeprecatedResolution.Rejected
         : DeprecatedResolution.Fulfilled,

@@ -8,14 +8,14 @@
         iframe.src = 'child.html';
         document.body.appendChild(iframe);
 
-        const messenger = new Penpal.ParentToChildWindowMessenger({
-          childWindow: iframe.contentWindow,
-          childOrigin: '*',
+        const messenger = new Penpal.WindowMessenger({
+          remoteWindow: iframe.contentWindow,
+          remoteOrigin: '*',
+          log: Penpal.debug('Child'),
         });
 
         Penpal.connectToChild({
           messenger,
-          debug: true,
         }).promise.then(function (child) {
           child.multiply(3, 2).then((result) => {
             const div = document.createElement('div');

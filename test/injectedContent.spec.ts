@@ -1,11 +1,10 @@
 import { CHILD_SERVER } from './constants';
-import { connectToChild, ParentToChildWindowMessenger } from '../src/index';
+import { connectToChild, WorkerMessenger, WindowMessenger } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import {
   expectNeverFulfilledIframeConnection,
   getWorkerFixtureUrl,
 } from './utils';
-import ParentToChildWorkerMessenger from '../src/parent/ParentToChildWorkerMessenger';
 
 const htmlSrc = `
 <!DOCTYPE html>
@@ -25,8 +24,10 @@ const htmlSrc = `
     -->
     <script src="${CHILD_SERVER}/penpal.js"></script>
     <script>
-      const messenger = new Penpal.ChildWindowToParentMessenger({
-        parentOrigin: '*'
+      const messenger = new Penpal.WindowMessenger({
+        remoteWindow: window.parent,
+        remoteOrigin: '*',
+        log: Penpal.debug('Child')
       });
       
       Penpal.connectToParent({
@@ -36,7 +37,6 @@ const htmlSrc = `
             return num1 * num2;
           }
         },
-        debug: true
       });
     </script>
   </body>
@@ -48,9 +48,9 @@ it('connects and calls a function on the child iframe when src is set to data UR
   iframe.src = `data:text/html,${htmlSrc}`;
   document.body.appendChild(iframe);
 
-  const messenger = new ParentToChildWindowMessenger({
-    childWindow: () => iframe.contentWindow!,
-    childOrigin: '*',
+  const messenger = new WindowMessenger({
+    remoteWindow: iframe.contentWindow!,
+    remoteOrigin: '*',
   });
 
   const connection = connectToChild<FixtureMethods>({
@@ -68,8 +68,8 @@ it('never connects iframe when src is set to data URI and childOrigin is not set
   iframe.src = `data:text/html,${htmlSrc}`;
   document.body.appendChild(iframe);
 
-  const messenger = new ParentToChildWindowMessenger({
-    childWindow: () => iframe.contentWindow!,
+  const messenger = new WindowMessenger({
+    remoteWindow: iframe.contentWindow!,
   });
 
   const connection = connectToChild<FixtureMethods>({
@@ -91,8 +91,8 @@ it('connects and calls a function on the child worker', async () => {
     type: 'module',
   });
 
-  const messenger = new ParentToChildWorkerMessenger({
-    childWorker: worker,
+  const messenger = new WorkerMessenger({
+    worker,
   });
 
   const connection = connectToChild<FixtureMethods>({
@@ -113,8 +113,8 @@ it('connects and calls a function on the child iframe when src is set to an obje
   iframe.src = blobUrl;
   document.body.appendChild(iframe);
 
-  const messenger = new ParentToChildWindowMessenger({
-    childWindow: () => iframe.contentWindow!,
+  const messenger = new WindowMessenger({
+    remoteWindow: iframe.contentWindow!,
   });
 
   const connection = connectToChild<FixtureMethods>({
@@ -135,8 +135,8 @@ it('connects and calls a function on the child worker when src is set to an obje
 
   const worker = new Worker(blobUrl);
 
-  const messenger = new ParentToChildWorkerMessenger({
-    childWorker: worker,
+  const messenger = new WorkerMessenger({
+    worker,
   });
 
   const connection = connectToChild<FixtureMethods>({
@@ -154,8 +154,8 @@ it('connects and calls a function on the child iframe when srcdoc is set', async
   iframe.srcdoc = htmlSrc;
   document.body.appendChild(iframe);
 
-  const messenger = new ParentToChildWindowMessenger({
-    childWindow: () => iframe.contentWindow!,
+  const messenger = new WindowMessenger({
+    remoteWindow: iframe.contentWindow!,
   });
 
   const connection = connectToChild<FixtureMethods>({

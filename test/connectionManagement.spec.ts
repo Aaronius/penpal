@@ -9,37 +9,37 @@ import {
   connectToChild,
   ErrorCode,
   PenpalError,
-  ParentToChildWindowMessenger,
-  ParentToChildWorkerMessenger,
+  WindowMessenger,
 } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
+import WorkerMessenger from '../src/WorkerMessenger';
 
 describe('connection management', () => {
   afterEach(() => {
     jasmine.clock().uninstall();
   });
 
-  it('connects to iframe when correct child origin provided', async () => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
+  it('connects to window when correct origin provided in parent', async () => {
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
-    const connection = connectToChild({
+    const connection = connectToChild<FixtureMethods>({
       messenger,
     });
 
     await connection.promise;
   });
 
-  it('connects to iframe when correct child origin regex provided', async () => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
+  it('connects to window when correct origin regex provided in parent', async () => {
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: /^http/,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: /^http/,
     });
 
     const connection = connectToChild({
@@ -52,8 +52,8 @@ describe('connection management', () => {
   it('connects to worker', async () => {
     const worker = new Worker(getWorkerFixtureUrl('general'));
 
-    const messenger = new ParentToChildWorkerMessenger({
-      childWorker: worker,
+    const messenger = new WorkerMessenger({
+      worker: worker,
     });
 
     const connection = connectToChild({
@@ -63,14 +63,14 @@ describe('connection management', () => {
     await connection.promise;
   });
 
-  it('connects to iframe connecting to parent with matching origin', async () => {
+  it('connects to window when matching origin provided in child', async () => {
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/matchingParentOrigin.html`
+      getPageFixtureUrl('matchingParentOrigin')
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild({
@@ -80,14 +80,14 @@ describe('connection management', () => {
     await connection.promise;
   });
 
-  it('connects to iframe connecting to parent with matching origin regex', async () => {
+  it('connects to window connecting when matching origin regex provided in child', async () => {
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/matchingParentOriginRegex.html`
+      getPageFixtureUrl('matchingParentOriginRegex')
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild({
@@ -97,12 +97,12 @@ describe('connection management', () => {
     await connection.promise;
   });
 
-  it("doesn't connect to iframe when incorrect child origin provided", async () => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
+  it("doesn't connect to window when incorrect origin provided in parent", async () => {
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: 'http://bogus.com',
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: 'http://bogus.com',
     });
 
     const connection = connectToChild({
@@ -112,14 +112,14 @@ describe('connection management', () => {
     await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
-  it("doesn't connect to iframe connecting to mismatched parent origin", async () => {
+  it("doesn't connect to window when mismatched origin provided in child", async () => {
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/mismatchedParentOrigin.html`
+      getPageFixtureUrl('mismatchedParentOrigin')
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild({
@@ -129,14 +129,14 @@ describe('connection management', () => {
     await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
-  it("doesn't connect to iframe connecting to mismatched parent origin regex", async () => {
+  it("doesn't connect to window when mismatched parent origin regex provided in child", async () => {
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/mismatchedParentOriginRegex.html`
+      getPageFixtureUrl('mismatchedParentOrigin')
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild({
@@ -146,17 +146,17 @@ describe('connection management', () => {
     await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
-  it('connects to iframe when child redirects to different origin and child origin is set to *', async () => {
+  it('connects to window when child redirects to different origin and origin is set to * in parent', async () => {
     const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/pages/general.html`
+      getPageFixtureUrl('general', CHILD_SERVER_ALTERNATE)
     );
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
+      getPageFixtureUrl('redirect') + `?to=${redirectToUrl}`
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: '*',
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: '*',
     });
 
     const connection = connectToChild({
@@ -166,16 +166,16 @@ describe('connection management', () => {
     await connection.promise;
   });
 
-  it("doesn't connect to iframe when child redirects to different origin and child origin is not set", async () => {
+  it("doesn't connect to window when child redirects to different origin and origin is not set in parent", async () => {
     const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/pages/general.html`
+      getPageFixtureUrl('general', CHILD_SERVER_ALTERNATE)
     );
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
+      getPageFixtureUrl('redirect') + `?to=${redirectToUrl}`
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
     });
 
     const connection = connectToChild({
@@ -185,17 +185,17 @@ describe('connection management', () => {
     await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
-  it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin", async () => {
+  it("doesn't connect to window when child redirects to different origin and origin is set to a mismatched origin in parent", async () => {
     const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/pages/general.html`
+      getPageFixtureUrl('general', CHILD_SERVER_ALTERNATE)
     );
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
+      getPageFixtureUrl('redirect') + `?to=${redirectToUrl}`
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild({
@@ -205,17 +205,17 @@ describe('connection management', () => {
     await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
-  it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin regex", async () => {
+  it("doesn't connect to window when child redirects to different origin and origin is set to a mismatched origin regex in parent", async () => {
     const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/pages/general.html`
+      getPageFixtureUrl('general', CHILD_SERVER_ALTERNATE)
     );
     const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/redirect.html?to=${redirectToUrl}`
+      getPageFixtureUrl('redirect') + `?to=${redirectToUrl}`
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: /example\.com/,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: /example\.com/,
     });
 
     const connection = connectToChild({
@@ -225,14 +225,12 @@ describe('connection management', () => {
     await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
-  it("doesn't connect to iframe when child does not set parent origin", async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/noParentOrigin.html`
-    );
+  it("doesn't connect to window when no origin set in child", async () => {
+    const iframe = createAndAddIframe(getPageFixtureUrl('noParentOrigin'));
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild({
@@ -243,11 +241,11 @@ describe('connection management', () => {
   });
 
   it('reconnects after child reloads', (done) => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild<FixtureMethods>({
@@ -274,16 +272,16 @@ describe('connection management', () => {
   });
 
   // Issue #18
-  it('properly disconnects previous call receiver upon reconnection', (done) => {
+  it('properly disconnects previous remote proxy methods upon reconnection', (done) => {
     const add = jasmine.createSpy().and.callFake((num1, num2) => {
       return num1 + num2;
     });
 
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild<FixtureMethods>({
@@ -313,11 +311,11 @@ describe('connection management', () => {
   });
 
   it('reconnects after child navigates to other page with different methods', (done) => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild<FixtureMethods>({
@@ -347,9 +345,9 @@ describe('connection management', () => {
       'http://www.fakeresponse.com/api/?sleep=10000'
     );
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: 'http://www.fakeresponse.com',
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: 'http://www.fakeresponse.com',
     });
 
     const connection = connectToChild<FixtureMethods>({
@@ -370,15 +368,15 @@ describe('connection management', () => {
 
   it(
     "doesn't close connection if connection succeeds then " +
-      'timeout passes (connectToChild)',
+      'timeout passes in parent',
     async () => {
       jasmine.clock().install();
 
-      const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/general.html`);
+      const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
-      const messenger = new ParentToChildWindowMessenger({
-        childWindow: () => iframe.contentWindow!,
-        childOrigin: CHILD_SERVER,
+      const messenger = new WindowMessenger({
+        remoteWindow: iframe.contentWindow!,
+        remoteOrigin: CHILD_SERVER,
       });
 
       const connection = connectToChild<FixtureMethods>({
@@ -396,13 +394,13 @@ describe('connection management', () => {
 
   it(
     "doesn't close connection if connection succeeds then " +
-      'timeout passes (connectToParent)',
+      'timeout passes in child',
     (done) => {
-      const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/timeout.html`);
+      const iframe = createAndAddIframe(getPageFixtureUrl('timeout'));
 
-      const messenger = new ParentToChildWindowMessenger({
-        childWindow: () => iframe.contentWindow!,
-        childOrigin: CHILD_SERVER,
+      const messenger = new WindowMessenger({
+        remoteWindow: iframe.contentWindow!,
+        remoteOrigin: CHILD_SERVER,
       });
 
       const connection = connectToChild<FixtureMethods>({
@@ -417,12 +415,12 @@ describe('connection management', () => {
     }
   );
 
-  it('connects to child iframe with same channel', async () => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/pages/channels.html`);
+  it('connects to window in parallel with separate channels', async () => {
+    const iframe = createAndAddIframe(getPageFixtureUrl('channels'));
 
-    const channelAMessenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const channelAMessenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
       channel: 'A',
     });
 
@@ -439,9 +437,9 @@ describe('connection management', () => {
       },
     });
 
-    const channelBMessenger = new ParentToChildWindowMessenger({
-      childWindow: () => iframe.contentWindow!,
-      childOrigin: CHILD_SERVER,
+    const channelBMessenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      remoteOrigin: CHILD_SERVER,
       channel: 'B',
     });
 
@@ -472,11 +470,11 @@ describe('connection management', () => {
     channelBConnection.close();
   });
 
-  it('connects to worker with same channel', async () => {
+  it('connects to worker in parallel with separate channels', async () => {
     const worker = new Worker(getWorkerFixtureUrl('channels'));
 
-    const channelAMessenger = new ParentToChildWorkerMessenger({
-      childWorker: worker,
+    const channelAMessenger = new WorkerMessenger({
+      worker,
       channel: 'A',
     });
 
@@ -493,8 +491,8 @@ describe('connection management', () => {
       },
     });
 
-    const channelBMessenger = new ParentToChildWorkerMessenger({
-      childWorker: worker,
+    const channelBMessenger = new WorkerMessenger({
+      worker,
       channel: 'B',
     });
 
@@ -549,14 +547,15 @@ describe('connection management', () => {
     // postMessage would never be called by the parent, nothing would cause the
     // parent's connection to be rejected unless there's a connection timeout
     // configured and the timeout were reached.
-    it(`rejects connection in child iframe when invalid childOrigin of ${invalidOrigin} is used`, async () => {
+    it(`rejects connection in child window when invalid origin of ${invalidOrigin} is used`, async () => {
       const iframe = createAndAddIframe(
-        `${CHILD_SERVER}/pages/invalidParentOrigin.html?invalidParentOrigin=${invalidOrigin}`
+        getPageFixtureUrl('invalidParentOrigin') +
+          `?invalidParentOrigin=${invalidOrigin}`
       );
 
-      const messenger = new ParentToChildWindowMessenger({
-        childWindow: () => iframe.contentWindow!,
-        childOrigin: CHILD_SERVER,
+      const messenger = new WindowMessenger({
+        remoteWindow: iframe.contentWindow!,
+        remoteOrigin: CHILD_SERVER,
       });
 
       const connection = connectToChild<FixtureMethods>({
@@ -585,12 +584,11 @@ describe('connection management', () => {
   }
 
   it('connects to window created with window.open()', async () => {
-    const url = getPageFixtureUrl('general');
-    const childWindow = window.open(url);
+    const childWindow = window.open(getPageFixtureUrl('openedWindow'));
 
-    const messenger = new ParentToChildWindowMessenger({
-      childWindow: childWindow!,
-      childOrigin: CHILD_SERVER,
+    const messenger = new WindowMessenger({
+      remoteWindow: childWindow!,
+      remoteOrigin: CHILD_SERVER,
     });
 
     const connection = connectToChild({
@@ -598,5 +596,7 @@ describe('connection management', () => {
     });
 
     await connection.promise;
+
+    childWindow?.close();
   });
 });

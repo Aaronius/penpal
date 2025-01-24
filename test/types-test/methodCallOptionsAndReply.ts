@@ -2,7 +2,7 @@ import assertType from './assertType';
 import {
   connectToChild,
   MethodCallOptions,
-  ParentToChildWindowMessenger,
+  WindowMessenger,
   RemoteMethodProxies,
   Reply,
 } from '../../src/index';
@@ -32,8 +32,8 @@ type ChildMethods = {
 
 const iframe = document.createElement('iframe');
 
-const messenger = new ParentToChildWindowMessenger({
-  childWindow: () => iframe.contentWindow!,
+const messenger = new WindowMessenger({
+  remoteWindow: iframe.contentWindow!,
 });
 
 const connection = connectToChild<ChildMethods>({

@@ -16,8 +16,10 @@
       let parentAPI;
       let parentReturnValue;
 
-      const messenger = new Penpal.ChildWindowToParentMessenger({
-        parentOrigin: '*',
+      const messenger = new Penpal.WindowMessenger({
+        remoteWindow: window.parent,
+        remoteOrigin: '*',
+        log: Penpal.debug('Child'),
       });
 
       const methods = {
@@ -92,7 +94,6 @@
       Penpal.connectToParent({
         messenger,
         methods: methods,
-        debug: true,
       }).promise.then((parent) => {
         parentAPI = parent;
       });

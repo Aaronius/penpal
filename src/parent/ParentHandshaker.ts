@@ -1,7 +1,6 @@
 import {
   AckMessage,
   FlattenedMethods,
-  Log,
   Methods,
   PenpalMessage,
   RemoteMethodProxies,
@@ -24,8 +23,7 @@ class ParentHandshaker<TMethods extends Methods> {
     private _closeConnection: (error: PenpalError) => void,
     private _onRemoteMethodProxiesConnected: (
       remoteMethodProxies: RemoteMethodProxies<TMethods>
-    ) => void,
-    private _log: Log
+    ) => void
   ) {
     this._remoteMethodProxies = {} as RemoteMethodProxies<TMethods>;
     this._messenger.addMessageHandler(this._handleMessage);
@@ -42,8 +40,6 @@ class ParentHandshaker<TMethods extends Methods> {
   };
 
   private _handleSynMessage = () => {
-    this._log('Handshake - Received SYN, responding with SYN-ACK');
-
     const synAckMessage: SynAckMessage = {
       type: MessageType.SynAck,
       methodPaths: Object.keys(this._flattenedMethods),
@@ -59,8 +55,6 @@ class ParentHandshaker<TMethods extends Methods> {
   };
 
   private _handleAckMessage = (message: AckMessage) => {
-    this._log('Handshake - Received ACK');
-
     // this._closeCallHandler will be defined if the child is reconnecting.
     if (this._closeCallHandler) {
       this._closeCallHandler();
@@ -73,8 +67,7 @@ class ParentHandshaker<TMethods extends Methods> {
 
     this._closeCallHandler = connectCallHandler(
       this._messenger,
-      this._flattenedMethods,
-      this._log
+      this._flattenedMethods
     );
 
     // If the child reconnects (for example, after refreshing or navigating
@@ -88,8 +81,7 @@ class ParentHandshaker<TMethods extends Methods> {
     this._closeRemoteMethodProxies = connectRemoteMethodProxies(
       this._remoteMethodProxies,
       this._messenger,
-      message.methodPaths,
-      this._log
+      message.methodPaths
     );
 
     // This method may be called multiple times if the child reconnects.
