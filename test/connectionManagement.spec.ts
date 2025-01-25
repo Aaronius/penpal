@@ -9,6 +9,7 @@ import {
   connectToChild,
   ErrorCode,
   PenpalError,
+  PortMessenger,
   WindowMessenger,
 } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
@@ -50,7 +51,7 @@ describe('connection management', () => {
   });
 
   it('connects to worker', async () => {
-    const worker = new Worker(getWorkerFixtureUrl('general'));
+    const worker = new Worker(getWorkerFixtureUrl('webWorkerGeneral'));
 
     const messenger = new WorkerMessenger({
       worker: worker,
@@ -485,7 +486,7 @@ describe('connection management', () => {
   });
 
   it('connects to worker in parallel with separate channels', async () => {
-    const worker = new Worker(getWorkerFixtureUrl('channels'));
+    const worker = new Worker(getWorkerFixtureUrl('webWorkerChannels'));
 
     const channelAMessenger = new WorkerMessenger({
       worker,
@@ -612,5 +613,21 @@ describe('connection management', () => {
     await connection.promise;
 
     childWindow?.close();
+  });
+
+  it('connects to port for shared worker', async () => {
+    const sharedWorker = new SharedWorker(getWorkerFixtureUrl('sharedWorker'));
+
+    const messenger = new PortMessenger({
+      port: sharedWorker.port,
+    });
+
+    const connection = connectToChild({
+      messenger,
+    });
+
+    await connection.promise;
+
+    connection.close();
   });
 });

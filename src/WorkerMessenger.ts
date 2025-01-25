@@ -35,7 +35,7 @@ type Options = {
   /**
    * A string identifier that restricts communication to a specific channel.
    * This is only useful when setting up multiple, parallel connections
-   * between a parent window and a single child web worker.
+   * between a parent window and a child worker.
    */
   channel?: string;
   /**

@@ -37,7 +37,7 @@ export const createIframeAndConnection = <TMethods extends Methods>({
 
 export const createWorkerAndConnection = <TMethods extends Methods>({
   methods = {},
-  workerName = 'general',
+  workerName = 'webWorkerGeneral',
 }: {
   methods?: Methods;
   workerName?: string;

@@ -85,7 +85,7 @@ it('never connects iframe when src is set to data URI and childOrigin is not set
 });
 
 it('connects and calls a function on the child worker', async () => {
-  const response = await fetch(getWorkerFixtureUrl('general'));
+  const response = await fetch(getWorkerFixtureUrl('webWorkerGeneral'));
   const code = await response.text();
   const worker = new Worker(`data:application/javascript,${code}`, {
     type: 'module',
@@ -128,7 +128,7 @@ it('connects and calls a function on the child iframe when src is set to an obje
 });
 
 it('connects and calls a function on the child worker when src is set to an object URL', async () => {
-  const response = await fetch(getWorkerFixtureUrl('general'));
+  const response = await fetch(getWorkerFixtureUrl('webWorkerGeneral'));
   const code = await response.text();
   const blob = new Blob([code], { type: 'application/javascript' });
   const blobUrl = URL.createObjectURL(blob);

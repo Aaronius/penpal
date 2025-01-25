@@ -110,7 +110,7 @@ describe('parent calling close()', () => {
     });
 
     it('removes method listener from worker', async () => {
-      const worker = new Worker(getWorkerFixtureUrl('general'));
+      const worker = new Worker(getWorkerFixtureUrl('webWorkerGeneral'));
 
       const addEventListenerSpy = spyOn(
         worker,

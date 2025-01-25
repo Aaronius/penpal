@@ -5,7 +5,9 @@ import {
   WorkerMessenger,
 } from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
-console.log('web worker origin', self.location.origin);
+
+console.log('worker origin', self.origin);
+
 type ParentAPI = Record<'add', (num1: number, num2: number) => Promise<number>>;
 
 let parentAPI: ParentAPI;
