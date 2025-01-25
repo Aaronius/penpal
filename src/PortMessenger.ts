@@ -32,7 +32,7 @@ type Options = {
  * Handles the details of communicating on a MessagePort.
  */
 class PortMessenger implements Messenger {
-  private _port?: MessagePort;
+  private _port: MessagePort;
   private _channel?: string;
   private _messageCallbacks = new Set<MessageHandler>();
   private _log?: Log;
@@ -95,9 +95,8 @@ class PortMessenger implements Messenger {
   };
 
   close = () => {
-    this._port?.removeEventListener('message', this._handleMessage);
-    this._port?.close();
-    this._port = undefined;
+    this._port.removeEventListener('message', this._handleMessage);
+    this._port.close();
     this._messageCallbacks.clear();
     this._log?.(LOG_MESSAGE_CONNECTION_CLOSED);
   };
