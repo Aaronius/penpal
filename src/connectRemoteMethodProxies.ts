@@ -1,7 +1,7 @@
 import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
 import { unflattenMethods } from './methodSerialization';
-import { PenpalMessage, SerializedError, RemoteMethodProxies } from './types';
+import { PenpalMessage, RemoteMethodProxies, Methods } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Messenger from './Messenger';
@@ -19,8 +19,7 @@ type ReplyHandler = {
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
  */
-export default (
-  remoteMethodProxies: RemoteMethodProxies,
+export default <TMethods extends Methods>(
   messenger: Messenger,
   methodPaths: string[]
 ) => {
@@ -42,9 +41,7 @@ export default (
     replyHandlers.delete(message.sessionId);
 
     if (message.isError) {
-      const error = message.isSerializedErrorInstance
-        ? deserializeError(message.error as SerializedError)
-        : message.error;
+      const error = deserializeError(message.value);
       replyHandler.reject(error);
     } else {
       replyHandler.resolve(message.value);
@@ -127,22 +124,31 @@ export default (
     return memo;
   }, {});
 
-  Object.assign(remoteMethodProxies, unflattenMethods(flattedMethodProxies));
+  const remoteMethodProxies = unflattenMethods(
+    flattedMethodProxies
+  ) as RemoteMethodProxies<TMethods>;
 
-  return () => {
-    isClosed = true;
-    messenger.removeMessageHandler(handleMessage);
+  const close = () => {
+    {
+      isClosed = true;
+      messenger.removeMessageHandler(handleMessage);
 
-    for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {
-      clearTimeout(timeoutId);
-      reject(
-        new PenpalError(
-          ErrorCode.ConnectionClosed,
-          `Method call ${methodPath}() cannot be resolved due to closed connection`
-        )
-      );
+      for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {
+        clearTimeout(timeoutId);
+        reject(
+          new PenpalError(
+            ErrorCode.ConnectionClosed,
+            `Method call ${methodPath}() cannot be resolved due to closed connection`
+          )
+        );
+      }
+
+      replyHandlers.clear();
     }
+  };
 
-    replyHandlers.clear();
+  return {
+    remoteMethodProxies,
+    close,
   };
 };

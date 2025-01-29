@@ -114,16 +114,7 @@ for (const variant of variants) {
       connection.close();
     });
 
-    it('handles promises rejected with strings', async () => {
-      const connection = createConnection<FixtureMethods>();
-      const child = await connection.promise;
-      await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
-        'test error string'
-      );
-      connection.close();
-    });
-
-    it('handles promises rejected with error objects', async () => {
+    it('handles promises rejected with error instances', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
       let error;
@@ -139,12 +130,39 @@ for (const variant of variants) {
       connection.close();
     });
 
+    it('handles promises rejected with objects', async () => {
+      const connection = createConnection<FixtureMethods>();
+      const child = await connection.promise;
+      let error;
+      try {
+        await child.getPromiseRejectedWithObject();
+      } catch (e) {
+        error = e;
+      }
+      // Just ensure there's no hard crash. We advise consumers to only
+      // reject with error instances.
+      expect(error).toEqual(jasmine.any(Error));
+      expect((error as Error).name).toBe('Error');
+      expect((error as Error).message).toBe('[object Object]');
+      expect((error as Error).stack).toEqual(jasmine.any(String));
+      connection.close();
+    });
+
     it('handles promises rejected with undefined', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
-      await expectAsync(
-        child.getPromiseRejectedWithUndefined()
-      ).toBeRejectedWith(undefined);
+      let error;
+      try {
+        await child.getPromiseRejectedWithUndefined();
+      } catch (e) {
+        error = e;
+      }
+      // Just ensure there's no hard crash. We advise consumers to only
+      // reject with error instances.
+      expect(error).toEqual(jasmine.any(Error));
+      expect((error as Error).name).toBe('Error');
+      expect((error as Error).message).toBe('');
+      expect((error as Error).stack).toEqual(jasmine.any(String));
       connection.close();
     });
 

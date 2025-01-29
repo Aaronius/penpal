@@ -1,18 +1,18 @@
 import { serializeError } from './errorSerialization';
 import { PenpalMessage, ReplyMessage, FlattenedMethods } from './types';
-import { MessageType, NativeErrorName } from './enums';
+import { ErrorCode, MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
 import Messenger from './Messenger';
+import PenpalError from './PenpalError';
 
 const createErrorReplyMessage = (
   sessionId: number,
-  error: unknown
+  error: Error
 ): ReplyMessage => ({
   type: MessageType.Reply,
   sessionId,
+  value: serializeError(error),
   isError: true,
-  error: error instanceof Error ? serializeError(error) : error,
-  isSerializedErrorInstance: error instanceof Error,
 });
 
 /**
@@ -23,7 +23,18 @@ export default (messenger: Messenger, flattenedMethods: FlattenedMethods) => {
   let isClosed = false;
 
   const handleMessage = async (message: PenpalMessage) => {
-    if (message.type !== MessageType.Call) return;
+    if (isClosed) {
+      // It's possible to throw an error here, but it would only be catchable
+      // using window.onerror since we're in an asynchronously-called function.
+      // There is no method call the consumer is making that they could wrap in
+      // a try-catch. Even if the consumer were to catch the error somehow,
+      // the value of doing so is questionable.
+      return;
+    }
+
+    if (message.type !== MessageType.Call) {
+      return;
+    }
 
     const { methodPath, args, sessionId } = message;
 
@@ -31,7 +42,14 @@ export default (messenger: Messenger, flattenedMethods: FlattenedMethods) => {
     let transferables: Transferable[] | undefined;
 
     try {
-      let value = await flattenedMethods[methodPath](...args);
+      if (!flattenedMethods[methodPath]) {
+        throw new PenpalError(
+          ErrorCode.MethodNotFound,
+          `Method \`${methodPath}\` is not found.`
+        );
+      }
+
+      let value: unknown = await flattenedMethods[methodPath](...args);
 
       if (value instanceof Reply) {
         transferables = value.transferables;
@@ -44,15 +62,18 @@ export default (messenger: Messenger, flattenedMethods: FlattenedMethods) => {
         value,
       };
     } catch (error) {
-      replyMessage = createErrorReplyMessage(sessionId, error);
+      replyMessage = createErrorReplyMessage(
+        sessionId,
+        error instanceof Error
+          ? error
+          : new Error(error === undefined ? error : String(error))
+      );
     }
 
+    // Although we checked this at the beginning of the function, we need to
+    // check it again because we've made async calls, and the connection may
+    // have been closed in the meantime.
     if (isClosed) {
-      // It's possible to throw an error here, but it would only be catchable
-      // using window.onerror since we're in an asynchronously-called function.
-      // There is no method call the consumer is making that they could wrap in
-      // a try-catch. Even if the consumer were to catch the error somehow,
-      // the value of doing so is questionable.
       return;
     }
 

@@ -54,8 +54,8 @@ const methods: Omit<
   getParentReturnValue() {
     return parentReturnValue;
   },
-  getPromiseRejectedWithString() {
-    return Promise.reject('test error string');
+  getPromiseRejectedWithObject() {
+    return Promise.reject({ a: 'b' });
   },
   getPromiseRejectedWithError() {
     // Using TypeError instead of Error just to make sure the "name" property

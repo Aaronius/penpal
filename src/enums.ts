@@ -12,6 +12,7 @@ export enum ErrorCode {
   MethodCallTimeout = 'MethodCallTimeout',
   TransmissionFailed = 'TransmissionFailed',
   InvalidArgument = 'InvalidArgument',
+  MethodNotFound = 'MethodNotFound',
 }
 
 export enum NativeErrorName {

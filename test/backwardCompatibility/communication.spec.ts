@@ -90,7 +90,7 @@ describe(`backward compatibility - communication between parent and child iframe
     connection.close();
   });
 
-  it('handles promises rejected with strings', async () => {
+  it('handles promises rejected with objects', async () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
@@ -102,9 +102,17 @@ describe(`backward compatibility - communication between parent and child iframe
       messenger,
     });
     const child = await connection.promise;
-    await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
-      'test error string'
-    );
+    let error;
+    try {
+      await child.getPromiseRejectedWithObject();
+    } catch (e) {
+      error = e;
+    }
+    // We advise consumers to only reject with error instances.
+    expect(error).toEqual(jasmine.any(Error));
+    expect((error as Error).name).toBe('Error');
+    expect((error as Error).message).toBe('[object Object]');
+    expect((error as Error).stack).toEqual(jasmine.any(String));
     connection.close();
   });
 
@@ -145,9 +153,17 @@ describe(`backward compatibility - communication between parent and child iframe
       messenger,
     });
     const child = await connection.promise;
-    await expectAsync(child.getPromiseRejectedWithUndefined()).toBeRejectedWith(
-      undefined
-    );
+    let error;
+    try {
+      await child.getPromiseRejectedWithUndefined();
+    } catch (e) {
+      error = e;
+    }
+    // We advise consumers to only reject with error instances.
+    expect(error).toEqual(jasmine.any(Error));
+    expect((error as Error).name).toBe('Error');
+    expect((error as Error).message).toBe('');
+    expect((error as Error).stack).toEqual(jasmine.any(String));
     connection.close();
   });
 

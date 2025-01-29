@@ -272,7 +272,7 @@ class WindowMessenger implements Messenger {
       });
     } else {
       // If this ever happens, it's a bug in Penpal.
-      throw new Error('Port has not been received from child');
+      throw new Error('Port is undefined');
     }
   };
 

@@ -7,6 +7,7 @@ import {
   WindowMessenger,
 } from '../../src/index';
 import FixtureMethods from '../childFixtures/types/FixtureMethods';
+import { isDeprecatedMessage } from '../../src/backwardCompatibility';
 
 /**
  * Asserts that no connection is successfully made between the parent and the
@@ -212,7 +213,7 @@ describe('backward compatibility - connection management', () => {
     await expectNoSuccessfulConnection(connection.promise, iframe);
   });
 
-  it('reconnects after child reloads', (done) => {
+  it('reconnects after child reloads', async () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
@@ -224,65 +225,29 @@ describe('backward compatibility - connection management', () => {
       messenger,
     });
 
-    connection.promise.then((child) => {
-      const previousMultiply = child.multiply;
+    const child = await connection.promise;
 
-      const intervalId = setInterval(function () {
-        // Detect reconnection
-        if (child.multiply !== previousMultiply) {
-          clearInterval(intervalId);
+    return new Promise<void>((resolve) => {
+      const handleMessage = async (event: MessageEvent) => {
+        if (
+          event.source === iframe.contentWindow &&
+          event.data?.penpal === 'ack'
+        ) {
+          window.removeEventListener('message', handleMessage);
           child.multiply(2, 4).then((value: number) => {
             expect(value).toEqual(8);
             connection.close();
-            done();
+            resolve();
           });
         }
-      }, 10);
+      };
 
+      window.addEventListener('message', handleMessage);
       child.reload();
     });
   });
 
-  // Issue #18
-  it('properly disconnects previous call receiver upon reconnection', (done) => {
-    const add = jasmine.createSpy().and.callFake((num1, num2) => {
-      return num1 + num2;
-    });
-
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
-    });
-    const connection = connectToChild<FixtureMethods>({
-      messenger,
-      methods: {
-        add,
-      },
-    });
-
-    connection.promise.then((child) => {
-      const previousAddUsingParent = child.addUsingParent;
-
-      const intervalId = setInterval(function () {
-        // Detect reconnection
-        if (child.addUsingParent !== previousAddUsingParent) {
-          clearInterval(intervalId);
-          child.addUsingParent().then(() => {
-            expect(add.calls.count()).toEqual(1);
-            connection.close();
-            done();
-          });
-        }
-      }, 10);
-
-      child.reload();
-    });
-  });
-
-  it('reconnects after child navigates to other page with different methods', (done) => {
+  it('reconnects after child navigates to other page with different methods, but fails on method call mismatch', async () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
@@ -294,23 +259,29 @@ describe('backward compatibility - connection management', () => {
       messenger,
     });
 
-    connection.promise.then((child) => {
-      const intervalId = setInterval(function () {
-        // Detect reconnection
-        if (child.methodNotInGeneralPage) {
-          clearInterval(intervalId);
-          expect(child.multiply).not.toBeDefined();
-          child.methodNotInGeneralPage().then((value) => {
-            expect(value).toEqual('method not in the general page');
-            connection.close();
-            done();
-          });
-        }
-      }, 10);
+    const child = await connection.promise;
 
-      child.navigate(
-        '/pages/backwardCompatibility/methodNotInGeneralPage.html'
-      );
+    return new Promise<void>((resolve, reject) => {
+      const handleMessage = async (event: MessageEvent) => {
+        if (
+          event.source === iframe.contentWindow &&
+          isDeprecatedMessage(event.data) &&
+          event.data.penpal === 'ack'
+        ) {
+          window.removeEventListener('message', handleMessage);
+          try {
+            // This should fail because `multiply` is not a method exposed
+            // by the new page.
+            await child.multiply(2, 4);
+            reject(new Error('Successful call not expected'));
+          } catch (_) {
+            resolve();
+          }
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+      child.navigate('/pages/methodNotInGeneralPage.html');
     });
   });
 

@@ -1,4 +1,4 @@
-import { MessageType } from './enums';
+import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
 import namespace from './namespace';
@@ -58,6 +58,7 @@ export type SerializedError = {
   name: string;
   message: string;
   stack?: string;
+  penpalCode?: ErrorCode;
 };
 
 export type SynMessage = {
@@ -86,19 +87,12 @@ export type ReplyMessage = {
   sessionId: number;
 } & (
   | {
-      isError?: false;
       value: unknown;
-      error?: never;
-      isSerializedErrorInstance?: never;
+      isError?: false;
     }
   | {
+      value: SerializedError;
       isError: true;
-      value?: never;
-      // Note that error may be undefined, for example, if the consumer
-      // returns a rejected promise without specifying an error.
-      // (e.g., return Promise.reject())
-      error: unknown;
-      isSerializedErrorInstance: boolean;
     }
 );
 

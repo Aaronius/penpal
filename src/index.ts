@@ -1,5 +1,4 @@
-export { default as connectToChild } from './parent/connectToChild';
-export { default as connectToParent } from './child/connectToParent';
+export { connectToChild, connectToParent } from './connectToRemote';
 export { default as WindowMessenger } from './WindowMessenger';
 export { default as WorkerMessenger } from './WorkerMessenger';
 export { default as PortMessenger } from './PortMessenger';

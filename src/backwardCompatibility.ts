@@ -1,6 +1,7 @@
-import { PenpalMessageEnvelope, ReplyMessage } from './types';
+import { PenpalMessageEnvelope, ReplyMessage, SerializedError } from './types';
 import namespace from './namespace';
 import { MessageType } from './enums';
+import { serializeError } from './errorSerialization';
 
 enum DeprecatedMessageType {
   Call = 'call',
@@ -36,13 +37,27 @@ type DeprecatedCallMessage = {
   args: unknown[];
 };
 
+type DeprecatedSerializedError = {
+  name: string;
+  message: string;
+  stack?: string;
+};
+
 type DeprecatedReplyMessage = {
   penpal: DeprecatedMessageType.Reply;
   id: number;
-  resolution: DeprecatedResolution;
-  returnValue: unknown;
-  returnValueIsError?: boolean;
-};
+} & (
+  | {
+      resolution: DeprecatedResolution;
+      returnValue: unknown;
+      returnValueIsError?: false;
+    }
+  | {
+      resolution: DeprecatedResolution.Rejected;
+      returnValue: DeprecatedSerializedError;
+      returnValueIsError: true;
+    }
+);
 
 export type DeprecatedPenpalMessage =
   | DeprecatedSynMessage
@@ -111,12 +126,25 @@ export const upgradeMessage = (
         value: message.returnValue,
       };
     } else {
+      let error: SerializedError;
+
+      if (message.returnValueIsError) {
+        error = message.returnValue;
+      } else {
+        error = serializeError(
+          new Error(
+            message.returnValue === undefined
+              ? undefined
+              : String(message.returnValue)
+          )
+        );
+      }
+
       upgradedMessage = {
         type: MessageType.Reply,
         sessionId: message.id,
+        value: error,
         isError: true,
-        error: message.returnValue,
-        isSerializedErrorInstance: !!message.returnValueIsError,
       };
     }
 
@@ -168,15 +196,22 @@ export const downgradeMessageEnvelope = (
   }
 
   if (message.type === MessageType.Reply) {
-    return {
-      penpal: DeprecatedMessageType.Reply,
-      id: message.sessionId,
-      resolution: message.isError
-        ? DeprecatedResolution.Rejected
-        : DeprecatedResolution.Fulfilled,
-      returnValue: message.isError ? message.error : message.value,
-      returnValueIsError: message.isError && message.isSerializedErrorInstance,
-    };
+    if (message.isError) {
+      return {
+        penpal: DeprecatedMessageType.Reply,
+        id: message.sessionId,
+        resolution: DeprecatedResolution.Rejected,
+        returnValue: message.value,
+        returnValueIsError: true,
+      };
+    } else {
+      return {
+        penpal: DeprecatedMessageType.Reply,
+        id: message.sessionId,
+        resolution: DeprecatedResolution.Fulfilled,
+        returnValue: message.value,
+      };
+    }
   }
 
   throw new Error(
