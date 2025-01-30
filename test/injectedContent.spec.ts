@@ -45,7 +45,7 @@ const htmlSrc = `
 
 it('connects and calls a function on the child iframe when src is set to data URI and childOrigin is set to *', async () => {
   const iframe = document.createElement('iframe');
-  iframe.src = `data:text/html,${htmlSrc}`;
+  iframe.src = `data:text/html,${encodeURIComponent(htmlSrc)}`;
   document.body.appendChild(iframe);
 
   const messenger = new WindowMessenger({
@@ -65,7 +65,7 @@ it('connects and calls a function on the child iframe when src is set to data UR
 
 it('never connects iframe when src is set to data URI and childOrigin is not set', async () => {
   const iframe = document.createElement('iframe');
-  iframe.src = `data:text/html,${htmlSrc}`;
+  iframe.src = `data:text/html,${encodeURIComponent(htmlSrc)}`;
   document.body.appendChild(iframe);
 
   const messenger = new WindowMessenger({
@@ -84,12 +84,13 @@ it('never connects iframe when src is set to data URI and childOrigin is not set
   await expectNeverFulfilledIframeConnection(connection, iframe);
 });
 
-it('connects and calls a function on the child worker', async () => {
+it('connects and calls a function on the child worker when src is set to data URI', async () => {
   const response = await fetch(getWorkerFixtureUrl('webWorkerGeneral'));
   const code = await response.text();
-  const worker = new Worker(`data:application/javascript,${code}`, {
-    type: 'module',
-  });
+
+  const worker = new Worker(
+    `data:application/javascript,${encodeURIComponent(code)}`
+  );
 
   const messenger = new WorkerMessenger({
     worker,
