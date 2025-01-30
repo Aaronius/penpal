@@ -608,43 +608,41 @@ describe('connection management', () => {
     connection.close();
   });
 
-  // fit('connects to service worker', async () => {
-  //   return new Promise<void>((resolve) => {
-  //     const initPenpal = async () => {
-  //       debugger;
-  //       const messageChannel = new MessageChannel();
-  //       messageChannel.port1.addEventListener('message', (event) => {
-  //         console.log('[Main Thread] Message from Service Worker:', event.data);
-  //       });
-  //       messageChannel.port1.start();
-  //
-  //       const messenger = new PortMessenger({
-  //         port: messageChannel.port1
-  //       });
-  //       const connection = connectToChild<FixtureMethods>({
-  //         messenger
-  //       });
-  //
-  //       navigator.serviceWorker.controller?.postMessage(
-  //         {
-  //           type: 'INIT_PENPAL',
-  //           port: messageChannel.port2,
-  //         },
-  //         [messageChannel.port2]
-  //       );
-  //
-  //       await connection.promise;
-  //       resolve();
-  //     };
-  //
-  //     if (navigator.serviceWorker.controller) {
-  //       void initPenpal();
-  //     }
-  //
-  //     navigator.serviceWorker.addEventListener('controllerchange', initPenpal);
-  //     debugger;
-  //     void navigator.serviceWorker.register(getWorkerFixtureUrl('serviceWorker'));
-  //   })
-  //
-  // });
+  it('connects to service worker', (done) => {
+    const initPenpal = async () => {
+      const { port1, port2 } = new MessageChannel();
+
+      const messenger = new PortMessenger({
+        port: port1,
+      });
+
+      const connection = connectToChild<FixtureMethods>({
+        messenger,
+      });
+
+      navigator.serviceWorker.controller?.postMessage(
+        {
+          type: 'INIT_PAYPAL',
+          port: port2,
+        },
+        {
+          transfer: [port2],
+        }
+      );
+
+      await connection.promise;
+      done();
+    };
+
+    if (navigator.serviceWorker.controller) {
+      initPenpal();
+    }
+
+    navigator.serviceWorker.addEventListener('controllerchange', initPenpal);
+    // This specific path is very important. Due to browser security, the
+    // service worker file must be loaded from the root directory in order for
+    // the service worker to be able to control the page the tests are
+    // running in. Learn more by looking up "service worker scope".
+    navigator.serviceWorker.register('/serviceWorker.js');
+  });
 });

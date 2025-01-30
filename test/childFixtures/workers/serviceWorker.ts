@@ -11,7 +11,7 @@ self.addEventListener('message', async (event) => {
     return;
   }
 
-  const [port] = event.data;
+  const { port } = event.data;
 
   const messenger = new PortMessenger({
     port,
