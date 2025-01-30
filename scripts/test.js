@@ -1,50 +1,55 @@
 #!/usr/bin/env node
 
-import { fileURLToPath } from 'url';
-import path from 'path';
-import { createServer } from 'http';
+import { createServer } from 'https';
 import connect from 'connect';
 import karma from 'karma';
 import serveStatic from 'serve-static';
 import * as rollup from 'rollup';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import config from '../rollup.config.js';
 
-// Resolve __dirname for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Parse CLI arguments from `process.argv`
 const args = process.argv.slice(2); // Exclude `node` and script path
 const isWatchMode = args.includes('--watch');
 
-// Serve static child views
+const ports = [9000, 9001];
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const sslOptions = {
+  key: fs.readFileSync(path.resolve('server.key')),
+  cert: fs.readFileSync(path.resolve('server.crt')),
+};
+
 const serveChildViews = () => {
-  const childViewsApp = connect()
+  const app = connect()
     .use(serveStatic('dist'))
     .use(serveStatic('test/childFixtures'));
 
-  // Host child views on two ports for cross-domain iframe tests
-  [9000, 9001].forEach((port) => createServer(childViewsApp).listen(port));
+  for (const port of ports) {
+    createServer(sslOptions, app).listen(port);
+  }
 };
 
-// Run tests using Karma
 const runTests = async () => {
-  const { parseConfig } = karma.config;
-  const karmaConfigPath = path.resolve(__dirname, '../karma.conf.cjs');
-  const karmaConfig = await parseConfig(karmaConfigPath, {
-    singleRun: !isWatchMode,
-  });
+  const karmaConfig = await karma.config.parseConfig(
+    path.resolve(__dirname, '../karma.conf.cjs'),
+    {
+      singleRun: !isWatchMode,
+    }
+  );
   await new karma.Server(karmaConfig).start();
 };
 
-// Build project and watch for changes
 const build = () => {
   const watcher = rollup.watch(config);
   let testsRunning = false;
 
   watcher.on('event', ({ code, error }) => {
     if (code === 'END' && !testsRunning) {
-      runTests().catch(console.error); // Log test errors
+      runTests().catch(console.error);
       testsRunning = true;
       if (!isWatchMode) watcher.close();
     } else if (code === 'ERROR' || code === 'FATAL') {
@@ -53,6 +58,5 @@ const build = () => {
   });
 };
 
-// Start services
 serveChildViews();
 build();

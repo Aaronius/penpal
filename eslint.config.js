@@ -34,7 +34,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*'],
+    files: ['scripts/**/*', 'karma.conf.cjs'],
     languageOptions: {
       ecmaVersion: ECMA_VERSION,
       globals: globals.node,

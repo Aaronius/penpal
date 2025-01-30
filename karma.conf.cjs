@@ -1,19 +1,18 @@
+const fs = require('fs');
 const typescript = require('@rollup/plugin-typescript');
-
-const browsers = [
-  'Chrome',
-  // 'Firefox',
-  // 'Edge',
-  // 'Safari'
-];
-const reporters = ['dots'];
 
 module.exports = (config) => {
   config.set({
-    frameworks: ['jasmine'],
+    browsers: ['ChromeSkipCertErrors'],
+    customLaunchers: {
+      ChromeSkipCertErrors: {
+        base: 'Chrome',
+        flags: ['--ignore-certificate-errors'],
+      },
+    },
     files: [
       {
-        pattern: 'test/childFixtures/**',
+        pattern: 'test/childFixtures/{pages,workers}/**',
         watched: true,
         included: false,
         served: true,
@@ -29,8 +28,9 @@ module.exports = (config) => {
     proxies: {
       '/penpal.js': '/base/dist/penpal.js',
       '/pages': '/base/test/childFixtures/pages',
-      '/workers': '/base/test/childFixtures/workers'
+      '/workers': '/base/test/childFixtures/workers',
     },
+    proxyValidateSSL: false,
     plugins: [
       '@metahub/karma-rollup-preprocessor',
       'karma-jasmine',
@@ -58,13 +58,19 @@ module.exports = (config) => {
         ],
       },
     },
+    protocol: 'https',
+    https: true,
+    httpsServerOptions: {
+      key: fs.readFileSync('server.key', 'utf8'),
+      cert: fs.readFileSync('server.crt', 'utf8'),
+    },
     port: 9003,
+    frameworks: ['jasmine'],
     colors: true,
     logLevel: config.LOG_INFO,
     // logLevel: config.LOG_DEBUG,
     autoWatch: true,
-    browsers: browsers,
-    reporters: reporters,
+    reporters: ['dots'],
     singleRun: false,
     concurrency: Infinity,
   });
