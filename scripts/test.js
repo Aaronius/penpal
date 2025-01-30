@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
-import { createServer } from 'https';
+import { createServer } from 'http';
 import connect from 'connect';
 import karma from 'karma';
 import serveStatic from 'serve-static';
 import * as rollup from 'rollup';
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import config from '../rollup.config.js';
@@ -18,18 +17,13 @@ const ports = [9000, 9001];
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sslOptions = {
-  key: fs.readFileSync(path.resolve('server.key')),
-  cert: fs.readFileSync(path.resolve('server.crt')),
-};
-
 const serveChildViews = () => {
   const app = connect()
     .use(serveStatic('dist'))
     .use(serveStatic('test/childFixtures'));
 
   for (const port of ports) {
-    createServer(sslOptions, app).listen(port);
+    createServer(app).listen(port);
   }
 };
 

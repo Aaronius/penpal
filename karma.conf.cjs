@@ -1,15 +1,13 @@
-const fs = require('fs');
 const typescript = require('@rollup/plugin-typescript');
 
 module.exports = (config) => {
   config.set({
-    browsers: ['ChromeSkipCertErrors'],
-    customLaunchers: {
-      ChromeSkipCertErrors: {
-        base: 'Chrome',
-        flags: ['--ignore-certificate-errors'],
-      },
-    },
+    browsers: [
+      'Chrome',
+      // 'Firefox',
+      // 'Edge',
+      // 'Safari'
+    ],
     files: [
       {
         pattern: 'test/childFixtures/{pages,workers}/**',
@@ -63,13 +61,6 @@ module.exports = (config) => {
         ],
       },
     },
-    protocol: 'https',
-    https: true,
-    httpsServerOptions: {
-      key: fs.readFileSync('server.key', 'utf8'),
-      cert: fs.readFileSync('server.crt', 'utf8'),
-    },
-    port: 9003,
     frameworks: ['jasmine'],
     colors: true,
     logLevel: config.LOG_INFO,
