@@ -1,10 +1,10 @@
 import { connectToParent, PortMessenger } from '../../../src/index';
 
+declare const self: SharedWorkerGlobalScope;
+
 console.log('worker origin', self.origin);
 
-const context = (self as unknown) as SharedWorkerGlobalScope;
-
-context.addEventListener('connect', async (event: MessageEvent) => {
+self.addEventListener('connect', async (event) => {
   const [port] = event.ports;
 
   const messenger = new PortMessenger({

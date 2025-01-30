@@ -7,7 +7,6 @@ interface Messenger {
   addMessageHandler: (callback: MessageHandler) => void;
   removeMessageHandler: (callback: MessageHandler) => void;
   close: () => void;
-  requiredHandeshakeInitiator?: 'parent' | 'child';
 }
 
 export default Messenger;

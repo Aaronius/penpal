@@ -6,6 +6,10 @@ import {
 } from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
 
+declare const self: DedicatedWorkerGlobalScope;
+
+console.log('worker origin', self.origin);
+
 let channelBParent: RemoteMethodProxies<Pick<FixtureMethods, 'getChannel'>>;
 
 const channelBMessenger = new WorkerMessenger({

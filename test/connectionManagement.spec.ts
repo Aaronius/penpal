@@ -592,11 +592,11 @@ describe('connection management', () => {
     childWindow?.close();
   });
 
-  it('connects to port for shared worker', async () => {
-    const sharedWorker = new SharedWorker(getWorkerFixtureUrl('sharedWorker'));
+  it('connects to shared worker', async () => {
+    const worker = new SharedWorker(getWorkerFixtureUrl('sharedWorker'));
 
     const messenger = new PortMessenger({
-      port: sharedWorker.port,
+      port: worker.port,
     });
 
     const connection = connectToChild({
@@ -607,4 +607,44 @@ describe('connection management', () => {
 
     connection.close();
   });
+
+  // fit('connects to service worker', async () => {
+  //   return new Promise<void>((resolve) => {
+  //     const initPenpal = async () => {
+  //       debugger;
+  //       const messageChannel = new MessageChannel();
+  //       messageChannel.port1.addEventListener('message', (event) => {
+  //         console.log('[Main Thread] Message from Service Worker:', event.data);
+  //       });
+  //       messageChannel.port1.start();
+  //
+  //       const messenger = new PortMessenger({
+  //         port: messageChannel.port1
+  //       });
+  //       const connection = connectToChild<FixtureMethods>({
+  //         messenger
+  //       });
+  //
+  //       navigator.serviceWorker.controller?.postMessage(
+  //         {
+  //           type: 'INIT_PENPAL',
+  //           port: messageChannel.port2,
+  //         },
+  //         [messageChannel.port2]
+  //       );
+  //
+  //       await connection.promise;
+  //       resolve();
+  //     };
+  //
+  //     if (navigator.serviceWorker.controller) {
+  //       void initPenpal();
+  //     }
+  //
+  //     navigator.serviceWorker.addEventListener('controllerchange', initPenpal);
+  //     debugger;
+  //     void navigator.serviceWorker.register(getWorkerFixtureUrl('serviceWorker'));
+  //   })
+  //
+  // });
 });

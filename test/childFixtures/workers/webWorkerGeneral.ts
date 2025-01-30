@@ -6,6 +6,8 @@ import {
 } from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
 
+declare const self: DedicatedWorkerGlobalScope;
+
 console.log('worker origin', self.origin);
 
 type ParentAPI = Record<'add', (num1: number, num2: number) => Promise<number>>;

@@ -15,11 +15,7 @@ import {
   logSendingMessage,
 } from './commonLogging';
 
-// If, inside a worker, the consumer passes `self` for the value of the
-// `worker` option, it will be a type like DedicatedWorkerGlobalScope. Worker
-// and DedicatedWorkerGlobalScope both have the below picked methods, but some
-// of the other things on DedicatedWorkerGlobalScope cause conflicts if we were
-// to use a union of Worker and DedicatedWorkerGlobalScope.
+// This is needed to resolve some conflict errors. There may be a better way.
 type MessageTarget = Pick<
   Worker,
   'postMessage' | 'addEventListener' | 'removeEventListener'
@@ -28,10 +24,10 @@ type MessageTarget = Pick<
 type Options = {
   /**
    * The web worker receiving/sending communication from/to the parent window.
-   * If WorkerMessenger is being used within the worker, `worker` should
+   * If this messenger is being used within the worker, `worker` should
    * typically be set to `self`.
    */
-  worker: MessageTarget;
+  worker: Worker | DedicatedWorkerGlobalScope;
   /**
    * A string identifier that restricts communication to a specific channel.
    * This is only useful when setting up multiple, parallel connections

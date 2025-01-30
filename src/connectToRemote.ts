@@ -7,29 +7,29 @@ import shakeHands from './shakeHands';
 
 type Options = {
   /**
-   * Messenger in charge of handling communication with the parent.
+   * Messenger in charge of handling communication with the remote.
    */
   messenger: Messenger;
   /**
-   * Methods that may be called by the parent window.
+   * Methods that may be called by the remote.
    */
   methods?: Methods;
   /**
    * The amount of time, in milliseconds, Penpal should wait
-   * for the parent to respond before rejecting the connection promise.
+   * for the remote to respond before rejecting the connection promise.
    */
   timeout?: number;
 };
 
 /**
- * Attempts to establish communication with the parent window.
+ * Attempts to establish communication with the remote.
  */
 const connectToRemote = <TMethods extends Methods>({
   messenger,
   methods = {},
   timeout,
-  connectionSide,
-}: Options & { connectionSide: 'parent' | 'child' }): Connection<TMethods> => {
+  localName,
+}: Options & { localName: 'parent' | 'child' }): Connection<TMethods> => {
   if (!messenger) {
     throw new PenpalError(
       ErrorCode.InvalidArgument,
@@ -51,8 +51,7 @@ const connectToRemote = <TMethods extends Methods>({
       const { remoteMethodProxies, close } = await shakeHands<TMethods>({
         messenger,
         flattenedMethods,
-        initiate:
-          (messenger.requiredHandeshakeInitiator ?? 'child') === connectionSide,
+        initiate: localName === 'child',
         timeout,
       });
       connectionClosedHandlers.push(close);
@@ -78,7 +77,7 @@ export const connectToChild = <TMethods extends Methods = Methods>(
 ) => {
   return connectToRemote<TMethods>({
     ...options,
-    connectionSide: 'parent',
+    localName: 'parent',
   });
 };
 
@@ -87,6 +86,6 @@ export const connectToParent = <TMethods extends Methods = Methods>(
 ) => {
   return connectToRemote<TMethods>({
     ...options,
-    connectionSide: 'child',
+    localName: 'child',
   });
 };

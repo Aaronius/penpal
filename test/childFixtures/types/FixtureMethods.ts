@@ -19,7 +19,7 @@ type FixtureMethods = {
   getPromiseRejectedWithError(): Promise<void>;
   getPromiseRejectedWithUndefined(): Promise<void>;
   throwError(): void;
-  getUnclonableValue(): Window | typeof globalThis;
+  getUnclonableValue(): unknown;
   reload(): void;
   navigate(to: string): void;
   nested: {
