@@ -7,11 +7,11 @@ import PenpalError from './PenpalError';
 import { getMethodAtMethodPath } from './methodSerialization';
 
 const createErrorReplyMessage = (
-  sessionId: number,
+  callId: number,
   error: Error
 ): ReplyMessage => ({
   type: MessageType.Reply,
-  sessionId,
+  callId,
   value: serializeError(error),
   isError: true,
 });
@@ -37,7 +37,7 @@ export default (messenger: Messenger, methods: Methods) => {
       return;
     }
 
-    const { methodPath, args, sessionId } = message;
+    const { methodPath, args, id } = message;
     let replyMessage: ReplyMessage;
     let transferables: Transferable[] | undefined;
 
@@ -60,12 +60,12 @@ export default (messenger: Messenger, methods: Methods) => {
 
       replyMessage = {
         type: MessageType.Reply,
-        sessionId,
+        callId: id,
         value,
       };
     } catch (error) {
       replyMessage = createErrorReplyMessage(
-        sessionId,
+        id,
         error instanceof Error
           ? error
           : new Error(error === undefined ? error : String(error))
@@ -86,9 +86,7 @@ export default (messenger: Messenger, methods: Methods) => {
       // cloneable (e.g., window), we want to ensure the receiver's promise
       // gets rejected.
       if ((error as Error).name === NativeErrorName.DataCloneError) {
-        messenger.sendMessage(
-          createErrorReplyMessage(sessionId, error as Error)
-        );
+        messenger.sendMessage(createErrorReplyMessage(id, error as Error));
       }
       throw error;
     }

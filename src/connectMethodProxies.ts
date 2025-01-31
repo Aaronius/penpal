@@ -38,13 +38,13 @@ export default <TMethods extends Methods>(
       return;
     }
 
-    const replyHandler = replyHandlers.get(message.sessionId);
+    const replyHandler = replyHandlers.get(message.callId);
 
     if (!replyHandler) {
       return;
     }
 
-    replyHandlers.delete(message.sessionId);
+    replyHandlers.delete(message.callId);
 
     if (message.isError) {
       const error = deserializeError(message.value);
@@ -66,7 +66,7 @@ export default <TMethods extends Methods>(
         );
       }
 
-      const sessionId = generateId();
+      const callId = generateId();
       const lastArg = args[args.length - 1];
       const lastArgIsOptions = lastArg instanceof MethodCallOptions;
       const { timeout, transferables } = lastArgIsOptions ? lastArg : {};
@@ -84,7 +84,7 @@ export default <TMethods extends Methods>(
         // Karma + Rollup + Typescript to avoid node type leakage.
         const timeoutId = timeout
           ? window.setTimeout(() => {
-              replyHandlers.delete(sessionId);
+              replyHandlers.delete(callId);
               reject(
                 new PenpalError(
                   ErrorCode.MethodCallTimeout,
@@ -96,7 +96,7 @@ export default <TMethods extends Methods>(
             }, timeout)
           : undefined;
 
-        replyHandlers.set(sessionId, {
+        replyHandlers.set(callId, {
           methodPath,
           resolve,
           reject,
@@ -107,7 +107,7 @@ export default <TMethods extends Methods>(
           messenger.sendMessage(
             {
               type: MessageType.Call,
-              sessionId,
+              id: callId,
               methodPath,
               args: argsWithoutOptions,
             },
