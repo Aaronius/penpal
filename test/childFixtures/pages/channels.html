@@ -17,7 +17,7 @@
 
       const channelBMessenger = new Penpal.WindowMessenger({
         remoteWindow: window.parent,
-        remoteOrigin: '*',
+        allowedOrigins: ['*'],
         channel: 'B',
         log: Penpal.debug('Child Connection B'),
       });
@@ -42,7 +42,7 @@
 
       const channelAMessenger = new Penpal.WindowMessenger({
         remoteWindow: window.parent,
-        remoteOrigin: '*',
+        allowedOrigins: ['*'],
         channel: 'A',
         log: Penpal.debug('Child Connection A'),
       });

@@ -10,7 +10,7 @@
 
         const messenger = new Penpal.WindowMessenger({
           remoteWindow: iframe.contentWindow,
-          remoteOrigin: '*',
+          remoteOrigins: ['*'],
           log: Penpal.debug('Child'),
         });
 

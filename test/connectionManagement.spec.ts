@@ -26,7 +26,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
     });
 
     const connection = connectToChild<FixtureMethods>({
@@ -41,7 +41,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: /^http/,
+      allowedOrigins: [/^http/],
     });
 
     const connection = connectToChild({
@@ -72,7 +72,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: ['http://example.com', CHILD_SERVER],
     });
 
     const connection = connectToChild({
@@ -89,7 +89,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: ['http://example.com', CHILD_SERVER],
     });
 
     const connection = connectToChild({
@@ -104,7 +104,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: 'http://bogus.com',
+      allowedOrigins: ['http://example.com'],
     });
 
     const connection = connectToChild({
@@ -121,7 +121,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
     });
 
     const connection = connectToChild({
@@ -138,7 +138,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
     });
 
     const connection = connectToChild({
@@ -158,7 +158,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: '*',
+      allowedOrigins: ['*'],
     });
 
     const connection = connectToChild({
@@ -211,7 +211,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
     });
 
     const connection = connectToChild({
@@ -231,7 +231,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: /example\.com/,
+      allowedOrigins: [/example\.com/],
     });
 
     const connection = connectToChild({
@@ -246,7 +246,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
     });
 
     const connection = connectToChild({
@@ -261,7 +261,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
     });
 
     const connection = connectToChild<FixtureMethods>({
@@ -296,7 +296,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
     });
 
     const connection = connectToChild<FixtureMethods>({
@@ -339,7 +339,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: 'http://www.fakeresponse.com',
+      allowedOrigins: ['http://www.fakeresponse.com'],
     });
 
     const connection = connectToChild<FixtureMethods>({
@@ -368,7 +368,7 @@ describe('connection management', () => {
 
       const messenger = new WindowMessenger({
         remoteWindow: iframe.contentWindow!,
-        remoteOrigin: CHILD_SERVER,
+        allowedOrigins: [CHILD_SERVER],
       });
 
       const connection = connectToChild<FixtureMethods>({
@@ -392,7 +392,7 @@ describe('connection management', () => {
 
       const messenger = new WindowMessenger({
         remoteWindow: iframe.contentWindow!,
-        remoteOrigin: CHILD_SERVER,
+        allowedOrigins: [CHILD_SERVER],
       });
 
       const connection = connectToChild<FixtureMethods>({
@@ -412,7 +412,7 @@ describe('connection management', () => {
 
     const channelAMessenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
       channel: 'A',
     });
 
@@ -431,7 +431,7 @@ describe('connection management', () => {
 
     const channelBMessenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
       channel: 'B',
     });
 
@@ -547,7 +547,7 @@ describe('connection management', () => {
 
       const messenger = new WindowMessenger({
         remoteWindow: iframe.contentWindow!,
-        remoteOrigin: CHILD_SERVER,
+        allowedOrigins: [CHILD_SERVER],
       });
 
       const connection = connectToChild<FixtureMethods>({
@@ -580,7 +580,7 @@ describe('connection management', () => {
 
     const messenger = new WindowMessenger({
       remoteWindow: childWindow!,
-      remoteOrigin: CHILD_SERVER,
+      allowedOrigins: [CHILD_SERVER],
     });
 
     const connection = connectToChild({

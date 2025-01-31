@@ -26,7 +26,7 @@ export const createIframeAndConnection = <TMethods extends Methods>({
   const iframe = createAndAddIframe(getPageFixtureUrl(pageName, CHILD_SERVER));
   const messenger = new WindowMessenger({
     remoteWindow: iframe.contentWindow!,
-    remoteOrigin: CHILD_SERVER,
+    allowedOrigins: [CHILD_SERVER],
   });
   const connection = connectToChild<TMethods>({
     messenger,

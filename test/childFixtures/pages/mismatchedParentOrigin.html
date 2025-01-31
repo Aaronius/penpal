@@ -15,7 +15,7 @@
     <script>
       const messenger = new Penpal.WindowMessenger({
         remoteWindow: window.parent,
-        remoteOrigin: 'http://example.com',
+        allowedOrigins: ['http://example.com'],
         log: Penpal.debug('Child'),
       });
 

@@ -13,11 +13,11 @@ import {
   isSynMessage,
 } from './guards';
 import PenpalError from './PenpalError';
-import { ErrorCode } from './enums';
+import { ErrorCode, MessageType } from './enums';
 import {
+  LOG_MESSAGE_CONNECTION_CLOSED,
   logReceivedMessage,
   logSendingMessage,
-  LOG_MESSAGE_CONNECTION_CLOSED,
 } from './commonLogging';
 
 type Options = {
@@ -26,13 +26,13 @@ type Options = {
    */
   remoteWindow: Window;
   /**
-   * The origin of the child window. Communication will be restricted to
-   * this origin. You may use a value of `*` to not restrict communication to
-   * a particular origin, but beware of the risks of doing so.
-   *
-   * Defaults to the value of `window.origin`.
+   * An array of strings or regular expressions defining to which origins
+   * communication will be allowed. If not provided, communication will be
+   * restricted to the origin of the current page. You may specify an allowed
+   * origin of `*` to not restrict communication, but beware the risks of
+   * doing so.
    */
-  remoteOrigin?: string | RegExp;
+  allowedOrigins?: (string | RegExp)[];
   /**
    * A string identifier that restricts communication to a specific channel.
    * This is only useful when setting up multiple, parallel connections
@@ -51,7 +51,7 @@ type Options = {
  */
 class WindowMessenger implements Messenger {
   private _remoteWindow: Window;
-  private _remoteOrigin: string | RegExp;
+  private _allowedOrigins: [string | RegExp, ...(string | RegExp)[]];
   private _log?: Log;
   private _channel?: string;
   private _concreteRemoteOrigin?: string;
@@ -59,12 +59,7 @@ class WindowMessenger implements Messenger {
   private _port?: MessagePort;
   private _isChildUsingDeprecatedProtocol = false;
 
-  constructor({
-    remoteWindow,
-    remoteOrigin = window.origin,
-    channel,
-    log,
-  }: Options) {
+  constructor({ remoteWindow, allowedOrigins, channel, log }: Options) {
     if (!remoteWindow) {
       throw new PenpalError(
         ErrorCode.InvalidArgument,
@@ -73,27 +68,57 @@ class WindowMessenger implements Messenger {
     }
 
     this._remoteWindow = remoteWindow;
-    this._remoteOrigin = remoteOrigin;
+    this._allowedOrigins =
+      allowedOrigins && allowedOrigins.length
+        ? (allowedOrigins as [string | RegExp, ...(string | RegExp)[]])
+        : [window.origin];
     this._channel = channel;
     this._log = log;
 
     window.addEventListener('message', this._handleMessageFromRemoteWindow);
   }
 
+  private _isAllowedOrigin = (origin: string) => {
+    return this._allowedOrigins.some((allowedOrigin) =>
+      allowedOrigin instanceof RegExp
+        ? allowedOrigin.test(origin)
+        : allowedOrigin === origin || allowedOrigin === '*'
+    );
+  };
+
+  private _getOriginForSendingMessage = (messageType: MessageType) => {
+    if (messageType === MessageType.Syn) {
+      return this._allowedOrigins.length > 1 ||
+        this._allowedOrigins[0] instanceof RegExp
+        ? '*'
+        : this._allowedOrigins[0];
+    }
+
+    // We should have already received a message from the remote with its
+    // exact (concrete) origin. If not, it's a bug in Penpal.
+    if (!this._concreteRemoteOrigin) {
+      throw new Error('Concrete remote origin not set');
+    }
+
+    // If the concrete remote origin (the origin we received from the remote
+    // on a prior message) is 'null', it means the remote is within
+    // an "opaque origin". The only way to post a message to an
+    // opaque origin is by using '*'. This does carry some security risk,
+    // so we only do this if the consumer has specifically defined '*' as
+    // an allowed origin. Opaque origins occur, for example, when
+    // loading an HTML document directly from the filesystem (not a
+    // web server) or through a data URI.
+    return this._concreteRemoteOrigin === 'null' &&
+      this._allowedOrigins.includes('*')
+      ? '*'
+      : this._concreteRemoteOrigin;
+  };
+
   private _destroyPort = () => {
     this._port?.removeEventListener('message', this._handleMessageFromPort);
     this._port?.close();
     this._port = undefined;
   };
-
-  private _isEventFromValidOrigin(event: MessageEvent): boolean {
-    if (event.currentTarget instanceof MessagePort) {
-      return true;
-    }
-    return this._remoteOrigin instanceof RegExp
-      ? this._remoteOrigin.test(event.origin)
-      : this._remoteOrigin === '*' || this._remoteOrigin === event.origin;
-  }
 
   private _handleMessageFromRemoteWindow = (event: MessageEvent): void => {
     if (
@@ -129,9 +154,13 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    if (!this._isEventFromValidOrigin(event)) {
+    if (!this._isAllowedOrigin(event.origin)) {
       this._log?.(
-        `Received a message from origin "${event.origin}" which did not match expected origin "${this._remoteOrigin}"`
+        `Received a message from origin \`${
+          event.origin
+        }\` which did not match allowed origins \`[${this._allowedOrigins.join(
+          ', '
+        )}]\``
       );
       return;
     }
@@ -151,9 +180,9 @@ class WindowMessenger implements Messenger {
 
     if (
       isAckMessage(message) &&
-      // Previous versions of Penpal don't use MessagePorts so they won't be
-      // sending a MessagePort on the event. We instead do all communication
-      // through the window rather than a port.
+      // Previous versions of Penpal don't use MessagePorts so they wouldn't be
+      // sending a MessagePort on the event. In that case, we instead do all
+      // communication through the window rather than a port.
       !this._isChildUsingDeprecatedProtocol
     ) {
       this._port = event.ports[0];
@@ -207,8 +236,7 @@ class WindowMessenger implements Messenger {
     logSendingMessage(envelope, this._log);
 
     if (isSynMessage(message)) {
-      const originForSending =
-        this._remoteOrigin instanceof RegExp ? '*' : this._remoteOrigin;
+      const originForSending = this._getOriginForSendingMessage(message.type);
       this._remoteWindow.postMessage(envelope, {
         targetOrigin: originForSending,
         transfer: transferables,
@@ -226,16 +254,7 @@ class WindowMessenger implements Messenger {
       const payload = this._isChildUsingDeprecatedProtocol
         ? downgradeMessageEnvelope(envelope)
         : envelope;
-
-      if (!this._concreteRemoteOrigin) {
-        // If this ever happens, it's a bug in Penpal.
-        throw new Error('Concrete child origin not set');
-      }
-
-      const originForSending =
-        this._remoteOrigin instanceof RegExp
-          ? this._concreteRemoteOrigin
-          : this._remoteOrigin;
+      const originForSending = this._getOriginForSendingMessage(message.type);
       this._remoteWindow.postMessage(payload, {
         targetOrigin: originForSending,
         transfer: transferables,
@@ -248,17 +267,8 @@ class WindowMessenger implements Messenger {
       this._port = port1;
       port1.addEventListener('message', this._handleMessageFromPort);
       port1.start();
-
       const transferablesToSend = [port2, ...(transferables || [])];
-      if (!this._concreteRemoteOrigin) {
-        // If this ever happens, it's a bug in Penpal.
-        throw new Error('Concrete child origin not set');
-      }
-
-      const originForSending =
-        this._remoteOrigin instanceof RegExp
-          ? this._concreteRemoteOrigin
-          : this._remoteOrigin;
+      const originForSending = this._getOriginForSendingMessage(message.type);
       this._remoteWindow.postMessage(envelope, {
         targetOrigin: originForSending,
         transfer: transferablesToSend,
@@ -271,7 +281,8 @@ class WindowMessenger implements Messenger {
         transfer: transferables,
       });
     } else {
-      // If this ever happens, it's a bug in Penpal.
+      // We should have already received a port during the handshake.
+      // Since we didn't, we've run into a bug in Penpal.
       throw new Error('Port is undefined');
     }
   };

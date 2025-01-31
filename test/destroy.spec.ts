@@ -92,7 +92,7 @@ describe('parent calling close()', () => {
 
       const messenger = new WindowMessenger({
         remoteWindow: iframe.contentWindow!,
-        remoteOrigin: CHILD_SERVER,
+        allowedOrigins: [CHILD_SERVER],
       });
 
       const connection = connectToChild<FixtureMethods>({

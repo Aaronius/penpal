@@ -26,7 +26,7 @@ const htmlSrc = `
     <script>
       const messenger = new Penpal.WindowMessenger({
         remoteWindow: window.parent,
-        remoteOrigin: '*',
+        allowedOrigins: ['*'],
         log: Penpal.debug('Child')
       });
       
@@ -50,7 +50,7 @@ it('connects and calls a function on the child iframe when src is set to data UR
 
   const messenger = new WindowMessenger({
     remoteWindow: iframe.contentWindow!,
-    remoteOrigin: '*',
+    allowedOrigins: ['*'],
   });
 
   const connection = connectToChild<FixtureMethods>({
