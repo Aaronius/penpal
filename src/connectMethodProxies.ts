@@ -1,14 +1,20 @@
 import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
-import { unflattenMethods } from './methodSerialization';
-import { PenpalMessage, RemoteMethodProxies, Methods } from './types';
+import { buildProxyMethodsFromMethodPaths } from './methodSerialization';
+import {
+  PenpalMessage,
+  RemoteMethodProxies,
+  Methods,
+  MethodPath,
+  MethodProxy,
+} from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Messenger from './Messenger';
 import PenpalError from './PenpalError';
 
 type ReplyHandler = {
-  methodPath: string;
+  methodPath: MethodPath;
   resolve: (value: unknown) => void;
   reject: (reason: unknown) => void;
   timeoutId?: number;
@@ -21,7 +27,7 @@ type ReplyHandler = {
  */
 export default <TMethods extends Methods>(
   messenger: Messenger,
-  methodPaths: string[]
+  methodPaths: MethodPath[]
 ) => {
   let isClosed = false;
 
@@ -50,12 +56,13 @@ export default <TMethods extends Methods>(
 
   messenger.addMessageHandler(handleMessage);
 
-  const createMethodProxy = (methodPath: string) => {
+  const createMethodProxy = (methodPath: MethodPath): MethodProxy => {
     return (...args: unknown[]) => {
       if (isClosed) {
         throw new PenpalError(
           ErrorCode.ConnectionClosed,
-          `Unable to send ${methodPath}() call due ` + `to closed connection`
+          `Unable to send ${methodPath.join('.')}() call due ` +
+            `to closed connection`
         );
       }
 
@@ -81,7 +88,9 @@ export default <TMethods extends Methods>(
               reject(
                 new PenpalError(
                   ErrorCode.MethodCallTimeout,
-                  `Method call ${methodPath}() timed out after ${timeout}ms`
+                  `Method call ${methodPath.join(
+                    '.'
+                  )}() timed out after ${timeout}ms`
                 )
               );
             }, timeout)
@@ -116,16 +125,9 @@ export default <TMethods extends Methods>(
     };
   };
 
-  // Wrap each method in a proxy which sends it to the corresponding receiver.
-  const flattedMethodProxies = methodPaths.reduce<
-    Record<string, () => Promise<unknown>>
-  >((memo, methodPath) => {
-    memo[methodPath] = createMethodProxy(methodPath);
-    return memo;
-  }, {});
-
-  const remoteMethodProxies = unflattenMethods(
-    flattedMethodProxies
+  const remoteMethodProxies = buildProxyMethodsFromMethodPaths(
+    methodPaths,
+    createMethodProxy
   ) as RemoteMethodProxies<TMethods>;
 
   const close = () => {
@@ -138,7 +140,9 @@ export default <TMethods extends Methods>(
         reject(
           new PenpalError(
             ErrorCode.ConnectionClosed,
-            `Method call ${methodPath}() cannot be resolved due to closed connection`
+            `Method call ${methodPath.join(
+              '.'
+            )}() cannot be resolved due to closed connection`
           )
         );
       }

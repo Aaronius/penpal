@@ -87,6 +87,9 @@ const methods: Omit<
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     return new Promise(() => {});
   },
+  ['with.period']: () => {
+    return 'success';
+  },
 };
 
 connectToParent<ParentAPI>({

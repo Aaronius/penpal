@@ -6,8 +6,8 @@ import namespace from './namespace';
 type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 
 /**
- * A mapped type to recursively convert sync methods into async methods and add
- * an optional MethodCallOptions argument.
+ * An object representing methods exposed by the remote but that can be called
+ * locally.
  */
 export type RemoteMethodProxies<TMethods extends Methods = Methods> = {
   [K in keyof TMethods]: TMethods[K] extends (...args: infer A) => infer R
@@ -43,16 +43,13 @@ export type Methods = {
 };
 
 /**
- * A map of key path to function. The flatted counterpart of Methods.
- *
- * @example
- * If a Methods object were like this:
- * { one: { two: () => {} } }
- *
- * it would flatten to this:
- * { "one.two": () => {} }
+ * An array of path segments (object property keys) to use to find a method
+ * within a Methods object. We avoid using a period-delimited string because
+ * property names can have periods in them which could cause issues.
  */
-export type FlattenedMethods = Record<string, Function>;
+export type MethodPath = string[];
+
+export type MethodProxy = (...args: unknown[]) => Promise<unknown>;
 
 export type SerializedError = {
   name: string;
@@ -67,18 +64,18 @@ export type SynMessage = {
 
 export type SynAckMessage = {
   type: MessageType.SynAck;
-  methodPaths: string[];
+  methodPaths: MethodPath[];
 };
 
 export type AckMessage = {
   type: MessageType.Ack;
-  methodPaths: string[];
+  methodPaths: MethodPath[];
 };
 
 export type CallMessage = {
   type: MessageType.Call;
   sessionId: number;
-  methodPath: string;
+  methodPath: MethodPath;
   args: unknown[];
 };
 

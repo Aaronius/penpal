@@ -1,7 +1,7 @@
 import Messenger from './Messenger';
 import {
   AckMessage,
-  FlattenedMethods,
+  MethodPath,
   Methods,
   PenpalMessage,
   RemoteMethodProxies,
@@ -11,14 +11,15 @@ import {
 import { ErrorCode, MessageType } from './enums';
 import PenpalError from './PenpalError';
 import connectCallHandler from './connectCallHandler';
-import connectRemoteMethodProxies from './connectRemoteMethodProxies';
+import connectMethodProxies from './connectMethodProxies';
 import { isAckMessage, isSynAckMessage, isSynMessage } from './guards';
 import getPromiseWithResolvers from './getPromiseWithResolvers';
 import startConnectionTimeout from './startConnectionTimeout';
+import { extractMethodPathsFromMethods } from './methodSerialization';
 
 type Options = {
   messenger: Messenger;
-  flattenedMethods: FlattenedMethods;
+  methods: Methods;
   initiate: boolean;
   timeout: number | undefined;
 };
@@ -30,12 +31,14 @@ type HandshakeResult<TMethods extends Methods> = {
 
 const shakeHands = <TMethods extends Methods>({
   messenger,
-  flattenedMethods,
+  methods,
   initiate,
   timeout,
 }: Options): Promise<HandshakeResult<TMethods>> => {
   const closeHandlers: (() => void)[] = [];
   let isComplete = false;
+
+  const methodPaths = extractMethodPathsFromMethods(methods);
 
   const { promise, resolve, reject } = getPromiseWithResolvers<
     HandshakeResult<TMethods>,
@@ -50,7 +53,9 @@ const shakeHands = <TMethods extends Methods>({
     }
   };
 
-  const connectCallHandlerAndRemoteMethodProxies = (methodPaths: string[]) => {
+  const connectCallHandlerAndMethodProxies = (
+    remoteMethodPaths: MethodPath[]
+  ) => {
     if (isComplete) {
       // If we get here, it means the remote is attempting to re-connect. While
       // that's supported, Penpal does not support the remote exposing
@@ -58,14 +63,14 @@ const shakeHands = <TMethods extends Methods>({
       return;
     }
 
-    closeHandlers.push(connectCallHandler(messenger, flattenedMethods));
+    closeHandlers.push(connectCallHandler(messenger, methods));
 
     const {
       remoteMethodProxies,
-      close: closeRemoteMethodProxies,
-    } = connectRemoteMethodProxies<TMethods>(messenger, methodPaths);
+      close: closeMethodProxies,
+    } = connectMethodProxies<TMethods>(messenger, remoteMethodPaths);
 
-    closeHandlers.push(closeRemoteMethodProxies);
+    closeHandlers.push(closeMethodProxies);
 
     stopConnectionTimeout();
     isComplete = true;
@@ -79,7 +84,7 @@ const shakeHands = <TMethods extends Methods>({
   const handleSynMessage = () => {
     const synAckMessage: SynAckMessage = {
       type: MessageType.SynAck,
-      methodPaths: Object.keys(flattenedMethods),
+      methodPaths,
     };
 
     try {
@@ -95,7 +100,7 @@ const shakeHands = <TMethods extends Methods>({
   const handleSynAckMessage = (message: SynAckMessage) => {
     const ackMessage: AckMessage = {
       type: MessageType.Ack,
-      methodPaths: Object.keys(flattenedMethods),
+      methodPaths,
     };
 
     try {
@@ -107,11 +112,11 @@ const shakeHands = <TMethods extends Methods>({
       return;
     }
 
-    connectCallHandlerAndRemoteMethodProxies(message.methodPaths);
+    connectCallHandlerAndMethodProxies(message.methodPaths);
   };
 
   const handleAckMessage = (message: AckMessage) => {
-    connectCallHandlerAndRemoteMethodProxies(message.methodPaths);
+    connectCallHandlerAndMethodProxies(message.methodPaths);
   };
 
   const handleMessage = (message: PenpalMessage) => {

@@ -194,6 +194,13 @@ for (const variant of variants) {
       connection.close();
     });
 
+    it('handles methods with periods in the name', async () => {
+      const connection = createConnection<FixtureMethods>();
+      const child = await connection.promise;
+      await expectAsync(child['with.period']()).toBeResolvedTo('success');
+      connection.close();
+    });
+
     it('rejects method call promise if method call timeout reached', async () => {
       jasmine.clock().install();
       const connection = createConnection<FixtureMethods>();

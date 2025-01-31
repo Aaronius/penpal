@@ -1,4 +1,9 @@
-import { PenpalMessageEnvelope, ReplyMessage, SerializedError } from './types';
+import {
+  MethodPath,
+  PenpalMessageEnvelope,
+  ReplyMessage,
+  SerializedError,
+} from './types';
 import namespace from './namespace';
 import { MessageType } from './enums';
 import { serializeError } from './errorSerialization';
@@ -72,6 +77,10 @@ export const isDeprecatedMessage = (
   return !!data && typeof data === 'object' && 'penpal' in data;
 };
 
+const upgradeMethodPath = (methodPath: string): MethodPath =>
+  methodPath.split('.');
+const downgradeMethodPath = (methodPath: MethodPath) => methodPath.join('.');
+
 export const upgradeMessage = (
   message: DeprecatedPenpalMessage
 ): PenpalMessageEnvelope => {
@@ -89,7 +98,7 @@ export const upgradeMessage = (
       namespace,
       message: {
         type: MessageType.SynAck,
-        methodPaths: message.methodNames,
+        methodPaths: message.methodNames.map(upgradeMethodPath),
       },
     };
   }
@@ -99,7 +108,7 @@ export const upgradeMessage = (
       namespace,
       message: {
         type: MessageType.Ack,
-        methodPaths: message.methodNames,
+        methodPaths: message.methodNames.map(upgradeMethodPath),
       },
     };
   }
@@ -110,7 +119,7 @@ export const upgradeMessage = (
       message: {
         type: MessageType.Call,
         sessionId: message.id,
-        methodPath: message.methodName,
+        methodPath: upgradeMethodPath(message.methodName),
         args: message.args,
       },
     };
@@ -175,14 +184,14 @@ export const downgradeMessageEnvelope = (
   if (message.type === MessageType.SynAck) {
     return {
       penpal: DeprecatedMessageType.SynAck,
-      methodNames: message.methodPaths,
+      methodNames: message.methodPaths.map(downgradeMethodPath),
     };
   }
 
   if (message.type === MessageType.Ack) {
     return {
       penpal: DeprecatedMessageType.Ack,
-      methodNames: message.methodPaths,
+      methodNames: message.methodPaths.map(downgradeMethodPath),
     };
   }
 
@@ -190,7 +199,7 @@ export const downgradeMessageEnvelope = (
     return {
       penpal: DeprecatedMessageType.Call,
       id: message.sessionId,
-      methodName: message.methodPath,
+      methodName: downgradeMethodPath(message.methodPath),
       args: message.args,
     };
   }

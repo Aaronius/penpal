@@ -1,9 +1,10 @@
 import { serializeError } from './errorSerialization';
-import { PenpalMessage, ReplyMessage, FlattenedMethods } from './types';
+import { PenpalMessage, ReplyMessage, Methods } from './types';
 import { ErrorCode, MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
 import Messenger from './Messenger';
 import PenpalError from './PenpalError';
+import { getMethodAtMethodPath } from './methodSerialization';
 
 const createErrorReplyMessage = (
   sessionId: number,
@@ -19,7 +20,7 @@ const createErrorReplyMessage = (
  * Listens for "call" messages from the remote, executes the corresponding method,
  * and responds with the return value or error.
  */
-export default (messenger: Messenger, flattenedMethods: FlattenedMethods) => {
+export default (messenger: Messenger, methods: Methods) => {
   let isClosed = false;
 
   const handleMessage = async (message: PenpalMessage) => {
@@ -37,19 +38,20 @@ export default (messenger: Messenger, flattenedMethods: FlattenedMethods) => {
     }
 
     const { methodPath, args, sessionId } = message;
-
     let replyMessage: ReplyMessage;
     let transferables: Transferable[] | undefined;
 
     try {
-      if (!flattenedMethods[methodPath]) {
+      const method = getMethodAtMethodPath(methodPath, methods);
+
+      if (!method) {
         throw new PenpalError(
           ErrorCode.MethodNotFound,
-          `Method \`${methodPath}\` is not found.`
+          `Method \`${methodPath.join('.')}\` is not found.`
         );
       }
 
-      let value: unknown = await flattenedMethods[methodPath](...args);
+      let value: unknown = await method(...args);
 
       if (value instanceof Reply) {
         transferables = value.transferables;

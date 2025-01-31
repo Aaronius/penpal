@@ -1,5 +1,4 @@
 import { Connection, Methods } from './types';
-import { flattenMethods } from './methodSerialization';
 import PenpalError from './PenpalError';
 import Messenger from './Messenger';
 import { ErrorCode } from './enums';
@@ -37,7 +36,6 @@ const connectToRemote = <TMethods extends Methods>({
     );
   }
 
-  const flattenedMethods = flattenMethods(methods);
   const connectionClosedHandlers: (() => void)[] = [messenger.close];
 
   const callCloseHandlers = () => {
@@ -50,7 +48,7 @@ const connectToRemote = <TMethods extends Methods>({
     try {
       const { remoteMethodProxies, close } = await shakeHands<TMethods>({
         messenger,
-        flattenedMethods,
+        methods,
         initiate: localName === 'child',
         timeout,
       });

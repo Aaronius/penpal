@@ -89,6 +89,9 @@
         neverResolve() {
           return new Promise(() => {});
         },
+        ['with.period']() {
+          return 'success';
+        },
       };
 
       Penpal.connectToParent({
