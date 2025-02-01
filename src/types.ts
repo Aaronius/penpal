@@ -93,17 +93,17 @@ export type ReplyMessage = {
     }
 );
 
-export type PenpalMessage =
+export type Message =
   | SynMessage
   | SynAckMessage
   | AckMessage
   | CallMessage
   | ReplyMessage;
 
-export type PenpalMessageEnvelope = {
+export type Envelope = {
   namespace: typeof namespace;
   channel?: string;
-  message: PenpalMessage;
+  message: Message;
 };
 
 export type Log = (...args: unknown[]) => void;

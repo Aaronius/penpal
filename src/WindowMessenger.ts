@@ -1,13 +1,13 @@
-import { Log, PenpalMessage, PenpalMessageEnvelope } from './types';
+import { Log, Message, Envelope } from './types';
 import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import {
-  downgradeMessageEnvelope,
+  downgradeEnvelope,
   isDeprecatedMessage,
   upgradeMessage,
 } from './backwardCompatibility';
 import {
   isAckMessage,
-  isPenpalMessageEnvelope,
+  isEnvelope,
   isSynAckMessage,
   isSynMessage,
 } from './guards';
@@ -48,7 +48,7 @@ class WindowMessenger implements Messenger {
   private _log?: Log;
   private _channel?: string;
   private _concreteRemoteOrigin?: string;
-  private _messageCallbacks = new Set<(message: PenpalMessage) => void>();
+  private _messageCallbacks = new Set<(message: Message) => void>();
   private _port?: MessagePort;
   private _isChildUsingDeprecatedProtocol = false;
 
@@ -81,7 +81,7 @@ class WindowMessenger implements Messenger {
     );
   };
 
-  private _getOriginForSendingMessage = (message: PenpalMessage) => {
+  private _getOriginForSendingMessage = (message: Message) => {
     if (isSynMessage(message)) {
       return this._allowedOrigins.length > 1 ||
         this._allowedOrigins[0] instanceof RegExp
@@ -128,9 +128,9 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    let envelope: PenpalMessageEnvelope;
+    let envelope: Envelope;
 
-    if (isPenpalMessageEnvelope(event.data)) {
+    if (isEnvelope(event.data)) {
       envelope = event.data;
     } else if (isDeprecatedMessage(event.data)) {
       this._log?.(
@@ -198,7 +198,7 @@ class WindowMessenger implements Messenger {
     // Unlike in _handleMessageFromWindow, we don't have to check if
     // the message is from a deprecated version of Penpal because older versions
     // of Penpal don't use MessagePorts.
-    if (!isPenpalMessageEnvelope(event.data)) {
+    if (!isEnvelope(event.data)) {
       return;
     }
 
@@ -216,11 +216,8 @@ class WindowMessenger implements Messenger {
     }
   };
 
-  sendMessage = (
-    message: PenpalMessage,
-    transferables?: Transferable[]
-  ): void => {
-    const envelope: PenpalMessageEnvelope = {
+  sendMessage = (message: Message, transferables?: Transferable[]): void => {
+    const envelope: Envelope = {
       namespace,
       channel: this._channel,
       message,
@@ -245,7 +242,7 @@ class WindowMessenger implements Messenger {
       this._isChildUsingDeprecatedProtocol
     ) {
       const payload = this._isChildUsingDeprecatedProtocol
-        ? downgradeMessageEnvelope(envelope)
+        ? downgradeEnvelope(envelope)
         : envelope;
       const originForSending = this._getOriginForSendingMessage(message);
       this._remoteWindow.postMessage(payload, {

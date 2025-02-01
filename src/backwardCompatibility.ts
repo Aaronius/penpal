@@ -1,9 +1,4 @@
-import {
-  MethodPath,
-  PenpalMessageEnvelope,
-  ReplyMessage,
-  SerializedError,
-} from './types';
+import { MethodPath, Envelope, ReplyMessage, SerializedError } from './types';
 import namespace from './namespace';
 import { MessageType } from './enums';
 import { serializeError } from './errorSerialization';
@@ -70,7 +65,7 @@ type DeprecatedReplyMessage = {
     }
 );
 
-export type DeprecatedPenpalMessage =
+export type DeprecatedMessage =
   | DeprecatedSynMessage
   | DeprecatedSynAckMessage
   | DeprecatedAckMessage
@@ -79,7 +74,7 @@ export type DeprecatedPenpalMessage =
 
 export const isDeprecatedMessage = (
   data: unknown
-): data is DeprecatedPenpalMessage => {
+): data is DeprecatedMessage => {
   return !!data && typeof data === 'object' && 'penpal' in data;
 };
 
@@ -87,9 +82,7 @@ const upgradeMethodPath = (methodPath: string): MethodPath =>
   methodPath.split('.');
 const downgradeMethodPath = (methodPath: MethodPath) => methodPath.join('.');
 
-export const upgradeMessage = (
-  message: DeprecatedPenpalMessage
-): PenpalMessageEnvelope => {
+export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
   if (message.penpal === DeprecatedMessageType.Syn) {
     return {
       namespace,
@@ -176,10 +169,8 @@ export const upgradeMessage = (
   );
 };
 
-export const downgradeMessageEnvelope = (
-  messageEnvelope: PenpalMessageEnvelope
-): DeprecatedPenpalMessage => {
-  const { message } = messageEnvelope;
+export const downgradeEnvelope = (envelope: Envelope): DeprecatedMessage => {
+  const { message } = envelope;
 
   if (message.type === MessageType.Syn) {
     return {

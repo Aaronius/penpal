@@ -1,8 +1,8 @@
-import { Log, PenpalMessage, PenpalMessageEnvelope } from './types';
+import { Log, Message, Envelope } from './types';
 import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import {
   isAckMessage,
-  isPenpalMessageEnvelope,
+  isEnvelope,
   isSynAckMessage,
   isSynMessage,
 } from './guards';
@@ -68,11 +68,11 @@ class WorkerMessenger implements Messenger {
   };
 
   private _handleMessage = (event: MessageEvent): void => {
-    if (!isPenpalMessageEnvelope(event.data)) {
+    if (!isEnvelope(event.data)) {
       return;
     }
 
-    const envelope: PenpalMessageEnvelope = event.data;
+    const envelope: Envelope = event.data;
     const { channel, message } = envelope;
 
     if (channel !== this._channel) {
@@ -99,7 +99,7 @@ class WorkerMessenger implements Messenger {
   };
 
   private _handleMessageFromPort = (event: MessageEvent): void => {
-    if (!isPenpalMessageEnvelope(event.data)) {
+    if (!isEnvelope(event.data)) {
       return;
     }
 
@@ -117,11 +117,8 @@ class WorkerMessenger implements Messenger {
     }
   };
 
-  sendMessage = (
-    message: PenpalMessage,
-    transferables?: Transferable[]
-  ): void => {
-    const envelope: PenpalMessageEnvelope = {
+  sendMessage = (message: Message, transferables?: Transferable[]): void => {
+    const envelope: Envelope = {
       namespace,
       channel: this._channel,
       message,

@@ -2,47 +2,39 @@ import namespace from './namespace';
 import {
   AckMessage,
   CallMessage,
-  PenpalMessage,
-  PenpalMessageEnvelope,
+  Message,
+  Envelope,
   ReplyMessage,
   SynAckMessage,
   SynMessage,
 } from './types';
 import { MessageType } from './enums';
 
-export const isPenpalMessageEnvelope = (
-  eventData: unknown
-): eventData is PenpalMessageEnvelope => {
+export const isEnvelope = (value: unknown): value is Envelope => {
   return (
-    typeof eventData === 'object' &&
-    eventData !== null &&
+    typeof value === 'object' &&
+    value !== null &&
     // @ts-expect-error namespace isn't a known property
-    eventData.namespace === namespace
+    value.namespace === namespace
   );
 };
 
-export const isSynMessage = (message: PenpalMessage): message is SynMessage => {
+export const isSynMessage = (message: Message): message is SynMessage => {
   return message.type === MessageType.Syn;
 };
 
-export const isSynAckMessage = (
-  message: PenpalMessage
-): message is SynAckMessage => {
+export const isSynAckMessage = (message: Message): message is SynAckMessage => {
   return message.type === MessageType.SynAck;
 };
 
-export const isAckMessage = (message: PenpalMessage): message is AckMessage => {
+export const isAckMessage = (message: Message): message is AckMessage => {
   return message.type === MessageType.Ack;
 };
 
-export const isCallMessage = (
-  message: PenpalMessage
-): message is CallMessage => {
+export const isCallMessage = (message: Message): message is CallMessage => {
   return message.type === MessageType.Call;
 };
 
-export const isReplyMessage = (
-  message: PenpalMessage
-): message is ReplyMessage => {
+export const isReplyMessage = (message: Message): message is ReplyMessage => {
   return message.type === MessageType.Reply;
 };

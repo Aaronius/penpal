@@ -1,7 +1,7 @@
-import { Log, PenpalMessageEnvelope } from './types';
+import { Log, Envelope } from './types';
 
 export const logSendingMessage = (
-  { channel, message }: PenpalMessageEnvelope,
+  { channel, message }: Envelope,
   log?: Log
 ) => {
   const preamble = 'Sending message';
@@ -9,7 +9,7 @@ export const logSendingMessage = (
 };
 
 export const logReceivedMessage = (
-  { channel, message }: PenpalMessageEnvelope,
+  { channel, message }: Envelope,
   log?: Log
 ) => {
   const preamble = 'Received message';

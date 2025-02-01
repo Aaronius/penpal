@@ -1,6 +1,6 @@
-import { Log, PenpalMessage, PenpalMessageEnvelope } from './types';
+import { Log, Message, Envelope } from './types';
 import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
-import { isPenpalMessageEnvelope } from './guards';
+import { isEnvelope } from './guards';
 import PenpalError from './PenpalError';
 import { ErrorCode } from './enums';
 import { logReceivedMessage, logSendingMessage } from './commonLogging';
@@ -46,7 +46,7 @@ class PortMessenger implements Messenger {
   };
 
   private _handleMessage = (event: MessageEvent): void => {
-    if (!isPenpalMessageEnvelope(event.data)) {
+    if (!isEnvelope(event.data)) {
       return;
     }
 
@@ -64,11 +64,8 @@ class PortMessenger implements Messenger {
     }
   };
 
-  sendMessage = (
-    message: PenpalMessage,
-    transferables?: Transferable[]
-  ): void => {
-    const envelope: PenpalMessageEnvelope = {
+  sendMessage = (message: Message, transferables?: Transferable[]): void => {
+    const envelope: Envelope = {
       namespace,
       channel: this._channel,
       message,

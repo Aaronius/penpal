@@ -2,7 +2,7 @@ import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
 import { buildProxyMethodsFromMethodPaths } from './methodSerialization';
 import {
-  PenpalMessage,
+  Message,
   RemoteMethodProxies,
   Methods,
   MethodPath,
@@ -35,7 +35,7 @@ export default <TMethods extends Methods>(
 
   const replyHandlers = new Map<number, ReplyHandler>();
 
-  const handleMessage = (message: PenpalMessage) => {
+  const handleMessage = (message: Message) => {
     if (!isReplyMessage(message)) {
       return;
     }

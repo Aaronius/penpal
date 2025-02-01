@@ -1,5 +1,5 @@
 import { serializeError } from './errorSerialization';
-import { PenpalMessage, ReplyMessage, Methods } from './types';
+import { Message, ReplyMessage, Methods } from './types';
 import { ErrorCode, MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
 import Messenger from './Messenger';
@@ -24,7 +24,7 @@ const createErrorReplyMessage = (
 export default (messenger: Messenger, methods: Methods) => {
   let isClosed = false;
 
-  const handleMessage = async (message: PenpalMessage) => {
+  const handleMessage = async (message: Message) => {
     if (isClosed) {
       // It's possible to throw an error here, but it would only be catchable
       // using window.onerror since we're in an asynchronously-called function.

@@ -3,7 +3,7 @@ import {
   AckMessage,
   MethodPath,
   Methods,
-  PenpalMessage,
+  Message,
   RemoteMethodProxies,
   SynAckMessage,
   SynMessage,
@@ -119,7 +119,7 @@ const shakeHands = <TMethods extends Methods>({
     connectCallHandlerAndMethodProxies(message.methodPaths);
   };
 
-  const handleMessage = (message: PenpalMessage) => {
+  const handleMessage = (message: Message) => {
     if (isSynMessage(message)) {
       handleSynMessage();
     }

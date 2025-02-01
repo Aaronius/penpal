@@ -14,7 +14,7 @@ import {
 } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import WorkerMessenger from '../src/WorkerMessenger';
-import { isAckMessage, isPenpalMessageEnvelope } from '../src/guards';
+import { isAckMessage, isEnvelope } from '../src/guards';
 
 describe('connection management', () => {
   afterEach(() => {
@@ -274,7 +274,7 @@ describe('connection management', () => {
       const handleMessage = async (event: MessageEvent) => {
         if (
           event.source === iframe.contentWindow &&
-          isPenpalMessageEnvelope(event.data) &&
+          isEnvelope(event.data) &&
           isAckMessage(event.data.message)
         ) {
           window.removeEventListener('message', handleMessage);
@@ -309,7 +309,7 @@ describe('connection management', () => {
       const handleMessage = async (event: MessageEvent) => {
         if (
           event.source === iframe.contentWindow &&
-          isPenpalMessageEnvelope(event.data) &&
+          isEnvelope(event.data) &&
           isAckMessage(event.data.message)
         ) {
           window.removeEventListener('message', handleMessage);
