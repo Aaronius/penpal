@@ -7,6 +7,7 @@ import {
   RemoteMethodProxies,
   SynAckMessage,
   SynMessage,
+  Log,
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import PenpalError from './PenpalError';
@@ -22,6 +23,7 @@ type Options = {
   methods: Methods;
   initiate: boolean;
   timeout: number | undefined;
+  log: Log | undefined;
 };
 
 type HandshakeResult<TMethods extends Methods> = {
@@ -34,6 +36,7 @@ const shakeHands = <TMethods extends Methods>({
   methods,
   initiate,
   timeout,
+  log,
 }: Options): Promise<HandshakeResult<TMethods>> => {
   const closeHandlers: (() => void)[] = [];
   let isComplete = false;
@@ -63,12 +66,12 @@ const shakeHands = <TMethods extends Methods>({
       return;
     }
 
-    closeHandlers.push(connectCallHandler(messenger, methods));
+    closeHandlers.push(connectCallHandler(messenger, methods, log));
 
     const {
       remoteMethodProxies,
       close: closeMethodProxies,
-    } = connectMethodProxies<TMethods>(messenger, remoteMethodPaths);
+    } = connectMethodProxies<TMethods>(messenger, remoteMethodPaths, log);
 
     closeHandlers.push(closeMethodProxies);
 
@@ -81,11 +84,13 @@ const shakeHands = <TMethods extends Methods>({
     });
   };
 
-  const handleSynMessage = () => {
+  const handleSynMessage = (message: SynMessage) => {
+    log?.(`Received handshake SYN`, message);
     const synAckMessage: SynAckMessage = {
       type: MessageType.SynAck,
       methodPaths,
     };
+    log?.(`Sending handshake SYN-ACK`, synAckMessage);
 
     try {
       messenger.sendMessage(synAckMessage);
@@ -98,10 +103,12 @@ const shakeHands = <TMethods extends Methods>({
   };
 
   const handleSynAckMessage = (message: SynAckMessage) => {
+    log?.(`Received handshake SYN-ACK`, message);
     const ackMessage: AckMessage = {
       type: MessageType.Ack,
       methodPaths,
     };
+    log?.(`Sending handshake ACK`, ackMessage);
 
     try {
       messenger.sendMessage(ackMessage);
@@ -116,12 +123,13 @@ const shakeHands = <TMethods extends Methods>({
   };
 
   const handleAckMessage = (message: AckMessage) => {
+    log?.(`Received handshake ACK`, message);
     connectCallHandlerAndMethodProxies(message.methodPaths);
   };
 
   const handleMessage = (message: Message) => {
     if (isSynMessage(message)) {
-      handleSynMessage();
+      handleSynMessage(message);
     }
 
     if (isSynAckMessage(message)) {
@@ -140,6 +148,7 @@ const shakeHands = <TMethods extends Methods>({
     const synMessage: SynMessage = {
       type: MessageType.Syn,
     };
+    log?.(`Sending handshake SYN`, synMessage);
 
     try {
       messenger.sendMessage(synMessage);

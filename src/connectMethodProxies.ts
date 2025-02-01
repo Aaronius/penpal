@@ -1,6 +1,9 @@
 import generateId from './generateId';
 import { deserializeError } from './errorSerialization';
-import { buildProxyMethodsFromMethodPaths } from './methodSerialization';
+import {
+  buildProxyMethodsFromMethodPaths,
+  formatMethodPath,
+} from './methodSerialization';
 import {
   Message,
   RemoteMethodProxies,
@@ -8,6 +11,7 @@ import {
   MethodPath,
   MethodProxy,
   CallMessage,
+  Log,
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
@@ -29,7 +33,8 @@ type ReplyHandler = {
  */
 export default <TMethods extends Methods>(
   messenger: Messenger,
-  methodPaths: MethodPath[]
+  methodPaths: MethodPath[],
+  log: Log | undefined
 ) => {
   let isClosed = false;
 
@@ -50,6 +55,11 @@ export default <TMethods extends Methods>(
 
     replyHandlers.delete(callId);
 
+    log?.(
+      `Received ${formatMethodPath(replyHandler.methodPath)}() call`,
+      message
+    );
+
     if (isError) {
       const error = deserializeError(value);
       replyHandler.reject(error);
@@ -65,7 +75,7 @@ export default <TMethods extends Methods>(
       if (isClosed) {
         throw new PenpalError(
           ErrorCode.ConnectionClosed,
-          `Unable to send ${methodPath.join('.')}() call due ` +
+          `Unable to send ${formatMethodPath(methodPath)}() call due ` +
             `to closed connection`
         );
       }
@@ -92,8 +102,8 @@ export default <TMethods extends Methods>(
               reject(
                 new PenpalError(
                   ErrorCode.MethodCallTimeout,
-                  `Method call ${methodPath.join(
-                    '.'
+                  `Method call ${formatMethodPath(
+                    methodPath
                   )}() timed out after ${timeout}ms`
                 )
               );
@@ -114,6 +124,7 @@ export default <TMethods extends Methods>(
             methodPath,
             args: argsWithoutOptions,
           };
+          log?.(`Sending ${methodPath}() call`, callMessage);
           messenger.sendMessage(callMessage, transferables);
         } catch (error) {
           reject(
@@ -142,8 +153,8 @@ export default <TMethods extends Methods>(
         reject(
           new PenpalError(
             ErrorCode.ConnectionClosed,
-            `Method call ${methodPath.join(
-              '.'
+            `Method call ${formatMethodPath(
+              methodPath
             )}() cannot be resolved due to closed connection`
           )
         );

@@ -1,5 +1,5 @@
-import { Log, Message, Envelope } from './types';
-import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
+import { Message, Envelope } from './types';
+import Messenger, { MessageHandler } from './Messenger';
 import {
   isAckMessage,
   isEnvelope,
@@ -8,7 +8,6 @@ import {
 } from './guards';
 import PenpalError from './PenpalError';
 import { ErrorCode } from './enums';
-import { logReceivedMessage, logSendingMessage } from './commonLogging';
 import namespace from './namespace';
 
 // This is needed to resolve some conflict errors. There may be a better way.
@@ -42,7 +41,6 @@ class WorkerMessenger implements Messenger {
   private _channel?: string;
   private _messageCallbacks = new Set<MessageHandler>();
   private _port?: MessagePort;
-  private _log?: Log;
 
   constructor({ worker, channel }: Options) {
     if (!worker) {
@@ -56,8 +54,7 @@ class WorkerMessenger implements Messenger {
     this._channel = channel;
   }
 
-  initialize = ({ log }: InitializeOptions) => {
-    this._log = log;
+  initialize = () => {
     this._worker.addEventListener('message', this._handleMessage);
   };
 
@@ -78,8 +75,6 @@ class WorkerMessenger implements Messenger {
     if (channel !== this._channel) {
       return;
     }
-
-    logReceivedMessage(envelope, this._log);
 
     if (isSynMessage(message)) {
       // If we receive a SYN message and already have a port, it means
@@ -111,8 +106,6 @@ class WorkerMessenger implements Messenger {
       channel: this._channel,
       message,
     };
-
-    logSendingMessage(envelope, this._log);
 
     if (isSynMessage(message) || isSynAckMessage(message)) {
       this._worker.postMessage(envelope, { transfer: transferables });

@@ -1,10 +1,10 @@
 import { serializeError } from './errorSerialization';
-import { Message, ReplyMessage, Methods } from './types';
+import { Message, ReplyMessage, Methods, Log } from './types';
 import { ErrorCode, MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
 import Messenger from './Messenger';
 import PenpalError from './PenpalError';
-import { getMethodAtMethodPath } from './methodSerialization';
+import { formatMethodPath, getMethodAtMethodPath } from './methodSerialization';
 import { isCallMessage } from './guards';
 
 const createErrorReplyMessage = (
@@ -21,7 +21,11 @@ const createErrorReplyMessage = (
  * Listens for "call" messages from the remote, executes the corresponding method,
  * and responds with the return value or error.
  */
-export default (messenger: Messenger, methods: Methods) => {
+export default (
+  messenger: Messenger,
+  methods: Methods,
+  log: Log | undefined
+) => {
   let isClosed = false;
 
   const handleMessage = async (message: Message) => {
@@ -38,6 +42,8 @@ export default (messenger: Messenger, methods: Methods) => {
       return;
     }
 
+    log?.(`Received ${formatMethodPath(message.methodPath)}() call`, message);
+
     const { methodPath, args, id: callId } = message;
     let replyMessage: ReplyMessage;
     let transferables: Transferable[] | undefined;
@@ -48,7 +54,7 @@ export default (messenger: Messenger, methods: Methods) => {
       if (!method) {
         throw new PenpalError(
           ErrorCode.MethodNotFound,
-          `Method \`${methodPath.join('.')}\` is not found.`
+          `Method \`${formatMethodPath(methodPath)}\` is not found.`
         );
       }
 
@@ -81,13 +87,16 @@ export default (messenger: Messenger, methods: Methods) => {
     }
 
     try {
+      log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
       messenger.sendMessage(replyMessage, transferables);
     } catch (error) {
       // If a consumer attempts to send an object that's not
       // cloneable (e.g., window), we want to ensure the receiver's promise
       // gets rejected.
       if ((error as Error).name === NativeErrorName.DataCloneError) {
-        messenger.sendMessage(createErrorReplyMessage(callId, error as Error));
+        replyMessage = createErrorReplyMessage(callId, error as Error);
+        log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
+        messenger.sendMessage(replyMessage);
       }
       throw error;
     }

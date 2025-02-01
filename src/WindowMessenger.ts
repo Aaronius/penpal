@@ -13,7 +13,6 @@ import {
 } from './guards';
 import PenpalError from './PenpalError';
 import { ErrorCode } from './enums';
-import { logReceivedMessage, logSendingMessage } from './commonLogging';
 import namespace from './namespace';
 
 type Options = {
@@ -210,8 +209,6 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    logReceivedMessage(envelope, this._log);
-
     for (const callback of this._messageCallbacks) {
       callback(message);
     }
@@ -223,8 +220,6 @@ class WindowMessenger implements Messenger {
       channel: this._channel,
       message,
     };
-
-    logSendingMessage(envelope, this._log);
 
     if (isSynMessage(message)) {
       const originForSending = this._getOriginForSendingMessage(message);

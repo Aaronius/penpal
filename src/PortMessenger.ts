@@ -1,9 +1,8 @@
-import { Log, Message, Envelope } from './types';
-import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
+import { Message, Envelope } from './types';
+import Messenger, { MessageHandler } from './Messenger';
 import { isEnvelope } from './guards';
 import PenpalError from './PenpalError';
 import { ErrorCode } from './enums';
-import { logReceivedMessage, logSendingMessage } from './commonLogging';
 import namespace from './namespace';
 
 type Options = {
@@ -28,7 +27,6 @@ class PortMessenger implements Messenger {
   private _port: MessagePort;
   private _channel?: string;
   private _messageCallbacks = new Set<MessageHandler>();
-  private _log?: Log;
 
   constructor({ port, channel }: Options) {
     if (!port) {
@@ -39,8 +37,7 @@ class PortMessenger implements Messenger {
     this._channel = channel;
   }
 
-  initialize = ({ log }: InitializeOptions) => {
-    this._log = log;
+  initialize = () => {
     this._port.addEventListener('message', this._handleMessage);
     this._port.start();
   };
@@ -57,8 +54,6 @@ class PortMessenger implements Messenger {
       return;
     }
 
-    logReceivedMessage(envelope, this._log);
-
     for (const callback of this._messageCallbacks) {
       callback(message);
     }
@@ -70,8 +65,6 @@ class PortMessenger implements Messenger {
       channel: this._channel,
       message,
     };
-
-    logSendingMessage(envelope, this._log);
 
     this._port?.postMessage(envelope, {
       transfer: transferables,

@@ -58,6 +58,7 @@ const connectToRemote = <TMethods extends Methods>({
         methods,
         initiate: localName === 'child',
         timeout,
+        log,
       });
       connectionClosedHandlers.push(close);
       return remoteMethodProxies;
@@ -73,6 +74,7 @@ const connectToRemote = <TMethods extends Methods>({
       // Why we don't reject the connection promise in this case:
       // https://github.com/Aaronius/penpal/issues/51
       callCloseHandlers();
+      log?.('Connection closed');
     },
   };
 };

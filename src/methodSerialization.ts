@@ -102,3 +102,7 @@ export const getMethodAtMethodPath = (
 
   return typeof result === 'function' ? result : undefined;
 };
+
+export const formatMethodPath = (methodPath: MethodPath) => {
+  return methodPath.join('.');
+};
