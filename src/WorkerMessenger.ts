@@ -9,6 +9,7 @@ import {
 import PenpalError from './PenpalError';
 import { ErrorCode } from './enums';
 import namespace from './namespace';
+import throwPenpalBugError from './throwPenpalBugError';
 
 // This is needed to resolve some conflict errors. There may be a better way.
 type MessageTarget = Pick<
@@ -87,8 +88,7 @@ class WorkerMessenger implements Messenger {
       this._port = event.ports[0];
 
       if (!this._port) {
-        // If this ever happens, it's a bug in Penpal.
-        throw new Error('Handshake - No port received on ACK');
+        throwPenpalBugError('No port received on ACK');
       }
 
       this._port.addEventListener('message', this._handleMessage);
@@ -129,8 +129,7 @@ class WorkerMessenger implements Messenger {
         transfer: transferables,
       });
     } else {
-      // If this ever happens, it's a bug in Penpal.
-      throw new Error('Port has not been received from child');
+      throwPenpalBugError('Port is undefined');
     }
   };
 

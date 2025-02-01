@@ -14,6 +14,7 @@ import {
 import PenpalError from './PenpalError';
 import { ErrorCode } from './enums';
 import namespace from './namespace';
+import throwPenpalBugError from './throwPenpalBugError';
 
 type Options = {
   /**
@@ -88,10 +89,8 @@ class WindowMessenger implements Messenger {
         : this._allowedOrigins[0];
     }
 
-    // We should have already received a message from the remote with its
-    // exact (concrete) origin. If not, it's a bug in Penpal.
     if (!this._concreteRemoteOrigin) {
-      throw new Error('Concrete remote origin not set');
+      throwPenpalBugError('Concrete remote origin not set');
     }
 
     // If the concrete remote origin (the origin we received from the remote
@@ -181,8 +180,7 @@ class WindowMessenger implements Messenger {
       this._port = event.ports[0];
 
       if (!this._port) {
-        // If this ever happens, it's a bug in Penpal.
-        throw new Error('No port received on ACK');
+        throwPenpalBugError('No port received on ACK');
       }
 
       this._port.addEventListener('message', this._handleMessageFromPort);
@@ -267,9 +265,7 @@ class WindowMessenger implements Messenger {
         transfer: transferables,
       });
     } else {
-      // We should have already received a port during the handshake.
-      // Since we didn't, we've run into a bug in Penpal.
-      throw new Error('Port is undefined');
+      throwPenpalBugError('Port is undefined');
     }
   };
 
