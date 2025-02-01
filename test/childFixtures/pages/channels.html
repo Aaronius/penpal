@@ -19,7 +19,6 @@
         remoteWindow: window.parent,
         allowedOrigins: ['*'],
         channel: 'B',
-        log: Penpal.debug('Child Connection B'),
       });
 
       const channelBMethods = {
@@ -34,6 +33,7 @@
       Penpal.connectToParent({
         messenger: channelBMessenger,
         methods: channelBMethods,
+        log: Penpal.debug('Child Connection B'),
       }).promise.then((parent) => {
         channelBParent = parent;
       });
@@ -44,7 +44,6 @@
         remoteWindow: window.parent,
         allowedOrigins: ['*'],
         channel: 'A',
-        log: Penpal.debug('Child Connection A'),
       });
 
       const channelAMethods = {
@@ -59,6 +58,7 @@
       Penpal.connectToParent({
         messenger: channelAMessenger,
         methods: channelAMethods,
+        log: Penpal.debug('Child Connection A'),
       }).promise.then((parent) => {
         channelAParent = parent;
       });

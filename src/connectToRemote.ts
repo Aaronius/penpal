@@ -1,4 +1,4 @@
-import { Connection, Methods } from './types';
+import { Connection, Log, Methods } from './types';
 import PenpalError from './PenpalError';
 import Messenger from './Messenger';
 import { ErrorCode } from './enums';
@@ -18,6 +18,11 @@ type Options = {
    * for the remote to respond before rejecting the connection promise.
    */
   timeout?: number;
+  /**
+   * A function for logging debug messages. When provided, messages will
+   * be logged.
+   */
+  log?: Log;
 };
 
 /**
@@ -27,6 +32,7 @@ const connectToRemote = <TMethods extends Methods>({
   messenger,
   methods = {},
   timeout,
+  log,
   localName,
 }: Options & { localName: 'parent' | 'child' }): Connection<TMethods> => {
   if (!messenger) {
@@ -46,6 +52,7 @@ const connectToRemote = <TMethods extends Methods>({
 
   const promise = (async () => {
     try {
+      messenger.initialize({ log });
       const { remoteMethodProxies, close } = await shakeHands<TMethods>({
         messenger,
         methods,

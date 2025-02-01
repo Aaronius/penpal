@@ -1,6 +1,5 @@
 import { Log, PenpalMessage, PenpalMessageEnvelope } from './types';
-import Messenger, { MessageHandler } from './Messenger';
-import namespace from './namespace';
+import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import {
   downgradeMessageEnvelope,
   isDeprecatedMessage,
@@ -13,12 +12,9 @@ import {
   isSynMessage,
 } from './guards';
 import PenpalError from './PenpalError';
-import { ErrorCode, MessageType } from './enums';
-import {
-  LOG_MESSAGE_CONNECTION_CLOSED,
-  logReceivedMessage,
-  logSendingMessage,
-} from './commonLogging';
+import { ErrorCode } from './enums';
+import { logReceivedMessage, logSendingMessage } from './commonLogging';
+import namespace from './namespace';
 
 type Options = {
   /**
@@ -34,16 +30,13 @@ type Options = {
    */
   allowedOrigins?: (string | RegExp)[];
   /**
-   * A string identifier that restricts communication to a specific channel.
-   * This is only useful when setting up multiple, parallel connections
-   * between a parent window and a child window.
+   * A string identifier that disambiguates communication when establishing
+   * multiple, parallel connections for a iframe. This is uncommon.
+   * The same channel identifier must be specified on both `connectToChild` and
+   * `connectToParent` in order for the connection between the two to be
+   * established.
    */
   channel?: string;
-  /**
-   * A function for logging debug messages. When provided, messages will
-   * be logged.
-   */
-  log?: Log;
 };
 
 /**
@@ -59,7 +52,7 @@ class WindowMessenger implements Messenger {
   private _port?: MessagePort;
   private _isChildUsingDeprecatedProtocol = false;
 
-  constructor({ remoteWindow, allowedOrigins, channel, log }: Options) {
+  constructor({ remoteWindow, allowedOrigins, channel }: Options) {
     if (!remoteWindow) {
       throw new PenpalError(
         ErrorCode.InvalidArgument,
@@ -73,10 +66,12 @@ class WindowMessenger implements Messenger {
         ? (allowedOrigins as [string | RegExp, ...(string | RegExp)[]])
         : [window.origin];
     this._channel = channel;
-    this._log = log;
-
-    window.addEventListener('message', this._handleMessageFromRemoteWindow);
   }
+
+  initialize = ({ log }: InitializeOptions) => {
+    this._log = log;
+    window.addEventListener('message', this._handleMessageFromRemoteWindow);
+  };
 
   private _isAllowedOrigin = (origin: string) => {
     return this._allowedOrigins.some((allowedOrigin) =>
@@ -86,8 +81,8 @@ class WindowMessenger implements Messenger {
     );
   };
 
-  private _getOriginForSendingMessage = (messageType: MessageType) => {
-    if (messageType === MessageType.Syn) {
+  private _getOriginForSendingMessage = (message: PenpalMessage) => {
+    if (isSynMessage(message)) {
       return this._allowedOrigins.length > 1 ||
         this._allowedOrigins[0] instanceof RegExp
         ? '*'
@@ -165,8 +160,6 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    logReceivedMessage(envelope, this._log);
-
     if (isSynMessage(message)) {
       // We destroy the port if one is already set, because it's possible a
       // child is re-connecting and we'll receive a new port.
@@ -236,7 +229,7 @@ class WindowMessenger implements Messenger {
     logSendingMessage(envelope, this._log);
 
     if (isSynMessage(message)) {
-      const originForSending = this._getOriginForSendingMessage(message.type);
+      const originForSending = this._getOriginForSendingMessage(message);
       this._remoteWindow.postMessage(envelope, {
         targetOrigin: originForSending,
         transfer: transferables,
@@ -254,7 +247,7 @@ class WindowMessenger implements Messenger {
       const payload = this._isChildUsingDeprecatedProtocol
         ? downgradeMessageEnvelope(envelope)
         : envelope;
-      const originForSending = this._getOriginForSendingMessage(message.type);
+      const originForSending = this._getOriginForSendingMessage(message);
       this._remoteWindow.postMessage(payload, {
         targetOrigin: originForSending,
         transfer: transferables,
@@ -268,7 +261,7 @@ class WindowMessenger implements Messenger {
       port1.addEventListener('message', this._handleMessageFromPort);
       port1.start();
       const transferablesToSend = [port2, ...(transferables || [])];
-      const originForSending = this._getOriginForSendingMessage(message.type);
+      const originForSending = this._getOriginForSendingMessage(message);
       this._remoteWindow.postMessage(envelope, {
         targetOrigin: originForSending,
         transfer: transferablesToSend,
@@ -299,7 +292,6 @@ class WindowMessenger implements Messenger {
     window.removeEventListener('message', this._handleMessageFromRemoteWindow);
     this._destroyPort();
     this._messageCallbacks.clear();
-    this._log?.(LOG_MESSAGE_CONNECTION_CLOSED);
   };
 }
 

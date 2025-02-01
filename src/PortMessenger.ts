@@ -1,14 +1,10 @@
 import { Log, PenpalMessage, PenpalMessageEnvelope } from './types';
-import Messenger, { MessageHandler } from './Messenger';
-import namespace from './namespace';
+import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import { isPenpalMessageEnvelope } from './guards';
 import PenpalError from './PenpalError';
 import { ErrorCode } from './enums';
-import {
-  LOG_MESSAGE_CONNECTION_CLOSED,
-  logReceivedMessage,
-  logSendingMessage,
-} from './commonLogging';
+import { logReceivedMessage, logSendingMessage } from './commonLogging';
+import namespace from './namespace';
 
 type Options = {
   /**
@@ -16,16 +12,13 @@ type Options = {
    */
   port: MessagePort;
   /**
-   * A string identifier that restricts communication to a specific channel.
-   * This is only useful when setting up multiple, parallel connections
-   * through a single port pair.
+   * A string identifier that disambiguates communication when establishing
+   * multiple, parallel connections over a single port pair. This is uncommon.
+   * The same channel identifier must be specified on both `connectToChild` and
+   * `connectToParent` in order for the connection between the two to be
+   * established.
    */
   channel?: string;
-  /**
-   * A function for logging debug messages. When provided, messages will
-   * be logged.
-   */
-  log?: Log;
 };
 
 /**
@@ -37,18 +30,20 @@ class PortMessenger implements Messenger {
   private _messageCallbacks = new Set<MessageHandler>();
   private _log?: Log;
 
-  constructor({ port, channel, log }: Options) {
+  constructor({ port, channel }: Options) {
     if (!port) {
       throw new PenpalError(ErrorCode.InvalidArgument, 'port must be defined');
     }
 
     this._port = port;
     this._channel = channel;
-    this._log = log;
+  }
 
+  initialize = ({ log }: InitializeOptions) => {
+    this._log = log;
     this._port.addEventListener('message', this._handleMessage);
     this._port.start();
-  }
+  };
 
   private _handleMessage = (event: MessageEvent): void => {
     if (!isPenpalMessageEnvelope(event.data)) {
@@ -98,7 +93,6 @@ class PortMessenger implements Messenger {
     this._port.removeEventListener('message', this._handleMessage);
     this._port.close();
     this._messageCallbacks.clear();
-    this._log?.(LOG_MESSAGE_CONNECTION_CLOSED);
   };
 }
 

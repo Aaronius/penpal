@@ -17,7 +17,6 @@ let parentReturnValue: number;
 
 const messenger = new WorkerMessenger({
   worker: self,
-  log: debug('Child'),
 });
 
 const methods: Omit<
@@ -95,6 +94,7 @@ const methods: Omit<
 connectToParent<ParentAPI>({
   messenger,
   methods: methods,
+  log: debug('Child'),
 }).promise.then((parent) => {
   parentAPI = parent;
 });

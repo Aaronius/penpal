@@ -7,6 +7,12 @@ import {
 import namespace from './namespace';
 import { MessageType } from './enums';
 import { serializeError } from './errorSerialization';
+import {
+  isAckMessage,
+  isCallMessage,
+  isReplyMessage,
+  isSynAckMessage,
+} from './guards';
 
 enum DeprecatedMessageType {
   Call = 'call',
@@ -181,21 +187,21 @@ export const downgradeMessageEnvelope = (
     };
   }
 
-  if (message.type === MessageType.SynAck) {
+  if (isSynAckMessage(message)) {
     return {
       penpal: DeprecatedMessageType.SynAck,
       methodNames: message.methodPaths.map(downgradeMethodPath),
     };
   }
 
-  if (message.type === MessageType.Ack) {
+  if (isAckMessage(message)) {
     return {
       penpal: DeprecatedMessageType.Ack,
       methodNames: message.methodPaths.map(downgradeMethodPath),
     };
   }
 
-  if (message.type === MessageType.Call) {
+  if (isCallMessage(message)) {
     return {
       penpal: DeprecatedMessageType.Call,
       id: message.id,
@@ -204,7 +210,7 @@ export const downgradeMessageEnvelope = (
     };
   }
 
-  if (message.type === MessageType.Reply) {
+  if (isReplyMessage(message)) {
     if (message.isError) {
       return {
         penpal: DeprecatedMessageType.Reply,

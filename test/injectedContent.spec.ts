@@ -27,7 +27,6 @@ const htmlSrc = `
       const messenger = new Penpal.WindowMessenger({
         remoteWindow: window.parent,
         allowedOrigins: ['*'],
-        log: Penpal.debug('Child')
       });
       
       Penpal.connectToParent({
@@ -37,6 +36,7 @@ const htmlSrc = `
             return num1 * num2;
           }
         },
+        log: Penpal.debug('Child')
       });
     </script>
   </body>

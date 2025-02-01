@@ -5,6 +5,7 @@ import Reply from './Reply';
 import Messenger from './Messenger';
 import PenpalError from './PenpalError';
 import { getMethodAtMethodPath } from './methodSerialization';
+import { isCallMessage } from './guards';
 
 const createErrorReplyMessage = (
   callId: number,
@@ -33,11 +34,11 @@ export default (messenger: Messenger, methods: Methods) => {
       return;
     }
 
-    if (message.type !== MessageType.Call) {
+    if (!isCallMessage(message)) {
       return;
     }
 
-    const { methodPath, args, id } = message;
+    const { methodPath, args, id: callId } = message;
     let replyMessage: ReplyMessage;
     let transferables: Transferable[] | undefined;
 
@@ -60,12 +61,12 @@ export default (messenger: Messenger, methods: Methods) => {
 
       replyMessage = {
         type: MessageType.Reply,
-        callId: id,
+        callId,
         value,
       };
     } catch (error) {
       replyMessage = createErrorReplyMessage(
-        id,
+        callId,
         error instanceof Error
           ? error
           : new Error(error === undefined ? error : String(error))
@@ -86,7 +87,7 @@ export default (messenger: Messenger, methods: Methods) => {
       // cloneable (e.g., window), we want to ensure the receiver's promise
       // gets rejected.
       if ((error as Error).name === NativeErrorName.DataCloneError) {
-        messenger.sendMessage(createErrorReplyMessage(id, error as Error));
+        messenger.sendMessage(createErrorReplyMessage(callId, error as Error));
       }
       throw error;
     }

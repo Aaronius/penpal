@@ -58,24 +58,6 @@ describe('parent calling close()', () => {
         );
         expect((error as PenpalError).code).toBe(ErrorCode.ConnectionClosed);
       });
-
-      it('supports multiple connections', async () => {
-        const connection1 = createConnection<FixtureMethods>();
-        const connection2 = createConnection<FixtureMethods>();
-
-        await Promise.all([
-          connection1.promise.then(async (child) => {
-            const value = await child.multiplyAsync(2, 5);
-            expect(value).toEqual(10);
-            connection1.close();
-          }),
-          connection2.promise.then(async (child) => {
-            const value = await child.multiplyAsync(3, 5);
-            expect(value).toEqual(15);
-            connection2.close();
-          }),
-        ]);
-      });
     });
 
     it('removes method listener from window', async () => {

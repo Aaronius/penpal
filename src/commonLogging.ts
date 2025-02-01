@@ -15,5 +15,3 @@ export const logReceivedMessage = (
   const preamble = 'Received message';
   log?.(channel ? `${preamble} on channel ${channel}` : preamble, message);
 };
-
-export const LOG_MESSAGE_CONNECTION_CLOSED = 'Connection closed';

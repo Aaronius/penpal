@@ -19,11 +19,11 @@
       const messenger = new Penpal.WindowMessenger({
         remoteWindow: window.parent,
         allowedOrigins: [invalidParentOrigin],
-        log: Penpal.debug('Child'),
       });
 
       Penpal.connectToParent({
         messenger,
+        log: Penpal.debug('Child'),
       }).promise.catch((error) => {
         window.parent.postMessage(
           {

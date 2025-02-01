@@ -7,11 +7,13 @@ import {
   Methods,
   MethodPath,
   MethodProxy,
+  CallMessage,
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Messenger from './Messenger';
 import PenpalError from './PenpalError';
+import { isReplyMessage } from './guards';
 
 type ReplyHandler = {
   methodPath: MethodPath;
@@ -34,23 +36,25 @@ export default <TMethods extends Methods>(
   const replyHandlers = new Map<number, ReplyHandler>();
 
   const handleMessage = (message: PenpalMessage) => {
-    if (message.type !== MessageType.Reply) {
+    if (!isReplyMessage(message)) {
       return;
     }
 
-    const replyHandler = replyHandlers.get(message.callId);
+    const { callId, value, isError } = message;
+
+    const replyHandler = replyHandlers.get(callId);
 
     if (!replyHandler) {
       return;
     }
 
-    replyHandlers.delete(message.callId);
+    replyHandlers.delete(callId);
 
-    if (message.isError) {
-      const error = deserializeError(message.value);
+    if (isError) {
+      const error = deserializeError(value);
       replyHandler.reject(error);
     } else {
-      replyHandler.resolve(message.value);
+      replyHandler.resolve(value);
     }
   };
 
@@ -104,15 +108,13 @@ export default <TMethods extends Methods>(
         });
 
         try {
-          messenger.sendMessage(
-            {
-              type: MessageType.Call,
-              id: callId,
-              methodPath,
-              args: argsWithoutOptions,
-            },
-            transferables
-          );
+          const callMessage: CallMessage = {
+            type: MessageType.Call,
+            id: callId,
+            methodPath,
+            args: argsWithoutOptions,
+          };
+          messenger.sendMessage(callMessage, transferables);
         } catch (error) {
           reject(
             new PenpalError(

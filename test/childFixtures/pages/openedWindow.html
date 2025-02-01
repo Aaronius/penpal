@@ -16,11 +16,11 @@
       const messenger = new Penpal.WindowMessenger({
         remoteWindow: window.opener,
         allowedOrigins: ['*'],
-        log: Penpal.debug('Child'),
       });
 
       Penpal.connectToParent({
         messenger,
+        log: Penpal.debug('Child'),
       }).promise.then((parent) => {
         parentAPI = parent;
       });

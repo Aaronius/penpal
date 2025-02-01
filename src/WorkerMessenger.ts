@@ -1,6 +1,5 @@
 import { Log, PenpalMessage, PenpalMessageEnvelope } from './types';
-import Messenger, { MessageHandler } from './Messenger';
-import namespace from './namespace';
+import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import {
   isAckMessage,
   isPenpalMessageEnvelope,
@@ -9,11 +8,8 @@ import {
 } from './guards';
 import PenpalError from './PenpalError';
 import { ErrorCode } from './enums';
-import {
-  LOG_MESSAGE_CONNECTION_CLOSED,
-  logReceivedMessage,
-  logSendingMessage,
-} from './commonLogging';
+import { logReceivedMessage, logSendingMessage } from './commonLogging';
+import namespace from './namespace';
 
 // This is needed to resolve some conflict errors. There may be a better way.
 type MessageTarget = Pick<
@@ -29,16 +25,13 @@ type Options = {
    */
   worker: Worker | DedicatedWorkerGlobalScope;
   /**
-   * A string identifier that restricts communication to a specific channel.
-   * This is only useful when setting up multiple, parallel connections
-   * between a parent window and a child worker.
+   * A string identifier that disambiguates communication when establishing
+   * multiple, parallel connections for a single worker. This is uncommon.
+   * The same channel identifier must be specified on both `connectToChild` and
+   * `connectToParent` in order for the connection between the two to be
+   * established.
    */
   channel?: string;
-  /**
-   * A function for logging debug messages. When provided, messages will
-   * be logged.
-   */
-  log?: Log;
 };
 
 /**
@@ -51,7 +44,7 @@ class WorkerMessenger implements Messenger {
   private _port?: MessagePort;
   private _log?: Log;
 
-  constructor({ worker, channel, log }: Options) {
+  constructor({ worker, channel }: Options) {
     if (!worker) {
       throw new PenpalError(
         ErrorCode.InvalidArgument,
@@ -61,10 +54,12 @@ class WorkerMessenger implements Messenger {
 
     this._worker = worker;
     this._channel = channel;
-    this._log = log;
-
-    this._worker.addEventListener('message', this._handleMessage);
   }
+
+  initialize = ({ log }: InitializeOptions) => {
+    this._log = log;
+    this._worker.addEventListener('message', this._handleMessage);
+  };
 
   private _destroyPort = () => {
     this._port?.removeEventListener('message', this._handleMessageFromPort);
@@ -73,15 +68,11 @@ class WorkerMessenger implements Messenger {
   };
 
   private _handleMessage = (event: MessageEvent): void => {
-    let envelope: PenpalMessageEnvelope;
-
-    if (isPenpalMessageEnvelope(event.data)) {
-      envelope = event.data;
-    } else {
-      // The received event doesn't pertain to Penpal.
+    if (!isPenpalMessageEnvelope(event.data)) {
       return;
     }
 
+    const envelope: PenpalMessageEnvelope = event.data;
     const { channel, message } = envelope;
 
     if (channel !== this._channel) {
@@ -138,15 +129,8 @@ class WorkerMessenger implements Messenger {
 
     logSendingMessage(envelope, this._log);
 
-    if (isSynMessage(message)) {
+    if (isSynMessage(message) || isSynAckMessage(message)) {
       this._worker.postMessage(envelope, { transfer: transferables });
-      return;
-    }
-
-    if (isSynAckMessage(message)) {
-      this._worker.postMessage(envelope, {
-        transfer: transferables,
-      });
       return;
     }
 
@@ -184,7 +168,6 @@ class WorkerMessenger implements Messenger {
     this._worker.removeEventListener('message', this._handleMessage);
     this._destroyPort();
     this._messageCallbacks.clear();
-    this._log?.(LOG_MESSAGE_CONNECTION_CLOSED);
   };
 }
 

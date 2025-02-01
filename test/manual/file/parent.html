@@ -11,11 +11,11 @@
         const messenger = new Penpal.WindowMessenger({
           remoteWindow: iframe.contentWindow,
           remoteOrigins: ['*'],
-          log: Penpal.debug('Child'),
         });
 
         Penpal.connectToChild({
           messenger,
+          log: Penpal.debug('Child'),
         }).promise.then(function (child) {
           child.multiply(3, 2).then((result) => {
             const div = document.createElement('div');

@@ -14,8 +14,8 @@ export const isPenpalMessageEnvelope = (
   eventData: unknown
 ): eventData is PenpalMessageEnvelope => {
   return (
-    !!eventData &&
     typeof eventData === 'object' &&
+    eventData !== null &&
     // @ts-expect-error namespace isn't a known property
     eventData.namespace === namespace
   );
@@ -45,13 +45,4 @@ export const isReplyMessage = (
   message: PenpalMessage
 ): message is ReplyMessage => {
   return message.type === MessageType.Reply;
-};
-
-export const isWindow = (value: unknown): value is Window => {
-  // We can't use `value instanceof Window` because if the value is an iframe's
-  // content window or a window created by window.open(), the expression would
-  // return false because those windows are created in a different execution
-  // context. We'll check via duck typing instead.
-  // @ts-expect-error window is an unknown property
-  return value != null && value.window === value;
 };

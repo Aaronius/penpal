@@ -15,7 +15,6 @@ let channelBParent: RemoteMethodProxies<Pick<FixtureMethods, 'getChannel'>>;
 const channelBMessenger = new WorkerMessenger({
   worker: self,
   channel: 'B',
-  log: debug('Child Connection B'),
 });
 
 const channelBMethods = {
@@ -30,6 +29,7 @@ const channelBMethods = {
 connectToParent<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
   messenger: channelBMessenger,
   methods: channelBMethods,
+  log: debug('Child Connection B'),
 }).promise.then((parent) => {
   channelBParent = parent;
 });
@@ -42,7 +42,6 @@ let channelAParent: RemoteMethodProxies<Pick<
 const channelAMessenger = new WorkerMessenger({
   worker: self,
   channel: 'A',
-  log: debug('Child Connection A'),
 });
 
 const channelAMethods = {
@@ -57,6 +56,7 @@ const channelAMethods = {
 connectToParent<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
   messenger: channelAMessenger,
   methods: channelAMethods,
+  log: debug('Child Connection A'),
 }).promise.then((parent) => {
   channelAParent = parent;
 });
