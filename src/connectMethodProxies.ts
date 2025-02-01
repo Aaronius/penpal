@@ -37,7 +37,6 @@ export default <TMethods extends Methods>(
   log: Log | undefined
 ) => {
   let isClosed = false;
-
   const replyHandlers = new Map<number, ReplyHandler>();
 
   const handleMessage = (message: Message) => {
@@ -46,7 +45,6 @@ export default <TMethods extends Methods>(
     }
 
     const { callId, value, isError } = message;
-
     const replyHandler = replyHandlers.get(callId);
 
     if (!replyHandler) {
@@ -54,15 +52,13 @@ export default <TMethods extends Methods>(
     }
 
     replyHandlers.delete(callId);
-
     log?.(
       `Received ${formatMethodPath(replyHandler.methodPath)}() call`,
       message
     );
 
     if (isError) {
-      const error = deserializeError(value);
-      replyHandler.reject(error);
+      replyHandler.reject(deserializeError(value));
     } else {
       replyHandler.resolve(value);
     }
@@ -110,12 +106,7 @@ export default <TMethods extends Methods>(
             }, timeout)
           : undefined;
 
-        replyHandlers.set(callId, {
-          methodPath,
-          resolve,
-          reject,
-          timeoutId,
-        });
+        replyHandlers.set(callId, { methodPath, resolve, reject, timeoutId });
 
         try {
           const callMessage: CallMessage = {
@@ -124,7 +115,7 @@ export default <TMethods extends Methods>(
             methodPath,
             args: argsWithoutOptions,
           };
-          log?.(`Sending ${methodPath}() call`, callMessage);
+          log?.(`Sending ${formatMethodPath(methodPath)}() call`, callMessage);
           messenger.sendMessage(callMessage, transferables);
         } catch (error) {
           reject(
@@ -144,24 +135,22 @@ export default <TMethods extends Methods>(
   ) as RemoteMethodProxies<TMethods>;
 
   const close = () => {
-    {
-      isClosed = true;
-      messenger.removeMessageHandler(handleMessage);
+    isClosed = true;
+    messenger.removeMessageHandler(handleMessage);
 
-      for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {
-        clearTimeout(timeoutId);
-        reject(
-          new PenpalError(
-            ErrorCode.ConnectionClosed,
-            `Method call ${formatMethodPath(
-              methodPath
-            )}() cannot be resolved due to closed connection`
-          )
-        );
-      }
-
-      replyHandlers.clear();
+    for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {
+      clearTimeout(timeoutId);
+      reject(
+        new PenpalError(
+          ErrorCode.ConnectionClosed,
+          `Method call ${formatMethodPath(
+            methodPath
+          )}() cannot be resolved due to closed connection`
+        )
+      );
     }
+
+    replyHandlers.clear();
   };
 
   return {

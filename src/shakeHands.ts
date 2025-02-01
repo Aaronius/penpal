@@ -15,7 +15,6 @@ import connectCallHandler from './connectCallHandler';
 import connectMethodProxies from './connectMethodProxies';
 import { isAckMessage, isSynAckMessage, isSynMessage } from './guards';
 import getPromiseWithResolvers from './getPromiseWithResolvers';
-import startConnectionTimeout from './startConnectionTimeout';
 import { extractMethodPathsFromMethods } from './methodSerialization';
 
 type Options = {
@@ -48,7 +47,17 @@ const shakeHands = <TMethods extends Methods>({
     PenpalError
   >();
 
-  const stopConnectionTimeout = startConnectionTimeout(timeout, reject);
+  const timeoutId =
+    timeout !== undefined
+      ? setTimeout(() => {
+          reject(
+            new PenpalError(
+              ErrorCode.ConnectionTimeout,
+              `Connection timed out after ${timeout}ms`
+            )
+          );
+        }, timeout)
+      : undefined;
 
   const close = () => {
     for (const closeHandler of closeHandlers) {
@@ -75,7 +84,7 @@ const shakeHands = <TMethods extends Methods>({
 
     closeHandlers.push(closeMethodProxies);
 
-    stopConnectionTimeout();
+    clearTimeout(timeoutId);
     isComplete = true;
 
     resolve({
