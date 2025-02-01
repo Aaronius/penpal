@@ -31,7 +31,7 @@ type Options = {
   allowedOrigins?: (string | RegExp)[];
   /**
    * A string identifier that disambiguates communication when establishing
-   * multiple, parallel connections for a iframe. This is uncommon.
+   * multiple, parallel connections for a single iframe. This is uncommon.
    * The same channel identifier must be specified on both `connectToChild` and
    * `connectToParent` in order for the connection between the two to be
    * established.
@@ -161,8 +161,9 @@ class WindowMessenger implements Messenger {
     }
 
     if (isSynMessage(message)) {
-      // We destroy the port if one is already set, because it's possible a
-      // child is re-connecting and we'll receive a new port.
+      // If we receive a SYN message and already have a port, it means
+      // the child is re-connecting, in which case we'll receive a new port.
+      // For this reason, we always make sure we destroy the existing port
       this._destroyPort();
       this._concreteRemoteOrigin = event.origin;
     }

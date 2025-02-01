@@ -62,7 +62,7 @@ class WorkerMessenger implements Messenger {
   };
 
   private _destroyPort = () => {
-    this._port?.removeEventListener('message', this._handleMessageFromPort);
+    this._port?.removeEventListener('message', this._handleMessage);
     this._port?.close();
     this._port = undefined;
   };
@@ -81,6 +81,13 @@ class WorkerMessenger implements Messenger {
 
     logReceivedMessage(envelope, this._log);
 
+    if (isSynMessage(message)) {
+      // If we receive a SYN message and already have a port, it means
+      // the child is re-connecting, in which case we'll receive a new port.
+      // For this reason, we always make sure we destroy the existing port
+      this._destroyPort();
+    }
+
     if (isAckMessage(message)) {
       this._port = event.ports[0];
 
@@ -89,28 +96,9 @@ class WorkerMessenger implements Messenger {
         throw new Error('Handshake - No port received on ACK');
       }
 
-      this._port.addEventListener('message', this._handleMessageFromPort);
+      this._port.addEventListener('message', this._handleMessage);
       this._port.start();
     }
-
-    for (const callback of this._messageCallbacks) {
-      callback(message);
-    }
-  };
-
-  private _handleMessageFromPort = (event: MessageEvent): void => {
-    if (!isEnvelope(event.data)) {
-      return;
-    }
-
-    const envelope = event.data;
-    const { channel, message } = envelope;
-
-    if (channel !== this._channel) {
-      return;
-    }
-
-    logReceivedMessage(envelope, this._log);
 
     for (const callback of this._messageCallbacks) {
       callback(message);
