@@ -30,6 +30,20 @@ type HandshakeResult<TMethods extends Methods> = {
   close: () => void;
 };
 
+/**
+ * Attempts to establish communication with the remote via a handshake protocol.
+ * Typically, this proceeds as follows:
+ *
+ * Parent                  Child
+ *   |  <------- SYN ------- |
+ *   |  ----- SYN-ACK -----> |
+ *   |  <------- ACK ------- |
+ *
+ * However, the direction in which the handshake proceeds is dictated by the
+ * caller of this function via the `initiate` option.
+ *
+ * SYN-ACK and ACK messages contain the methods that the remote can call.
+ */
 const shakeHands = <TMethods extends Methods>({
   messenger,
   methods,

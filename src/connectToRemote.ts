@@ -19,8 +19,8 @@ type Options = {
    */
   timeout?: number;
   /**
-   * A function for logging debug messages. When provided, messages will
-   * be logged.
+   * A function for logging debug messages. Debug messages will only be
+   * logged when this is defined.
    */
   log?: Log;
 };
