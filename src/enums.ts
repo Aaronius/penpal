@@ -1,18 +1,18 @@
 export enum MessageType {
-  Call = 'call',
-  Reply = 'reply',
-  Syn = 'syn',
-  SynAck = 'synAck',
-  Ack = 'ack',
+  Call = 'CALL',
+  Reply = 'REPLY',
+  Syn = 'SYN',
+  SynAck = 'SYN_ACK',
+  Ack = 'ACK',
 }
 
 export enum ErrorCode {
-  ConnectionClosed = 'ConnectionClosed',
-  ConnectionTimeout = 'ConnectionTimeout',
-  MethodCallTimeout = 'MethodCallTimeout',
-  TransmissionFailed = 'TransmissionFailed',
-  InvalidArgument = 'InvalidArgument',
-  MethodNotFound = 'MethodNotFound',
+  ConnectionClosed = 'CONNECTION_CLOSED',
+  ConnectionTimeout = 'CONNECTION_TIMEOUT',
+  MethodCallTimeout = 'METHOD_CALL_TIMEOUT',
+  TransmissionFailed = 'TRANSMISSION_FAILED',
+  InvalidArgument = 'INVALID_ARGUMENT',
+  MethodNotFound = 'METHOD_NOT_FOUND',
 }
 
 export enum NativeErrorName {
