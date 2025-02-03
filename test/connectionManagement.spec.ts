@@ -291,7 +291,7 @@ describe('connection management', () => {
     });
   });
 
-  it('reconnects after child navigates to other page with different methods, but fails on method call mismatch', async () => {
+  it('reconnects after child navigates to other page with different methods', async () => {
     const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
     const messenger = new WindowMessenger({
@@ -313,6 +313,13 @@ describe('connection management', () => {
           isAckMessage(event.data.message)
         ) {
           window.removeEventListener('message', handleMessage);
+          try {
+            const result = await child.methodNotInGeneralPage();
+            expect(result).toBe('success');
+          } catch (error) {
+            reject(error);
+          }
+
           try {
             // This should fail because `multiply` is not a method exposed
             // by the new page.

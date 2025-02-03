@@ -9,7 +9,7 @@ import {
 import FixtureMethods from '../childFixtures/types/FixtureMethods';
 import { CHILD_SERVER } from '../constants';
 
-describe(`backward compatibility - communication between parent and child iframe`, () => {
+describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`, () => {
   afterEach(() => {
     jasmine.clock().uninstall();
   });

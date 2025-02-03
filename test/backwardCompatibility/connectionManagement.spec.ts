@@ -32,7 +32,7 @@ const expectNoSuccessfulConnection = (
   });
 };
 
-describe('backward compatibility - connection management', () => {
+describe('BACKWARD COMPATIBILITY: connection management', () => {
   afterEach(() => {
     jasmine.clock().uninstall();
   });
@@ -247,7 +247,7 @@ describe('backward compatibility - connection management', () => {
     });
   });
 
-  it('reconnects after child navigates to other page with different methods, but fails on method call mismatch', async () => {
+  it('reconnects after child navigates to other page with different methods', async () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
@@ -270,6 +270,13 @@ describe('backward compatibility - connection management', () => {
         ) {
           window.removeEventListener('message', handleMessage);
           try {
+            const result = await child.methodNotInGeneralPage();
+            expect(result).toBe('success');
+          } catch (error) {
+            reject(error);
+          }
+
+          try {
             // This should fail because `multiply` is not a method exposed
             // by the new page.
             await child.multiply(2, 4);
@@ -281,7 +288,9 @@ describe('backward compatibility - connection management', () => {
       };
 
       window.addEventListener('message', handleMessage);
-      child.navigate('/pages/methodNotInGeneralPage.html');
+      child.navigate(
+        '/pages/backwardCompatibility/methodNotInGeneralPage.html'
+      );
     });
   });
 

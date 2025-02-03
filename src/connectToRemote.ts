@@ -53,7 +53,7 @@ const connectToRemote = <TMethods extends Methods>({
   const promise = (async () => {
     try {
       messenger.initialize({ log });
-      const { remoteMethodProxies, close } = await shakeHands<TMethods>({
+      const { remoteProxy, close } = await shakeHands<TMethods>({
         messenger,
         methods,
         initiate: localName === 'child',
@@ -61,7 +61,7 @@ const connectToRemote = <TMethods extends Methods>({
         log,
       });
       connectionClosedHandlers.push(close);
-      return remoteMethodProxies;
+      return remoteProxy;
     } catch (error) {
       callCloseHandlers();
       throw error as PenpalError;

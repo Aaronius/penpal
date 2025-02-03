@@ -1,7 +1,7 @@
 import {
   connectToParent,
   WorkerMessenger,
-  RemoteMethodProxies,
+  RemoteProxy,
   debug,
 } from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
@@ -10,7 +10,7 @@ declare const self: DedicatedWorkerGlobalScope;
 
 console.log('worker origin', self.origin);
 
-let channelBParent: RemoteMethodProxies<Pick<FixtureMethods, 'getChannel'>>;
+let channelBParent: RemoteProxy<Pick<FixtureMethods, 'getChannel'>>;
 
 const channelBMessenger = new WorkerMessenger({
   worker: self,
@@ -34,7 +34,7 @@ connectToParent<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
   channelBParent = parent;
 });
 
-let channelAParent: RemoteMethodProxies<Pick<
+let channelAParent: RemoteProxy<Pick<
   FixtureMethods,
   'getChannel' | 'getChannelFromParent'
 >>;

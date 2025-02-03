@@ -1,5 +1,6 @@
-import { MethodPath, MethodProxy, Methods } from './types';
+import { MethodPath, Methods } from './types';
 
+// TODO: Used for backward-compatibility. Remove in next major version.
 /**
  * Given an object of (nested) keys to functions, extract paths to each function.
  *
@@ -37,51 +38,6 @@ export const extractMethodPathsFromMethods = (
   }
 
   return methodPaths;
-};
-
-/**
- * Given method paths (arrays of path segments), generates an object that
- * follows the method path structures and creates proxy methods at each method
- * path.
- *
- * @example
- * Given this MethodPath[]
- * [
- *   ['one', 'two'],
- *   ['three']
- * ]
- *
- * the extracted Methods would be:
- * {
- *   one: {
- *     two: <proxy method>
- *   }
- *   three: <proxy method>
- * }
- */
-export const buildProxyMethodsFromMethodPaths = (
-  methodPaths: MethodPath[],
-  createMethodProxy: (methodPath: MethodPath) => MethodProxy
-) => {
-  const result: Methods = {};
-
-  for (const methodPath of methodPaths) {
-    const finalPathSegmentIndex = methodPath.length - 1;
-    let currentLevel = result;
-
-    for (const [index, pathSegment] of methodPath.entries()) {
-      if (index === finalPathSegmentIndex) {
-        currentLevel[pathSegment] = createMethodProxy(methodPath);
-      } else {
-        if (!currentLevel[pathSegment]) {
-          currentLevel[pathSegment] = {};
-        }
-        currentLevel = currentLevel[pathSegment] as Methods;
-      }
-    }
-  }
-
-  return result;
 };
 
 export const getMethodAtMethodPath = (

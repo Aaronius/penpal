@@ -3,7 +3,7 @@ import {
   connectToChild,
   MethodCallOptions,
   WindowMessenger,
-  RemoteMethodProxies,
+  RemoteProxy,
   Reply,
 } from '../../src/index';
 
@@ -41,7 +41,7 @@ const connection = connectToChild<ChildMethods>({
 });
 
 const child = await connection.promise;
-assertType<RemoteMethodProxies<ChildMethods>>(child);
+assertType<RemoteProxy<ChildMethods>>(child);
 assertType<Promise<number>>(child.multiply(2, 3));
 assertType<Promise<number>>(child.multiplyWithPromisedValue(2, 3));
 assertType<Promise<number>>(child.multiply(2, 3, new MethodCallOptions()));

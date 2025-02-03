@@ -1,10 +1,9 @@
 import Messenger from './Messenger';
 import {
   AckMessage,
-  MethodPath,
   Methods,
   Message,
-  RemoteMethodProxies,
+  RemoteProxy,
   SynAckMessage,
   SynMessage,
   Log,
@@ -12,7 +11,7 @@ import {
 import { ErrorCode, MessageType } from './enums';
 import PenpalError from './PenpalError';
 import connectCallHandler from './connectCallHandler';
-import connectMethodProxies from './connectMethodProxies';
+import connectRemoteProxy from './connectRemoteProxy';
 import { isAckMessage, isSynAckMessage, isSynMessage } from './guards';
 import getPromiseWithResolvers from './getPromiseWithResolvers';
 import { extractMethodPathsFromMethods } from './methodSerialization';
@@ -26,7 +25,7 @@ type Options = {
 };
 
 type HandshakeResult<TMethods extends Methods> = {
-  remoteMethodProxies: RemoteMethodProxies<TMethods>;
+  remoteProxy: RemoteProxy<TMethods>;
   close: () => void;
 };
 
@@ -79,22 +78,18 @@ const shakeHands = <TMethods extends Methods>({
     }
   };
 
-  const connectCallHandlerAndMethodProxies = (
-    remoteMethodPaths: MethodPath[]
-  ) => {
+  const connectCallHandlerAndMethodProxies = () => {
     if (isComplete) {
       // If we get here, it means the remote is attempting to re-connect. While
-      // that's supported, Penpal does not support the remote exposing
-      // different methods than during the prior connection.
+      // that's supported, we don't need to run the rest of this function again.
       return;
     }
 
     closeHandlers.push(connectCallHandler(messenger, methods, log));
 
-    const {
-      remoteMethodProxies,
-      close: closeMethodProxies,
-    } = connectMethodProxies<TMethods>(messenger, remoteMethodPaths, log);
+    const { remoteProxy, close: closeMethodProxies } = connectRemoteProxy<
+      TMethods
+    >(messenger, log);
 
     closeHandlers.push(closeMethodProxies);
 
@@ -102,7 +97,7 @@ const shakeHands = <TMethods extends Methods>({
     isComplete = true;
 
     resolve({
-      remoteMethodProxies,
+      remoteProxy,
       close,
     });
   };
@@ -129,7 +124,6 @@ const shakeHands = <TMethods extends Methods>({
     log?.(`Received handshake SYN-ACK`, message);
     const ackMessage: AckMessage = {
       type: MessageType.Ack,
-      methodPaths,
     };
     log?.(`Sending handshake ACK`, ackMessage);
 
@@ -142,12 +136,12 @@ const shakeHands = <TMethods extends Methods>({
       return;
     }
 
-    connectCallHandlerAndMethodProxies(message.methodPaths);
+    connectCallHandlerAndMethodProxies();
   };
 
   const handleAckMessage = (message: AckMessage) => {
     log?.(`Received handshake ACK`, message);
-    connectCallHandlerAndMethodProxies(message.methodPaths);
+    connectCallHandlerAndMethodProxies();
   };
 
   const handleMessage = (message: Message) => {

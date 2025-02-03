@@ -2,12 +2,10 @@ import { MethodPath, Envelope, ReplyMessage, SerializedError } from './types';
 import namespace from './namespace';
 import { MessageType } from './enums';
 import { serializeError } from './errorSerialization';
-import {
-  isAckMessage,
-  isCallMessage,
-  isReplyMessage,
-  isSynAckMessage,
-} from './guards';
+import { isCallMessage, isReplyMessage, isSynAckMessage } from './guards';
+import PenpalBugError from './PenpalBugError';
+
+// TODO: This file is used for backward-compatibility. Remove in next major version.
 
 enum DeprecatedMessageType {
   Call = 'call',
@@ -92,22 +90,11 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
     };
   }
 
-  if (message.penpal === DeprecatedMessageType.SynAck) {
-    return {
-      namespace,
-      message: {
-        type: MessageType.SynAck,
-        methodPaths: message.methodNames.map(upgradeMethodPath),
-      },
-    };
-  }
-
   if (message.penpal === DeprecatedMessageType.Ack) {
     return {
       namespace,
       message: {
         type: MessageType.Ack,
-        methodPaths: message.methodNames.map(upgradeMethodPath),
       },
     };
   }
@@ -162,32 +149,17 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
     };
   }
 
-  throw new Error(
-    // @ts-expect-error This should never happen.
-    `Unrecognized message type ${message.penpal} on message`,
-    message
+  throw new PenpalBugError(
+    `Unexpected message to upgrade: ${JSON.stringify(message)}`
   );
 };
 
 export const downgradeEnvelope = (envelope: Envelope): DeprecatedMessage => {
   const { message } = envelope;
 
-  if (message.type === MessageType.Syn) {
-    return {
-      penpal: DeprecatedMessageType.Syn,
-    };
-  }
-
   if (isSynAckMessage(message)) {
     return {
       penpal: DeprecatedMessageType.SynAck,
-      methodNames: message.methodPaths.map(downgradeMethodPath),
-    };
-  }
-
-  if (isAckMessage(message)) {
-    return {
-      penpal: DeprecatedMessageType.Ack,
       methodNames: message.methodPaths.map(downgradeMethodPath),
     };
   }
@@ -220,9 +192,7 @@ export const downgradeEnvelope = (envelope: Envelope): DeprecatedMessage => {
     }
   }
 
-  throw new Error(
-    // @ts-expect-error This should never happen.
-    `Unrecognized message type ${message.type} on message`,
-    message
+  throw new PenpalBugError(
+    `Unexpected message to downgrade: ${JSON.stringify(message)}`
   );
 };

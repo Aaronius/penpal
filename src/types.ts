@@ -9,13 +9,13 @@ type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
  * An object representing methods exposed by the remote but that can be called
  * locally.
  */
-export type RemoteMethodProxies<TMethods extends Methods = Methods> = {
+export type RemoteProxy<TMethods extends Methods = Methods> = {
   [K in keyof TMethods]: TMethods[K] extends (...args: infer A) => infer R
     ? (
         ...args: [...A, MethodCallOptions?]
       ) => Promise<ExtractValueFromReply<Awaited<R>>>
     : TMethods[K] extends Methods
-    ? RemoteMethodProxies<TMethods[K]>
+    ? RemoteProxy<TMethods[K]>
     : never;
 };
 
@@ -26,7 +26,7 @@ export type Connection<TMethods extends Methods = Methods> = {
   /**
    * A promise which will be resolved once a connection has been established.
    */
-  promise: Promise<RemoteMethodProxies<TMethods>>;
+  promise: Promise<RemoteProxy<TMethods>>;
   /**
    * A method that, when called, will disconnect any communication.
    * You may call this even before a connection has been established.
@@ -49,8 +49,6 @@ export type Methods = {
  */
 export type MethodPath = string[];
 
-export type MethodProxy = (...args: unknown[]) => Promise<unknown>;
-
 export type SerializedError = {
   name: string;
   message: string;
@@ -64,12 +62,12 @@ export type SynMessage = {
 
 export type SynAckMessage = {
   type: MessageType.SynAck;
+  // TODO: Used for backward-compatibility. Remove in next major version.
   methodPaths: MethodPath[];
 };
 
 export type AckMessage = {
   type: MessageType.Ack;
-  methodPaths: MethodPath[];
 };
 
 export type CallMessage = {
@@ -100,10 +98,10 @@ export type Message =
   | CallMessage
   | ReplyMessage;
 
-export type Envelope = {
+export type Envelope<TMessage extends Message = Message> = {
   namespace: typeof namespace;
   channel?: string;
-  message: Message;
+  message: TMessage;
 };
 
 export type Log = (...args: unknown[]) => void;

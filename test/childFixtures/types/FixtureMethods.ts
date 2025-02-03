@@ -29,8 +29,8 @@ type FixtureMethods = {
     };
   };
   neverResolve(): Promise<void>;
-  ['with.period'](): string;
-  methodNotInGeneralPage: () => 'string';
+  ['with.period'](): 'success';
+  methodNotInGeneralPage: () => 'success';
 };
 
 export default FixtureMethods;

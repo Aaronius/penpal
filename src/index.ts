@@ -8,4 +8,4 @@ export { default as PenpalError } from './PenpalError';
 export { default as debug } from './debug';
 
 export { ErrorCode } from './enums';
-export { Connection, RemoteMethodProxies, Methods } from './types';
+export { Connection, RemoteProxy, Methods } from './types';
