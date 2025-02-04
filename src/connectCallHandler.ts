@@ -8,7 +8,7 @@ import { formatMethodPath, getMethodAtMethodPath } from './methodSerialization';
 import { isCallMessage } from './guards';
 
 const createErrorReplyMessage = (
-  callId: number,
+  callId: string,
   error: Error
 ): ReplyMessage => ({
   type: MessageType.Reply,

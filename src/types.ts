@@ -72,14 +72,14 @@ export type AckMessage = {
 
 export type CallMessage = {
   type: MessageType.Call;
-  id: number;
+  id: string;
   methodPath: MethodPath;
   args: unknown[];
 };
 
 export type ReplyMessage = {
   type: MessageType.Reply;
-  callId: number;
+  callId: string;
 } & (
   | {
       value: unknown;

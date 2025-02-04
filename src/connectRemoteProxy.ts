@@ -62,7 +62,7 @@ export default <TMethods extends Methods>(
   log: Log | undefined
 ) => {
   let isClosed = false;
-  const replyHandlers = new Map<number, ReplyHandler>();
+  const replyHandlers = new Map<string, ReplyHandler>();
 
   const handleMessage = (message: Message) => {
     if (!isReplyMessage(message)) {

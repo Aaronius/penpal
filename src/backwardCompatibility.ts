@@ -104,7 +104,8 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
       namespace,
       message: {
         type: MessageType.Call,
-        id: message.id,
+        // Actually converting the ID to a string would break communication.
+        id: (message.id as unknown) as string,
         methodPath: upgradeMethodPath(message.methodName),
         args: message.args,
       },
@@ -117,7 +118,8 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
     if (message.resolution === DeprecatedResolution.Fulfilled) {
       upgradedMessage = {
         type: MessageType.Reply,
-        callId: message.id,
+        // Actually converting the ID to a string would break communication.
+        callId: (message.id as unknown) as string,
         value: message.returnValue,
       };
     } else {
@@ -137,7 +139,8 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
 
       upgradedMessage = {
         type: MessageType.Reply,
-        callId: message.id,
+        // Actually converting the ID to a string would break communication.
+        callId: (message.id as unknown) as string,
         value: error,
         isError: true,
       };
@@ -167,7 +170,8 @@ export const downgradeEnvelope = (envelope: Envelope): DeprecatedMessage => {
   if (isCallMessage(message)) {
     return {
       penpal: DeprecatedMessageType.Call,
-      id: message.id,
+      // Actually converting the ID to a number would break communication.
+      id: (message.id as unknown) as number,
       methodName: downgradeMethodPath(message.methodPath),
       args: message.args,
     };
@@ -177,7 +181,8 @@ export const downgradeEnvelope = (envelope: Envelope): DeprecatedMessage => {
     if (message.isError) {
       return {
         penpal: DeprecatedMessageType.Reply,
-        id: message.callId,
+        // Actually converting the ID to a number would break communication.
+        id: (message.callId as unknown) as number,
         resolution: DeprecatedResolution.Rejected,
         returnValue: message.value,
         returnValueIsError: true,
@@ -185,7 +190,8 @@ export const downgradeEnvelope = (envelope: Envelope): DeprecatedMessage => {
     } else {
       return {
         penpal: DeprecatedMessageType.Reply,
-        id: message.callId,
+        // Actually converting the ID to a number would break communication.
+        id: (message.callId as unknown) as number,
         resolution: DeprecatedResolution.Fulfilled,
         returnValue: message.value,
       };
