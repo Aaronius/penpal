@@ -58,16 +58,17 @@ export type SerializedError = {
 
 export type SynMessage = {
   type: MessageType.Syn;
+  participantId: string;
 };
 
-export type SynAckMessage = {
-  type: MessageType.SynAck;
+export type Ack1Message = {
+  type: MessageType.Ack1;
   // TODO: Used for backward-compatibility. Remove in next major version.
   methodPaths: MethodPath[];
 };
 
-export type AckMessage = {
-  type: MessageType.Ack;
+export type Ack2Message = {
+  type: MessageType.Ack2;
 };
 
 export type CallMessage = {
@@ -93,8 +94,8 @@ export type ReplyMessage = {
 
 export type Message =
   | SynMessage
-  | SynAckMessage
-  | AckMessage
+  | Ack1Message
+  | Ack2Message
   | CallMessage
   | ReplyMessage;
 

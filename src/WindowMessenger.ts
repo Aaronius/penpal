@@ -6,9 +6,9 @@ import {
   upgradeMessage,
 } from './backwardCompatibility';
 import {
-  isAckMessage,
+  isAck2Message,
   isEnvelope,
-  isSynAckMessage,
+  isAck1Message,
   isSynMessage,
 } from './guards';
 import PenpalError from './PenpalError';
@@ -166,12 +166,12 @@ class WindowMessenger implements Messenger {
       this._concreteRemoteOrigin = event.origin;
     }
 
-    if (isSynAckMessage(message)) {
+    if (isAck1Message(message)) {
       this._concreteRemoteOrigin = event.origin;
     }
 
     if (
-      isAckMessage(message) &&
+      isAck2Message(message) &&
       // Previous versions of Penpal don't use MessagePorts so they wouldn't be
       // sending a MessagePort on the event. In that case, we instead do all
       // communication through the window rather than a port.
@@ -180,7 +180,7 @@ class WindowMessenger implements Messenger {
       this._port = event.ports[0];
 
       if (!this._port) {
-        throw new PenpalBugError('No port received on ACK');
+        throw new PenpalBugError('No port received on ACK2');
       }
 
       this._port.addEventListener('message', this._handleMessageFromPort);
@@ -229,7 +229,7 @@ class WindowMessenger implements Messenger {
     }
 
     if (
-      isSynAckMessage(message) ||
+      isAck1Message(message) ||
       // If the child is using a previous version of Penpal, we need to
       // downgrade the message and send it through the window rather than
       // the port because older versions of Penpal don't use MessagePorts.
@@ -246,7 +246,7 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    if (isAckMessage(message)) {
+    if (isAck2Message(message)) {
       const { port1, port2 } = new MessageChannel();
       this._port = port1;
       port1.addEventListener('message', this._handleMessageFromPort);

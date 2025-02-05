@@ -33,8 +33,7 @@ const connectToRemote = <TMethods extends Methods>({
   methods = {},
   timeout,
   log,
-  localName,
-}: Options & { localName: 'parent' | 'child' }): Connection<TMethods> => {
+}: Options): Connection<TMethods> => {
   if (!messenger) {
     throw new PenpalError(
       ErrorCode.InvalidArgument,
@@ -56,7 +55,6 @@ const connectToRemote = <TMethods extends Methods>({
       const { remoteProxy, close } = await shakeHands<TMethods>({
         messenger,
         methods,
-        initiate: localName === 'child',
         timeout,
         log,
       });
@@ -79,20 +77,6 @@ const connectToRemote = <TMethods extends Methods>({
   };
 };
 
-export const connectToChild = <TMethods extends Methods = Methods>(
-  options: Options
-) => {
-  return connectToRemote<TMethods>({
-    ...options,
-    localName: 'parent',
-  });
-};
+export const connectToChild = connectToRemote;
 
-export const connectToParent = <TMethods extends Methods = Methods>(
-  options: Options
-) => {
-  return connectToRemote<TMethods>({
-    ...options,
-    localName: 'child',
-  });
-};
+export const connectToParent = connectToRemote;

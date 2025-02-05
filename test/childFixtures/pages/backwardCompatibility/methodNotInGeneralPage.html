@@ -24,6 +24,7 @@
       Penpal.connectToParent({
         methods: methods,
         parentOrigin: '*',
+        debug: true,
       }).promise.then(function (parent) {
         parentAPI = parent;
       });

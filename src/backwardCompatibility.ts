@@ -2,8 +2,10 @@ import { MethodPath, Envelope, ReplyMessage, SerializedError } from './types';
 import namespace from './namespace';
 import { MessageType } from './enums';
 import { serializeError } from './errorSerialization';
-import { isCallMessage, isReplyMessage, isSynAckMessage } from './guards';
+import { isCallMessage, isReplyMessage, isAck1Message } from './guards';
 import PenpalBugError from './PenpalBugError';
+
+export const DEPRECATED_PENPAL_PARTICIPANT_ID = 'deprecated-penpal';
 
 // TODO: This file is used for backward-compatibility. Remove in next major version.
 
@@ -86,6 +88,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
       namespace,
       message: {
         type: MessageType.Syn,
+        participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
       },
     };
   }
@@ -94,7 +97,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
     return {
       namespace,
       message: {
-        type: MessageType.Ack,
+        type: MessageType.Ack2,
       },
     };
   }
@@ -160,7 +163,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
 export const downgradeEnvelope = (envelope: Envelope): DeprecatedMessage => {
   const { message } = envelope;
 
-  if (isSynAckMessage(message)) {
+  if (isAck1Message(message)) {
     return {
       penpal: DeprecatedMessageType.SynAck,
       methodNames: message.methodPaths.map(downgradeMethodPath),

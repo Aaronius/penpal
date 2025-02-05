@@ -45,7 +45,7 @@
           );
         },
         addUsingParent() {
-          parentAPI.add(3, 6).then(function (value) {
+          return parentAPI.add(3, 6).then(function (value) {
             parentReturnValue = value;
           });
         },

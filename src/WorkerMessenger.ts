@@ -1,9 +1,9 @@
 import { Message, Envelope } from './types';
 import Messenger, { MessageHandler } from './Messenger';
 import {
-  isAckMessage,
+  isAck2Message,
   isEnvelope,
-  isSynAckMessage,
+  isAck1Message,
   isSynMessage,
 } from './guards';
 import PenpalError from './PenpalError';
@@ -84,11 +84,11 @@ class WorkerMessenger implements Messenger {
       this._destroyPort();
     }
 
-    if (isAckMessage(message)) {
+    if (isAck2Message(message)) {
       this._port = event.ports[0];
 
       if (!this._port) {
-        throw new PenpalBugError('No port received on ACK');
+        throw new PenpalBugError('No port received on ACK2');
       }
 
       this._port.addEventListener('message', this._handleMessage);
@@ -107,12 +107,12 @@ class WorkerMessenger implements Messenger {
       message,
     };
 
-    if (isSynMessage(message) || isSynAckMessage(message)) {
+    if (isSynMessage(message) || isAck1Message(message)) {
       this._worker.postMessage(envelope, { transfer: transferables });
       return;
     }
 
-    if (isAckMessage(message)) {
+    if (isAck2Message(message)) {
       const { port1, port2 } = new MessageChannel();
       this._port = port1;
       port1.addEventListener('message', this._handleMessage);

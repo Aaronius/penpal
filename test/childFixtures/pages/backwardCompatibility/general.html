@@ -26,7 +26,7 @@
           });
         },
         addUsingParent: function () {
-          parentAPI.add(3, 6).then(function (value) {
+          return parentAPI.add(3, 6).then(function (value) {
             parentReturnValue = value;
           });
         },
@@ -73,6 +73,7 @@
 
       Penpal.connectToParent({
         methods: methods,
+        debug: true,
       }).promise.then(function (parent) {
         parentAPI = parent;
       });

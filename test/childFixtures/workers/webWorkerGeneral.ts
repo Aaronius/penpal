@@ -48,7 +48,7 @@ const methods: Omit<
     return Promise.resolve(new Reply(Promise.resolve(num1 * num2)));
   },
   addUsingParent() {
-    parentAPI.add(3, 6).then(function (value: number) {
+    return parentAPI.add(3, 6).then(function (value: number) {
       parentReturnValue = value;
     });
   },

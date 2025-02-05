@@ -1,11 +1,11 @@
 import namespace from './namespace';
 import {
-  AckMessage,
+  Ack2Message,
   CallMessage,
   Message,
   Envelope,
   ReplyMessage,
-  SynAckMessage,
+  Ack1Message,
   SynMessage,
 } from './types';
 import { MessageType } from './enums';
@@ -23,12 +23,12 @@ export const isSynMessage = (message: Message): message is SynMessage => {
   return message.type === MessageType.Syn;
 };
 
-export const isSynAckMessage = (message: Message): message is SynAckMessage => {
-  return message.type === MessageType.SynAck;
+export const isAck1Message = (message: Message): message is Ack1Message => {
+  return message.type === MessageType.Ack1;
 };
 
-export const isAckMessage = (message: Message): message is AckMessage => {
-  return message.type === MessageType.Ack;
+export const isAck2Message = (message: Message): message is Ack2Message => {
+  return message.type === MessageType.Ack2;
 };
 
 export const isCallMessage = (message: Message): message is CallMessage => {

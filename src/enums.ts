@@ -2,8 +2,8 @@ export enum MessageType {
   Call = 'CALL',
   Reply = 'REPLY',
   Syn = 'SYN',
-  SynAck = 'SYN_ACK',
-  Ack = 'ACK',
+  Ack1 = 'ACK1',
+  Ack2 = 'ACK2',
 }
 
 export enum ErrorCode {

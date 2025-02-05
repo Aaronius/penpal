@@ -14,7 +14,7 @@ import {
 } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import WorkerMessenger from '../src/WorkerMessenger';
-import { isAckMessage, isEnvelope } from '../src/guards';
+import { isAck2Message, isEnvelope, isAck1Message } from '../src/guards';
 
 describe('connection management', () => {
   afterEach(() => {
@@ -275,7 +275,8 @@ describe('connection management', () => {
         if (
           event.source === iframe.contentWindow &&
           isEnvelope(event.data) &&
-          isAckMessage(event.data.message)
+          (isAck1Message(event.data.message) ||
+            isAck2Message(event.data.message))
         ) {
           window.removeEventListener('message', handleMessage);
           child.multiply(2, 4).then((value: number) => {
@@ -310,7 +311,8 @@ describe('connection management', () => {
         if (
           event.source === iframe.contentWindow &&
           isEnvelope(event.data) &&
-          isAckMessage(event.data.message)
+          (isAck1Message(event.data.message) ||
+            isAck2Message(event.data.message))
         ) {
           window.removeEventListener('message', handleMessage);
           try {

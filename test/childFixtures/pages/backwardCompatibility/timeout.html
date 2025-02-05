@@ -15,6 +15,7 @@
     <script>
       Penpal.connectToParent({
         timeout: 30,
+        debug: true,
       }).promise.then(function (parent) {
         setTimeout(function () {
           parent.reportStillConnected();

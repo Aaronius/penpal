@@ -1,10 +1,10 @@
 import Messenger from './Messenger';
 import {
-  AckMessage,
+  Ack2Message,
   Methods,
   Message,
   RemoteProxy,
-  SynAckMessage,
+  Ack1Message,
   SynMessage,
   Log,
 } from './types';
@@ -12,14 +12,15 @@ import { ErrorCode, MessageType } from './enums';
 import PenpalError from './PenpalError';
 import connectCallHandler from './connectCallHandler';
 import connectRemoteProxy from './connectRemoteProxy';
-import { isAckMessage, isSynAckMessage, isSynMessage } from './guards';
+import { isAck2Message, isAck1Message, isSynMessage } from './guards';
 import getPromiseWithResolvers from './getPromiseWithResolvers';
 import { extractMethodPathsFromMethods } from './methodSerialization';
+import generateId from './generateId';
+import { DEPRECATED_PENPAL_PARTICIPANT_ID } from './backwardCompatibility';
 
 type Options = {
   messenger: Messenger;
   methods: Methods;
-  initiate: boolean;
   timeout: number | undefined;
   log: Log | undefined;
 };
@@ -31,25 +32,74 @@ type HandshakeResult<TMethods extends Methods> = {
 
 /**
  * Attempts to establish communication with the remote via a handshake protocol.
- * Typically, this proceeds as follows:
+ * The handshake protocol fulfills a few requirements:
  *
- * Parent                  Child
- *   |  <------- SYN ------- |
- *   |  ----- SYN-ACK -----> |
- *   |  <------- ACK ------- |
+ * 1. One participant in the handshake may not be available when the other
+ *    participant starts the handshake. For example, a document inside an iframe
+ *    may not be loaded when the parent window starts a handshake.
+ * 2. While #1 could be solved by having the consumer of Penpal specify which
+ *    participant should initiate the handshake, we'd rather avoid this
+ *    unnecessary cognitive load.
+ * 3. While #1 could be solved by having the consumer of Penpal specify which
+ *    participant is the "parent" or "child" and then having Penpal assume
+ *    the child should initiate the handshake, we'd rather avoid parent-child
+ *    terminology since Penpal can support communication between two
+ *    participants where neither would be considered a parent nor child. It may
+ *    also be too presumptive that the child should always initiate the
+ *    handshake.
+ * 4. For robustness, each participant must know that the other participant is
+ *    receiving its messages for the handshake to be considered complete.
+ * 5. The handshake should support a participant attempting to
+ *    re-establish the connection. This can occur, for example, if an end user
+ *    were to right-click within an iframe and click reload.
+ * 6. The handshake should allow a Messenger to easily attach something to
+ *    a handshake message from one participant to the other unidirectionally
+ *    (rather than from both participants to each other).
+ *    This is important when a participant needs to be in charge of, for
+ *    example, creating a MessageChannel and sending one MessagePort from the
+ *    MessagePort pair to the other participant. If both participants attempted
+ *    to do this it could lead to confusion.
+ * 7. The handshake ideally shouldn't require sending handshake messages on an
+ *    interval (retrying until the other participant is ready to receive them).
+ *    Intervals can increase compute resources if the interval is too short
+ *    or increase latency if the interval is too long. While we could make this
+ *    configurable, it's additional mental load for the consumer. Additionally,
+ *    setInterval and setTimeout are not available within some contexts
+ *    (like AudioWorklet), where a consumer may like to use Penpal.
  *
- * However, the direction in which the handshake proceeds is dictated by the
- * caller of this function via the `initiate` option.
- *
- * SYN-ACK and ACK messages contain the methods that the remote can call.
+ * To accomplish these requirements, the handshake protocol is as follows:
+ * 1. Each participant generates a random participant ID.
+ * 2. As soon as possible, each participant sends a SYN message containing its
+ *    participant ID to the other participant.
+ * 3. When the SYN messages were sent, one of the participants may not have
+ *    been ready to receive the SYN message from the other. At least one
+ *    of the participant was ready, however, and should have received a SYN
+ *    message from the other participant. This participant(s) that did receive
+ *    the SYN message knows for sure that the other participant is now ready
+ *    to receive a SYN message, so it will send another SYN message in case
+ *    the other participant did not receive the first SYN message. This means
+ *    that one or both participants may end up sending two SYN messages instead
+ *    of just one.
+ * 4. Each participant now should have received at least one SYN message from
+ *    the other participant. Each participant compares their own ID with the
+ *    other participant's ID. Whichever participant has the higher ID
+ *    (using a simple string comparison) is considered the handshake leader
+ *    and will send an ACK1 message to the other participant.
+ * 5. At this point, the handshake leader does not know whether the other
+ *    participant is actually receiving messages. The participant receiving
+ *    the ACK1 message will respond with an ACK2, informing the handshake
+ *    leader that it is indeed receiving messages.
+ * 6. At this point, both participants know the other is receiving messages
+ *    and the handshake is complete.
  */
 const shakeHands = <TMethods extends Methods>({
   messenger,
   methods,
-  initiate,
   timeout,
   log,
 }: Options): Promise<HandshakeResult<TMethods>> => {
+  const participantId = generateId();
+  let remoteParticipantId: string;
   const closeHandlers: (() => void)[] = [];
   let isComplete = false;
 
@@ -102,68 +152,10 @@ const shakeHands = <TMethods extends Methods>({
     });
   };
 
-  const handleSynMessage = (message: SynMessage) => {
-    log?.(`Received handshake SYN`, message);
-    const synAckMessage: SynAckMessage = {
-      type: MessageType.SynAck,
-      methodPaths,
-    };
-    log?.(`Sending handshake SYN-ACK`, synAckMessage);
-
-    try {
-      messenger.sendMessage(synAckMessage);
-    } catch (error) {
-      reject(
-        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
-      );
-      return;
-    }
-  };
-
-  const handleSynAckMessage = (message: SynAckMessage) => {
-    log?.(`Received handshake SYN-ACK`, message);
-    const ackMessage: AckMessage = {
-      type: MessageType.Ack,
-    };
-    log?.(`Sending handshake ACK`, ackMessage);
-
-    try {
-      messenger.sendMessage(ackMessage);
-    } catch (error) {
-      reject(
-        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
-      );
-      return;
-    }
-
-    connectCallHandlerAndMethodProxies();
-  };
-
-  const handleAckMessage = (message: AckMessage) => {
-    log?.(`Received handshake ACK`, message);
-    connectCallHandlerAndMethodProxies();
-  };
-
-  const handleMessage = (message: Message) => {
-    if (isSynMessage(message)) {
-      handleSynMessage(message);
-    }
-
-    if (isSynAckMessage(message)) {
-      handleSynAckMessage(message);
-    }
-
-    if (isAckMessage(message)) {
-      handleAckMessage(message);
-    }
-  };
-
-  messenger.addMessageHandler(handleMessage);
-  closeHandlers.push(() => messenger.removeMessageHandler(handleMessage));
-
-  if (initiate) {
+  const sendSynMessage = () => {
     const synMessage: SynMessage = {
       type: MessageType.Syn,
+      participantId: participantId,
     };
     log?.(`Sending handshake SYN`, synMessage);
 
@@ -174,7 +166,92 @@ const shakeHands = <TMethods extends Methods>({
         new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
       );
     }
-  }
+  };
+
+  const handleSynMessage = (message: SynMessage) => {
+    log?.(`Received handshake SYN`, message);
+
+    if (
+      message.participantId === remoteParticipantId &&
+      // TODO: Used for backward-compatibility. Remove in next major version.
+      remoteParticipantId !== DEPRECATED_PENPAL_PARTICIPANT_ID
+    ) {
+      return;
+    }
+
+    remoteParticipantId = message.participantId;
+
+    // We send another SYN message in case the other participant was not ready
+    // when we sent the first SYN message.
+    sendSynMessage();
+
+    const isHandshakeLeader =
+      participantId > remoteParticipantId ||
+      // TODO: Used for backward-compatibility. Remove in next major version.
+      remoteParticipantId === DEPRECATED_PENPAL_PARTICIPANT_ID;
+
+    if (!isHandshakeLeader) {
+      return;
+    }
+
+    const ack1Message: Ack1Message = {
+      type: MessageType.Ack1,
+      methodPaths,
+    };
+    log?.(`Sending handshake ACK1`, ack1Message);
+
+    try {
+      messenger.sendMessage(ack1Message);
+    } catch (error) {
+      reject(
+        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
+      );
+      return;
+    }
+  };
+
+  const handleAck1Message = (message: Ack1Message) => {
+    log?.(`Received handshake ACK1`, message);
+    const ack2Message: Ack2Message = {
+      type: MessageType.Ack2,
+    };
+    log?.(`Sending handshake ACK2`, ack2Message);
+
+    try {
+      messenger.sendMessage(ack2Message);
+    } catch (error) {
+      reject(
+        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
+      );
+      return;
+    }
+
+    connectCallHandlerAndMethodProxies();
+  };
+
+  const handleAck2Message = (message: Ack2Message) => {
+    log?.(`Received handshake ACK2`, message);
+    connectCallHandlerAndMethodProxies();
+  };
+
+  const handleMessage = (message: Message) => {
+    if (isSynMessage(message)) {
+      handleSynMessage(message);
+    }
+
+    if (isAck1Message(message)) {
+      handleAck1Message(message);
+    }
+
+    if (isAck2Message(message)) {
+      handleAck2Message(message);
+    }
+  };
+
+  messenger.addMessageHandler(handleMessage);
+  closeHandlers.push(() => messenger.removeMessageHandler(handleMessage));
+
+  sendSynMessage();
 
   return promise;
 };

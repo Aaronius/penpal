@@ -15,6 +15,7 @@
     <script>
       Penpal.connectToParent({
         parentOrigin: 'http://example.com',
+        debug: true,
       }).promise.then(function (parent) {
         parentAPI = parent;
       });
