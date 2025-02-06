@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head> </head>
+  <body>
+    <h1>WebSocket Example</h1>
+    <input id="messageInput" type="text" placeholder="Type a message" />
+    <button id="sendButton">Send</button>
+    <pre id="messages"></pre>
+    <script>
+      const ws = new WebSocket(`ws://localhost:9000`);
+      ws.addEventListener('open', () => {
+        console.log('Connected to server');
+      });
+
+      ws.addEventListener('message', (event) => {
+        document.getElementById('messages').textContent += event.data + '\n';
+      });
+
+      ws.addEventListener('close', () => {
+        console.log('Disconnected from server');
+      });
+
+      ws.addEventListener('error', (event) => {
+        console.error('WebSocket error:', event);
+      });
+
+      document.getElementById('sendButton').addEventListener('click', () => {
+        const input = document.getElementById('messageInput');
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(input.value);
+          input.value = '';
+        } else {
+          console.warn('WebSocket is not open');
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -7,6 +7,7 @@ import serveStatic from 'serve-static';
 import * as rollup from 'rollup';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { WebSocketServer } from 'ws';
 import config from '../rollup.config.js';
 
 const args = process.argv.slice(2); // Exclude `node` and script path
@@ -17,7 +18,7 @@ const ports = [9000, 9001];
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const serveChildViews = () => {
+const serve = () => {
   const app = connect()
     .use(serveStatic('dist'))
     .use(serveStatic('test/childFixtures'))
@@ -26,7 +27,20 @@ const serveChildViews = () => {
     });
 
   for (const port of ports) {
-    createServer(app).listen(port);
+    const server = createServer(app).listen(port);
+    const wss = new WebSocketServer({ server });
+    wss.on('connection', (ws) => {
+      console.log('Client connected');
+
+      ws.on('message', (message) => {
+        console.log(`Received: ${message}`);
+        ws.send(`Echo: ${message}`);
+      });
+
+      ws.on('close', () => {
+        console.log('Client disconnected');
+      });
+    });
   }
 };
 
@@ -55,5 +69,5 @@ const build = () => {
   });
 };
 
-serveChildViews();
+serve();
 build();
