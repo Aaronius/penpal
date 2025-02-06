@@ -92,12 +92,17 @@ export type ReplyMessage = {
     }
 );
 
+export type CloseMessage = {
+  type: MessageType.Close;
+};
+
 export type Message =
   | SynMessage
   | Ack1Message
   | Ack2Message
   | CallMessage
-  | ReplyMessage;
+  | ReplyMessage
+  | CloseMessage;
 
 export type Envelope<TMessage extends Message = Message> = {
   namespace: typeof namespace;

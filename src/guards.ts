@@ -7,6 +7,7 @@ import {
   ReplyMessage,
   Ack1Message,
   SynMessage,
+  CloseMessage,
 } from './types';
 import { MessageType } from './enums';
 
@@ -37,4 +38,8 @@ export const isCallMessage = (message: Message): message is CallMessage => {
 
 export const isReplyMessage = (message: Message): message is ReplyMessage => {
   return message.type === MessageType.Reply;
+};
+
+export const isCloseMessage = (message: Message): message is CloseMessage => {
+  return message.type === MessageType.Close;
 };

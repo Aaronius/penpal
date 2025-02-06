@@ -292,6 +292,37 @@ describe('connection management', () => {
     });
   });
 
+  it('closes other side of connection when connection is closed', async () => {
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
+
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      allowedOrigins: [CHILD_SERVER],
+    });
+
+    const connection = connectToChild<FixtureMethods>({
+      messenger,
+    });
+
+    await connection.promise;
+    connection.close();
+
+    return new Promise<void>((resolve) => {
+      window.addEventListener('message', (event) => {
+        if (
+          event.source === iframe.contentWindow &&
+          event.data.addUsingParentResultErrorCode
+        ) {
+          expect(event.data.addUsingParentResultErrorCode).toBe(
+            ErrorCode.ConnectionClosed
+          );
+          resolve();
+        }
+      });
+      iframe.contentWindow!.postMessage('addUsingParent', CHILD_SERVER);
+    });
+  });
+
   it('reconnects after child navigates to other page with different methods', async () => {
     const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 

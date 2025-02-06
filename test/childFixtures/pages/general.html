@@ -100,6 +100,21 @@
       }).promise.then((parent) => {
         parentAPI = parent;
       });
+
+      window.addEventListener('message', async (event) => {
+        if (event.data === 'addUsingParent') {
+          try {
+            const result = await parentAPI.add(3, 6);
+            window.parent.postMessage({ addUsingParentResult: result }, '*');
+          } catch (error) {
+            console.log(error);
+            window.parent.postMessage(
+              { addUsingParentResultErrorCode: error.code },
+              '*'
+            );
+          }
+        }
+      });
     </script>
   </body>
 </html>

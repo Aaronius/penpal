@@ -1,8 +1,10 @@
-import { Connection, Log, Methods } from './types';
+import { CloseMessage, Connection, Log, Methods } from './types';
 import PenpalError from './PenpalError';
 import Messenger from './Messenger';
-import { ErrorCode } from './enums';
+import { ErrorCode, MessageType } from './enums';
 import shakeHands from './shakeHands';
+import { isCloseMessage } from './guards';
+import once from './once';
 
 type Options = {
   /**
@@ -43,15 +45,38 @@ const connectToRemote = <TMethods extends Methods>({
 
   const connectionClosedHandlers: (() => void)[] = [messenger.close];
 
-  const callCloseHandlers = () => {
+  const closeConnection = once((notifyOtherParticipant: boolean) => {
+    if (notifyOtherParticipant) {
+      const closeMessage: CloseMessage = {
+        type: MessageType.Close,
+      };
+
+      try {
+        messenger.sendMessage(closeMessage);
+      } catch (_) {
+        // We do our best to notify the other participant of the connection, but
+        // if there's an error in doing so (e.g., maybe the handshake hasn't
+        // completed and a messenger can't send the message), it's probably not
+        // worth bothering the consumer with an error.
+      }
+    }
+
     for (const connectionClosedHandler of connectionClosedHandlers) {
       connectionClosedHandler();
     }
-  };
+
+    log?.('Connection closed');
+  });
 
   const promise = (async () => {
     try {
       messenger.initialize({ log });
+      messenger.addMessageHandler((message) => {
+        if (isCloseMessage(message)) {
+          closeConnection(false);
+        }
+      });
+
       const { remoteProxy, close } = await shakeHands<TMethods>({
         messenger,
         methods,
@@ -61,18 +86,17 @@ const connectToRemote = <TMethods extends Methods>({
       connectionClosedHandlers.push(close);
       return remoteProxy;
     } catch (error) {
-      callCloseHandlers();
+      closeConnection(true);
       throw error as PenpalError;
     }
   })();
 
   return {
     promise,
-    close() {
-      // Why we don't reject the connection promise in this case:
-      // https://github.com/Aaronius/penpal/issues/51
-      callCloseHandlers();
-      log?.('Connection closed');
+    // Why we don't reject the connection promise when consumer calls close():
+    // https://github.com/Aaronius/penpal/issues/51
+    close: () => {
+      closeConnection(true);
     },
   };
 };
