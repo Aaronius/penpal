@@ -295,9 +295,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
   });
 
   it('rejects promise if connectToChild times out', async () => {
-    const iframe = createAndAddIframe(
-      'http://www.fakeresponse.com/api/?sleep=10000'
-    );
+    const iframe = createAndAddIframe(`${CHILD_SERVER}/never-respond`);
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],

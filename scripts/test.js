@@ -20,7 +20,10 @@ const __dirname = path.dirname(__filename);
 const serveChildViews = () => {
   const app = connect()
     .use(serveStatic('dist'))
-    .use(serveStatic('test/childFixtures'));
+    .use(serveStatic('test/childFixtures'))
+    .use('/never-respond', () => {
+      // Intentionally never respond
+    });
 
   for (const port of ports) {
     createServer(app).listen(port);
