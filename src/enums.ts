@@ -13,6 +13,7 @@ export enum ErrorCode {
   InvalidArgument = 'INVALID_ARGUMENT',
   MethodCallTimeout = 'METHOD_CALL_TIMEOUT',
   MethodNotFound = 'METHOD_NOT_FOUND',
+  MessengerReused = 'MESSENGER_REUSED',
   TransmissionFailed = 'TRANSMISSION_FAILED',
 }
 

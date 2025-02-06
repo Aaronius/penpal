@@ -27,6 +27,8 @@ type Options = {
   log?: Log;
 };
 
+const usedMessengers = new WeakSet<Messenger>();
+
 /**
  * Attempts to establish communication with the remote.
  */
@@ -42,6 +44,15 @@ const connectToRemote = <TMethods extends Methods>({
       'messenger must be defined'
     );
   }
+
+  if (usedMessengers.has(messenger)) {
+    throw new PenpalError(
+      ErrorCode.MessengerReused,
+      'A messenger can only be used for a single connection'
+    );
+  }
+
+  usedMessengers.add(messenger);
 
   const connectionClosedHandlers: (() => void)[] = [messenger.close];
 

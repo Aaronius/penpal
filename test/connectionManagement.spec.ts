@@ -613,6 +613,31 @@ describe('connection management', () => {
     });
   }
 
+  it('throws error when messenger is re-used', async () => {
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
+
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      allowedOrigins: [CHILD_SERVER],
+    });
+
+    connectToChild<FixtureMethods>({
+      messenger,
+    });
+
+    try {
+      connectToChild<FixtureMethods>({
+        messenger,
+      });
+    } catch (error) {
+      expect(error).toEqual(jasmine.any(PenpalError));
+      expect((error as PenpalError).code).toBe(ErrorCode.MessengerReused);
+      return;
+    }
+
+    throw new Error('Expected error to be thrown');
+  });
+
   it('connects to window created with window.open()', async () => {
     const childWindow = window.open(getPageFixtureUrl('openedWindow'));
 
