@@ -1,4 +1,4 @@
-import { Message, Log } from './types';
+import { Message, Log } from '../types';
 
 export type MessageHandler = (message: Message) => void;
 

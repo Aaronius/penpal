@@ -1,6 +1,6 @@
 import { CloseMessage, Connection, Log, Methods } from './types';
 import PenpalError from './PenpalError';
-import Messenger from './Messenger';
+import Messenger from './messengers/Messenger';
 import { ErrorCode, MessageType } from './enums';
 import shakeHands from './shakeHands';
 import { isCloseMessage } from './guards';

@@ -1,15 +1,15 @@
-import { Message, Envelope } from './types';
+import { Message, Envelope } from '../types';
 import Messenger, { MessageHandler } from './Messenger';
 import {
   isAck2Message,
   isEnvelope,
   isAck1Message,
   isSynMessage,
-} from './guards';
-import PenpalError from './PenpalError';
-import { ErrorCode } from './enums';
-import namespace from './namespace';
-import PenpalBugError from './PenpalBugError';
+} from '../guards';
+import PenpalError from '../PenpalError';
+import { ErrorCode } from '../enums';
+import namespace from '../namespace';
+import PenpalBugError from '../PenpalBugError';
 
 // This is needed to resolve some conflict errors. There may be a better way.
 type MessageTarget = Pick<

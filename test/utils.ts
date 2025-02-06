@@ -7,7 +7,7 @@ import {
   WindowMessenger,
 } from '../src/index';
 import { CHILD_SERVER } from './constants';
-import WorkerMessenger from '../src/WorkerMessenger';
+import WorkerMessenger from '../src/messengers/WorkerMessenger';
 
 export const createAndAddIframe = (url: string) => {
   const iframe = document.createElement('iframe');

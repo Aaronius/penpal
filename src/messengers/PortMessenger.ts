@@ -1,9 +1,9 @@
-import { Message, Envelope } from './types';
+import { Message, Envelope } from '../types';
 import Messenger, { MessageHandler } from './Messenger';
-import { isEnvelope } from './guards';
-import PenpalError from './PenpalError';
-import { ErrorCode } from './enums';
-import namespace from './namespace';
+import { isEnvelope } from '../guards';
+import PenpalError from '../PenpalError';
+import { ErrorCode } from '../enums';
+import namespace from '../namespace';
 
 type Options = {
   /**

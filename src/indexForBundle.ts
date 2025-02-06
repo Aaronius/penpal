@@ -1,7 +1,7 @@
 import { connectToChild, connectToParent } from './connectToRemote';
-import WindowMessenger from './WindowMessenger';
-import WorkerMessenger from './WorkerMessenger';
-import PortMessenger from './PortMessenger';
+import WindowMessenger from './messengers/WindowMessenger';
+import WorkerMessenger from './messengers/WorkerMessenger';
+import PortMessenger from './messengers/PortMessenger';
 import MethodCallOptions from './MethodCallOptions';
 import Reply from './Reply';
 import debug from './debug';

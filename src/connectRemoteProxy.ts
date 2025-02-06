@@ -11,7 +11,7 @@ import {
 } from './types';
 import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
-import Messenger from './Messenger';
+import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
 import { isReplyMessage } from './guards';
 

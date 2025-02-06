@@ -2,7 +2,7 @@ import { serializeError } from './errorSerialization';
 import { Message, ReplyMessage, Methods, Log } from './types';
 import { ErrorCode, MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
-import Messenger from './Messenger';
+import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
 import { formatMethodPath, getMethodAtMethodPath } from './methodSerialization';
 import { isCallMessage } from './guards';

@@ -1,20 +1,20 @@
-import { Log, Message, Envelope } from './types';
+import { Log, Message, Envelope } from '../types';
 import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import {
   downgradeEnvelope,
   isDeprecatedMessage,
   upgradeMessage,
-} from './backwardCompatibility';
+} from '../backwardCompatibility';
 import {
   isAck2Message,
   isEnvelope,
   isAck1Message,
   isSynMessage,
-} from './guards';
-import PenpalError from './PenpalError';
-import { ErrorCode } from './enums';
-import namespace from './namespace';
-import PenpalBugError from './PenpalBugError';
+} from '../guards';
+import PenpalError from '../PenpalError';
+import { ErrorCode } from '../enums';
+import namespace from '../namespace';
+import PenpalBugError from '../PenpalBugError';
 
 type Options = {
   /**

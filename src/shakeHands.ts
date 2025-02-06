@@ -1,4 +1,4 @@
-import Messenger from './Messenger';
+import Messenger from './messengers/Messenger';
 import {
   Ack2Message,
   Methods,

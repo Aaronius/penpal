@@ -13,7 +13,7 @@ import {
   WindowMessenger,
 } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
-import WorkerMessenger from '../src/WorkerMessenger';
+import WorkerMessenger from '../src/messengers/WorkerMessenger';
 import { isAck2Message, isEnvelope, isAck1Message } from '../src/guards';
 
 describe('connection management', () => {
