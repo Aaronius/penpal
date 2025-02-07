@@ -14,6 +14,7 @@ import MethodCallOptions from './MethodCallOptions';
 import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
 import { isReplyMessage } from './guards';
+import namespace from './namespace';
 
 type ReplyHandler = {
   methodPath: MethodPath;
@@ -57,8 +58,9 @@ const createRemoteProxy = (
  * called, a "call" message will be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
  */
-export default <TMethods extends Methods>(
+const connectRemoteProxy = <TMethods extends Methods>(
   messenger: Messenger,
+  channel: string | undefined,
   log: Log | undefined
 ) => {
   let isClosed = false;
@@ -134,6 +136,8 @@ export default <TMethods extends Methods>(
 
       try {
         const callMessage: CallMessage = {
+          namespace,
+          channel,
           type: MessageType.Call,
           id: callId,
           methodPath,
@@ -176,3 +180,5 @@ export default <TMethods extends Methods>(
     close,
   };
 };
+
+export default connectRemoteProxy;

@@ -1,14 +1,8 @@
-import { Message, Envelope } from '../types';
-import Messenger, { MessageHandler } from './Messenger';
-import {
-  isAck2Message,
-  isEnvelope,
-  isAck1Message,
-  isSynMessage,
-} from '../guards';
+import { Message } from '../types';
+import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
+import { isAck2Message, isAck1Message, isSynMessage } from '../guards';
 import PenpalError from '../PenpalError';
 import { ErrorCode } from '../enums';
-import namespace from '../namespace';
 import PenpalBugError from '../PenpalBugError';
 
 // This is needed to resolve some conflict errors. There may be a better way.
@@ -24,14 +18,6 @@ type Options = {
    * typically be set to `self`.
    */
   worker: Worker | DedicatedWorkerGlobalScope;
-  /**
-   * A string identifier that disambiguates communication when establishing
-   * multiple, parallel connections for a single worker. This is uncommon.
-   * The same channel identifier must be specified on both `connectToChild` and
-   * `connectToParent` in order for the connection between the two to be
-   * established.
-   */
-  channel?: string;
 };
 
 /**
@@ -39,11 +25,11 @@ type Options = {
  */
 class WorkerMessenger implements Messenger {
   private _worker: MessageTarget;
-  private _channel?: string;
+  private _validateReceivedMessage?: (data: unknown) => data is Message;
   private _messageCallbacks = new Set<MessageHandler>();
   private _port?: MessagePort;
 
-  constructor({ worker, channel }: Options) {
+  constructor({ worker }: Options) {
     if (!worker) {
       throw new PenpalError(
         ErrorCode.InvalidArgument,
@@ -52,10 +38,10 @@ class WorkerMessenger implements Messenger {
     }
 
     this._worker = worker;
-    this._channel = channel;
   }
 
-  initialize = () => {
+  initialize = ({ validateReceivedMessage }: InitializeOptions) => {
+    this._validateReceivedMessage = validateReceivedMessage;
     this._worker.addEventListener('message', this._handleMessage);
   };
 
@@ -65,27 +51,20 @@ class WorkerMessenger implements Messenger {
     this._port = undefined;
   };
 
-  private _handleMessage = (event: MessageEvent): void => {
-    if (!isEnvelope(event.data)) {
+  private _handleMessage = ({ ports, data }: MessageEvent): void => {
+    if (!this._validateReceivedMessage?.(data)) {
       return;
     }
 
-    const envelope: Envelope = event.data;
-    const { channel, message } = envelope;
-
-    if (channel !== this._channel) {
-      return;
-    }
-
-    if (isSynMessage(message)) {
+    if (isSynMessage(data)) {
       // If we receive a SYN message and already have a port, it means
       // the child is re-connecting, in which case we'll receive a new port.
-      // For this reason, we always make sure we destroy the existing port
+      // For this reason, we always make sure we destroy the existing port.
       this._destroyPort();
     }
 
-    if (isAck2Message(message)) {
-      this._port = event.ports[0];
+    if (isAck2Message(data)) {
+      this._port = ports[0];
 
       if (!this._port) {
         throw new PenpalBugError('No port received on ACK2');
@@ -96,19 +75,13 @@ class WorkerMessenger implements Messenger {
     }
 
     for (const callback of this._messageCallbacks) {
-      callback(message);
+      callback(data);
     }
   };
 
   sendMessage = (message: Message, transferables?: Transferable[]): void => {
-    const envelope: Envelope = {
-      namespace,
-      channel: this._channel,
-      message,
-    };
-
     if (isSynMessage(message) || isAck1Message(message)) {
-      this._worker.postMessage(envelope, { transfer: transferables });
+      this._worker.postMessage(message, { transfer: transferables });
       return;
     }
 
@@ -118,19 +91,20 @@ class WorkerMessenger implements Messenger {
       port1.addEventListener('message', this._handleMessage);
       port1.start();
 
-      this._worker.postMessage(envelope, {
+      this._worker.postMessage(message, {
         transfer: [port2, ...(transferables || [])],
       });
       return;
     }
 
     if (this._port) {
-      this._port.postMessage(envelope, {
+      this._port.postMessage(message, {
         transfer: transferables,
       });
-    } else {
-      throw new PenpalBugError('Port is undefined');
+      return;
     }
+
+    throw new PenpalBugError('Port is undefined');
   };
 
   addMessageHandler = (callback: MessageHandler): void => {

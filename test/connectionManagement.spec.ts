@@ -14,7 +14,7 @@ import {
 } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import WorkerMessenger from '../src/messengers/WorkerMessenger';
-import { isAck2Message, isEnvelope, isAck1Message } from '../src/guards';
+import { isAck2Message, isAck1Message, isMessage } from '../src/guards';
 
 describe('connection management', () => {
   afterEach(() => {
@@ -274,9 +274,8 @@ describe('connection management', () => {
       const handleMessage = async (event: MessageEvent) => {
         if (
           event.source === iframe.contentWindow &&
-          isEnvelope(event.data) &&
-          (isAck1Message(event.data.message) ||
-            isAck2Message(event.data.message))
+          isMessage(event.data) &&
+          (isAck1Message(event.data) || isAck2Message(event.data))
         ) {
           window.removeEventListener('message', handleMessage);
           child.multiply(2, 4).then((value: number) => {
@@ -341,9 +340,8 @@ describe('connection management', () => {
       const handleMessage = async (event: MessageEvent) => {
         if (
           event.source === iframe.contentWindow &&
-          isEnvelope(event.data) &&
-          (isAck1Message(event.data.message) ||
-            isAck2Message(event.data.message))
+          isMessage(event.data) &&
+          (isAck1Message(event.data) || isAck2Message(event.data))
         ) {
           window.removeEventListener('message', handleMessage);
           try {
@@ -451,7 +449,6 @@ describe('connection management', () => {
     const channelAMessenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
-      channel: 'A',
     });
 
     // We try to connect and make method calls on both
@@ -460,6 +457,7 @@ describe('connection management', () => {
 
     const channelAConnection = connectToChild<FixtureMethods>({
       messenger: channelAMessenger,
+      channel: 'A',
       methods: {
         getChannel() {
           return 'A';
@@ -470,11 +468,11 @@ describe('connection management', () => {
     const channelBMessenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
-      channel: 'B',
     });
 
     const channelBConnection = connectToChild<FixtureMethods>({
       messenger: channelBMessenger,
+      channel: 'B',
       methods: {
         getChannel() {
           return 'B';
@@ -505,7 +503,6 @@ describe('connection management', () => {
 
     const channelAMessenger = new WorkerMessenger({
       worker,
-      channel: 'A',
     });
 
     // We try to connect and make method calls on both
@@ -514,6 +511,7 @@ describe('connection management', () => {
 
     const channelAConnection = connectToChild<FixtureMethods>({
       messenger: channelAMessenger,
+      channel: 'A',
       methods: {
         getChannel() {
           return 'A';
@@ -523,11 +521,11 @@ describe('connection management', () => {
 
     const channelBMessenger = new WorkerMessenger({
       worker,
-      channel: 'B',
     });
 
     const channelBConnection = connectToChild<FixtureMethods>({
       messenger: channelBMessenger,
+      channel: 'B',
       methods: {
         getChannel() {
           return 'B';

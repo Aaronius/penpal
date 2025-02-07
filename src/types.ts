@@ -56,43 +56,50 @@ export type SerializedError = {
   penpalCode?: ErrorCode;
 };
 
-export type SynMessage = {
+type MessageBase = {
+  namespace: typeof namespace;
+  // Purposely specifying undefined as a type rather than making this an
+  // optional property so we don't forget to set it anywhere.
+  channel: string | undefined;
+};
+
+export type SynMessage = MessageBase & {
   type: MessageType.Syn;
   participantId: string;
 };
 
-export type Ack1Message = {
+export type Ack1Message = MessageBase & {
   type: MessageType.Ack1;
   // TODO: Used for backward-compatibility. Remove in next major version.
   methodPaths: MethodPath[];
 };
 
-export type Ack2Message = {
+export type Ack2Message = MessageBase & {
   type: MessageType.Ack2;
 };
 
-export type CallMessage = {
+export type CallMessage = MessageBase & {
   type: MessageType.Call;
   id: string;
   methodPath: MethodPath;
   args: unknown[];
 };
 
-export type ReplyMessage = {
+export type ReplyMessage = MessageBase & {
   type: MessageType.Reply;
   callId: string;
 } & (
-  | {
-      value: unknown;
-      isError?: false;
-    }
-  | {
-      value: SerializedError;
-      isError: true;
-    }
-);
+    | {
+        value: unknown;
+        isError?: false;
+      }
+    | {
+        value: SerializedError;
+        isError: true;
+      }
+  );
 
-export type CloseMessage = {
+export type CloseMessage = MessageBase & {
   type: MessageType.Close;
 };
 
@@ -103,11 +110,5 @@ export type Message =
   | CallMessage
   | ReplyMessage
   | CloseMessage;
-
-export type Envelope<TMessage extends Message = Message> = {
-  namespace: typeof namespace;
-  channel?: string;
-  message: TMessage;
-};
 
 export type Log = (...args: unknown[]) => void;

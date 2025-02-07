@@ -4,6 +4,7 @@ export type MessageHandler = (message: Message) => void;
 
 export type InitializeOptions = {
   log?: Log;
+  validateReceivedMessage: (data: unknown) => data is Message;
 };
 
 interface Messenger {

@@ -1,8 +1,13 @@
-import { MethodPath, Envelope, ReplyMessage, SerializedError } from './types';
+import { Message, MethodPath, SerializedError } from './types';
 import namespace from './namespace';
 import { MessageType } from './enums';
 import { serializeError } from './errorSerialization';
-import { isCallMessage, isReplyMessage, isAck1Message } from './guards';
+import {
+  isCallMessage,
+  isReplyMessage,
+  isAck1Message,
+  isObject,
+} from './guards';
 import PenpalBugError from './PenpalBugError';
 
 export const DEPRECATED_PENPAL_PARTICIPANT_ID = 'deprecated-penpal';
@@ -75,51 +80,48 @@ export type DeprecatedMessage =
 export const isDeprecatedMessage = (
   data: unknown
 ): data is DeprecatedMessage => {
-  return !!data && typeof data === 'object' && 'penpal' in data;
+  return isObject(data) && 'penpal' in data;
 };
 
 const upgradeMethodPath = (methodPath: string): MethodPath =>
   methodPath.split('.');
 const downgradeMethodPath = (methodPath: MethodPath) => methodPath.join('.');
 
-export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
+export const upgradeMessage = (message: DeprecatedMessage): Message => {
   if (message.penpal === DeprecatedMessageType.Syn) {
     return {
       namespace,
-      message: {
-        type: MessageType.Syn,
-        participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
-      },
+      channel: undefined,
+      type: MessageType.Syn,
+      participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
     };
   }
 
   if (message.penpal === DeprecatedMessageType.Ack) {
     return {
       namespace,
-      message: {
-        type: MessageType.Ack2,
-      },
+      channel: undefined,
+      type: MessageType.Ack2,
     };
   }
 
   if (message.penpal === DeprecatedMessageType.Call) {
     return {
       namespace,
-      message: {
-        type: MessageType.Call,
-        // Actually converting the ID to a string would break communication.
-        id: (message.id as unknown) as string,
-        methodPath: upgradeMethodPath(message.methodName),
-        args: message.args,
-      },
+      channel: undefined,
+      type: MessageType.Call,
+      // Actually converting the ID to a string would break communication.
+      id: (message.id as unknown) as string,
+      methodPath: upgradeMethodPath(message.methodName),
+      args: message.args,
     };
   }
 
   if (message.penpal === DeprecatedMessageType.Reply) {
-    let upgradedMessage: ReplyMessage;
-
     if (message.resolution === DeprecatedResolution.Fulfilled) {
-      upgradedMessage = {
+      return {
+        namespace,
+        channel: undefined,
         type: MessageType.Reply,
         // Actually converting the ID to a string would break communication.
         callId: (message.id as unknown) as string,
@@ -140,7 +142,9 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
         );
       }
 
-      upgradedMessage = {
+      return {
+        namespace,
+        channel: undefined,
         type: MessageType.Reply,
         // Actually converting the ID to a string would break communication.
         callId: (message.id as unknown) as string,
@@ -148,11 +152,6 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
         isError: true,
       };
     }
-
-    return {
-      namespace,
-      message: upgradedMessage,
-    };
   }
 
   throw new PenpalBugError(
@@ -160,9 +159,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Envelope => {
   );
 };
 
-export const downgradeEnvelope = (envelope: Envelope): DeprecatedMessage => {
-  const { message } = envelope;
-
+export const downgradeMessage = (message: Message): DeprecatedMessage => {
   if (isAck1Message(message)) {
     return {
       penpal: DeprecatedMessageType.SynAck,

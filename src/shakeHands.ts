@@ -17,11 +17,13 @@ import getPromiseWithResolvers from './getPromiseWithResolvers';
 import { extractMethodPathsFromMethods } from './methodSerialization';
 import generateId from './generateId';
 import { DEPRECATED_PENPAL_PARTICIPANT_ID } from './backwardCompatibility';
+import namespace from './namespace';
 
 type Options = {
   messenger: Messenger;
   methods: Methods;
   timeout: number | undefined;
+  channel: string | undefined;
   log: Log | undefined;
 };
 
@@ -96,6 +98,7 @@ const shakeHands = <TMethods extends Methods>({
   messenger,
   methods,
   timeout,
+  channel,
   log,
 }: Options): Promise<HandshakeResult<TMethods>> => {
   const participantId = generateId();
@@ -135,11 +138,11 @@ const shakeHands = <TMethods extends Methods>({
       return;
     }
 
-    closeHandlers.push(connectCallHandler(messenger, methods, log));
+    closeHandlers.push(connectCallHandler(messenger, methods, channel, log));
 
     const { remoteProxy, close: closeMethodProxies } = connectRemoteProxy<
       TMethods
-    >(messenger, log);
+    >(messenger, channel, log);
 
     closeHandlers.push(closeMethodProxies);
 
@@ -154,7 +157,9 @@ const shakeHands = <TMethods extends Methods>({
 
   const sendSynMessage = () => {
     const synMessage: SynMessage = {
+      namespace,
       type: MessageType.Syn,
+      channel,
       participantId: participantId,
     };
     log?.(`Sending handshake SYN`, synMessage);
@@ -195,6 +200,8 @@ const shakeHands = <TMethods extends Methods>({
     }
 
     const ack1Message: Ack1Message = {
+      namespace,
+      channel,
       type: MessageType.Ack1,
       methodPaths,
     };
@@ -213,6 +220,8 @@ const shakeHands = <TMethods extends Methods>({
   const handleAck1Message = (message: Ack1Message) => {
     log?.(`Received handshake ACK1`, message);
     const ack2Message: Ack2Message = {
+      namespace,
+      channel,
       type: MessageType.Ack2,
     };
     log?.(`Sending handshake ACK2`, ack2Message);

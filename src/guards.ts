@@ -3,7 +3,6 @@ import {
   Ack2Message,
   CallMessage,
   Message,
-  Envelope,
   ReplyMessage,
   Ack1Message,
   SynMessage,
@@ -11,13 +10,14 @@ import {
 } from './types';
 import { MessageType } from './enums';
 
-export const isEnvelope = (value: unknown): value is Envelope => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    // @ts-expect-error namespace isn't a known property
-    value.namespace === namespace
-  );
+export const isObject = (
+  data: unknown
+): data is Record<string | number | symbol, unknown> => {
+  return typeof data === 'object' && data !== null;
+};
+
+export const isMessage = (data: unknown): data is Message => {
+  return isObject(data) && data.namespace === namespace;
 };
 
 export const isSynMessage = (message: Message): message is SynMessage => {

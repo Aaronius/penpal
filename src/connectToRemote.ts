@@ -1,10 +1,11 @@
-import { CloseMessage, Connection, Log, Methods } from './types';
+import { CloseMessage, Connection, Log, Message, Methods } from './types';
 import PenpalError from './PenpalError';
 import Messenger from './messengers/Messenger';
 import { ErrorCode, MessageType } from './enums';
 import shakeHands from './shakeHands';
-import { isCloseMessage } from './guards';
+import { isCloseMessage, isMessage } from './guards';
 import once from './once';
+import namespace from './namespace';
 
 type Options = {
   /**
@@ -21,6 +22,15 @@ type Options = {
    */
   timeout?: number;
   /**
+   * A string identifier that disambiguates communication when establishing
+   * multiple, parallel connections between two participants, for example,
+   * two windows, a window and a worker, etc. The same channel identifier
+   * (which is a string of your choosing) must be specified on both
+   * `connectToChild` and `connectToParent` in order for the connection
+   * between the two to be established.
+   */
+  channel?: string;
+  /**
    * A function for logging debug messages. Debug messages will only be
    * logged when this is defined.
    */
@@ -36,6 +46,7 @@ const connectToRemote = <TMethods extends Methods>({
   messenger,
   methods = {},
   timeout,
+  channel,
   log,
 }: Options): Connection<TMethods> => {
   if (!messenger) {
@@ -59,6 +70,8 @@ const connectToRemote = <TMethods extends Methods>({
   const closeConnection = once((notifyOtherParticipant: boolean) => {
     if (notifyOtherParticipant) {
       const closeMessage: CloseMessage = {
+        namespace,
+        channel,
         type: MessageType.Close,
       };
 
@@ -79,9 +92,13 @@ const connectToRemote = <TMethods extends Methods>({
     log?.('Connection closed');
   });
 
+  const validateReceivedMessage = (data: unknown): data is Message => {
+    return isMessage(data) && data.channel === channel;
+  };
+
   const promise = (async () => {
     try {
-      messenger.initialize({ log });
+      messenger.initialize({ log, validateReceivedMessage });
       messenger.addMessageHandler((message) => {
         if (isCloseMessage(message)) {
           closeConnection(false);
@@ -92,6 +109,7 @@ const connectToRemote = <TMethods extends Methods>({
         messenger,
         methods,
         timeout,
+        channel,
         log,
       });
       connectionClosedHandlers.push(close);

@@ -6,11 +6,15 @@ import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
 import { formatMethodPath, getMethodAtMethodPath } from './methodSerialization';
 import { isCallMessage } from './guards';
+import namespace from './namespace';
 
 const createErrorReplyMessage = (
+  channel: string | undefined,
   callId: string,
   error: Error
 ): ReplyMessage => ({
+  namespace,
+  channel,
   type: MessageType.Reply,
   callId,
   value: serializeError(error),
@@ -21,9 +25,10 @@ const createErrorReplyMessage = (
  * Listens for "call" messages from the remote, executes the corresponding method,
  * and responds with the return value or error.
  */
-export default (
+const connectCallHandler = (
   messenger: Messenger,
   methods: Methods,
+  channel: string | undefined,
   log: Log | undefined
 ) => {
   let isClosed = false;
@@ -66,12 +71,15 @@ export default (
       }
 
       replyMessage = {
+        namespace,
+        channel,
         type: MessageType.Reply,
         callId,
         value,
       };
     } catch (error) {
       replyMessage = createErrorReplyMessage(
+        channel,
         callId,
         error instanceof Error
           ? error
@@ -94,7 +102,7 @@ export default (
       // cloneable (e.g., window), we want to ensure the receiver's promise
       // gets rejected.
       if ((error as Error).name === NativeErrorName.DataCloneError) {
-        replyMessage = createErrorReplyMessage(callId, error as Error);
+        replyMessage = createErrorReplyMessage(channel, callId, error as Error);
         log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
         messenger.sendMessage(replyMessage);
       }
@@ -109,3 +117,5 @@ export default (
     messenger.removeMessageHandler(handleMessage);
   };
 };
+
+export default connectCallHandler;

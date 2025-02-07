@@ -1,19 +1,13 @@
-import { Log, Message, Envelope } from '../types';
+import { Log, Message } from '../types';
 import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import {
-  downgradeEnvelope,
+  downgradeMessage,
   isDeprecatedMessage,
   upgradeMessage,
 } from '../backwardCompatibility';
-import {
-  isAck2Message,
-  isEnvelope,
-  isAck1Message,
-  isSynMessage,
-} from '../guards';
+import { isAck2Message, isAck1Message, isSynMessage } from '../guards';
 import PenpalError from '../PenpalError';
 import { ErrorCode } from '../enums';
-import namespace from '../namespace';
 import PenpalBugError from '../PenpalBugError';
 
 type Options = {
@@ -29,14 +23,6 @@ type Options = {
    * doing so.
    */
   allowedOrigins?: (string | RegExp)[];
-  /**
-   * A string identifier that disambiguates communication when establishing
-   * multiple, parallel connections for a single iframe. This is uncommon.
-   * The same channel identifier must be specified on both `connectToChild` and
-   * `connectToParent` in order for the connection between the two to be
-   * established.
-   */
-  channel?: string;
 };
 
 /**
@@ -46,13 +32,14 @@ class WindowMessenger implements Messenger {
   private _remoteWindow: Window;
   private _allowedOrigins: [string | RegExp, ...(string | RegExp)[]];
   private _log?: Log;
-  private _channel?: string;
+  private _validateReceivedMessage?: (data: unknown) => data is Message;
   private _concreteRemoteOrigin?: string;
   private _messageCallbacks = new Set<(message: Message) => void>();
   private _port?: MessagePort;
+  // TODO: Used for backward-compatibility. Remove in next major version.
   private _isChildUsingDeprecatedProtocol = false;
 
-  constructor({ remoteWindow, allowedOrigins, channel }: Options) {
+  constructor({ remoteWindow, allowedOrigins }: Options) {
     if (!remoteWindow) {
       throw new PenpalError(
         ErrorCode.InvalidArgument,
@@ -61,15 +48,14 @@ class WindowMessenger implements Messenger {
     }
 
     this._remoteWindow = remoteWindow;
-    this._allowedOrigins =
-      allowedOrigins && allowedOrigins.length
-        ? (allowedOrigins as [string | RegExp, ...(string | RegExp)[]])
-        : [window.origin];
-    this._channel = channel;
+    this._allowedOrigins = allowedOrigins?.length
+      ? (allowedOrigins as [string | RegExp, ...(string | RegExp)[]])
+      : [window.origin];
   }
 
-  initialize = ({ log }: InitializeOptions) => {
+  initialize = ({ log, validateReceivedMessage }: InitializeOptions) => {
     this._log = log;
+    this._validateReceivedMessage = validateReceivedMessage;
     window.addEventListener('message', this._handleMessageFromRemoteWindow);
   };
 
@@ -113,71 +99,52 @@ class WindowMessenger implements Messenger {
     this._port = undefined;
   };
 
-  private _handleMessageFromRemoteWindow = (event: MessageEvent): void => {
-    if (
-      // Under specific timing circumstances, we can receive an event
-      // whose source is null at this point. This seems to happen when the
-      // child iframe is removed from the DOM about the same time it
-      // sends a message.
-      // https://github.com/Aaronius/penpal/issues/85
-      !event.source ||
-      event.source !== this._remoteWindow
-    ) {
+  private _handleMessageFromRemoteWindow = ({
+    source,
+    origin,
+    ports,
+    data,
+  }: MessageEvent): void => {
+    if (source !== this._remoteWindow) {
       return;
     }
 
-    let envelope: Envelope;
-
-    if (isEnvelope(event.data)) {
-      envelope = event.data;
-    } else if (isDeprecatedMessage(event.data)) {
+    // TODO: Used for backward-compatibility. Remove in next major version.
+    if (isDeprecatedMessage(data)) {
       this._log?.(
         'Please upgrade the child window to the latest version of Penpal.'
       );
       this._isChildUsingDeprecatedProtocol = true;
-      envelope = upgradeMessage(event.data);
-    } else {
-      // The received event doesn't pertain to Penpal.
+      data = upgradeMessage(data);
+    }
+
+    if (!this._validateReceivedMessage?.(data)) {
       return;
     }
 
-    const { channel, message } = envelope;
-
-    if (channel !== this._channel) {
-      return;
-    }
-
-    if (!this._isAllowedOrigin(event.origin)) {
+    if (!this._isAllowedOrigin(origin)) {
       this._log?.(
-        `Received a message from origin \`${
-          event.origin
-        }\` which did not match allowed origins \`[${this._allowedOrigins.join(
-          ', '
-        )}]\``
+        `Received a message from origin \`${origin}\` which did not match ` +
+          `allowed origins \`[${this._allowedOrigins.join(', ')}]\``
       );
       return;
     }
 
-    if (isSynMessage(message)) {
+    if (isSynMessage(data)) {
       // If we receive a SYN message and already have a port, it means
       // the child is re-connecting, in which case we'll receive a new port.
-      // For this reason, we always make sure we destroy the existing port
+      // For this reason, we always make sure we destroy the existing port.
       this._destroyPort();
-      this._concreteRemoteOrigin = event.origin;
-    }
-
-    if (isAck1Message(message)) {
-      this._concreteRemoteOrigin = event.origin;
+      this._concreteRemoteOrigin = origin;
     }
 
     if (
-      isAck2Message(message) &&
-      // Previous versions of Penpal don't use MessagePorts so they wouldn't be
-      // sending a MessagePort on the event. In that case, we instead do all
-      // communication through the window rather than a port.
+      isAck2Message(data) &&
+      // Previous versions of Penpal don't use MessagePorts and do all
+      // communication through the window.
       !this._isChildUsingDeprecatedProtocol
     ) {
-      this._port = event.ports[0];
+      this._port = ports[0];
 
       if (!this._port) {
         throw new PenpalBugError('No port received on ACK2');
@@ -188,40 +155,27 @@ class WindowMessenger implements Messenger {
     }
 
     for (const callback of this._messageCallbacks) {
-      callback(message);
+      callback(data);
     }
   };
 
-  private _handleMessageFromPort = (event: MessageEvent): void => {
-    // Unlike in _handleMessageFromWindow, we don't have to check if
+  private _handleMessageFromPort = ({ data }: MessageEvent): void => {
+    // Unlike in _handleMessageFromWindow, we don't need to check if
     // the message is from a deprecated version of Penpal because older versions
     // of Penpal don't use MessagePorts.
-    if (!isEnvelope(event.data)) {
-      return;
-    }
-
-    const envelope = event.data;
-    const { channel, message } = envelope;
-
-    if (channel !== this._channel) {
+    if (!this._validateReceivedMessage?.(data)) {
       return;
     }
 
     for (const callback of this._messageCallbacks) {
-      callback(message);
+      callback(data);
     }
   };
 
   sendMessage = (message: Message, transferables?: Transferable[]): void => {
-    const envelope: Envelope = {
-      namespace,
-      channel: this._channel,
-      message,
-    };
-
     if (isSynMessage(message)) {
       const originForSending = this._getOriginForSendingMessage(message);
-      this._remoteWindow.postMessage(envelope, {
+      this._remoteWindow.postMessage(message, {
         targetOrigin: originForSending,
         transfer: transferables,
       });
@@ -236,8 +190,8 @@ class WindowMessenger implements Messenger {
       this._isChildUsingDeprecatedProtocol
     ) {
       const payload = this._isChildUsingDeprecatedProtocol
-        ? downgradeEnvelope(envelope)
-        : envelope;
+        ? downgradeMessage(message)
+        : message;
       const originForSending = this._getOriginForSendingMessage(message);
       this._remoteWindow.postMessage(payload, {
         targetOrigin: originForSending,
@@ -253,7 +207,7 @@ class WindowMessenger implements Messenger {
       port1.start();
       const transferablesToSend = [port2, ...(transferables || [])];
       const originForSending = this._getOriginForSendingMessage(message);
-      this._remoteWindow.postMessage(envelope, {
+      this._remoteWindow.postMessage(message, {
         targetOrigin: originForSending,
         transfer: transferablesToSend,
       });
@@ -261,12 +215,13 @@ class WindowMessenger implements Messenger {
     }
 
     if (this._port) {
-      this._port.postMessage(envelope, {
+      this._port.postMessage(message, {
         transfer: transferables,
       });
-    } else {
-      throw new PenpalBugError('Port is undefined');
+      return;
     }
+
+    throw new PenpalBugError('Port is undefined');
   };
 
   addMessageHandler = (callback: MessageHandler): void => {
