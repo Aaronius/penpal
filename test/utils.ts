@@ -1,6 +1,6 @@
 import {
   Connection,
-  connectToChild,
+  connect,
   ErrorCode,
   Methods,
   PenpalError,
@@ -28,7 +28,7 @@ export const createIframeAndConnection = <TMethods extends Methods>({
     remoteWindow: iframe.contentWindow!,
     allowedOrigins: [CHILD_SERVER],
   });
-  const connection = connectToChild<TMethods>({
+  const connection = connect<TMethods>({
     messenger,
     methods,
   });
@@ -46,7 +46,7 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   const messenger = new WorkerMessenger({
     worker,
   });
-  const connection = connectToChild<TMethods>({
+  const connection = connect<TMethods>({
     messenger,
     methods,
   });

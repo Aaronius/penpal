@@ -1,4 +1,4 @@
-import { connectToChild, connectToParent } from './connectToRemote';
+import connect from './connect';
 import WindowMessenger from './messengers/WindowMessenger';
 import WorkerMessenger from './messengers/WorkerMessenger';
 import PortMessenger from './messengers/PortMessenger';
@@ -8,8 +8,7 @@ import debug from './debug';
 import { ErrorCode } from './enums';
 
 export default {
-  connectToChild,
-  connectToParent,
+  connect,
   WindowMessenger,
   WorkerMessenger,
   PortMessenger,

@@ -25,9 +25,8 @@ type Options = {
    * A string identifier that disambiguates communication when establishing
    * multiple, parallel connections between two participants, for example,
    * two windows, a window and a worker, etc. The same channel identifier
-   * (which is a string of your choosing) must be specified on both
-   * `connectToChild` and `connectToParent` in order for the connection
-   * between the two to be established.
+   * (which is a string of your choosing) must be provided by both participants
+   * in order for the connection between the two to be established.
    */
   channel?: string;
   /**
@@ -42,7 +41,7 @@ const usedMessengers = new WeakSet<Messenger>();
 /**
  * Attempts to establish communication with the remote.
  */
-const connectToRemote = <TMethods extends Methods>({
+const connect = <TMethods extends Methods>({
   messenger,
   methods = {},
   timeout,
@@ -130,6 +129,4 @@ const connectToRemote = <TMethods extends Methods>({
   };
 };
 
-export const connectToChild = connectToRemote;
-
-export const connectToParent = connectToRemote;
+export default connect;

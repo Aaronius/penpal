@@ -18,7 +18,7 @@
         allowedOrigins: ['http://example.com'],
       });
 
-      Penpal.connectToParent({
+      Penpal.connect({
         messenger,
         log: Penpal.debug('Child'),
       }).promise.then(function (parent) {

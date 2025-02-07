@@ -6,7 +6,7 @@ import {
   getPageFixtureUrl,
 } from './utils';
 import {
-  connectToChild,
+  connect,
   ErrorCode,
   PenpalError,
   PortMessenger,
@@ -29,7 +29,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -44,7 +44,7 @@ describe('connection management', () => {
       allowedOrigins: [/^http/],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -58,7 +58,7 @@ describe('connection management', () => {
       worker: worker,
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -75,7 +75,7 @@ describe('connection management', () => {
       allowedOrigins: ['http://example.com', CHILD_SERVER],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -92,7 +92,7 @@ describe('connection management', () => {
       allowedOrigins: ['http://example.com', CHILD_SERVER],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -107,7 +107,7 @@ describe('connection management', () => {
       allowedOrigins: ['http://example.com'],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -124,7 +124,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -141,7 +141,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -161,7 +161,7 @@ describe('connection management', () => {
       allowedOrigins: ['*'],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -175,7 +175,7 @@ describe('connection management', () => {
       remoteWindow: iframe.contentWindow!,
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -194,7 +194,7 @@ describe('connection management', () => {
       remoteWindow: iframe.contentWindow!,
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -214,7 +214,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -234,7 +234,7 @@ describe('connection management', () => {
       allowedOrigins: [/example\.com/],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -249,7 +249,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -264,7 +264,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -299,7 +299,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -330,7 +330,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -370,7 +370,7 @@ describe('connection management', () => {
     });
   });
 
-  it('rejects promise if connectToChild times out', async () => {
+  it('rejects promise if connection timeout passes', async () => {
     const iframe = createAndAddIframe(`${CHILD_SERVER}/never-respond`);
 
     const messenger = new WindowMessenger({
@@ -378,7 +378,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
       timeout: 0,
     });
@@ -394,54 +394,27 @@ describe('connection management', () => {
     expect((error as PenpalError).code).toBe(ErrorCode.ConnectionTimeout);
   });
 
-  it(
-    "doesn't close connection if connection succeeds then " +
-      'timeout passes in parent',
-    async () => {
-      jasmine.clock().install();
+  it("doesn't close connection if connection succeeds then timeout passes", async () => {
+    jasmine.clock().install();
 
-      const iframe = createAndAddIframe(getPageFixtureUrl('general'));
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
-      const messenger = new WindowMessenger({
-        remoteWindow: iframe.contentWindow!,
-        allowedOrigins: [CHILD_SERVER],
-      });
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      allowedOrigins: [CHILD_SERVER],
+    });
 
-      const connection = connectToChild<FixtureMethods>({
-        messenger,
-      });
+    const connection = connect<FixtureMethods>({
+      messenger,
+    });
 
-      await connection.promise;
-      jasmine.clock().tick(10000);
+    await connection.promise;
+    jasmine.clock().tick(10000);
 
-      expect(iframe.parentNode).not.toBeNull();
+    expect(iframe.parentNode).not.toBeNull();
 
-      connection.close();
-    }
-  );
-
-  it(
-    "doesn't close connection if connection succeeds then " +
-      'timeout passes in child',
-    (done) => {
-      const iframe = createAndAddIframe(getPageFixtureUrl('timeout'));
-
-      const messenger = new WindowMessenger({
-        remoteWindow: iframe.contentWindow!,
-        allowedOrigins: [CHILD_SERVER],
-      });
-
-      const connection = connectToChild<FixtureMethods>({
-        messenger,
-        methods: {
-          reportStillConnected() {
-            connection.close();
-            done();
-          },
-        },
-      });
-    }
-  );
+    connection.close();
+  });
 
   it('connects to window in parallel with separate channels', async () => {
     const iframe = createAndAddIframe(getPageFixtureUrl('channels'));
@@ -455,7 +428,7 @@ describe('connection management', () => {
     // children as simultaneous as possible to make the test more robust by
     // trying to trip up the logic in our code.
 
-    const channelAConnection = connectToChild<FixtureMethods>({
+    const channelAConnection = connect<FixtureMethods>({
       messenger: channelAMessenger,
       channel: 'A',
       methods: {
@@ -470,7 +443,7 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const channelBConnection = connectToChild<FixtureMethods>({
+    const channelBConnection = connect<FixtureMethods>({
       messenger: channelBMessenger,
       channel: 'B',
       methods: {
@@ -509,7 +482,7 @@ describe('connection management', () => {
     // children as simultaneous as possible to make the test more robust by
     // trying to trip up the logic in our code.
 
-    const channelAConnection = connectToChild<FixtureMethods>({
+    const channelAConnection = connect<FixtureMethods>({
       messenger: channelAMessenger,
       channel: 'A',
       methods: {
@@ -523,7 +496,7 @@ describe('connection management', () => {
       worker,
     });
 
-    const channelBConnection = connectToChild<FixtureMethods>({
+    const channelBConnection = connect<FixtureMethods>({
       messenger: channelBMessenger,
       channel: 'B',
       methods: {
@@ -559,55 +532,26 @@ describe('connection management', () => {
   ];
 
   for (const invalidOrigin of invalidOrigins) {
-    // This test is only valid when setting an invalid parent origin when
-    // calling connectToParent and not when setting an invalid child origin
-    // when calling connectToChild. To understand why, it's important to
-    // consider that it is the underlying postMessage call that throws the error
-    // stating that the origin is invalid. The child is the first to call
-    // postMessage when it sends the SYN handshake message. If the child were
-    // to use a valid parent origin, the parent would receive the SYN call,
-    // but the parent would see that the event.origin doesn't match the
-    // configured (invalid) child origin and just ignore the message.
-    // It wouldn't _fail_ the connection in this case, because it must consider
-    // that the SYN message could legitimately be intended for a different
-    // penpal connection. The parent would also never call postMessage in this
-    // case, because it's still waiting to receive a valid SYN message. Because
-    // postMessage would never be called by the parent, nothing would cause the
-    // parent's connection to be rejected unless there's a connection timeout
-    // configured and the timeout were reached.
-    it(`rejects connection in child window when invalid origin of ${invalidOrigin} is used`, async () => {
-      const iframe = createAndAddIframe(
-        getPageFixtureUrl('invalidParentOrigin') +
-          `?invalidParentOrigin=${invalidOrigin}`
-      );
+    it(`rejects connection when invalid origin of ${invalidOrigin} is used`, async () => {
+      const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
       const messenger = new WindowMessenger({
         remoteWindow: iframe.contentWindow!,
-        allowedOrigins: [CHILD_SERVER],
+        allowedOrigins: [invalidOrigin],
       });
 
-      const connection = connectToChild<FixtureMethods>({
-        messenger,
-      });
-
-      const childConnectionAssertionPromise = new Promise<void>((resolve) => {
-        window.addEventListener('message', (message) => {
-          if (message.data.errorCode) {
-            expect(message.data.errorCode).toBe(ErrorCode.TransmissionFailed);
-            resolve();
-          }
+      try {
+        const connection = connect<FixtureMethods>({
+          messenger,
         });
-      });
+        await connection.promise;
+      } catch (error) {
+        expect(error).toEqual(jasmine.any(PenpalError));
+        expect((error as PenpalError).code).toBe(ErrorCode.TransmissionFailed);
+        return;
+      }
 
-      const parentConnectionAssertionPromise = expectNeverFulfilledIframeConnection(
-        connection,
-        iframe
-      );
-
-      return Promise.all([
-        childConnectionAssertionPromise,
-        parentConnectionAssertionPromise,
-      ]);
+      throw new Error('Expected error to be thrown');
     });
   }
 
@@ -619,12 +563,12 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    connectToChild<FixtureMethods>({
+    connect<FixtureMethods>({
       messenger,
     });
 
     try {
-      connectToChild<FixtureMethods>({
+      connect<FixtureMethods>({
         messenger,
       });
     } catch (error) {
@@ -644,13 +588,15 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    const connection = connectToChild({
-      messenger,
-    });
+    try {
+      const connection = connect({
+        messenger,
+      });
 
-    await connection.promise;
-
-    childWindow?.close();
+      await connection.promise;
+    } finally {
+      childWindow?.close();
+    }
   });
 
   it('connects to shared worker', async () => {
@@ -660,7 +606,7 @@ describe('connection management', () => {
       port: worker.port,
     });
 
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -677,7 +623,7 @@ describe('connection management', () => {
         port: port1,
       });
 
-      const connection = connectToChild<FixtureMethods>({
+      const connection = connect<FixtureMethods>({
         messenger,
       });
 

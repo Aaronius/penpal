@@ -6,12 +6,7 @@ import {
   getPageFixtureUrl,
   getWorkerFixtureUrl,
 } from './utils';
-import {
-  connectToChild,
-  ErrorCode,
-  PenpalError,
-  WindowMessenger,
-} from '../src/index';
+import { connect, ErrorCode, PenpalError, WindowMessenger } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import WorkerMessenger from '../src/messengers/WorkerMessenger';
 
@@ -77,7 +72,7 @@ describe('parent calling close()', () => {
         allowedOrigins: [CHILD_SERVER],
       });
 
-      const connection = connectToChild<FixtureMethods>({
+      const connection = connect<FixtureMethods>({
         messenger,
       });
 
@@ -107,7 +102,7 @@ describe('parent calling close()', () => {
         worker,
       });
 
-      const connection = connectToChild<FixtureMethods>({
+      const connection = connect<FixtureMethods>({
         messenger,
       });
 

@@ -1,7 +1,7 @@
 import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from '../constants';
 import { createAndAddIframe } from '../utils';
 import {
-  connectToChild,
+  connect,
   ErrorCode,
   PenpalError,
   WindowMessenger,
@@ -45,7 +45,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -60,7 +60,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [/^http/],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -75,7 +75,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -90,7 +90,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -105,7 +105,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: ['http://bogus.com'],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -120,7 +120,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -135,7 +135,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -153,7 +153,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: ['*'],
     });
-    const connection = connectToChild({
+    const connection = connect({
       messenger,
     });
 
@@ -170,7 +170,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -188,7 +188,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -206,7 +206,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [/example\.com/],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -221,7 +221,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -255,7 +255,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
@@ -294,13 +294,13 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     });
   });
 
-  it('rejects promise if connectToChild times out', async () => {
+  it('rejects promise if connection timeout passes', async () => {
     const iframe = createAndAddIframe(`${CHILD_SERVER}/never-respond`);
     const messenger = new WindowMessenger({
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
       timeout: 0,
     });
@@ -316,52 +316,25 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     expect((error as PenpalError).code).toBe(ErrorCode.ConnectionTimeout);
   });
 
-  it(
-    "doesn't close connection if connection succeeds then " +
-      'timeout passes (connectToChild)',
-    async () => {
-      jasmine.clock().install();
-      const iframe = createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-      );
-      const messenger = new WindowMessenger({
-        remoteWindow: iframe.contentWindow!,
-        allowedOrigins: [CHILD_SERVER],
-      });
-      const connection = connectToChild<FixtureMethods>({
-        messenger,
-        timeout: 100000,
-      });
+  it("doesn't close connection if connection succeeds then timeout passes", async () => {
+    jasmine.clock().install();
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      allowedOrigins: [CHILD_SERVER],
+    });
+    const connection = connect<FixtureMethods>({
+      messenger,
+      timeout: 100000,
+    });
 
-      await connection.promise;
-      jasmine.clock().tick(10000);
+    await connection.promise;
+    jasmine.clock().tick(10000);
 
-      expect(iframe.parentNode).not.toBeNull();
+    expect(iframe.parentNode).not.toBeNull();
 
-      connection.close();
-    }
-  );
-
-  it(
-    "doesn't close connection if connection succeeds then " +
-      'timeout passes (connectToParent)',
-    (done) => {
-      const iframe = createAndAddIframe(
-        `${CHILD_SERVER}/pages/backwardCompatibility/timeout.html`
-      );
-      const messenger = new WindowMessenger({
-        remoteWindow: iframe.contentWindow!,
-        allowedOrigins: [CHILD_SERVER],
-      });
-      const connection = connectToChild<FixtureMethods>({
-        messenger,
-        methods: {
-          reportStillConnected() {
-            connection.close();
-            done();
-          },
-        },
-      });
-    }
-  );
+    connection.close();
+  });
 });

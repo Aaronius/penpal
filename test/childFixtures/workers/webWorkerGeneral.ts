@@ -1,9 +1,4 @@
-import {
-  connectToParent,
-  debug,
-  Reply,
-  WorkerMessenger,
-} from '../../../src/index';
+import { connect, debug, Reply, WorkerMessenger } from '../../../src/index';
 import FixtureMethods from '../types/FixtureMethods';
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -91,7 +86,7 @@ const methods: Omit<
   },
 };
 
-connectToParent<ParentAPI>({
+connect<ParentAPI>({
   messenger,
   methods: methods,
   log: debug('Child'),

@@ -1,4 +1,4 @@
-import { connectToParent, PortMessenger } from '../../../src/index';
+import { connect, PortMessenger } from '../../../src/index';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -17,7 +17,7 @@ self.addEventListener('message', async (event) => {
     port,
   });
 
-  const connection = connectToParent({
+  const connection = connect({
     messenger,
   });
 

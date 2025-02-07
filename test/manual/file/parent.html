@@ -13,7 +13,7 @@
           remoteOrigins: ['*'],
         });
 
-        Penpal.connectToChild({
+        Penpal.connect({
           messenger,
           log: Penpal.debug('Child'),
         }).promise.then(function (child) {

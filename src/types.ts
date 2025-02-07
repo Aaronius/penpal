@@ -20,11 +20,11 @@ export type RemoteProxy<TMethods extends Methods = Methods> = {
 };
 
 /**
- * Connection object returned from calling connectToChild or connectToParent.
+ * An object representing the connection as a result of calling connect().
  */
 export type Connection<TMethods extends Methods = Methods> = {
   /**
-   * A promise which will be resolved once a connection has been established.
+   * A promise which will be resolved once the connection has been established.
    */
   promise: Promise<RemoteProxy<TMethods>>;
   /**

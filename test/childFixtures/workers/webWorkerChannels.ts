@@ -1,5 +1,5 @@
 import {
-  connectToParent,
+  connect,
   WorkerMessenger,
   RemoteProxy,
   debug,
@@ -25,7 +25,7 @@ const channelBMethods = {
   },
 };
 
-connectToParent<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
+connect<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
   messenger: channelBMessenger,
   channel: 'B',
   methods: channelBMethods,
@@ -52,7 +52,7 @@ const channelAMethods = {
   },
 };
 
-connectToParent<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
+connect<Pick<FixtureMethods, 'getChannel' | 'getChannelFromParent'>>({
   messenger: channelAMessenger,
   channel: 'A',
   methods: channelAMethods,

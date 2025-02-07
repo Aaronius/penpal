@@ -75,13 +75,12 @@ type HandshakeResult<TMethods extends Methods> = {
  *    participant ID to the other participant.
  * 3. When the SYN messages were sent, one of the participants may not have
  *    been ready to receive the SYN message from the other. At least one
- *    of the participant was ready, however, and should have received a SYN
- *    message from the other participant. This participant(s) that did receive
- *    the SYN message knows for sure that the other participant is now ready
+ *    of the participants was ready, however, and should have received a SYN
+ *    message from the other participant. Each participant that did receive
+ *    a SYN message knows for sure that the other participant is now ready
  *    to receive a SYN message, so it will send another SYN message in case
- *    the other participant did not receive the first SYN message. This means
- *    that one or both participants may end up sending two SYN messages instead
- *    of just one.
+ *    the other participant did not receive the first SYN message. This
+ *    ultimately results in each participant sending two SYN messages.
  * 4. Each participant now should have received at least one SYN message from
  *    the other participant. Each participant compares their own ID with the
  *    other participant's ID. Whichever participant has the higher ID

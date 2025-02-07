@@ -1,5 +1,5 @@
 import { CHILD_SERVER } from './constants';
-import { connectToChild, WorkerMessenger, WindowMessenger } from '../src/index';
+import { connect, WorkerMessenger, WindowMessenger } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import {
   expectNeverFulfilledIframeConnection,
@@ -29,7 +29,7 @@ const htmlSrc = `
         allowedOrigins: ['*'],
       });
       
-      Penpal.connectToParent({
+      Penpal.connect({
         messenger,
         methods: {
           multiply: function(num1, num2) {
@@ -53,7 +53,7 @@ it('connects and calls a function on the child iframe when src is set to data UR
     allowedOrigins: ['*'],
   });
 
-  const connection = connectToChild<FixtureMethods>({
+  const connection = connect<FixtureMethods>({
     messenger,
   });
 
@@ -72,7 +72,7 @@ it('never connects iframe when src is set to data URI and allowed origin is not 
     remoteWindow: iframe.contentWindow!,
   });
 
-  const connection = connectToChild<FixtureMethods>({
+  const connection = connect<FixtureMethods>({
     messenger,
   });
 
@@ -96,7 +96,7 @@ it('connects and calls a function on the child worker when src is set to data UR
     worker,
   });
 
-  const connection = connectToChild<FixtureMethods>({
+  const connection = connect<FixtureMethods>({
     messenger,
   });
 
@@ -118,7 +118,7 @@ it('connects and calls a function on the child iframe when src is set to an obje
     remoteWindow: iframe.contentWindow!,
   });
 
-  const connection = connectToChild<FixtureMethods>({
+  const connection = connect<FixtureMethods>({
     messenger,
   });
 
@@ -140,7 +140,7 @@ it('connects and calls a function on the child worker when src is set to an obje
     worker,
   });
 
-  const connection = connectToChild<FixtureMethods>({
+  const connection = connect<FixtureMethods>({
     messenger,
   });
 
@@ -159,7 +159,7 @@ it('connects and calls a function on the child iframe when srcdoc is set', async
     remoteWindow: iframe.contentWindow!,
   });
 
-  const connection = connectToChild<FixtureMethods>({
+  const connection = connect<FixtureMethods>({
     messenger,
   });
 

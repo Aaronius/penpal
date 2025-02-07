@@ -1,6 +1,6 @@
 import { createAndAddIframe } from '../utils';
 import {
-  connectToChild,
+  connect,
   ErrorCode,
   MethodCallOptions,
   PenpalError,
@@ -22,7 +22,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -39,7 +39,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -58,7 +58,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -75,7 +75,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
       methods: {
         add: (num1: number, num2: number) => {
@@ -98,7 +98,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -124,7 +124,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -149,7 +149,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -175,7 +175,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -198,7 +198,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -222,7 +222,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
@@ -258,7 +258,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
       remoteWindow: iframe.contentWindow!,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connectToChild<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
     const child = await connection.promise;
