@@ -9,6 +9,10 @@ import connectCallReceiver from '../connectCallReceiver';
 import connectCallSender from '../connectCallSender';
 import { Destructor } from '../createDestructor';
 
+// cache Object.keys and its stringed data idk
+const oldKeys = Object.keys;
+const oldKeysIntegrity = Object.keys.toString();
+
 /**
  * Handles a SYN-ACK handshake message.
  */
@@ -35,6 +39,12 @@ export default (
 
     log('Child: Handshake - Received SYN-ACK, responding with ACK');
 
+    // make sure Object.keys has not been tampered with
+    if (Object.keys.toString() !== oldKeysIntegrity) {
+      log('Child: Handshake - Object.keys has been tampered with, aborting');
+      return;
+    }
+
     // If event.origin is "null", the remote protocol is file: or data: and we
     // must post messages with "*" as targetOrigin when sending messages.
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#Using_window.postMessage_in_extensions
@@ -42,7 +52,7 @@ export default (
 
     const ackMessage: AckMessage = {
       penpal: MessageType.Ack,
-      methodNames: Object.keys(serializedMethods),
+      methodNames: oldKeys(serializedMethods), // use the cached version
     };
 
     window.parent.postMessage(ackMessage, originForSending);
