@@ -25,8 +25,9 @@ type ReplyHandler = {
 
 const createRemoteProxy = (
   callback: (path: MethodPath, args: unknown[]) => void,
+  log?: Log,
   path: MethodPath = []
-) => {
+): Methods => {
   return new Proxy(
     path
       ? () => {
@@ -44,9 +45,23 @@ const createRemoteProxy = (
         if (prop === 'then') {
           return;
         }
-        return createRemoteProxy(callback, [...path, prop]);
+        return createRemoteProxy(callback, log, [...path, prop]);
       },
-      apply(_target, _thisArg, args) {
+      apply(target, _thisArg, args) {
+        if (log) {
+          const lastPathSegment = path.at(-1);
+          const builtInFunction = (target as Record<string, unknown>)[
+            lastPathSegment!
+          ];
+          if (typeof builtInFunction === 'function') {
+            log(
+              `You may be attempting to call the native ` +
+                `\`${lastPathSegment}\` method which is not supported. Call ` +
+                `will be sent to remote.`
+            );
+          }
+        }
+
         return callback(path, args);
       },
     }
@@ -156,7 +171,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
         );
       }
     });
-  }) as RemoteProxy<TMethods>;
+  }, log) as RemoteProxy<TMethods>;
 
   const close = () => {
     isClosed = true;

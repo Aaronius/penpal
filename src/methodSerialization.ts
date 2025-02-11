@@ -1,4 +1,5 @@
 import { MethodPath, Methods } from './types';
+import { isObject } from './guards';
 
 // TODO: Used for backward-compatibility. Remove in next major version.
 /**
@@ -46,12 +47,7 @@ export const getMethodAtMethodPath = (
 ) => {
   const result = methodPath.reduce<Methods | Function | undefined>(
     (acc, pathSegment) => {
-      return typeof acc === 'object' &&
-        acc !== null &&
-        // Avoid grabbing built-in properties on the Object prototype.
-        Object.prototype.hasOwnProperty.call(acc, pathSegment)
-        ? acc[pathSegment]
-        : undefined;
+      return isObject(acc) ? acc[pathSegment] : undefined;
     },
     methods
   );

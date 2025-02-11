@@ -28,6 +28,7 @@ type FixtureMethods = {
     by: {
       twoLevels<T>(input: T): T;
     };
+    apply(): string;
   };
   neverResolve(): Promise<void>;
   ['with.period'](): 'success';

@@ -31,6 +31,7 @@ export const createIframeAndConnection = <TMethods extends Methods>({
   const connection = connect<TMethods>({
     messenger,
     methods,
+    // log: debug('Parent')
   });
   return connection;
 };
@@ -49,6 +50,7 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   const connection = connect<TMethods>({
     messenger,
     methods,
+    // log: debug('Parent')
   });
   return connection;
 };

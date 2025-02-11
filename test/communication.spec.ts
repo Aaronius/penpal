@@ -42,8 +42,23 @@ for (const variant of variants) {
     it('calls an asynchronous function on the child', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
-      const value = await child.multiply(2, 5);
+      const value = await child.multiplyAsync(2, 5);
       expect(value).toEqual(10);
+      connection.close();
+    });
+
+    it('methods on Function prototype (like `apply`) are sent to remote', async () => {
+      const connection = createConnection<FixtureMethods>();
+      const child = await connection.promise;
+      // Penpal doesn't know whether the developer is trying to call an
+      // `apply` method on the remote or is trying to call the built-in `apply`
+      // method found on the Function prototype. Because we want to allow for
+      // the case that the remote is legitimately exposing an `apply` method,
+      // the Penpal proxy sends a call to the remote rather than calling the
+      // built-in `apply` method. The same strategy is taken for other built-in
+      // methods like `bind` and `call`.
+      const value = await child.nested.apply();
+      expect(value).toEqual('apply result');
       connection.close();
     });
 

@@ -87,6 +87,9 @@
               return input;
             },
           },
+          apply() {
+            return 'apply result';
+          },
         },
         neverResolve() {
           return new Promise(() => {});

@@ -79,6 +79,9 @@ const methods: Omit<
         return input;
       },
     },
+    apply() {
+      return 'apply result';
+    },
   },
   neverResolve() {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
