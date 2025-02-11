@@ -33,7 +33,7 @@ const createRemoteProxy = (
       ? () => {
           // Intentionally empty
         }
-      : {},
+      : Object.create(null),
     {
       get(_target, prop: string) {
         // If a promise is resolved with this proxy object, the JavaScript
