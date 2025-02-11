@@ -1,5 +1,5 @@
 import { MethodPath, Methods } from './types';
-import { isObject } from './guards';
+import { isFunction, isObject } from './guards';
 
 // TODO: Used for backward-compatibility. Remove in next major version.
 /**
@@ -29,7 +29,7 @@ export const extractMethodPathsFromMethods = (
   for (const key of Object.keys(methods)) {
     const value = methods[key];
 
-    if (typeof value === 'function') {
+    if (isFunction(value)) {
       methodPaths.push([...currentPath, key]);
     } else if (isObject(value)) {
       methodPaths.push(
@@ -52,7 +52,7 @@ export const getMethodAtMethodPath = (
     methods
   );
 
-  return typeof result === 'function' ? result : undefined;
+  return isFunction(result) ? result : undefined;
 };
 
 export const formatMethodPath = (methodPath: MethodPath) => {

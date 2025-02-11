@@ -13,7 +13,7 @@ import { ErrorCode, MessageType } from './enums';
 import MethodCallOptions from './MethodCallOptions';
 import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
-import { isReplyMessage } from './guards';
+import { isFunction, isReplyMessage } from './guards';
 import namespace from './namespace';
 
 type ReplyHandler = {
@@ -53,7 +53,7 @@ const createRemoteProxy = (
           const builtInFunction = (target as Record<string, unknown>)[
             lastPathSegment!
           ];
-          if (typeof builtInFunction === 'function') {
+          if (isFunction(builtInFunction)) {
             log(
               `You may be attempting to call the native ` +
                 `\`${lastPathSegment}\` method which is not supported. Call ` +

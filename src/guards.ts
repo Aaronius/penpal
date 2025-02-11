@@ -11,9 +11,13 @@ import {
 import { MessageType } from './enums';
 
 export const isObject = (
-  data: unknown
-): data is Record<string | number | symbol, unknown> => {
-  return typeof data === 'object' && data !== null;
+  value: unknown
+): value is Record<string | number | symbol, unknown> => {
+  return typeof value === 'object' && value !== null;
+};
+
+export const isFunction = (value: unknown) => {
+  return typeof value === 'function';
 };
 
 export const isMessage = (data: unknown): data is Message => {
