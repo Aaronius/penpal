@@ -3,10 +3,7 @@ import { Reply } from '../../../src/index';
 type FixtureMethods = {
   multiply(num1: number, num2: number): number;
   multiplyAsync(num1: number, num2: number): Promise<number>;
-  multiplyUsingTransferables(
-    num1DataView: DataView,
-    num2DataView: DataView
-  ): Reply<DataView>;
+  double(numbers: Int32Array): Reply<Int32Array>;
   multiplyWithPromisedReplyInstanceAndPromisedReturnValue(
     num1: number,
     num2: number

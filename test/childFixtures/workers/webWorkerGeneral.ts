@@ -30,13 +30,10 @@ const methods: Omit<
       resolve(num1 * num2);
     });
   },
-  multiplyUsingTransferables(num1DataView: DataView, num2DataView: DataView) {
-    const num1 = num1DataView.getInt32(0);
-    const num2 = num2DataView.getInt32(0);
-    const returnValue = new DataView(new ArrayBuffer(4));
-    returnValue.setInt32(0, num1 * num2);
-    return new Reply(returnValue, {
-      transferables: [returnValue.buffer],
+  double(numbersArray: Int32Array) {
+    const resultArray = numbersArray.map((num) => num * 2);
+    return new Reply(resultArray, {
+      transferables: [resultArray.buffer],
     });
   },
   multiplyWithPromisedReplyInstanceAndPromisedReturnValue(num1, num2) {

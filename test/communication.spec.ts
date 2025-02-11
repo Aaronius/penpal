@@ -63,43 +63,28 @@ for (const variant of variants) {
     });
 
     it('handles transferables', async () => {
-      const input1DataView = new DataView(new ArrayBuffer(4));
-      input1DataView.setInt32(0, 2);
-
-      const input2DataView = new DataView(new ArrayBuffer(4));
-      input2DataView.setInt32(0, 5);
+      const numbersArray = new Int32Array(new ArrayBuffer(8));
+      numbersArray[0] = 4;
+      numbersArray[1] = 5;
 
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
 
-      const returnValuePromise = child.multiplyUsingTransferables(
-        input1DataView,
-        input2DataView,
+      const resultPromise = child.double(
+        numbersArray,
         new MethodCallOptions({
-          transferables: [input1DataView.buffer, input2DataView.buffer],
+          transferables: [numbersArray.buffer],
         })
       );
 
-      for (const dataView of [input1DataView, input2DataView]) {
-        let errorWritingToTransferredBuffer: Error;
+      // This is undefined because the underlying array buffer should
+      // have been successfully transferred to the remote and this window
+      // should no longer have access to it due to native browser security.
+      expect(numbersArray[0]).toBeUndefined();
 
-        try {
-          /*
-          An error should be thrown here because the underlying array buffer should
-          have been successfully transferred to the child and the parent should no
-          longer have access to it due to native browser security.
-           */
-          dataView.setInt32(0, 1);
-        } catch (error) {
-          errorWritingToTransferredBuffer = error as Error;
-        }
-
-        expect(errorWritingToTransferredBuffer!).toBeDefined();
-        expect(errorWritingToTransferredBuffer!.name).toBe('TypeError');
-      }
-
-      const returnValue = await returnValuePromise;
-      expect(returnValue.getInt32(0)).toBe(10);
+      const resultArray = await resultPromise;
+      expect(resultArray[0]).toBe(8);
+      expect(resultArray[1]).toBe(10);
       connection.close();
     });
 

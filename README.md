@@ -7,7 +7,7 @@
 
 # Penpal
 
-Penpal is a promise-based library for easily communicating with windows (including iframes) and web workers via postMessage. The parent window can call methods exposed by child windows or web workers, pass arguments, and receive a return value. Similarly, child windows and web workers can call methods exposed by the parent window, pass arguments, and receive a return value. Easy peasy.
+Penpal makes communication between windows (including iframes) and workers simple by abstracting the details of postMessage into promise-based methods.
 
 This library has no dependencies.
 
@@ -23,32 +23,33 @@ Install Penpal from npm as follows:
 
 Alternatively, load a build of Penpal that is already hosted on a CDN:
 
-`<script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>`
+`<script src="https://unpkg.com/penpal@^7/dist/penpal.min.js"></script>`
 
-Penpal will then be installed on `window.Penpal`. Usage is similar to if you were using it from npm, which is documented below, but instead of importing each module, you would access it on the `Penpal` global instead (e.g., `Penpal.connectToChild`).
+Penpal will then be installed on `window.Penpal`. Usage is similar to if you were using it from npm, which is documented below, but instead of importing each module, you would access it on the `Penpal` global variable instead.
 
-## Usage with Iframes
+## Usage with an Iframe
+
+<details open>
+    <summary>Expand Details</summary>
 
 ### Parent Window
 
 ```javascript
-import { ParentToChildWindowMessenger, connectToChild } from 'penpal';
+import { WindowMessenger, connect } from 'penpal';
 
 const iframe = document.createElement('iframe');
 iframe.src = 'https://childorigin.example.com/iframe.html';
 document.body.appendChild(iframe);
 
-const messenger = new ParentToChildWindowMessenger({
-  // Alternatively, if iframe.contentWindow is undefined, provide a function
-  // that Penpal will use to lazily reference the content window later:
-  // childWindow: () => iframe.contentWindow
-  childWindow: iframe.contentWindow,
-  childOrigin: 'https://childorigin.example.com',
+const messenger = new WindowMessenger({
+  remoteWindow: iframe.contentWindow,
+  // allowedOrigins will default to `[window.origin]` if not specified
+  allowedOrigins: ['https://childorigin.example.com'],
 });
 
-const connection = connectToChild({
+const connection = connect({
   messenger,
-  // Methods the parent is exposing to the child.
+  // Methods the parent window is exposing to the iframe window.
   methods: {
     add(num1, num2) {
       return num1 + num2;
@@ -56,31 +57,33 @@ const connection = connectToChild({
   },
 });
 
-connection.promise.then((child) => {
-  child.multiply(2, 6).then((total) => console.log(total));
-  child.divide(12, 4).then((total) => console.log(total));
-});
+const remote = await connection.promise;
+const multiplicationResult = await remote.multiply(2, 6);
+console.log(multiplicationResult); // 12
+const divisionResult = await remote.divide(12, 4);
+console.log(divisionResult); // 3
 ```
 
-### Child Iframe Window
+### Iframe Window
 
 ```javascript
-import { ChildWindowToParentMessenger, connectToParent } from 'penpal';
+import { WindowMessenger, connect } from 'penpal';
 
-const messenger = new ChildWindowToParentMessenger({
-  parentOrigin: 'https://parentorigin.example.com',
+const messenger = new WindowMessenger({
+  remoteWindow: window.parent,
+  // allowedOrigins will default to `[window.origin]` if not specified
+  allowedOrigins: ['https://parentorigin.example.com'],
 });
 
-const connection = connectToParent({
+const connection = connect({
   messenger,
-  // Methods child is exposing to parent.
+  // Methods the iframe window is exposing to the parent window.
   methods: {
     multiply(num1, num2) {
       return num1 * num2;
     },
     divide(num1, num2) {
-      // Return a promise if the value being
-      // returned requires asynchronous processing.
+      // Return a promise if asynchronous processing is needed.
       return new Promise((resolve) => {
         setTimeout(() => {
           resolve(num1 / num2);
@@ -90,27 +93,34 @@ const connection = connectToParent({
   },
 });
 
-connection.promise.then((parent) => {
-  parent.add(3, 1).then((total) => console.log(total));
-});
+const remote = await connection.promise;
+const additionResult = await remote.add(2, 6);
+console.log(additionResult); // 8
 ```
 
-## Usage with Web Workers
+</details>
+
+## Usage with a Window Opened Using `window.open`
+
+<details>
+    <summary>Expand Details</summary>
 
 ### Parent Window
 
 ```javascript
-import { ParentToChildWorkerMessenger, connectToChild } from 'penpal';
+import { WindowMessenger, connect } from 'penpal';
 
-const worker = new Worker('worker.js');
+const childWindow = window.open('https://childorigin.example.com/popup.html');
 
-const messenger = new ParentToChildWorkerMessenger({
-  childWorker: worker,
+const messenger = new WindowMessenger({
+  remoteWindow: childWindow,
+  // allowedOrigins will default to `[window.origin]` if not specified
+  allowedOrigins: ['https://childorigin.example.com'],
 });
 
-const connection = connectToChild({
+const connection = connect({
   messenger,
-  // Methods the parent is exposing to the child.
+  // Methods the parent window is exposing to the child window.
   methods: {
     add(num1, num2) {
       return num1 + num2;
@@ -118,29 +128,33 @@ const connection = connectToChild({
   },
 });
 
-connection.promise.then((child) => {
-  child.multiply(2, 6).then((total) => console.log(total));
-  child.divide(12, 4).then((total) => console.log(total));
-});
+const remote = await connection.promise;
+const multiplicationResult = await remote.multiply(2, 6);
+console.log(multiplicationResult); // 12
+const divisionResult = await remote.divide(12, 4);
+console.log(divisionResult); // 3
 ```
 
-### Child Web Worker
+### Opened Window
 
 ```javascript
-import { ChildWorkerToParentMessenger, connectToParent } from 'penpal';
+import { WindowMessenger, connect } from 'penpal';
 
-const messenger = new ChildWorkerToParentMessenger();
+const messenger = new WindowMessenger({
+  remoteWindow: window.opener,
+  // allowedOrigins will default to `[window.origin]` if not specified
+  allowedOrigins: ['https://parentorigin.example.com'],
+});
 
-const connection = connectToParent({
+const connection = connect({
   messenger,
-  // Methods child is exposing to parent.
+  // Methods the child window is exposing to the parent (opener) window.
   methods: {
     multiply(num1, num2) {
       return num1 * num2;
     },
     divide(num1, num2) {
-      // Return a promise if the value being
-      // returned requires asynchronous processing.
+      // Return a promise if asynchronous processing is needed.
       return new Promise((resolve) => {
         setTimeout(() => {
           resolve(num1 / num2);
@@ -150,10 +164,448 @@ const connection = connectToParent({
   },
 });
 
-connection.promise.then((parent) => {
-  parent.add(3, 1).then((total) => console.log(total));
+const remote = await connection.promise;
+const additionResult = await remote.add(2, 6);
+console.log(additionResult); //
+```
+
+</details>
+
+## Usage with a Worker
+
+<details>
+    <summary>Expand Details</summary>
+
+### Window
+
+```javascript
+import { WorkerMessenger, connect } from 'penpal';
+
+const worker = new Worker('worker.js');
+
+const messenger = new WorkerMessenger({
+  worker,
+});
+
+const connection = connect({
+  messenger,
+  // Methods the window is exposing to the worker.
+  methods: {
+    add(num1, num2) {
+      return num1 + num2;
+    },
+  },
+});
+
+const remote = await connection.promise;
+const multiplicationResult = await remote.multiply(2, 6);
+console.log(multiplicationResult); // 12
+const divisionResult = await remote.divide(12, 4);
+console.log(divisionResult); // 3
+```
+
+### Worker
+
+```javascript
+import { WorkerMessenger, connect } from 'penpal';
+
+const messenger = new WorkerMessenger({
+  worker: self,
+});
+
+const connection = connect({
+  messenger,
+  // Methods the worker is exposing to the window.
+  methods: {
+    multiply(num1, num2) {
+      return num1 * num2;
+    },
+    divide(num1, num2) {
+      // Return a promise if asynchronous processing is needed.
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(num1 / num2);
+        }, 1000);
+      });
+    },
+  },
+});
+
+const remote = await connection.promise;
+const additionResult = await remote.add(2, 6);
+console.log(additionResult); // 8
+```
+
+</details>
+
+## Usage with a Shared Worker
+
+<details>
+    <summary>Expand Details</summary>
+
+### Window
+
+```javascript
+import { WorkerMessenger, connect } from 'penpal';
+
+const worker = new SharedWorker('shared-worker.js');
+
+const messenger = new PortMessenger({
+  port: worker.port,
+});
+
+const connection = connect({
+  messenger,
+  // Methods the window is exposing to the worker.
+  methods: {
+    add(num1, num2) {
+      return num1 + num2;
+    },
+  },
+});
+
+const remote = await connection.promise;
+const multiplicationResult = await remote.multiply(2, 6);
+console.log(multiplicationResult); // 12
+const divisionResult = await remote.divide(12, 4);
+console.log(divisionResult); // 3
+```
+
+### Shared Worker
+
+```javascript
+import { PortMessenger, connect } from 'penpal';
+
+self.addEventListener('connect', async (event) => {
+  const [port] = event.ports;
+
+  const messenger = new PortMessenger({
+    port,
+  });
+
+  const connection = connect({
+    messenger,
+    // Methods the worker is exposing to the window.
+    methods: {
+      multiply(num1, num2) {
+        return num1 * num2;
+      },
+      divide(num1, num2) {
+        // Return a promise if asynchronous processing is needed.
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(num1 / num2);
+          }, 1000);
+        });
+      },
+    },
+  });
+
+  const remote = await connection.promise;
+  const additionResult = await remote.add(2, 6);
+  console.log(additionResult); // 8
 });
 ```
+
+</details>
+
+## Usage with a Service Worker
+
+<details>
+    <summary>Expand Details</summary>
+
+### Window
+
+```javascript
+import { PortMessenger, connect } from 'penpal';
+
+const initPenpal = async () => {
+  const { port1, port2 } = new MessageChannel();
+
+  const messenger = new PortMessenger({
+    port: port1,
+  });
+
+  const connection = connect({
+    messenger,
+    // Methods the window is exposing to the worker.
+    methods: {
+      add(num1, num2) {
+        return num1 + num2;
+      },
+    },
+  });
+
+  const remote = await connection.promise;
+  const multiplicationResult = await remote.multiply(2, 6);
+  console.log(multiplicationResult); // 12
+  const divisionResult = await remote.divide(12, 4);
+  console.log(divisionResult); // 3
+
+  navigator.serviceWorker.controller?.postMessage(
+    {
+      type: 'INIT_PAYPAL',
+      port: port2,
+    },
+    {
+      transfer: [port2],
+    }
+  );
+};
+
+if (navigator.serviceWorker.controller) {
+  initPenpal();
+}
+
+navigator.serviceWorker.addEventListener('controllerchange', initPenpal);
+navigator.serviceWorker.register('service-worker.js');
+```
+
+### Service Worker
+
+```javascript
+import { PortMessenger, connect } from 'penpal';
+
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', () => self.clients.claim());
+self.addEventListener('message', async (event) => {
+  if (event.data?.type === 'INIT_PENPAL') {
+    return;
+  }
+
+  const { port } = event.data;
+
+  const messenger = new PortMessenger({
+    port,
+  });
+
+  const connection = connect({
+    messenger,
+    // Methods worker is exposing to window.
+    methods: {
+      multiply(num1, num2) {
+        return num1 * num2;
+      },
+      divide(num1, num2) {
+        // Return a promise if asynchronous processing is needed.
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(num1 / num2);
+          }, 1000);
+        });
+      },
+    },
+  });
+
+  await connection.promise;
+});
+```
+
+</details>
+
+## Debugging
+
+To debug while using Penpal, specify a function for the `log` option when calling `connect`. While this can be any function, Penpal exports a simple logging function called `debug` which you can import and use. Passing a prefix into `debug` will help you distinguish logs from other Penpal connections.
+
+```javascript
+import { connect, debug } from 'penpal';
+
+...
+
+const connection = connect({
+  messenger,
+  log: debug('parent')
+});
+```
+
+For more advanced logging, check out the popular [debug](https://www.npmjs.com/package/debug) package which can be used similarly.
+
+```javascript
+import debug from 'debug';
+import { connect } from 'penpal';
+
+...
+
+const connection = connect({
+  messenger,
+  log: debug('penpal:parent')
+});
+```
+
+## Timeouts
+
+### Connection Timeouts
+
+When establishing a connection, you may specify a timeout in milliseconds. If a connection is not successfully made within the timeout period, the connection promise will be rejected with an error. See [Errors](#errors) for more information on errors.
+
+```javascript
+import { ErrorCode } from 'penpal';
+
+...
+
+const connection = connect({
+  messenger,
+  timeout: 5000 // 5 seconds
+});
+
+try {
+  const remote = await connection.promise;
+} catch (error) {
+  if (error.code === ErrorCode.ConnectionTimeout) {
+    // Connection failed due to timeout.
+  }
+}
+```
+
+### Method Call Timeouts
+
+When calling a remote method, you may specify a timeout in milliseconds by passing an instance of `MethodCallOptions` as the last argument. If a response is not received within the timeout period, the method call promise will be rejected with an error. See [Errors](#errors) for more information on errors.
+
+```javascript
+import { MethodCallOptions, ErrorCode } from 'penpal';
+
+...
+
+const remote = await connection.promise;
+
+try {
+  const multiplicationResult =
+    await remote.multiply(2, 6, new MethodCallOptions({ timeout: 1000 }));
+} catch (error) {
+  if (error.code === ErrorCode.MethodCallTimeout) {
+    // Method call failed due to timeout.
+  }
+}
+```
+
+## Transferable Objects
+
+When sending a value between windows or workers, the browser uses a [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) by default to _clone_ the value as it is sent. As a result, the value will exist in memory multiple times--once for the sender and once for the recipient. This is typically fine, but some use cases require sending a large amount of data between contexts which could result in a significant performance hit.
+
+To address this scenario, browsers support [transferable objects](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects) which allow certain types of objects to be _transferred_ between contexts. Rather than cloning the object, the browser will provide the receiving context a pointer to the object's existing block of memory.
+
+When calling a remote method using Penpal, you may specify which objects should be transferred rather than cloned by passing an instance of `MethodCallOptions` as the last argument with the `transferables` option set. When responding to a method call, you may specify which objects should be transferred by returning an instance of `Reply` with the `transferables` option set.
+
+### Window
+
+```javascript
+import { connect, MethodCallOptions } from 'penpal';
+
+...
+
+const connection = connect({
+  messenger
+});
+
+const remote = await connection.promise;
+
+const numbersArray = new Int32Array(new ArrayBuffer(8));
+numbersArray[0] = 4;
+numbersArray[1] = 5;
+
+const multiplicationResultArray = await remote.double(
+  numbersArray,
+  new MethodCallOptions({ transferables: [numbersArray.buffer] })
+);
+
+console.log(multiplicationResultArray[0]); // 8
+console.log(multiplicationResultArray[1]); // 10
+```
+
+### Worker
+
+```javascript
+import { connect, Reply } from 'penpal';
+
+...
+
+const connection = connect({
+  messenger,
+  methods: {
+    double(numbersArray) {
+      // numbersArray and resultArray are both Int32Arrays
+      const resultArray = numbersArray.map(num => num * 2);
+      return new Reply(resultArray, {
+        transferables: [resultArray.buffer],
+      });
+    }
+  },
+});
+```
+
+## Reconnection
+
+If the child iframe attempts to reconnect with the parent, the parent will accept the new connection. This could happen, for example, if a user refreshes the child iframe or navigates within the iframe to a different page that also uses Penpal. In this case, the `child` object the parent received when the initial connection was established will be updated with the new methods provided by the child iframe.
+
+NOTE: Currently there is no API to notify consumers of a reconnection. If this is important for you, please provide feedback on [this issue](https://github.com/Aaronius/penpal/issues/58) with how you would like to see the API designed.
+
+## Errors
+
+Penpal will throw (or reject promises with) errors in certain situations. Each error will have a `code` property which may be used for programmatic decisioning (e.g., do something if the error was due to a connection timing out) along with a `message` describing the problem. Errors may be thrown with the following codes:
+
+`ConnectionDestroyed`
+
+This error will be thrown when attempting to call a method on `child` or `parent` objects and the connection was previously destroyed.
+
+`ConnectionTimeout`
+
+The promise found at `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.
+
+`NoIframeSrc`
+
+This error will be thrown when the iframe passed into `connectToChild` does not have `src` or `srcdoc` set.
+
+For your convenience, these error codes can be imported as follows:
+
+```
+import { ErrorCode } from 'penpal';
+// ErrorCode.ConnectionDestroyed
+// ErrorCode.ConnectionTimeout
+// ErrorCode.NoIframeSrc
+```
+
+## TypeScript
+
+When calling `connectToChild` or `connectToParent`, you may pass a generic type argument. This will be used to type the `child` or `parent` object that `connection.promise` is resolved with. This is better explained in code:
+
+```typescript
+import { connectToChild } from 'penpal';
+
+// This interace could be imported from a code library
+// that both the parent and child share.
+interface ChildApi {
+  multiply(...args: number[]): number;
+}
+
+// Supply the interface as a generic argument.
+const connection = connectToChild<ChildApi>({
+  iframe: new HTMLIFrameElement(),
+});
+
+// The resulting child object will contain properly
+// typed methods.
+const child = await connection.promise;
+// The result variable is typed as a number.
+const result = await child.multiply(1, 3);
+```
+
+The following TypeScript types are also exported as named constants for your use:
+
+- `Connection`
+- `Methods`
+- `AsyncMethodReturns`
+- `CallSender`
+- `PenpalError`
+
+## React
+
+If you're using Penpal within a React app, please check out [@weblivion/react-penpal](https://www.npmjs.com/package/@weblivion/react-penpal).
+
+## Supported Browsers
+
+Penpal is designed to run successfully on the most recent versions of Chrome, Firefox, Safari, and Edge. Penpal has also been reported to work within Ionic projects on iOS and Android devices.
+
+## Security
 
 ## API
 
@@ -233,86 +685,14 @@ A promise which will be resolved once communication has been established. The pr
 
 A method that, when called, will disconnect any messaging channels. You may call this even before a connection has been established.
 
-## Reconnection
-
-If the child iframe attempts to reconnect with the parent, the parent will accept the new connection. This could happen, for example, if a user refreshes the child iframe or navigates within the iframe to a different page that also uses Penpal. In this case, the `child` object the parent received when the initial connection was established will be updated with the new methods provided by the child iframe.
-
-NOTE: Currently there is no API to notify consumers of a reconnection. If this is important for you, please provide feedback on [this issue](https://github.com/Aaronius/penpal/issues/58) with how you would like to see the API designed.
-
-## Errors
-
-Penpal will throw (or reject promises with) errors in certain situations. Each error will have a `code` property which may be used for programmatic decisioning (e.g., do something if the error was due to a connection timing out) along with a `message` describing the problem. Errors may be thrown with the following codes:
-
-`ConnectionDestroyed`
-
-This error will be thrown when attempting to call a method on `child` or `parent` objects and the connection was previously destroyed.
-
-`ConnectionTimeout`
-
-The promise found at `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.
-
-`NoIframeSrc`
-
-This error will be thrown when the iframe passed into `connectToChild` does not have `src` or `srcdoc` set.
-
-For your convenience, these error codes can be imported as follows:
-
-```
-import { ErrorCode } from 'penpal';
-// ErrorCode.ConnectionDestroyed
-// ErrorCode.ConnectionTimeout
-// ErrorCode.NoIframeSrc
-```
-
-## TypeScript
-
-When calling `connectToChild` or `connectToParent`, you may pass a generic type argument. This will be used to type the `child` or `parent` object that `connection.promise` is resolved with. This is better explained in code:
-
-```typescript
-import { connectToChild } from 'penpal';
-
-// This interace could be imported from a code library
-// that both the parent and child share.
-interface ChildApi {
-  multiply(...args: number[]): number;
-}
-
-// Supply the interface as a generic argument.
-const connection = connectToChild<ChildApi>({
-  iframe: new HTMLIFrameElement(),
-});
-
-// The resulting child object will contain properly
-// typed methods.
-const child = await connection.promise;
-// The result variable is typed as a number.
-const result = await child.multiply(1, 3);
-```
-
-The following TypeScript types are also exported as named constants for your use:
-
-- `Connection`
-- `Methods`
-- `AsyncMethodReturns`
-- `CallSender`
-- `PenpalError`
-
-## React
-
-If you're using Penpal within a React app, please check out [@weblivion/react-penpal](https://www.npmjs.com/package/@weblivion/react-penpal).
-
-## Supported Browsers
-
-Penpal is designed to run successfully on the most recent versions of Chrome, Firefox, Safari, and Edge. If you need to support Internet Explorer 11, feel free to use version 3.x of Penpal. See the [3.x README](https://github.com/Aaronius/penpal/tree/3.x) for documentation.
-
-Penpal has also been reported to work within Ionic projects on iOS and Android devices.
-
 ## Inspiration
 
 This library is inspired by:
 
 - [Postmate](https://github.com/dollarshaveclub/postmate)
 - [JSChannel](https://github.com/mozilla/jschannel)
+- [post-me](https://github.com/alesgenova/post-me)
+- [comlink](https://github.com/GoogleChromeLabs/comlink)
 
 ## License
 
