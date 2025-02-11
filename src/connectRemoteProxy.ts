@@ -68,6 +68,15 @@ const createRemoteProxy = (
   );
 };
 
+const getClosedConnectionMethodCallError = (methodPath: MethodPath) => {
+  return new PenpalError(
+    ErrorCode.ConnectionClosed,
+    `Method call ${formatMethodPath(
+      methodPath
+    )}() failed due to closed connection`
+  );
+};
+
 /**
  * Creates a proxy. When methods are called on the proxy, a "call" message will
  * be sent to the remote, the remote's corresponding method will be
@@ -112,11 +121,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
 
   const remoteProxy = createRemoteProxy((methodPath, args) => {
     if (isClosed) {
-      throw new PenpalError(
-        ErrorCode.ConnectionClosed,
-        `Unable to send ${formatMethodPath(methodPath)}() call due ` +
-          `to closed connection`
-      );
+      throw getClosedConnectionMethodCallError(methodPath);
     }
 
     const callId = generateId();
@@ -179,14 +184,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
 
     for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {
       clearTimeout(timeoutId);
-      reject(
-        new PenpalError(
-          ErrorCode.ConnectionClosed,
-          `Method call ${formatMethodPath(
-            methodPath
-          )}() cannot be resolved due to closed connection`
-        )
-      );
+      reject(getClosedConnectionMethodCallError(methodPath));
     }
 
     replyHandlers.clear();

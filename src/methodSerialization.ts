@@ -31,7 +31,7 @@ export const extractMethodPathsFromMethods = (
 
     if (typeof value === 'function') {
       methodPaths.push([...currentPath, key]);
-    } else if (typeof value === 'object' && value !== null) {
+    } else if (isObject(value)) {
       methodPaths.push(
         ...extractMethodPathsFromMethods(value, [...currentPath, key])
       );

@@ -49,7 +49,7 @@ describe('parent calling close()', () => {
         }
         expect(error).toEqual(jasmine.any(Error));
         expect((error as Error).message).toBe(
-          'Unable to send multiply() call due to closed connection'
+          'Method call multiply() failed due to closed connection'
         );
         expect((error as PenpalError).code).toBe(ErrorCode.ConnectionClosed);
       });

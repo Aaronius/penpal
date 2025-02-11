@@ -91,6 +91,12 @@ const upgradeMethodPath = (methodPath: string): MethodPath =>
   methodPath.split('.');
 const downgradeMethodPath = (methodPath: MethodPath) => methodPath.join('.');
 
+const getUnexpectedMessageError = (message: unknown) => {
+  return new PenpalBugError(
+    `Unexpected message to translate: ${JSON.stringify(message)}`
+  );
+};
+
 export const upgradeMessage = (message: DeprecatedMessage): Message => {
   if (message.penpal === DeprecatedMessageType.Syn) {
     return {
@@ -151,9 +157,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Message => {
     }
   }
 
-  throw new PenpalBugError(
-    `Unexpected message to upgrade: ${JSON.stringify(message)}`
-  );
+  throw getUnexpectedMessageError(message);
 };
 
 export const downgradeMessage = (message: Message): DeprecatedMessage => {
@@ -199,7 +203,5 @@ export const downgradeMessage = (message: Message): DeprecatedMessage => {
     }
   }
 
-  throw new PenpalBugError(
-    `Unexpected message to downgrade: ${JSON.stringify(message)}`
-  );
+  throw getUnexpectedMessageError(message);
 };

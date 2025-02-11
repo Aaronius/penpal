@@ -262,7 +262,7 @@ for (const variant of variants) {
 
       expect(error!).toEqual(jasmine.any(Error));
       expect(error!.message).toBe(
-        'Method call neverResolve() cannot be resolved due to closed connection'
+        'Method call neverResolve() failed due to closed connection'
       );
       expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionClosed);
       connection.close();
