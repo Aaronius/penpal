@@ -90,6 +90,24 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
     connection.close();
   });
 
+  it('handles promises rejected with strings', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      allowedOrigins: [CHILD_SERVER],
+    });
+    const connection = connect<FixtureMethods>({
+      messenger,
+    });
+    const child = await connection.promise;
+    await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
+      'test error string'
+    );
+    connection.close();
+  });
+
   it('handles promises rejected with objects', async () => {
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
@@ -108,11 +126,32 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
     } catch (e) {
       error = e;
     }
-    // We advise consumers to only reject with error instances.
-    expect(error).toEqual(jasmine.any(Error));
-    expect((error as Error).name).toBe('Error');
-    expect((error as Error).message).toBe('[object Object]');
-    expect((error as Error).stack).toEqual(jasmine.any(String));
+    expect(error).toEqual({ a: 'b' });
+    connection.close();
+  });
+
+  it('handles promises rejected with undefined', async () => {
+    const iframe = createAndAddIframe(
+      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
+    );
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      allowedOrigins: [CHILD_SERVER],
+    });
+    const connection = connect<FixtureMethods>({
+      messenger,
+    });
+    const child = await connection.promise;
+    let catchCalled = false;
+    let error;
+    try {
+      await child.getPromiseRejectedWithUndefined();
+    } catch (e) {
+      catchCalled = true;
+      error = e;
+    }
+    expect(catchCalled).toBeTrue();
+    expect(error).toBeUndefined();
     connection.close();
   });
 
@@ -137,32 +176,6 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
     expect(error).toEqual(jasmine.any(Error));
     expect((error as Error).name).toBe('TypeError');
     expect((error as Error).message).toBe('test error object');
-    expect((error as Error).stack).toEqual(jasmine.any(String));
-    connection.close();
-  });
-
-  it('handles promises rejected with undefined', async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
-    });
-    const child = await connection.promise;
-    let error;
-    try {
-      await child.getPromiseRejectedWithUndefined();
-    } catch (e) {
-      error = e;
-    }
-    // We advise consumers to only reject with error instances.
-    expect(error).toEqual(jasmine.any(Error));
-    expect((error as Error).name).toBe('Error');
-    expect((error as Error).message).toBe('');
     expect((error as Error).stack).toEqual(jasmine.any(String));
     connection.close();
   });

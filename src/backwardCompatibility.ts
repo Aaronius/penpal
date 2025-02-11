@@ -1,7 +1,6 @@
-import { Message, MethodPath, SerializedError } from './types';
+import { Message, MethodPath } from './types';
 import namespace from './namespace';
 import { MessageType } from './enums';
-import { serializeError } from './errorSerialization';
 import {
   isCallMessage,
   isReplyMessage,
@@ -59,7 +58,12 @@ type DeprecatedReplyMessage = {
   id: number;
 } & (
   | {
-      resolution: DeprecatedResolution;
+      resolution: DeprecatedResolution.Fulfilled;
+      returnValue: unknown;
+      returnValueIsError?: false;
+    }
+  | {
+      resolution: DeprecatedResolution.Rejected;
       returnValue: unknown;
       returnValueIsError?: false;
     }
@@ -128,28 +132,21 @@ export const upgradeMessage = (message: DeprecatedMessage): Message => {
         value: message.returnValue,
       };
     } else {
-      let error: SerializedError;
-
-      if (message.returnValueIsError) {
-        error = message.returnValue;
-      } else {
-        error = serializeError(
-          new Error(
-            message.returnValue === undefined
-              ? undefined
-              : String(message.returnValue)
-          )
-        );
-      }
-
       return {
         namespace,
         channel: undefined,
         type: MessageType.Reply,
         // Actually converting the ID to a string would break communication.
         callId: (message.id as unknown) as string,
-        value: error,
         isError: true,
+        ...(message.returnValueIsError
+          ? {
+              value: message.returnValue,
+              isSerializedErrorInstance: true,
+            }
+          : {
+              value: message.returnValue,
+            }),
       };
     }
   }
@@ -184,8 +181,12 @@ export const downgradeMessage = (message: Message): DeprecatedMessage => {
         // Actually converting the ID to a number would break communication.
         id: (message.callId as unknown) as number,
         resolution: DeprecatedResolution.Rejected,
-        returnValue: message.value,
-        returnValueIsError: true,
+        ...(message.isSerializedErrorInstance
+          ? {
+              returnValue: message.value,
+              returnValueIsError: true,
+            }
+          : { returnValue: message.value }),
       };
     } else {
       return {

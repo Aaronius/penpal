@@ -11,14 +11,16 @@ import namespace from './namespace';
 const createErrorReplyMessage = (
   channel: string | undefined,
   callId: string,
-  error: Error
+  error: unknown
 ): ReplyMessage => ({
   namespace,
   channel,
   type: MessageType.Reply,
   callId,
-  value: serializeError(error),
   isError: true,
+  ...(error instanceof Error
+    ? { value: serializeError(error), isSerializedErrorInstance: true }
+    : { value: error }),
 });
 
 /**
@@ -78,13 +80,7 @@ const connectCallHandler = (
         value,
       };
     } catch (error) {
-      replyMessage = createErrorReplyMessage(
-        channel,
-        callId,
-        error instanceof Error
-          ? error
-          : new Error(error === undefined ? error : String(error))
-      );
+      replyMessage = createErrorReplyMessage(channel, callId, error);
     }
 
     // Although we checked this at the beginning of the function, we need to

@@ -114,19 +114,12 @@ for (const variant of variants) {
       connection.close();
     });
 
-    it('handles promises rejected with error instances', async () => {
+    it('handles promises rejected with strings', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
-      let error;
-      try {
-        await child.getPromiseRejectedWithError();
-      } catch (e) {
-        error = e;
-      }
-      expect(error).toEqual(jasmine.any(Error));
-      expect((error as Error).name).toBe('TypeError');
-      expect((error as Error).message).toBe('test error object');
-      expect((error as Error).stack).toEqual(jasmine.any(String));
+      await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
+        'test error string'
+      );
       connection.close();
     });
 
@@ -139,29 +132,38 @@ for (const variant of variants) {
       } catch (e) {
         error = e;
       }
-      // Just ensure there's no hard crash. We advise consumers to only
-      // reject with error instances.
-      expect(error).toEqual(jasmine.any(Error));
-      expect((error as Error).name).toBe('Error');
-      expect((error as Error).message).toBe('[object Object]');
-      expect((error as Error).stack).toEqual(jasmine.any(String));
+      expect(error).toEqual({ a: 'b' });
       connection.close();
     });
 
     it('handles promises rejected with undefined', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
+      let catchCalled = false;
       let error;
       try {
         await child.getPromiseRejectedWithUndefined();
       } catch (e) {
+        catchCalled = true;
         error = e;
       }
-      // Just ensure there's no hard crash. We advise consumers to only
-      // reject with error instances.
+      expect(catchCalled).toBeTrue();
+      expect(error).toBeUndefined();
+      connection.close();
+    });
+
+    it('handles promises rejected with error instances', async () => {
+      const connection = createConnection<FixtureMethods>();
+      const child = await connection.promise;
+      let error;
+      try {
+        await child.getPromiseRejectedWithError();
+      } catch (e) {
+        error = e;
+      }
       expect(error).toEqual(jasmine.any(Error));
-      expect((error as Error).name).toBe('Error');
-      expect((error as Error).message).toBe('');
+      expect((error as Error).name).toBe('TypeError');
+      expect((error as Error).message).toBe('test error object');
       expect((error as Error).stack).toEqual(jasmine.any(String));
       connection.close();
     });

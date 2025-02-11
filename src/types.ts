@@ -92,10 +92,17 @@ export type ReplyMessage = MessageBase & {
     | {
         value: unknown;
         isError?: false;
+        isSerializedErrorInstance?: false;
+      }
+    | {
+        value: unknown;
+        isError: true;
+        isSerializedErrorInstance?: false;
       }
     | {
         value: SerializedError;
         isError: true;
+        isSerializedErrorInstance: true;
       }
   );
 

@@ -15,9 +15,10 @@ type FixtureMethods = {
   getChannelFromParent(): string;
   addUsingParent(): void;
   getParentReturnValue(): number | undefined;
+  getPromiseRejectedWithString(): Promise<string>;
   getPromiseRejectedWithObject(): Promise<Record<string, string>>;
-  getPromiseRejectedWithError(): Promise<void>;
   getPromiseRejectedWithUndefined(): Promise<void>;
+  getPromiseRejectedWithError(): Promise<void>;
   throwError(): void;
   getUnclonableValue(): unknown;
   reload(): void;

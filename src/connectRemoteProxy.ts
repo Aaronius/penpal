@@ -54,8 +54,8 @@ const createRemoteProxy = (
 };
 
 /**
- * Augments an object with methods that match those defined by the remote. When these methods are
- * called, a "call" message will be sent to the remote, the remote's corresponding method will be
+ * Creates a proxy. When methods are called on the proxy, a "call" message will
+ * be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
  */
 const connectRemoteProxy = <TMethods extends Methods>(
@@ -71,7 +71,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
       return;
     }
 
-    const { callId, value, isError } = message;
+    const { callId, value, isError, isSerializedErrorInstance } = message;
     const replyHandler = replyHandlers.get(callId);
 
     if (!replyHandler) {
@@ -85,7 +85,9 @@ const connectRemoteProxy = <TMethods extends Methods>(
     );
 
     if (isError) {
-      replyHandler.reject(deserializeError(value));
+      replyHandler.reject(
+        isSerializedErrorInstance ? deserializeError(value) : value
+      );
     } else {
       replyHandler.resolve(value);
     }

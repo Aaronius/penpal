@@ -50,16 +50,19 @@ const methods: Omit<
   getParentReturnValue() {
     return parentReturnValue;
   },
+  getPromiseRejectedWithString() {
+    return Promise.reject('test error string');
+  },
   getPromiseRejectedWithObject() {
     return Promise.reject({ a: 'b' });
+  },
+  getPromiseRejectedWithUndefined() {
+    return Promise.reject();
   },
   getPromiseRejectedWithError() {
     // Using TypeError instead of Error just to make sure the "name" property
     // on the error instance gets properly serialized.
     return Promise.reject(new TypeError('test error object'));
-  },
-  getPromiseRejectedWithUndefined() {
-    return Promise.reject();
   },
   throwError() {
     throw new Error('Oh nos!');
