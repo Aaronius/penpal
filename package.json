@@ -1,7 +1,7 @@
 {
   "name": "penpal",
   "version": "6.2.2",
-  "description": "Penpal makes communication between windows (including iframes) and workers simple by abstracting the details of postMessage into promise-based methods.",
+  "description": "Penpal simplifies communication with iframes, workers, windows, etc. by using promise-based methods on top of postMessage.",
   "author": "Aaron Hardy <aaron@aaronhardy.com>",
   "license": "MIT",
   "bugs": {
@@ -12,17 +12,24 @@
     "url": "git+https://github.com/Aaronius/penpal.git"
   },
   "keywords": [
-    "window",
-    "windows",
+    "postMessage",
+    "communication",
+    "promise",
     "iframe",
     "iframes",
     "worker",
     "workers",
     "web-worker",
     "web-workers",
-    "postMessage",
-    "communication",
-    "promise"
+    "shared-worker",
+    "shared-workers",
+    "service-worker",
+    "service-workers",
+    "port",
+    "message-port",
+    "message-channel",
+    "window",
+    "windows"
   ],
   "type": "module",
   "exports": {

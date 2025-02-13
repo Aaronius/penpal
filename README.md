@@ -7,7 +7,7 @@
 
 # Penpal
 
-Penpal makes communication between windows (including iframes) and workers simple by abstracting the details of postMessage into promise-based methods.
+Penpal simplifies communication with iframes, workers, windows, etc. by using promise-based methods on top of postMessage.
 
 This library has no dependencies.
 
@@ -417,7 +417,7 @@ self.addEventListener('message', async (event) => {
 
 ## Closing the Connection
 
-At any point in time, call `connection.close()` to close the connection. If you're closing a window or worker that's part of a connection, be sure to close the connection as well so that objects can be properly garbage collected.
+At any point in time, call `connection.close()` to close the connection so that event listeners can be removed and objects can be properly garbage collected.
 
 ## Debugging
 
