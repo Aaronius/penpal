@@ -58,6 +58,7 @@ const connection = connect({
 });
 
 const remote = await connection.promise;
+// Calling a remote method will always return a promise.
 const multiplicationResult = await remote.multiply(2, 6);
 console.log(multiplicationResult); // 12
 const divisionResult = await remote.divide(12, 4);
@@ -94,6 +95,7 @@ const connection = connect({
 });
 
 const remote = await connection.promise;
+// Calling a remote method will always return a promise.
 const additionResult = await remote.add(2, 6);
 console.log(additionResult); // 8
 ```
@@ -129,6 +131,7 @@ const connection = connect({
 });
 
 const remote = await connection.promise;
+// Calling a remote method will always return a promise.
 const multiplicationResult = await remote.multiply(2, 6);
 console.log(multiplicationResult); // 12
 const divisionResult = await remote.divide(12, 4);
@@ -165,6 +168,7 @@ const connection = connect({
 });
 
 const remote = await connection.promise;
+// Calling a remote method will always return a promise.
 const additionResult = await remote.add(2, 6);
 console.log(additionResult); //
 ```
@@ -198,6 +202,7 @@ const connection = connect({
 });
 
 const remote = await connection.promise;
+// Calling a remote method will always return a promise.
 const multiplicationResult = await remote.multiply(2, 6);
 console.log(multiplicationResult); // 12
 const divisionResult = await remote.divide(12, 4);
@@ -232,6 +237,7 @@ const connection = connect({
 });
 
 const remote = await connection.promise;
+// Calling a remote method will always return a promise.
 const additionResult = await remote.add(2, 6);
 console.log(additionResult); // 8
 ```
@@ -265,6 +271,7 @@ const connection = connect({
 });
 
 const remote = await connection.promise;
+// Calling a remote method will always return a promise.
 const multiplicationResult = await remote.multiply(2, 6);
 console.log(multiplicationResult); // 12
 const divisionResult = await remote.divide(12, 4);
@@ -302,6 +309,7 @@ self.addEventListener('connect', async (event) => {
   });
 
   const remote = await connection.promise;
+  // Calling a remote method will always return a promise.
   const additionResult = await remote.add(2, 6);
   console.log(additionResult); // 8
 });
@@ -337,6 +345,7 @@ const initPenpal = async () => {
   });
 
   const remote = await connection.promise;
+  // Calling a remote method will always return a promise.
   const multiplicationResult = await remote.multiply(2, 6);
   console.log(multiplicationResult); // 12
   const divisionResult = await remote.divide(12, 4);
@@ -397,15 +406,22 @@ self.addEventListener('message', async (event) => {
     },
   });
 
-  await connection.promise;
+  const remote = await connection.promise;
+  // Calling a remote method will always return a promise.
+  const additionResult = await remote.add(2, 6);
+  console.log(additionResult); // 8
 });
 ```
 
 </details>
 
+## Closing the Connection
+
+At any point in time, call `connection.close()` to close the connection. If you're closing a window or worker that's part of a connection, be sure to close the connection as well so that objects can be properly garbage collected.
+
 ## Debugging
 
-To debug while using Penpal, specify a function for the `log` option when calling `connect`. While this can be any function, Penpal exports a simple logging function called `debug` which you can import and use. Passing a prefix into `debug` will help you distinguish logs from other Penpal connections.
+To debug while using Penpal, specify a function for the `log` option when calling `connect()`. This function will be called whenever Penpal needs to log a message. While this can be any function, Penpal exports a simple logging function called `debug` which you can import and use. Passing a prefix into `debug` will help to distinguish the origin of log messages.
 
 ```javascript
 import { connect, debug } from 'penpal';
@@ -533,69 +549,188 @@ const connection = connect({
 });
 ```
 
-## Reconnection
+## Multiple, Parallel Connections
 
-If the child iframe attempts to reconnect with the parent, the parent will accept the new connection. This could happen, for example, if a user refreshes the child iframe or navigates within the iframe to a different page that also uses Penpal. In this case, the `child` object the parent received when the initial connection was established will be updated with the new methods provided by the child iframe.
+In fairly rare cases, you may wish to make multiple, parallel connections between two participants. To illustrate, let's use a scenario where you wish to make two parallel connections between Window A and Window B. In other words, you will be calling `connect()` twice within Window A and twice within Window B.
 
-NOTE: Currently there is no API to notify consumers of a reconnection. If this is important for you, please provide feedback on [this issue](https://github.com/Aaronius/penpal/issues/58) with how you would like to see the API designed.
+In an attempt to establish these two connections, Penpal in Window A will be calling `postMessage()` on a single window object. By default, when Penpal within Window B receives these messages, it has no way to disambiguate messages related to the first call to `connect()` from messages related to the second call to `connect()`. As a result, the connections may fail to be properly established.
+
+To prevent this issue, Penpal provides the concept of channels. A channel is a string identifier of your choosing that you may provide when calling `connect()` within both participants. When a channel is provided, it is used to disambiguate communication between multiple, parallel connections. This is better explained in code:
+
+### Window A
+
+```javascript
+import { WindowMessenger, connect } from 'penpal';
+
+const iframe = document.createElement('iframe');
+iframe.src = 'https://childorigin.example.com/iframe.html';
+document.body.appendChild(iframe);
+
+const messengerA = new WindowMessenger({
+  remoteWindow: iframe.contentWindow,
+  allowedOrigins: ['https://childorigin.example.com'],
+});
+
+const connectionA = connect({
+  messenger: messengerA,
+  channel: 'A',
+  methods: {
+    add(num1, num2) {
+      return num1 + num2;
+    },
+  },
+});
+
+// Note that each call to connect() needs a separate messenger instance.
+const messengerB = new WindowMessenger({
+  remoteWindow: iframe.contentWindow,
+  allowedOrigins: ['https://childorigin.example.com'],
+});
+
+const connectionB = connect({
+  messenger: messengerB,
+  channel: 'B',
+  methods: {
+    subtract(num1, num2) {
+      return num1 - num2;
+    },
+  },
+});
+```
+
+### Window B
+
+```javascript
+import { WindowMessenger, connect } from 'penpal';
+
+const messengerA = new WindowMessenger({
+  remoteWindow: iframe.parent,
+  allowedOrigins: ['https://parentOrigin.example.com'],
+});
+
+const connectionA = connect({
+  messenger: messengerA,
+  channel: 'A',
+  methods: {
+    multiply(num1, num2) {
+      return num1 * num2;
+    },
+  },
+});
+
+// Note that each call to connect() needs a separate messenger instance.
+const messengerB = new WindowMessenger({
+  remoteWindow: iframe.contentWindow,
+  allowedOrigins: ['https://parentorigin.example.com'],
+});
+
+const connectionB = connect({
+  messenger: messengerB,
+  channel: 'B',
+  methods: {
+    divide(num1, num2) {
+      return num1 / num2;
+    },
+  },
+});
+```
+
+Although we're using `WindowMessenger` here to establish connections between two windows, channels would similarly need to be used when using `WorkerMessenger` to make multiple, parallel connections to a worker. When using `PortMessenger`, channels are only needed when establishing multiple, parallel connections over the same port (when using separate ports, messages are already disambiguated).
 
 ## Errors
 
-Penpal will throw (or reject promises with) errors in certain situations. Each error will have a `code` property which may be used for programmatic decisioning (e.g., do something if the error was due to a connection timing out) along with a `message` describing the problem. Errors may be thrown with the following codes:
+Penpal will throw or reject promises with errors in certain situations. Each error will be an instance of `PenpalError` and will have a `code` property which may be used for programmatic decisioning (e.g., take a specific action if a method call times out) along with a `message` describing the problem. Changes to error codes will be considered breaking changes and require a new major version of Penpal to be released. Changes to messages will not be considered breaking changes. The following error codes are used:
 
-`ConnectionDestroyed`
+`CONNECTION_CLOSED`
 
-This error will be thrown when attempting to call a method on `child` or `parent` objects and the connection was previously destroyed.
+This error will be thrown when attempting to call a method and the connection was previously closed.
 
-`ConnectionTimeout`
+`CONNECTION_TIMEOUT`
 
-The promise found at `connection.promise` will be rejected with this error after the `timeout` duration has elapsed and a connection has not been established.
+The promise found at `connection.promise` will be rejected with this error after the configured [connection timeout](#connection-timeouts) duration has elapsed and a connection has not been established.
 
-`NoIframeSrc`
+`INVALID_ARGUMENT`
 
-This error will be thrown when the iframe passed into `connectToChild` does not have `src` or `srcdoc` set.
+This error will be thrown when an invalid argument is passed to Penpal.
 
-For your convenience, these error codes can be imported as follows:
+`METHOD_CALL_TIMEOUT`
+
+The promise returned from a method call will be rejected with this error after the configured [method call timeout](#method-call-timeouts) duration has elapsed and a response has not been received.
+
+`METHOD_NOT_FOUND`
+
+The promise returned from a method call will be rejected with this error if the method does not exist on the remote.
+
+`TRANSMISSION_FAILED`
+
+When a connection is being established, the promise found at `connection.promise` will be rejected with this error if a message cannot be transmitted. When a method call is being made, the promise returned from the method call will be rejected with this error if a message cannot be transmitted.
+
+### Error Code Enumeration
+
+For your convenience, the above error codes can be imported and referenced as follows:
 
 ```
 import { ErrorCode } from 'penpal';
-// ErrorCode.ConnectionDestroyed
+// ErrorCode.ConnectionClosed
 // ErrorCode.ConnectionTimeout
-// ErrorCode.NoIframeSrc
+// ErrorCode.InvalidArgument
+// ErrorCode.MethodCallTimeout
+// ErrorCode.MethodNotFound
+// ErrorCode.TransmissionFailed
 ```
 
 ## TypeScript
 
-When calling `connectToChild` or `connectToParent`, you may pass a generic type argument. This will be used to type the `child` or `parent` object that `connection.promise` is resolved with. This is better explained in code:
+Penpal is built in TypeScript and provides full TypeScript support. When calling `connect()`, it's recommended you pass a generic type argument that describes the methods the remote will be exposing. This will be used to type the `remote` object that `connection.promise` is resolved with. This is better explained in code:
+
+### Window Connecting to a Worker
 
 ```typescript
-import { connectToChild } from 'penpal';
+import { WorkerMessenger, connect } from 'penpal';
 
-// This interace could be imported from a code library
-// that both the parent and child share.
-interface ChildApi {
+// This interace could be in a module imported by both the window and worker.
+interface WorkerApi {
   multiply(...args: number[]): number;
 }
 
-// Supply the interface as a generic argument.
-const connection = connectToChild<ChildApi>({
-  iframe: new HTMLIFrameElement(),
+const worker = new Worker('worker.js');
+
+const messenger = new WorkerMessenger({
+  worker,
 });
 
-// The resulting child object will contain properly
-// typed methods.
-const child = await connection.promise;
-// The result variable is typed as a number.
-const result = await child.multiply(1, 3);
+// Note we're passing in WorkerApi as a generic type argument.
+const connection = connect<WorkerApi>({
+  messenger,
+});
+
+// This `remote` object will contain properly typed methods.
+const remote = await connection.promise;
+// This `multiplicationResult` constant will be properly typed as a number.
+const multiplicationResult = await remote.multiply(2, 6);
 ```
 
-The following TypeScript types are also exported as named constants for your use:
+### Exported Types
 
-- `Connection`
-- `Methods`
-- `AsyncMethodReturns`
-- `CallSender`
-- `PenpalError`
+Penpal exports several types for your usage. Import types as follows:
+
+```typescript
+import { Connection, Methods, RemoteProxy } from 'penpal';
+```
+
+The types are described as follows:
+
+#### `Connection`
+
+The connection object returned from `connect()` is typed as `Connection`.
+
+#### `Methods`
+
+The object you provide for the `methods` option when calling `connect()` must be compatible with the `Methods` type. The generic type argument you pass when calling `connect()` must also be compatible with the `Methods` type.
+
+#### `RemoteProxy`
+
+The object that `connection.promise` resolves to will be of type `RemoteProxy`. More specifically, it will be of type `RemoteProxy<TMethods>`, where `TMethods` is the type you pass as a generic type argument when calling `connect()` as described above.
 
 ## React
 
@@ -605,13 +740,11 @@ If you're using Penpal within a React app, please check out [@weblivion/react-pe
 
 Penpal is designed to run successfully on the most recent versions of Chrome, Firefox, Safari, and Edge. Penpal has also been reported to work within Ionic projects on iOS and Android devices.
 
-## Security
+---
 
 ## API
 
-### `connectToChild(options: Object) => Object`
-
-**For Penpal to operate correctly, you must ensure that `connectToChild` is called before the iframe calls `connectToParent`.** As shown in the example above, it is safe to set the `src` or `srcdoc` property of the iframe and append the iframe to the document before calling `connectToChild` as long as they are both done in the same [JavaScript event loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop). Alternatively, you can always append the iframe to the document _after_ calling `connectToChild` instead of _before_.
+### `connect(options: Object) => Object`
 
 #### Options
 

@@ -57,7 +57,7 @@ const connect = <TMethods extends Methods>({
 
   if (usedMessengers.has(messenger)) {
     throw new PenpalError(
-      ErrorCode.MessengerReused,
+      ErrorCode.InvalidArgument,
       'A messenger can only be used for a single connection'
     );
   }

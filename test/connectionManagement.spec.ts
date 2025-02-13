@@ -573,7 +573,7 @@ describe('connection management', () => {
       });
     } catch (error) {
       expect(error).toEqual(jasmine.any(PenpalError));
-      expect((error as PenpalError).code).toBe(ErrorCode.MessengerReused);
+      expect((error as PenpalError).code).toBe(ErrorCode.InvalidArgument);
       return;
     }
 
