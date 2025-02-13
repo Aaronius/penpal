@@ -18,15 +18,13 @@ type Options = {
   methods?: Methods;
   /**
    * The amount of time, in milliseconds, Penpal should wait
-   * for the remote to respond before rejecting the connection promise.
+   * for a connection to be established before rejecting the connection promise.
    */
   timeout?: number;
   /**
    * A string identifier that disambiguates communication when establishing
-   * multiple, parallel connections between two participants, for example,
-   * two windows, a window and a worker, etc. The same channel identifier
-   * (which is a string of your choosing) must be provided by both participants
-   * in order for the connection between the two to be established.
+   * multiple, parallel connections between two participants (e.g., two windows,
+   * a window and a worker).
    */
   channel?: string;
   /**
