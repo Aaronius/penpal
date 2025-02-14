@@ -39,7 +39,7 @@ Penpal will then be installed on `window.Penpal`. Usage is similar to if you wer
 
 ## Usage with an Iframe
 
-<details open>
+<details>
     <summary>Expand Details</summary>
 
 ### Parent Window
