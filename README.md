@@ -1,15 +1,21 @@
+<div align="center">
+
+![Penpal](.github/assets/banner.png 'Penpal')
+
+</div>
+
+<p align="center">
+  Penpal simplifies communication with iframes, workers, windows, etc. by
+  <br/>
+  using promise-based methods on top of postMessage.
+  <br/>
+</p>
+
+<div align="center">
+
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
-[See documentation for 6.x](https://github.com/Aaronius/penpal/tree/master)  
-[See documentation for 5.x](https://github.com/Aaronius/penpal/tree/5.x)  
-[See documentation for 4.x](https://github.com/Aaronius/penpal/tree/4.x)  
-[See documentation for 3.x](https://github.com/Aaronius/penpal/tree/3.x)
-
-# Penpal
-
-Penpal simplifies communication with iframes, workers, windows, etc. by using promise-based methods on top of postMessage.
-
-This library has no dependencies.
+</div>
 
 ## Installation
 
