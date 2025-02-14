@@ -500,7 +500,7 @@ try {
 }
 ```
 
-## Transferable Objects
+## Transferring Large Objects
 
 When sending a value between windows or workers, the browser uses a [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) by default to _clone_ the value as it is sent. As a result, the value will exist in memory multiple times--once for the sender and once for the recipient. This is typically fine, but some use cases require sending a large amount of data between contexts which could result in a significant performance hit.
 
@@ -778,7 +778,7 @@ The return value of `connect` is a `Connection` object with the following proper
 
 `promise: Promise`
 
-A promise which will be resolved once communication has been established. The promise will be resolved with an object that serves as a proxy for the methods the remote has exposed. Calling a method on this proxy object will always return a promise since it involves sending messages to and from the remote which are asynchronous operations. When calling a method on this proxy object, you may always pass an instance of `MethodCallOptions` as a final argument. See [Method Call Timeouts](#method-call-timeouts) and [Transferable Objects](#transferable-objects) for more information on `MethodCallOptions`.
+A promise which will be resolved once communication has been established. The promise will be resolved with an object that serves as a proxy for the methods the remote has exposed. Calling a method on this proxy object will always return a promise since it involves sending messages to and from the remote which are asynchronous operations. When calling a method on this proxy object, you may always pass an instance of `MethodCallOptions` as a final argument. See [Method Call Timeouts](#method-call-timeouts) and [Transferable Large Objects](#transferring-large-objects) for more information on `MethodCallOptions`.
 
 `destroy: () => void`
 
@@ -826,9 +826,16 @@ This messenger supports communication between two [MessagePorts](https://develop
 
 `port: MessagePort`
 
-A reference to the port. Each of the two participants in a Penpal connection will have its own [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort). Both ports must come from the same [MessageChannel](https://developer.mozilla.org/en-US/docs/Web/API/MessageChannel).
+A reference to the port. Each of the two participants in a Penpal connection will have its own [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort).
 
 ---
+
+## Documentation for Previous Versions
+
+- [v6 documentation](https://github.com/Aaronius/penpal/tree/master)
+- [v5 documentation](https://github.com/Aaronius/penpal/tree/5.x)
+- [v4 documentation](https://github.com/Aaronius/penpal/tree/4.x)
+- [v3 documentation](https://github.com/Aaronius/penpal/tree/3.x)
 
 ## Inspiration
 
