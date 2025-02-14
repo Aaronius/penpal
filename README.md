@@ -1,6 +1,10 @@
 <div align="center">
 
-![Penpal](.github/assets/banner.png 'Penpal')
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/readme-banner-white.png">
+  <source media="(prefers-color-scheme: light)" srcset=".github/assets/readme-banner-black.png">
+  <img alt="Penpal Logo" src=".github/assets/readme-banner-black.png">
+</picture>
 
 </div>
 
