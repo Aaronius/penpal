@@ -485,10 +485,10 @@ try {
 
 ### Method Call Timeouts
 
-When calling a remote method, you may specify a timeout in milliseconds by passing an instance of `MethodCallOptions` as the last argument. If a response is not received within the timeout period, the method call promise will be rejected with an error. See [Errors](#errors) for more information on errors.
+When calling a remote method, you may specify a timeout in milliseconds by passing an instance of `CallOptions` as the last argument. If a response is not received within the timeout period, the method call promise will be rejected with an error. See [Errors](#errors) for more information on errors.
 
 ```javascript
-import { MethodCallOptions, ErrorCode } from 'penpal';
+import { CallOptions, ErrorCode } from 'penpal';
 
 ...
 
@@ -496,7 +496,7 @@ const remote = await connection.promise;
 
 try {
   const multiplicationResult =
-    await remote.multiply(2, 6, new MethodCallOptions({ timeout: 1000 }));
+    await remote.multiply(2, 6, new CallOptions({ timeout: 1000 }));
 } catch (error) {
   if (error.code === ErrorCode.MethodCallTimeout) {
     // Method call failed due to timeout.
@@ -510,12 +510,12 @@ When sending a value between windows or workers, the browser uses a [structured 
 
 To address this scenario, browsers support [transferable objects](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects) which allow certain types of objects to be _transferred_ between contexts. Rather than cloning the object, the browser will provide the receiving context a pointer to the object's existing block of memory.
 
-When calling a remote method using Penpal, you may specify which objects should be transferred rather than cloned by passing an instance of `MethodCallOptions` as the last argument with the `transferables` option set. When responding to a method call, you may specify which objects should be transferred by returning an instance of `Reply` with the `transferables` option set.
+When calling a remote method using Penpal, you may specify which objects should be transferred rather than cloned by passing an instance of `CallOptions` as the last argument with the `transferables` option set. When responding to a method call, you may specify which objects should be transferred by returning an instance of `Reply` with the `transferables` option set.
 
 ### Window
 
 ```javascript
-import { connect, MethodCallOptions } from 'penpal';
+import { connect, CallOptions } from 'penpal';
 
 ...
 
@@ -531,7 +531,7 @@ numbersArray[1] = 5;
 
 const multiplicationResultArray = await remote.double(
   numbersArray,
-  new MethodCallOptions({ transferables: [numbersArray.buffer] })
+  new CallOptions({ transferables: [numbersArray.buffer] })
 );
 
 console.log(multiplicationResultArray[0]); // 8
@@ -782,7 +782,7 @@ The return value of `connect` is a `Connection` object with the following proper
 
 `promise: Promise`
 
-A promise which will be resolved once communication has been established. The promise will be resolved with an object that serves as a proxy for the methods the remote has exposed. Calling a method on this proxy object will always return a promise since it involves sending messages to and from the remote which are asynchronous operations. When calling a method on this proxy object, you may always pass an instance of `MethodCallOptions` as a final argument. See [Method Call Timeouts](#method-call-timeouts) and [Transferable Large Objects](#transferring-large-objects) for more information on `MethodCallOptions`.
+A promise which will be resolved once communication has been established. The promise will be resolved with an object that serves as a proxy for the methods the remote has exposed. Calling a method on this proxy object will always return a promise since it involves sending messages to and from the remote which are asynchronous operations. When calling a method on this proxy object, you may always pass an instance of `CallOptions` as a final argument. See [Method Call Timeouts](#method-call-timeouts) and [Transferable Large Objects](#transferring-large-objects) for more information on `CallOptions`.
 
 `destroy: () => void`
 

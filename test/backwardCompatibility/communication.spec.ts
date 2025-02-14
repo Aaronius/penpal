@@ -2,7 +2,7 @@ import { createAndAddIframe } from '../utils';
 import {
   connect,
   ErrorCode,
-  MethodCallOptions,
+  CallOptions,
   PenpalError,
   WindowMessenger,
 } from '../../src/index';
@@ -240,7 +240,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
     });
     const child = await connection.promise;
     const promise = child.neverResolve(
-      new MethodCallOptions({
+      new CallOptions({
         timeout: 1000,
       })
     );

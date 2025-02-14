@@ -1,5 +1,5 @@
 import { ErrorCode, MessageType } from './enums';
-import MethodCallOptions from './MethodCallOptions';
+import CallOptions from './CallOptions';
 import Reply from './Reply';
 import namespace from './namespace';
 
@@ -12,7 +12,7 @@ type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 export type RemoteProxy<TMethods extends Methods = Methods> = {
   [K in keyof TMethods]: TMethods[K] extends (...args: infer A) => infer R
     ? (
-        ...args: [...A, MethodCallOptions?]
+        ...args: [...A, CallOptions?]
       ) => Promise<ExtractValueFromReply<Awaited<R>>>
     : TMethods[K] extends Methods
     ? RemoteProxy<TMethods[K]>

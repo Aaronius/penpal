@@ -1,7 +1,7 @@
 import assertType from './assertType';
 import {
   connect,
-  MethodCallOptions,
+  CallOptions,
   WindowMessenger,
   RemoteProxy,
   Reply,
@@ -44,12 +44,12 @@ const child = await connection.promise;
 assertType<RemoteProxy<ChildMethods>>(child);
 assertType<Promise<number>>(child.multiply(2, 3));
 assertType<Promise<number>>(child.multiplyWithPromisedValue(2, 3));
-assertType<Promise<number>>(child.multiply(2, 3, new MethodCallOptions()));
-assertType<Promise<number>>(child.multiply(2, 3, new MethodCallOptions({})));
+assertType<Promise<number>>(child.multiply(2, 3, new CallOptions()));
+assertType<Promise<number>>(child.multiply(2, 3, new CallOptions({})));
 assertType<Promise<number>>(
-  child.multiply(2, 3, new MethodCallOptions({ transferables: [] }))
+  child.multiply(2, 3, new CallOptions({ transferables: [] }))
 );
-// @ts-expect-error Message options must be an instance of MethodCallOptions.
+// @ts-expect-error Message options must be an instance of CallOptions.
 void child.multiply(2, 3, { transferables: [] });
 assertType<Promise<number>>(child.multiplyWithReplyInstance(2, 3));
 assertType<Promise<number>>(child.multiplyWithPromisedReplyInstance(2, 3));
@@ -70,7 +70,7 @@ assertType<Promise<DataView>>(
   child.multiplyWithTransferables(
     input1DataView,
     input2DataView,
-    new MethodCallOptions({
+    new CallOptions({
       transferables: [input1DataView.buffer, input2DataView.buffer],
     })
   )

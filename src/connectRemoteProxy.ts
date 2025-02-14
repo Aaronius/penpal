@@ -10,7 +10,7 @@ import {
   Log,
 } from './types';
 import { ErrorCode, MessageType } from './enums';
-import MethodCallOptions from './MethodCallOptions';
+import CallOptions from './CallOptions';
 import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
 import { isFunction, isReplyMessage } from './guards';
@@ -126,7 +126,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
 
     const callId = generateId();
     const lastArg = args[args.length - 1];
-    const lastArgIsOptions = lastArg instanceof MethodCallOptions;
+    const lastArgIsOptions = lastArg instanceof CallOptions;
     const { timeout, transferables } = lastArgIsOptions ? lastArg : {};
     const argsWithoutOptions = lastArgIsOptions ? args.slice(0, -1) : args;
 

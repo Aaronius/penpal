@@ -1,12 +1,12 @@
-const brand: unique symbol = Symbol('MethodCallOptions');
+const brand: unique symbol = Symbol('CallOptions');
 
-class MethodCallOptions {
+class CallOptions {
   readonly transferables?: Transferable[];
   readonly timeout?: number;
 
   // This ensures that the class cannot be faked by structural typing.
   // This is necessary because Penpal uses an instanceof check to determine
-  // if a value is, in fact, an instance of MethodCallOptions rather than just
+  // if a value is, in fact, an instance of CallOptions rather than just
   // being structurally similar.
   private [brand] = brand;
 
@@ -16,4 +16,4 @@ class MethodCallOptions {
   }
 }
 
-export default MethodCallOptions;
+export default CallOptions;

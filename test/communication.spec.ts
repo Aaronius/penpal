@@ -1,5 +1,5 @@
 import { createIframeAndConnection, createWorkerAndConnection } from './utils';
-import { ErrorCode, MethodCallOptions, PenpalError } from '../src/index';
+import { ErrorCode, CallOptions, PenpalError } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 
 const variants = [
@@ -72,7 +72,7 @@ for (const variant of variants) {
 
       const resultPromise = child.double(
         numbersArray,
-        new MethodCallOptions({
+        new CallOptions({
           transferables: [numbersArray.buffer],
         })
       );
@@ -208,7 +208,7 @@ for (const variant of variants) {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
       const promise = child.neverResolve(
-        new MethodCallOptions({
+        new CallOptions({
           timeout: 1000,
         })
       );
