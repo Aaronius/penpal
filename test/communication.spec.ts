@@ -26,7 +26,7 @@ for (const variant of variants) {
       const child = await connection.promise;
       const value = await child.multiply(2, 5);
       expect(value).toEqual(10);
-      connection.close();
+      connection.destroy();
     });
 
     it('calls nested functions on the child', async () => {
@@ -36,7 +36,7 @@ for (const variant of variants) {
       expect(oneLevel).toEqual('pen');
       const twoLevels = await child.nested.by.twoLevels('pal');
       expect(twoLevels).toEqual('pal');
-      connection.close();
+      connection.destroy();
     });
 
     it('calls an asynchronous function on the child', async () => {
@@ -44,7 +44,7 @@ for (const variant of variants) {
       const child = await connection.promise;
       const value = await child.multiplyAsync(2, 5);
       expect(value).toEqual(10);
-      connection.close();
+      connection.destroy();
     });
 
     it('methods on Function prototype (like `apply`) are sent to remote', async () => {
@@ -59,7 +59,7 @@ for (const variant of variants) {
       // methods like `bind` and `call`.
       const value = await child.nested.apply();
       expect(value).toEqual('apply result');
-      connection.close();
+      connection.destroy();
     });
 
     it('handles transferables', async () => {
@@ -85,7 +85,7 @@ for (const variant of variants) {
       const resultArray = await resultPromise;
       expect(resultArray[0]).toBe(8);
       expect(resultArray[1]).toBe(10);
-      connection.close();
+      connection.destroy();
     });
 
     it('handles a promised reply instance with a promised return value', async () => {
@@ -96,7 +96,7 @@ for (const variant of variants) {
         5
       );
       expect(value).toEqual(10);
-      connection.close();
+      connection.destroy();
     });
 
     it('calls a function on the parent', async () => {
@@ -111,7 +111,7 @@ for (const variant of variants) {
       await child.addUsingParent();
       const value = await child.getParentReturnValue();
       expect(value).toEqual(9);
-      connection.close();
+      connection.destroy();
     });
 
     it('handles promises rejected with strings', async () => {
@@ -120,7 +120,7 @@ for (const variant of variants) {
       await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
         'test error string'
       );
-      connection.close();
+      connection.destroy();
     });
 
     it('handles promises rejected with objects', async () => {
@@ -133,7 +133,7 @@ for (const variant of variants) {
         error = e;
       }
       expect(error).toEqual({ a: 'b' });
-      connection.close();
+      connection.destroy();
     });
 
     it('handles promises rejected with undefined', async () => {
@@ -149,7 +149,7 @@ for (const variant of variants) {
       }
       expect(catchCalled).toBeTrue();
       expect(error).toBeUndefined();
-      connection.close();
+      connection.destroy();
     });
 
     it('handles promises rejected with error instances', async () => {
@@ -165,7 +165,7 @@ for (const variant of variants) {
       expect((error as Error).name).toBe('TypeError');
       expect((error as Error).message).toBe('test error object');
       expect((error as Error).stack).toEqual(jasmine.any(String));
-      connection.close();
+      connection.destroy();
     });
 
     it('handles thrown errors', async () => {
@@ -179,7 +179,7 @@ for (const variant of variants) {
       }
       expect(error).toEqual(jasmine.any(Error));
       expect((error as Error).message).toBe('Oh nos!');
-      connection.close();
+      connection.destroy();
     });
 
     it('handles unclonable values', async () => {
@@ -193,14 +193,14 @@ for (const variant of variants) {
       }
       expect(error).toEqual(jasmine.any(Error));
       expect((error as Error).name).toBe('DataCloneError');
-      connection.close();
+      connection.destroy();
     });
 
     it('handles methods with periods in the name', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
       await expectAsync(child['with.period']()).toBeResolvedTo('success');
-      connection.close();
+      connection.destroy();
     });
 
     it('rejects method call promise if method call timeout reached', async () => {
@@ -228,10 +228,10 @@ for (const variant of variants) {
         'Method call neverResolve() timed out after 1000ms'
       );
       expect((error as PenpalError).code).toBe(ErrorCode.MethodCallTimeout);
-      connection.close();
+      connection.destroy();
     });
 
-    it('rejects method call promise if connection is closed before reply is received', async () => {
+    it('rejects method call promise if connection is destroyed before reply is received', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
 
@@ -240,17 +240,17 @@ for (const variant of variants) {
       child.neverResolve().catch((e) => {
         error = e;
       });
-      connection.close();
+      connection.destroy();
 
       // Wait for microtask queue to drain
       await Promise.resolve();
 
       expect(error!).toEqual(jasmine.any(Error));
       expect(error!.message).toBe(
-        'Method call neverResolve() failed due to closed connection'
+        'Method call neverResolve() failed due to destroyed connection'
       );
-      expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionClosed);
-      connection.close();
+      expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
+      connection.destroy();
     });
   });
 }

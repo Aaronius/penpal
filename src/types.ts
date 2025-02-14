@@ -31,7 +31,7 @@ export type Connection<TMethods extends Methods = Methods> = {
    * A method that, when called, will disconnect any communication.
    * You may call this even before a connection has been established.
    */
-  close: () => void;
+  destroy: () => void;
 };
 
 /**
@@ -106,8 +106,8 @@ export type ReplyMessage = MessageBase & {
       }
   );
 
-export type CloseMessage = MessageBase & {
-  type: MessageType.Close;
+export type DestroyMessage = MessageBase & {
+  type: MessageType.Destroy;
 };
 
 export type Message =
@@ -116,6 +116,6 @@ export type Message =
   | Ack2Message
   | CallMessage
   | ReplyMessage
-  | CloseMessage;
+  | DestroyMessage;
 
 export type Log = (...args: unknown[]) => void;

@@ -280,7 +280,7 @@ describe('connection management', () => {
           window.removeEventListener('message', handleMessage);
           child.multiply(2, 4).then((value: number) => {
             expect(value).toEqual(8);
-            connection.close();
+            connection.destroy();
             resolve();
           });
         }
@@ -291,7 +291,7 @@ describe('connection management', () => {
     });
   });
 
-  it('closes other side of connection when connection is closed', async () => {
+  it('destroys other side of connection when connection is destroyed', async () => {
     const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
     const messenger = new WindowMessenger({
@@ -304,7 +304,7 @@ describe('connection management', () => {
     });
 
     await connection.promise;
-    connection.close();
+    connection.destroy();
 
     return new Promise<void>((resolve) => {
       window.addEventListener('message', (event) => {
@@ -313,7 +313,7 @@ describe('connection management', () => {
           event.data.addUsingParentResultErrorCode
         ) {
           expect(event.data.addUsingParentResultErrorCode).toBe(
-            ErrorCode.ConnectionClosed
+            ErrorCode.ConnectionDestroyed
           );
           resolve();
         }
@@ -394,7 +394,7 @@ describe('connection management', () => {
     expect((error as PenpalError).code).toBe(ErrorCode.ConnectionTimeout);
   });
 
-  it("doesn't close connection if connection succeeds then timeout passes", async () => {
+  it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
     jasmine.clock().install();
 
     const iframe = createAndAddIframe(getPageFixtureUrl('general'));
@@ -413,7 +413,7 @@ describe('connection management', () => {
 
     expect(iframe.parentNode).not.toBeNull();
 
-    connection.close();
+    connection.destroy();
   });
 
   it('connects to window in parallel with separate channels', async () => {
@@ -467,8 +467,8 @@ describe('connection management', () => {
 
     expect(results).toEqual(['A', 'B', 'A', 'B']);
 
-    channelAConnection.close();
-    channelBConnection.close();
+    channelAConnection.destroy();
+    channelBConnection.destroy();
   });
 
   it('connects to worker in parallel with separate channels', async () => {
@@ -520,8 +520,8 @@ describe('connection management', () => {
 
     expect(results).toEqual(['A', 'B', 'A', 'B']);
 
-    channelAConnection.close();
-    channelBConnection.close();
+    channelAConnection.destroy();
+    channelBConnection.destroy();
   });
 
   const invalidOrigins = [
@@ -612,7 +612,7 @@ describe('connection management', () => {
 
     await connection.promise;
 
-    connection.close();
+    connection.destroy();
   });
 
   it('connects to service worker', (done) => {

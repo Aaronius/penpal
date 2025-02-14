@@ -12,7 +12,7 @@ interface Messenger {
   addMessageHandler: (callback: MessageHandler) => void;
   removeMessageHandler: (callback: MessageHandler) => void;
   initialize: (options: InitializeOptions) => void;
-  close: () => void;
+  destroy: () => void;
 }
 
 export default Messenger;

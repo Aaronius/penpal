@@ -1,9 +1,9 @@
-import { CloseMessage, Connection, Log, Message, Methods } from './types';
+import { DestroyMessage, Connection, Log, Message, Methods } from './types';
 import PenpalError from './PenpalError';
 import Messenger from './messengers/Messenger';
 import { ErrorCode, MessageType } from './enums';
 import shakeHands from './shakeHands';
-import { isCloseMessage, isMessage } from './guards';
+import { isDestroyMessage, isMessage } from './guards';
 import once from './once';
 import namespace from './namespace';
 
@@ -62,18 +62,18 @@ const connect = <TMethods extends Methods>({
 
   usedMessengers.add(messenger);
 
-  const connectionClosedHandlers: (() => void)[] = [messenger.close];
+  const connectionDestroyedHandlers: (() => void)[] = [messenger.destroy];
 
-  const closeConnection = once((notifyOtherParticipant: boolean) => {
+  const destroyConnection = once((notifyOtherParticipant: boolean) => {
     if (notifyOtherParticipant) {
-      const closeMessage: CloseMessage = {
+      const destroyMessage: DestroyMessage = {
         namespace,
         channel,
-        type: MessageType.Close,
+        type: MessageType.Destroy,
       };
 
       try {
-        messenger.sendMessage(closeMessage);
+        messenger.sendMessage(destroyMessage);
       } catch (_) {
         // We do our best to notify the other participant of the connection, but
         // if there's an error in doing so (e.g., maybe the handshake hasn't
@@ -82,11 +82,11 @@ const connect = <TMethods extends Methods>({
       }
     }
 
-    for (const connectionClosedHandler of connectionClosedHandlers) {
-      connectionClosedHandler();
+    for (const connectionDestroyedHandler of connectionDestroyedHandlers) {
+      connectionDestroyedHandler();
     }
 
-    log?.('Connection closed');
+    log?.('Connection destroyed');
   });
 
   const validateReceivedMessage = (data: unknown): data is Message => {
@@ -97,32 +97,32 @@ const connect = <TMethods extends Methods>({
     try {
       messenger.initialize({ log, validateReceivedMessage });
       messenger.addMessageHandler((message) => {
-        if (isCloseMessage(message)) {
-          closeConnection(false);
+        if (isDestroyMessage(message)) {
+          destroyConnection(false);
         }
       });
 
-      const { remoteProxy, close } = await shakeHands<TMethods>({
+      const { remoteProxy, destroy } = await shakeHands<TMethods>({
         messenger,
         methods,
         timeout,
         channel,
         log,
       });
-      connectionClosedHandlers.push(close);
+      connectionDestroyedHandlers.push(destroy);
       return remoteProxy;
     } catch (error) {
-      closeConnection(true);
+      destroyConnection(true);
       throw error as PenpalError;
     }
   })();
 
   return {
     promise,
-    // Why we don't reject the connection promise when consumer calls close():
+    // Why we don't reject the connection promise when consumer calls destroy():
     // https://github.com/Aaronius/penpal/issues/51
-    close: () => {
-      closeConnection(true);
+    destroy: () => {
+      destroyConnection(true);
     },
   };
 };

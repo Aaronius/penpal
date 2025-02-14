@@ -33,10 +33,10 @@ const connectCallHandler = (
   channel: string | undefined,
   log: Log | undefined
 ) => {
-  let isClosed = false;
+  let isDestroyed = false;
 
   const handleMessage = async (message: Message) => {
-    if (isClosed) {
+    if (isDestroyed) {
       // It's possible to throw an error here, but it would only be catchable
       // using window.onerror since we're in an asynchronously-called function.
       // There is no method call the consumer is making that they could wrap in
@@ -85,8 +85,8 @@ const connectCallHandler = (
 
     // Although we checked this at the beginning of the function, we need to
     // check it again because we've made async calls, and the connection may
-    // have been closed in the meantime.
-    if (isClosed) {
+    // have been destroyed in the meantime.
+    if (isDestroyed) {
       return;
     }
 
@@ -109,7 +109,7 @@ const connectCallHandler = (
   messenger.addMessageHandler(handleMessage);
 
   return () => {
-    isClosed = true;
+    isDestroyed = true;
     messenger.removeMessageHandler(handleMessage);
   };
 };

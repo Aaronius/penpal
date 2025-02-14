@@ -115,7 +115,7 @@ class WorkerMessenger implements Messenger {
     this._messageCallbacks.delete(callback);
   };
 
-  close = () => {
+  destroy = () => {
     this._worker.removeEventListener('message', this._handleMessage);
     this._destroyPort();
     this._messageCallbacks.clear();

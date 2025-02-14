@@ -29,7 +29,7 @@ type Options = {
 
 type HandshakeResult<TMethods extends Methods> = {
   remoteProxy: RemoteProxy<TMethods>;
-  close: () => void;
+  destroy: () => void;
 };
 
 /**
@@ -102,7 +102,7 @@ const shakeHands = <TMethods extends Methods>({
 }: Options): Promise<HandshakeResult<TMethods>> => {
   const participantId = generateId();
   let remoteParticipantId: string;
-  const closeHandlers: (() => void)[] = [];
+  const destroyHandlers: (() => void)[] = [];
   let isComplete = false;
 
   const methodPaths = extractMethodPathsFromMethods(methods);
@@ -124,9 +124,9 @@ const shakeHands = <TMethods extends Methods>({
         }, timeout)
       : undefined;
 
-  const close = () => {
-    for (const closeHandler of closeHandlers) {
-      closeHandler();
+  const destroy = () => {
+    for (const destroyHandler of destroyHandlers) {
+      destroyHandler();
     }
   };
 
@@ -137,20 +137,20 @@ const shakeHands = <TMethods extends Methods>({
       return;
     }
 
-    closeHandlers.push(connectCallHandler(messenger, methods, channel, log));
+    destroyHandlers.push(connectCallHandler(messenger, methods, channel, log));
 
-    const { remoteProxy, close: closeMethodProxies } = connectRemoteProxy<
+    const { remoteProxy, destroy: destroyMethodProxies } = connectRemoteProxy<
       TMethods
     >(messenger, channel, log);
 
-    closeHandlers.push(closeMethodProxies);
+    destroyHandlers.push(destroyMethodProxies);
 
     clearTimeout(timeoutId);
     isComplete = true;
 
     resolve({
       remoteProxy,
-      close,
+      destroy: destroy,
     });
   };
 
@@ -257,7 +257,7 @@ const shakeHands = <TMethods extends Methods>({
   };
 
   messenger.addMessageHandler(handleMessage);
-  closeHandlers.push(() => messenger.removeMessageHandler(handleMessage));
+  destroyHandlers.push(() => messenger.removeMessageHandler(handleMessage));
 
   sendSynMessage();
 

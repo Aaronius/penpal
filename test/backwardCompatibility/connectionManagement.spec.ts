@@ -236,7 +236,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
           window.removeEventListener('message', handleMessage);
           child.multiply(2, 4).then((value: number) => {
             expect(value).toEqual(8);
-            connection.close();
+            connection.destroy();
             resolve();
           });
         }
@@ -316,7 +316,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     expect((error as PenpalError).code).toBe(ErrorCode.ConnectionTimeout);
   });
 
-  it("doesn't close connection if connection succeeds then timeout passes", async () => {
+  it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
     jasmine.clock().install();
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
@@ -335,6 +335,6 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
 
     expect(iframe.parentNode).not.toBeNull();
 
-    connection.close();
+    connection.destroy();
   });
 });

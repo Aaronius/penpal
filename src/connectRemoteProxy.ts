@@ -68,12 +68,12 @@ const createRemoteProxy = (
   );
 };
 
-const getClosedConnectionMethodCallError = (methodPath: MethodPath) => {
+const getDestroyedConnectionMethodCallError = (methodPath: MethodPath) => {
   return new PenpalError(
-    ErrorCode.ConnectionClosed,
+    ErrorCode.ConnectionDestroyed,
     `Method call ${formatMethodPath(
       methodPath
-    )}() failed due to closed connection`
+    )}() failed due to destroyed connection`
   );
 };
 
@@ -87,7 +87,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
   channel: string | undefined,
   log: Log | undefined
 ) => {
-  let isClosed = false;
+  let isDestroyed = false;
   const replyHandlers = new Map<string, ReplyHandler>();
 
   const handleMessage = (message: Message) => {
@@ -120,8 +120,8 @@ const connectRemoteProxy = <TMethods extends Methods>(
   messenger.addMessageHandler(handleMessage);
 
   const remoteProxy = createRemoteProxy((methodPath, args) => {
-    if (isClosed) {
-      throw getClosedConnectionMethodCallError(methodPath);
+    if (isDestroyed) {
+      throw getDestroyedConnectionMethodCallError(methodPath);
     }
 
     const callId = generateId();
@@ -178,13 +178,13 @@ const connectRemoteProxy = <TMethods extends Methods>(
     });
   }, log) as RemoteProxy<TMethods>;
 
-  const close = () => {
-    isClosed = true;
+  const destroy = () => {
+    isDestroyed = true;
     messenger.removeMessageHandler(handleMessage);
 
     for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {
       clearTimeout(timeoutId);
-      reject(getClosedConnectionMethodCallError(methodPath));
+      reject(getDestroyedConnectionMethodCallError(methodPath));
     }
 
     replyHandlers.clear();
@@ -192,7 +192,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
 
   return {
     remoteProxy,
-    close,
+    destroy,
   };
 };
 

@@ -56,7 +56,7 @@ class PortMessenger implements Messenger {
     this._messageCallbacks.delete(callback);
   };
 
-  close = () => {
+  destroy = () => {
     this._port.removeEventListener('message', this._handleMessage);
     this._port.close();
     this._messageCallbacks.clear();

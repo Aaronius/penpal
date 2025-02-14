@@ -4,11 +4,11 @@ export enum MessageType {
   Ack2 = 'ACK2',
   Call = 'CALL',
   Reply = 'REPLY',
-  Close = 'CLOSE',
+  Destroy = 'DESTROY',
 }
 
 export enum ErrorCode {
-  ConnectionClosed = 'CONNECTION_CLOSED',
+  ConnectionDestroyed = 'CONNECTION_DESTROYED',
   ConnectionTimeout = 'CONNECTION_TIMEOUT',
   InvalidArgument = 'INVALID_ARGUMENT',
   MethodCallTimeout = 'METHOD_CALL_TIMEOUT',

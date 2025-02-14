@@ -10,7 +10,7 @@ import { connect, ErrorCode, PenpalError, WindowMessenger } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import WorkerMessenger from '../src/messengers/WorkerMessenger';
 
-describe('parent calling close()', () => {
+describe('parent calling destroy()', () => {
   const variants = [
     {
       childType: 'iframe',
@@ -28,7 +28,7 @@ describe('parent calling close()', () => {
       // Issue #51
       it('does not resolve or reject promise', async () => {
         const connection = createConnection<FixtureMethods>();
-        connection.close();
+        connection.destroy();
 
         await expectAsync(connection.promise).toBePending();
       });
@@ -39,7 +39,7 @@ describe('parent calling close()', () => {
         // The method call message listener is set up after the connection has been established.
 
         const child = await connection.promise;
-        connection.close();
+        connection.destroy();
 
         let error;
         try {
@@ -49,9 +49,9 @@ describe('parent calling close()', () => {
         }
         expect(error).toEqual(jasmine.any(Error));
         expect((error as Error).message).toBe(
-          'Method call multiply() failed due to closed connection'
+          'Method call multiply() failed due to destroyed connection'
         );
-        expect((error as PenpalError).code).toBe(ErrorCode.ConnectionClosed);
+        expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
       });
     });
 
@@ -78,7 +78,7 @@ describe('parent calling close()', () => {
 
       // The method call message listener is set up after the connection has been established.
       await connection.promise;
-      connection.close();
+      connection.destroy();
 
       expect(addEventListenerSpy.calls.count()).toBe(1);
       addEventListenerSpy.calls.allArgs().forEach((args) => {
@@ -108,7 +108,7 @@ describe('parent calling close()', () => {
 
       // The method call message listener is set up after the connection has been established.
       await connection.promise;
-      connection.close();
+      connection.destroy();
 
       expect(addEventListenerSpy.calls.count()).toBe(1);
       addEventListenerSpy.calls.allArgs().forEach((args) => {

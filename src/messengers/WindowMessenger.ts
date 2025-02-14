@@ -232,7 +232,7 @@ class WindowMessenger implements Messenger {
     this._messageCallbacks.delete(callback);
   };
 
-  close = () => {
+  destroy = () => {
     window.removeEventListener('message', this._handleMessageFromRemoteWindow);
     this._destroyPort();
     this._messageCallbacks.clear();

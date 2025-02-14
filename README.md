@@ -425,9 +425,9 @@ self.addEventListener('message', async (event) => {
 
 </details>
 
-## Closing the Connection
+## Destroying the Connection
 
-At any point in time, call `connection.close()` to close the connection so that event listeners can be removed and objects can be properly garbage collected.
+At any point in time, call `connection.destroy()` to destroy the connection so that event listeners can be removed and objects can be properly garbage collected.
 
 ## Debugging
 
@@ -651,9 +651,9 @@ Although we're using `WindowMessenger` here to establish connections between two
 
 Penpal will throw or reject promises with errors in certain situations. Each error will be an instance of `PenpalError` and will have a `code` property which may be used for programmatic decisioning (e.g., take a specific action if a method call times out) along with a `message` describing the problem. Changes to error codes will be considered breaking changes and require a new major version of Penpal to be released. Changes to messages will not be considered breaking changes. The following error codes are used:
 
-`CONNECTION_CLOSED`
+`CONNECTION_DESTROYED`
 
-This error will be thrown when attempting to call a method and the connection was previously closed.
+This error will be thrown when attempting to call a method and the connection was previously destroyed.
 
 `CONNECTION_TIMEOUT`
 
@@ -681,7 +681,7 @@ For your convenience, the above error codes can be imported and referenced as fo
 
 ```
 import { ErrorCode } from 'penpal';
-// ErrorCode.ConnectionClosed
+// ErrorCode.ConnectionDestroyed
 // ErrorCode.ConnectionTimeout
 // ErrorCode.InvalidArgument
 // ErrorCode.MethodCallTimeout
@@ -786,7 +786,7 @@ A promise which will be resolved once communication has been established. The pr
 
 `destroy: () => void`
 
-A method that, when called, will disconnect any messaging channels, event listeners, etc. You may call this even before a connection has been established. See [Closing the Connection](#closing-the-connection) for more information.
+A method that, when called, will disconnect any messaging channels, event listeners, etc. You may call this even before a connection has been established. See [Destroying the Connection](#destroying-the-connection) for more information.
 
 ---
 
