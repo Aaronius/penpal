@@ -619,7 +619,7 @@ const connectionB = connect({
 import { WindowMessenger, connect } from 'penpal';
 
 const messengerA = new WindowMessenger({
-  remoteWindow: iframe.parent,
+  remoteWindow: window.parent,
   allowedOrigins: ['https://parentOrigin.example.com'],
 });
 
