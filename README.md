@@ -48,13 +48,15 @@ Penpal will then be installed on `window.Penpal`. Usage is similar to if you wer
 import { WindowMessenger, connect } from 'penpal';
 
 const iframe = document.createElement('iframe');
-iframe.src = 'https://childorigin.example.com/iframe.html';
+iframe.src = 'https://childorigin.example.com/path/to/iframe.html';
 document.body.appendChild(iframe);
 
 const messenger = new WindowMessenger({
   remoteWindow: iframe.contentWindow,
-  // allowedOrigins will default to `[window.origin]` if not specified
+  // Defaults to the current origin.
   allowedOrigins: ['https://childorigin.example.com'],
+  // Alternatively,
+  // allowedOrigins: [new Url(iframe.src).origin]
 });
 
 const connection = connect({
@@ -82,7 +84,7 @@ import { WindowMessenger, connect } from 'penpal';
 
 const messenger = new WindowMessenger({
   remoteWindow: window.parent,
-  // allowedOrigins will default to `[window.origin]` if not specified
+  // Defaults to the current origin.
   allowedOrigins: ['https://parentorigin.example.com'],
 });
 
@@ -122,12 +124,15 @@ console.log(additionResult); // 8
 ```javascript
 import { WindowMessenger, connect } from 'penpal';
 
-const childWindow = window.open('https://childorigin.example.com/popup.html');
+const windowUrl = 'https://childorigin.example.com/path/to/window.html';
+const childWindow = window.open(windowUrl);
 
 const messenger = new WindowMessenger({
   remoteWindow: childWindow,
-  // allowedOrigins will default to `[window.origin]` if not specified
+  // Defaults to the current origin.
   allowedOrigins: ['https://childorigin.example.com'],
+  // Alternatively,
+  // allowedOrigins: [new Url(windowUrl).origin]
 });
 
 const connection = connect({
@@ -155,7 +160,7 @@ import { WindowMessenger, connect } from 'penpal';
 
 const messenger = new WindowMessenger({
   remoteWindow: window.opener,
-  // allowedOrigins will default to `[window.origin]` if not specified
+  // Defaults to the current origin.
   allowedOrigins: ['https://parentorigin.example.com'],
 });
 
@@ -180,7 +185,7 @@ const connection = connect({
 const remote = await connection.promise;
 // Calling a remote method will always return a promise.
 const additionResult = await remote.add(2, 6);
-console.log(additionResult); //
+console.log(additionResult); // 8
 ```
 
 </details>
