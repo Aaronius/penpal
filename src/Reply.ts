@@ -4,10 +4,8 @@ class Reply<T = unknown> {
   readonly value: T;
   readonly transferables?: Transferable[];
 
-  // This ensures that the class cannot be faked by structural typing.
-  // This is necessary because Penpal uses an instanceof check to determine
-  // if a value is, in fact, an instance of Reply rather than just being
-  // structurally similar.
+  // Allows TypeScript to distinguish between an actual instance of this
+  // class versus an object that looks structurally similar.
   private [brand] = brand;
 
   constructor(
