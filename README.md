@@ -509,7 +509,7 @@ try {
 }
 ```
 
-## Transferring Large Objects
+## Transferring Large Data
 
 When sending a value between windows or workers, the browser uses a [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) by default to _clone_ the value as it is sent. As a result, the value will exist in memory multiple times--once for the sender and once for the recipient. This is typically fine, but some use cases require sending a large amount of data between contexts which could result in a significant performance hit.
 
@@ -564,13 +564,13 @@ const connection = connect({
 });
 ```
 
-## Multiple, Parallel Connections
+## Parallel Connections
 
-In fairly rare cases, you may wish to make multiple, parallel connections between two participants. To illustrate, let's use a scenario where you wish to make two parallel connections between Window A and Window B. In other words, you will be calling `connect()` twice within Window A and twice within Window B.
+In fairly rare cases, you may wish to make parallel connections between two participants. To illustrate, let's use a scenario where you wish to make two parallel connections between Window A and Window B. In other words, you will be calling `connect()` twice within Window A and twice within Window B.
 
 In an attempt to establish these two connections, Penpal in Window A will be calling `postMessage()` on a single window object. By default, when Penpal within Window B receives these messages, it has no way to disambiguate messages related to the first call to `connect()` from messages related to the second call to `connect()`. As a result, the connections may fail to be properly established.
 
-To prevent this issue, Penpal provides the concept of channels. A channel is a string identifier of your choosing that you may provide when calling `connect()` within both participants. When a channel is provided, it is used to disambiguate communication between multiple, parallel connections. This is better explained in code:
+To prevent this issue, Penpal provides the concept of channels. A channel is a string identifier of your choosing that you may provide when calling `connect()` within both participants. When a channel is provided, it is used to disambiguate communication between parallel connections. This is better explained in code:
 
 ### Window A
 
@@ -650,7 +650,7 @@ const connectionB = connect({
 });
 ```
 
-Although we're using `WindowMessenger` here to establish connections between two windows, channels would similarly need to be used when using `WorkerMessenger` to make multiple, parallel connections to a worker. When using `PortMessenger`, channels are only needed when establishing multiple, parallel connections over the same port (when using separate ports, messages are already disambiguated).
+Although we're using `WindowMessenger` here to establish connections between two windows, channels would similarly need to be used when using `WorkerMessenger` to make parallel connections to a worker. When using `PortMessenger`, channels are only needed when establishing parallel connections over a single pair of ports.
 
 ## Errors
 
@@ -775,7 +775,7 @@ The amount of time, in milliseconds, Penpal should wait for a connection to be e
 
 `channel: string` (optional)
 
-A string identifier that disambiguates communication when establishing multiple, parallel connections between two participants (e.g., two windows, a window and a worker). See [Multiple, Parallel Connections](#multiple-parallel-connections) for more information.
+A string identifier that disambiguates communication when establishing parallel connections between two participants (e.g., two windows, a window and a worker). See [Parallel Connections](#parallel-connections) for more information.
 
 `log: (...args: unknown[]) => void` (optional)
 
@@ -787,7 +787,7 @@ The return value of `connect` is a `Connection` object with the following proper
 
 `promise: Promise`
 
-A promise which will be resolved once communication has been established. The promise will be resolved with an object that serves as a proxy for the methods the remote has exposed. Calling a method on this proxy object will always return a promise since it involves sending messages to and from the remote which are asynchronous operations. When calling a method on this proxy object, you may always pass an instance of `CallOptions` as a final argument. See [Method Call Timeouts](#method-call-timeouts) and [Transferable Large Objects](#transferring-large-objects) for more information on `CallOptions`.
+A promise which will be resolved once communication has been established. The promise will be resolved with an object that serves as a proxy for the methods the remote has exposed. Calling a method on this proxy object will always return a promise since it involves sending messages to and from the remote which are asynchronous operations. When calling a method on this proxy object, you may always pass an instance of `CallOptions` as a final argument. See [Method Call Timeouts](#method-call-timeouts) and [Transferring Large Data](#transferring-large-data) for more information on `CallOptions`.
 
 `destroy: () => void`
 
@@ -829,7 +829,7 @@ A reference to the worker. When connecting from a window, you would specify the 
 
 ### `PortMessenger`
 
-This messenger supports communication between two [MessagePorts](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort). This is particularly useful when establishing a connection with a [SharedWorker](https://developer.mozilla.org/en-US/docs/Web/API/SharedWorker) or [ServiceWorker](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorker). See [Usage with a Shared Worker](#usage-with-a-shared-worker) and [Usage with a Service Worker](#usage-with-a-service-worker) for examples.
+This messenger supports communication between a pair of [MessagePorts](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort). This is particularly useful when establishing a connection with a [SharedWorker](https://developer.mozilla.org/en-US/docs/Web/API/SharedWorker) or [ServiceWorker](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorker). See [Usage with a Shared Worker](#usage-with-a-shared-worker) and [Usage with a Service Worker](#usage-with-a-service-worker) for examples.
 
 #### Constructor Options
 
