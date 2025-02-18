@@ -629,7 +629,7 @@ describe('connection management', () => {
 
       navigator.serviceWorker.controller?.postMessage(
         {
-          type: 'INIT_PAYPAL',
+          type: 'INIT_PENPAL',
           port: port2,
         },
         {

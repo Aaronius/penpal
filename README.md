@@ -368,7 +368,7 @@ const initPenpal = async () => {
 
   navigator.serviceWorker.controller?.postMessage(
     {
-      type: 'INIT_PAYPAL',
+      type: 'INIT_PENPAL',
       port: port2,
     },
     {
@@ -393,7 +393,7 @@ import { PortMessenger, connect } from 'penpal';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', () => self.clients.claim());
 self.addEventListener('message', async (event) => {
-  if (event.data?.type === 'INIT_PENPAL') {
+  if (event.data?.type !== 'INIT_PENPAL') {
     return;
   }
 
