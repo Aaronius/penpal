@@ -1,5 +1,9 @@
 [![npm version](https://badge.fury.io/js/penpal.svg)](https://badge.fury.io/js/penpal)
 
+### Check out the pre-release of version 7!
+
+Version 7 is coming and has many new features including support for workers. See the [pre-release announcement](https://github.com/Aaronius/penpal/discussions/100) and the [updated README](https://github.com/Aaronius/penpal/blob/7.x/README.md).
+
 ### Upgrading from version 5? See [version 6 release notes](https://github.com/Aaronius/penpal/releases/tag/v6.0.0) for details.
 
 [See documentation for 5.x](https://github.com/Aaronius/penpal/tree/5.x)  
