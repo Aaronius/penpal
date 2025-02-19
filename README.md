@@ -267,7 +267,7 @@ console.log(additionResult); // 8
 ### Window
 
 ```javascript
-import { WorkerMessenger, connect } from 'penpal';
+import { PortMessenger, connect } from 'penpal';
 
 const worker = new SharedWorker('shared-worker.js');
 
@@ -345,6 +345,16 @@ import { PortMessenger, connect } from 'penpal';
 const initPenpal = async () => {
   const { port1, port2 } = new MessageChannel();
 
+  navigator.serviceWorker.controller?.postMessage(
+    {
+      type: 'INIT_PENPAL',
+      port: port2,
+    },
+    {
+      transfer: [port2],
+    }
+  );
+
   const messenger = new PortMessenger({
     port: port1,
   });
@@ -365,16 +375,6 @@ const initPenpal = async () => {
   console.log(multiplicationResult); // 12
   const divisionResult = await remote.divide(12, 4);
   console.log(divisionResult); // 3
-
-  navigator.serviceWorker.controller?.postMessage(
-    {
-      type: 'INIT_PENPAL',
-      port: port2,
-    },
-    {
-      transfer: [port2],
-    }
-  );
 };
 
 if (navigator.serviceWorker.controller) {
@@ -724,6 +724,14 @@ const remote = await connection.promise;
 // This `multiplicationResult` constant will be properly typed as a number.
 const multiplicationResult = await remote.multiply(2, 6);
 ```
+
+When creating a worker, it's highly recommended that you add the following line of code at the top of your worker script depending on which type of worker you're creating:
+
+- Dedicated (regular) worker: `declare const self: DedicatedWorkerGlobalScope;`
+- Shared worker: `declare const self: SharedWorkerGlobalScope;`
+- Service worker: `declare const self: ServiceWorkerGlobalScope;`
+
+This lets TypeScript know which type of worker you're creating, and you'll run into fewer TypeScript errors.
 
 ### Exported Types
 

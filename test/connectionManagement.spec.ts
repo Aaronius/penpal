@@ -619,14 +619,6 @@ describe('connection management', () => {
     const initPenpal = async () => {
       const { port1, port2 } = new MessageChannel();
 
-      const messenger = new PortMessenger({
-        port: port1,
-      });
-
-      const connection = connect<FixtureMethods>({
-        messenger,
-      });
-
       navigator.serviceWorker.controller?.postMessage(
         {
           type: 'INIT_PENPAL',
@@ -636,6 +628,14 @@ describe('connection management', () => {
           transfer: [port2],
         }
       );
+
+      const messenger = new PortMessenger({
+        port: port1,
+      });
+
+      const connection = connect<FixtureMethods>({
+        messenger,
+      });
 
       await connection.promise;
       done();
