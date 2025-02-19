@@ -31,7 +31,7 @@ module.exports = (config) => {
       // service worker file must be loaded from the root directory in order for
       // the service worker to be able to control the page the tests are
       // running in. Learn more by looking up "service worker scope".
-      '/serviceWorker.js': '/base/test/childFixtures/workers/serviceWorker.js'
+      '/serviceWorker.js': '/base/test/childFixtures/workers/serviceWorker.js',
     },
     proxyValidateSSL: false,
     plugins: [
