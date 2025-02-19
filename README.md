@@ -27,13 +27,13 @@
 
 Install Penpal from npm as follows:
 
-`npm install penpal`
+`npm install penpal@next`
 
 ### Using a CDN
 
 Alternatively, load a build of Penpal that is already hosted on a CDN:
 
-`<script src="https://unpkg.com/penpal@^7/dist/penpal.min.js"></script>`
+`<script src="https://unpkg.com/penpal@next/dist/penpal.min.js"></script>`
 
 Penpal will then be installed on `window.Penpal`. Usage is similar to if you were using it from npm, which is documented below, but instead of importing each module, you would access it on the `Penpal` global variable instead.
 
