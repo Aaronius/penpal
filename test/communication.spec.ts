@@ -204,17 +204,13 @@ for (const variant of variants) {
     });
 
     it('rejects method call promise if method call timeout reached', async () => {
-      jasmine.clock().install();
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
       const promise = child.neverResolve(
         new CallOptions({
-          timeout: 1000,
+          timeout: 0,
         })
       );
-      jasmine.clock().tick(999);
-      await expectAsync(promise).toBePending();
-      jasmine.clock().tick(1);
 
       let error;
       try {
@@ -225,7 +221,7 @@ for (const variant of variants) {
 
       expect(error).toEqual(jasmine.any(Error));
       expect((error as Error).message).toBe(
-        'Method call neverResolve() timed out after 1000ms'
+        'Method call neverResolve() timed out after 0ms'
       );
       expect((error as PenpalError).code).toBe(ErrorCode.MethodCallTimeout);
       connection.destroy();

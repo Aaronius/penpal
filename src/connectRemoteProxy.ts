@@ -140,19 +140,20 @@ const connectRemoteProxy = <TMethods extends Methods>(
       // running tests if we don't disambiguate the browser setTimeout
       // from node's setTimeout. There may be a better way to configure
       // Karma + Rollup + Typescript to avoid node type leakage.
-      const timeoutId = timeout
-        ? window.setTimeout(() => {
-            replyHandlers.delete(callId);
-            reject(
-              new PenpalError(
-                ErrorCode.MethodCallTimeout,
-                `Method call ${formatMethodPath(
-                  methodPath
-                )}() timed out after ${timeout}ms`
-              )
-            );
-          }, timeout)
-        : undefined;
+      const timeoutId =
+        timeout !== undefined
+          ? window.setTimeout(() => {
+              replyHandlers.delete(callId);
+              reject(
+                new PenpalError(
+                  ErrorCode.MethodCallTimeout,
+                  `Method call ${formatMethodPath(
+                    methodPath
+                  )}() timed out after ${timeout}ms`
+                )
+              );
+            }, timeout)
+          : undefined;
 
       replyHandlers.set(callId, { methodPath, resolve, reject, timeoutId });
 

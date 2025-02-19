@@ -227,7 +227,6 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
   });
 
   it('rejects method call promise if method call timeout reached', async () => {
-    jasmine.clock().install();
     const iframe = createAndAddIframe(
       `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
     );
@@ -241,12 +240,9 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
     const child = await connection.promise;
     const promise = child.neverResolve(
       new CallOptions({
-        timeout: 1000,
+        timeout: 0,
       })
     );
-    jasmine.clock().tick(999);
-    await expectAsync(promise).toBePending();
-    jasmine.clock().tick(1);
 
     let error;
     try {
@@ -257,7 +253,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
 
     expect(error).toEqual(jasmine.any(Error));
     expect((error as Error).message).toBe(
-      'Method call neverResolve() timed out after 1000ms'
+      'Method call neverResolve() timed out after 0ms'
     );
     expect((error as PenpalError).code).toBe(ErrorCode.MethodCallTimeout);
     connection.destroy();
