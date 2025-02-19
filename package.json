@@ -42,6 +42,7 @@
       "types": "./lib/index.d.ts"
     }
   },
+  "types": "./lib/index.d.ts",
   "scripts": {
     "clean": "rimraf lib cjs dist",
     "build:lib": "tsc --project src/tsconfig.json",
