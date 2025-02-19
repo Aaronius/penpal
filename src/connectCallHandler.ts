@@ -1,6 +1,5 @@
 import { serializeError } from './errorSerialization';
 import { Message, ReplyMessage, Methods, Log } from './types';
-import { ErrorCode, MessageType, NativeErrorName } from './enums';
 import Reply from './Reply';
 import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
@@ -15,7 +14,7 @@ const createErrorReplyMessage = (
 ): ReplyMessage => ({
   namespace,
   channel,
-  type: MessageType.Reply,
+  type: 'REPLY',
   callId,
   isError: true,
   ...(error instanceof Error
@@ -60,7 +59,7 @@ const connectCallHandler = (
 
       if (!method) {
         throw new PenpalError(
-          ErrorCode.MethodNotFound,
+          'METHOD_NOT_FOUND',
           `Method \`${formatMethodPath(methodPath)}\` is not found.`
         );
       }
@@ -75,7 +74,7 @@ const connectCallHandler = (
       replyMessage = {
         namespace,
         channel,
-        type: MessageType.Reply,
+        type: 'REPLY',
         callId,
         value,
       };
@@ -97,7 +96,7 @@ const connectCallHandler = (
       // If a consumer attempts to send an object that's not
       // cloneable (e.g., window), we want to ensure the receiver's promise
       // gets rejected.
-      if ((error as Error).name === NativeErrorName.DataCloneError) {
+      if ((error as Error).name === 'DataCloneError') {
         replyMessage = createErrorReplyMessage(channel, callId, error as Error);
         log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
         messenger.sendMessage(replyMessage);

@@ -1,7 +1,6 @@
 import { DestroyMessage, Connection, Log, Message, Methods } from './types';
 import PenpalError from './PenpalError';
 import Messenger from './messengers/Messenger';
-import { ErrorCode, MessageType } from './enums';
 import shakeHands from './shakeHands';
 import { isDestroyMessage, isMessage } from './guards';
 import once from './once';
@@ -47,15 +46,12 @@ const connect = <TMethods extends Methods>({
   log,
 }: Options): Connection<TMethods> => {
   if (!messenger) {
-    throw new PenpalError(
-      ErrorCode.InvalidArgument,
-      'messenger must be defined'
-    );
+    throw new PenpalError('INVALID_ARGUMENT', 'messenger must be defined');
   }
 
   if (usedMessengers.has(messenger)) {
     throw new PenpalError(
-      ErrorCode.InvalidArgument,
+      'INVALID_ARGUMENT',
       'A messenger can only be used for a single connection'
     );
   }
@@ -69,7 +65,7 @@ const connect = <TMethods extends Methods>({
       const destroyMessage: DestroyMessage = {
         namespace,
         channel,
-        type: MessageType.Destroy,
+        type: 'DESTROY',
       };
 
       try {

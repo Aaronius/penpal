@@ -8,7 +8,6 @@ import {
   SynMessage,
   DestroyMessage,
 } from './types';
-import { MessageType } from './enums';
 
 export const isObject = (
   value: unknown
@@ -25,27 +24,27 @@ export const isMessage = (data: unknown): data is Message => {
 };
 
 export const isSynMessage = (message: Message): message is SynMessage => {
-  return message.type === MessageType.Syn;
+  return message.type === 'SYN';
 };
 
 export const isAck1Message = (message: Message): message is Ack1Message => {
-  return message.type === MessageType.Ack1;
+  return message.type === 'ACK1';
 };
 
 export const isAck2Message = (message: Message): message is Ack2Message => {
-  return message.type === MessageType.Ack2;
+  return message.type === 'ACK2';
 };
 
 export const isCallMessage = (message: Message): message is CallMessage => {
-  return message.type === MessageType.Call;
+  return message.type === 'CALL';
 };
 
 export const isReplyMessage = (message: Message): message is ReplyMessage => {
-  return message.type === MessageType.Reply;
+  return message.type === 'REPLY';
 };
 
 export const isDestroyMessage = (
   message: Message
 ): message is DestroyMessage => {
-  return message.type === MessageType.Destroy;
+  return message.type === 'DESTROY';
 };

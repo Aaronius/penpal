@@ -7,7 +7,6 @@ import {
 } from '../backwardCompatibility';
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards';
 import PenpalError from '../PenpalError';
-import { ErrorCode } from '../enums';
 import PenpalBugError from '../PenpalBugError';
 
 type Options = {
@@ -41,10 +40,7 @@ class WindowMessenger implements Messenger {
 
   constructor({ remoteWindow, allowedOrigins }: Options) {
     if (!remoteWindow) {
-      throw new PenpalError(
-        ErrorCode.InvalidArgument,
-        'remoteWindow must be defined'
-      );
+      throw new PenpalError('INVALID_ARGUMENT', 'remoteWindow must be defined');
     }
 
     this.#remoteWindow = remoteWindow;

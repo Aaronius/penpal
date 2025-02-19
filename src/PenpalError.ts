@@ -1,4 +1,4 @@
-import { ErrorCode } from './enums';
+import { ErrorCode } from './types';
 
 class PenpalError extends Error {
   public code: ErrorCode;

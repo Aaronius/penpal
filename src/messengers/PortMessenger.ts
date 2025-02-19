@@ -1,7 +1,6 @@
 import { Message } from '../types';
 import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import PenpalError from '../PenpalError';
-import { ErrorCode } from '../enums';
 
 type Options = {
   /**
@@ -20,7 +19,7 @@ class PortMessenger implements Messenger {
 
   constructor({ port }: Options) {
     if (!port) {
-      throw new PenpalError(ErrorCode.InvalidArgument, 'port must be defined');
+      throw new PenpalError('INVALID_ARGUMENT', 'port must be defined');
     }
 
     this.#port = port;

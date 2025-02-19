@@ -1,11 +1,4 @@
-import {
-  Connection,
-  connect,
-  ErrorCode,
-  Methods,
-  PenpalError,
-  WindowMessenger,
-} from '../src/index';
+import { Connection, connect, Methods, WindowMessenger } from '../src/index';
 import { CHILD_SERVER } from './constants';
 import WorkerMessenger from '../src/messengers/WorkerMessenger';
 
@@ -85,15 +78,4 @@ export const expectNeverFulfilledIframeConnection = (
       }, 100);
     });
   });
-};
-
-export const expectRejectedConnection = async (
-  connection: Connection,
-  expectedErrorCode: ErrorCode
-) => {
-  const spy = jasmine.createSpy();
-  await connection.promise.catch(spy);
-  expect(spy).toHaveBeenCalled();
-  const error = spy.calls.mostRecent().args[0] as PenpalError;
-  expect(error.code).toEqual(expectedErrorCode);
 };

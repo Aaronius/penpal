@@ -2,7 +2,6 @@ import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from '../constants';
 import { createAndAddIframe } from '../utils';
 import {
   connect,
-  ErrorCode,
   PenpalError,
   WindowMessenger,
 } from '../../src/index';
@@ -313,7 +312,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     }
     expect(error).toEqual(jasmine.any(Error));
     expect((error as Error).message).toBe('Connection timed out after 0ms');
-    expect((error as PenpalError).code).toBe(ErrorCode.ConnectionTimeout);
+    expect((error as PenpalError).code).toBe('CONNECTION_TIMEOUT');
   });
 
   it("doesn't destroy connection if connection succeeds then timeout passes", async () => {

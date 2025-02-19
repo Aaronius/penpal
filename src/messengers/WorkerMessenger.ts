@@ -2,7 +2,6 @@ import { Message } from '../types';
 import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards';
 import PenpalError from '../PenpalError';
-import { ErrorCode } from '../enums';
 import PenpalBugError from '../PenpalBugError';
 
 // This is needed to resolve some conflict errors. There may be a better way.
@@ -31,10 +30,7 @@ class WorkerMessenger implements Messenger {
 
   constructor({ worker }: Options) {
     if (!worker) {
-      throw new PenpalError(
-        ErrorCode.InvalidArgument,
-        'worker must be defined'
-      );
+      throw new PenpalError('INVALID_ARGUMENT', 'worker must be defined');
     }
 
     this.#worker = worker;

@@ -1,6 +1,5 @@
 import { Message, MethodPath } from './types';
 import namespace from './namespace';
-import { MessageType } from './enums';
 import {
   isCallMessage,
   isReplyMessage,
@@ -102,7 +101,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Message => {
     return {
       namespace,
       channel: undefined,
-      type: MessageType.Syn,
+      type: 'SYN',
       participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
     };
   }
@@ -111,7 +110,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Message => {
     return {
       namespace,
       channel: undefined,
-      type: MessageType.Ack2,
+      type: 'ACK2',
     };
   }
 
@@ -119,7 +118,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Message => {
     return {
       namespace,
       channel: undefined,
-      type: MessageType.Call,
+      type: 'CALL',
       // Actually converting the ID to a string would break communication.
       id: (message.id as unknown) as string,
       methodPath: upgradeMethodPath(message.methodName),
@@ -132,7 +131,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Message => {
       return {
         namespace,
         channel: undefined,
-        type: MessageType.Reply,
+        type: 'REPLY',
         // Actually converting the ID to a string would break communication.
         callId: (message.id as unknown) as string,
         value: message.returnValue,
@@ -141,7 +140,7 @@ export const upgradeMessage = (message: DeprecatedMessage): Message => {
       return {
         namespace,
         channel: undefined,
-        type: MessageType.Reply,
+        type: 'REPLY',
         // Actually converting the ID to a string would break communication.
         callId: (message.id as unknown) as string,
         isError: true,

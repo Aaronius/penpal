@@ -8,7 +8,6 @@ import {
   SynMessage,
   Log,
 } from './types';
-import { ErrorCode, MessageType } from './enums';
 import PenpalError from './PenpalError';
 import connectCallHandler from './connectCallHandler';
 import connectRemoteProxy from './connectRemoteProxy';
@@ -117,7 +116,7 @@ const shakeHands = <TMethods extends Methods>({
       ? setTimeout(() => {
           reject(
             new PenpalError(
-              ErrorCode.ConnectionTimeout,
+              'CONNECTION_TIMEOUT',
               `Connection timed out after ${timeout}ms`
             )
           );
@@ -157,7 +156,7 @@ const shakeHands = <TMethods extends Methods>({
   const sendSynMessage = () => {
     const synMessage: SynMessage = {
       namespace,
-      type: MessageType.Syn,
+      type: 'SYN',
       channel,
       participantId: participantId,
     };
@@ -166,9 +165,7 @@ const shakeHands = <TMethods extends Methods>({
     try {
       messenger.sendMessage(synMessage);
     } catch (error) {
-      reject(
-        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
-      );
+      reject(new PenpalError('TRANSMISSION_FAILED', (error as Error).message));
     }
   };
 
@@ -201,7 +198,7 @@ const shakeHands = <TMethods extends Methods>({
     const ack1Message: Ack1Message = {
       namespace,
       channel,
-      type: MessageType.Ack1,
+      type: 'ACK1',
       methodPaths,
     };
     log?.(`Sending handshake ACK1`, ack1Message);
@@ -209,9 +206,7 @@ const shakeHands = <TMethods extends Methods>({
     try {
       messenger.sendMessage(ack1Message);
     } catch (error) {
-      reject(
-        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
-      );
+      reject(new PenpalError('TRANSMISSION_FAILED', (error as Error).message));
       return;
     }
   };
@@ -221,16 +216,14 @@ const shakeHands = <TMethods extends Methods>({
     const ack2Message: Ack2Message = {
       namespace,
       channel,
-      type: MessageType.Ack2,
+      type: 'ACK2',
     };
     log?.(`Sending handshake ACK2`, ack2Message);
 
     try {
       messenger.sendMessage(ack2Message);
     } catch (error) {
-      reject(
-        new PenpalError(ErrorCode.TransmissionFailed, (error as Error).message)
-      );
+      reject(new PenpalError('TRANSMISSION_FAILED', (error as Error).message));
       return;
     }
 

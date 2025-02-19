@@ -1,7 +1,6 @@
 import { createAndAddIframe } from '../utils';
 import {
   connect,
-  ErrorCode,
   CallOptions,
   PenpalError,
   WindowMessenger,
@@ -255,7 +254,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
     expect((error as Error).message).toBe(
       'Method call neverResolve() timed out after 0ms'
     );
-    expect((error as PenpalError).code).toBe(ErrorCode.MethodCallTimeout);
+    expect((error as PenpalError).code).toBe('METHOD_CALL_TIMEOUT');
     connection.destroy();
   });
 
@@ -286,7 +285,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
     expect(error!.message).toBe(
       'Method call neverResolve() failed due to destroyed connection'
     );
-    expect((error! as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
+    expect((error! as PenpalError).code).toBe('CONNECTION_DESTROYED');
     connection.destroy();
   });
 });

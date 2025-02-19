@@ -5,6 +5,6 @@ export { default as PortMessenger } from './messengers/PortMessenger';
 export { default as CallOptions } from './CallOptions';
 export { default as Reply } from './Reply';
 export { default as PenpalError } from './PenpalError';
+export { default as ErrorCode } from './ErrorCodeObj';
 export { default as debug } from './debug';
-export { ErrorCode } from './enums';
 export { Connection, RemoteProxy, Methods } from './types';

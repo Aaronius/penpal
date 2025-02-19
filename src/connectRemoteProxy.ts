@@ -9,7 +9,6 @@ import {
   CallMessage,
   Log,
 } from './types';
-import { ErrorCode, MessageType } from './enums';
 import CallOptions from './CallOptions';
 import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
@@ -70,7 +69,7 @@ const createRemoteProxy = (
 
 const getDestroyedConnectionMethodCallError = (methodPath: MethodPath) => {
   return new PenpalError(
-    ErrorCode.ConnectionDestroyed,
+    'CONNECTION_DESTROYED',
     `Method call ${formatMethodPath(
       methodPath
     )}() failed due to destroyed connection`
@@ -146,7 +145,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
               replyHandlers.delete(callId);
               reject(
                 new PenpalError(
-                  ErrorCode.MethodCallTimeout,
+                  'METHOD_CALL_TIMEOUT',
                   `Method call ${formatMethodPath(
                     methodPath
                   )}() timed out after ${timeout}ms`
@@ -161,7 +160,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
         const callMessage: CallMessage = {
           namespace,
           channel,
-          type: MessageType.Call,
+          type: 'CALL',
           id: callId,
           methodPath,
           args: argsWithoutOptions,
@@ -170,10 +169,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
         messenger.sendMessage(callMessage, transferables);
       } catch (error) {
         reject(
-          new PenpalError(
-            ErrorCode.TransmissionFailed,
-            (error as Error).message
-          )
+          new PenpalError('TRANSMISSION_FAILED', (error as Error).message)
         );
       }
     });

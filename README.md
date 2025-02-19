@@ -680,7 +680,7 @@ The promise returned from a method call will be rejected with this error if the 
 
 When a connection is being established, the promise found at `connection.promise` will be rejected with this error if a message cannot be transmitted. When a method call is being made, the promise returned from the method call will be rejected with this error if a message cannot be transmitted.
 
-### Error Code Enumeration
+### Referencing Error Codes
 
 For your convenience, the above error codes can be imported and referenced as follows:
 

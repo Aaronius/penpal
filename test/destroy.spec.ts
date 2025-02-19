@@ -6,7 +6,7 @@ import {
   getPageFixtureUrl,
   getWorkerFixtureUrl,
 } from './utils';
-import { connect, ErrorCode, PenpalError, WindowMessenger } from '../src/index';
+import { connect, PenpalError, WindowMessenger } from '../src/index';
 import FixtureMethods from './childFixtures/types/FixtureMethods';
 import WorkerMessenger from '../src/messengers/WorkerMessenger';
 
@@ -51,7 +51,7 @@ describe('parent calling destroy()', () => {
         expect((error as Error).message).toBe(
           'Method call multiply() failed due to destroyed connection'
         );
-        expect((error as PenpalError).code).toBe(ErrorCode.ConnectionDestroyed);
+        expect((error as PenpalError).code).toBe('CONNECTION_DESTROYED');
       });
     });
 

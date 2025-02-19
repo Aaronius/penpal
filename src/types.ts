@@ -1,7 +1,7 @@
-import { ErrorCode, MessageType } from './enums';
 import CallOptions from './CallOptions';
 import Reply from './Reply';
 import namespace from './namespace';
+import ErrorCodeObj from './ErrorCodeObj';
 
 type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 
@@ -49,6 +49,8 @@ export type Methods = {
  */
 export type MethodPath = string[];
 
+export type ErrorCode = typeof ErrorCodeObj[keyof typeof ErrorCodeObj];
+
 export type SerializedError = {
   name: string;
   message: string;
@@ -64,29 +66,29 @@ type MessageBase = {
 };
 
 export type SynMessage = MessageBase & {
-  type: MessageType.Syn;
+  type: 'SYN';
   participantId: string;
 };
 
 export type Ack1Message = MessageBase & {
-  type: MessageType.Ack1;
+  type: 'ACK1';
   // TODO: Used for backward-compatibility. Remove in next major version.
   methodPaths: MethodPath[];
 };
 
 export type Ack2Message = MessageBase & {
-  type: MessageType.Ack2;
+  type: 'ACK2';
 };
 
 export type CallMessage = MessageBase & {
-  type: MessageType.Call;
+  type: 'CALL';
   id: string;
   methodPath: MethodPath;
   args: unknown[];
 };
 
 export type ReplyMessage = MessageBase & {
-  type: MessageType.Reply;
+  type: 'REPLY';
   callId: string;
 } & (
     | {
@@ -107,7 +109,7 @@ export type ReplyMessage = MessageBase & {
   );
 
 export type DestroyMessage = MessageBase & {
-  type: MessageType.Destroy;
+  type: 'DESTROY';
 };
 
 export type Message =

@@ -7,7 +7,6 @@ import {
 } from './utils';
 import {
   connect,
-  ErrorCode,
   PenpalError,
   PortMessenger,
   WindowMessenger,
@@ -313,7 +312,7 @@ describe('connection management', () => {
           event.data.addUsingParentResultErrorCode
         ) {
           expect(event.data.addUsingParentResultErrorCode).toBe(
-            ErrorCode.ConnectionDestroyed
+            'CONNECTION_DESTROYED'
           );
           resolve();
         }
@@ -357,9 +356,7 @@ describe('connection management', () => {
             await child.multiply(2, 4);
             reject(new Error('Successful call not expected'));
           } catch (error) {
-            expect((error as PenpalError).code).toEqual(
-              ErrorCode.MethodNotFound
-            );
+            expect((error as PenpalError).code).toEqual('METHOD_NOT_FOUND');
             resolve();
           }
         }
@@ -391,7 +388,7 @@ describe('connection management', () => {
     }
     expect(error).toEqual(jasmine.any(Error));
     expect((error as Error).message).toBe('Connection timed out after 0ms');
-    expect((error as PenpalError).code).toBe(ErrorCode.ConnectionTimeout);
+    expect((error as PenpalError).code).toBe('CONNECTION_TIMEOUT');
   });
 
   it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
@@ -547,7 +544,7 @@ describe('connection management', () => {
         await connection.promise;
       } catch (error) {
         expect(error).toEqual(jasmine.any(PenpalError));
-        expect((error as PenpalError).code).toBe(ErrorCode.TransmissionFailed);
+        expect((error as PenpalError).code).toBe('TRANSMISSION_FAILED');
         return;
       }
 
@@ -573,7 +570,7 @@ describe('connection management', () => {
       });
     } catch (error) {
       expect(error).toEqual(jasmine.any(PenpalError));
-      expect((error as PenpalError).code).toBe(ErrorCode.InvalidArgument);
+      expect((error as PenpalError).code).toBe('INVALID_ARGUMENT');
       return;
     }
 
