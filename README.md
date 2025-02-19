@@ -566,13 +566,13 @@ const connection = connect({
 
 ## Parallel Connections
 
-In fairly rare cases, you may wish to make parallel connections between two participants. To illustrate, let's use a scenario where you wish to make two parallel connections between Window A and Window B. In other words, you will be calling `connect()` twice within Window A and twice within Window B.
+In fairly rare cases, you may wish to make parallel connections between two participants. To illustrate, let's use a scenario where you wish to make two parallel connections between a parent window and an iframe window. In other words, you will be calling `connect()` twice within the parent window and twice within the iframe window.
 
-In an attempt to establish these two connections, Penpal in Window A will be calling `postMessage()` on a single window object. By default, when Penpal within Window B receives these messages, it has no way to disambiguate messages related to the first call to `connect()` from messages related to the second call to `connect()`. As a result, the connections may fail to be properly established.
+In an attempt to establish these two connections, Penpal in the parent window will be calling `postMessage()` on the iframe's window object (`iframe.contentWindow`). By default, when Penpal within the iframe window receives these messages, it has no way to disambiguate messages related to the parent window's first call to `connect()` from messages related to the parent window's second call to `connect()`. As a result, the connections may fail to be properly established.
 
 To prevent this issue, Penpal provides the concept of channels. A channel is a string identifier of your choosing that you may provide when calling `connect()` within both participants. When a channel is provided, it is used to disambiguate communication between parallel connections. This is better explained in code:
 
-### Window A
+### Parent Window
 
 ```javascript
 import { WindowMessenger, connect } from 'penpal';
@@ -613,7 +613,7 @@ const connectionB = connect({
 });
 ```
 
-### Window B
+### Iframe Window
 
 ```javascript
 import { WindowMessenger, connect } from 'penpal';
@@ -650,7 +650,7 @@ const connectionB = connect({
 });
 ```
 
-Although we're using `WindowMessenger` here to establish connections between two windows, channels would similarly need to be used when using `WorkerMessenger` to make parallel connections to a worker. When using `PortMessenger`, channels are only needed when establishing parallel connections over a single pair of ports.
+Although we're using `WindowMessenger` here to connect between a parent window and an iframe window, channels would similarly need to be used when using `WorkerMessenger` to make parallel connections to a worker. When using `PortMessenger`, channels are only needed when establishing parallel connections over a single pair of ports.
 
 ## Errors
 
