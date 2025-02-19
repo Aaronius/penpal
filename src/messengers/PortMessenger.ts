@@ -14,52 +14,52 @@ type Options = {
  * Handles the details of communicating on a MessagePort.
  */
 class PortMessenger implements Messenger {
-  private _port: MessagePort;
-  private _validateReceivedMessage?: (data: unknown) => data is Message;
-  private _messageCallbacks = new Set<MessageHandler>();
+  #port: MessagePort;
+  #validateReceivedMessage?: (data: unknown) => data is Message;
+  #messageCallbacks = new Set<MessageHandler>();
 
   constructor({ port }: Options) {
     if (!port) {
       throw new PenpalError(ErrorCode.InvalidArgument, 'port must be defined');
     }
 
-    this._port = port;
+    this.#port = port;
   }
 
   initialize = ({ validateReceivedMessage }: InitializeOptions) => {
-    this._validateReceivedMessage = validateReceivedMessage;
-    this._port.addEventListener('message', this._handleMessage);
-    this._port.start();
-  };
-
-  private _handleMessage = ({ data }: MessageEvent): void => {
-    if (!this._validateReceivedMessage?.(data)) {
-      return;
-    }
-
-    for (const callback of this._messageCallbacks) {
-      callback(data);
-    }
+    this.#validateReceivedMessage = validateReceivedMessage;
+    this.#port.addEventListener('message', this.#handleMessage);
+    this.#port.start();
   };
 
   sendMessage = (message: Message, transferables?: Transferable[]): void => {
-    this._port?.postMessage(message, {
+    this.#port?.postMessage(message, {
       transfer: transferables,
     });
   };
 
   addMessageHandler = (callback: MessageHandler): void => {
-    this._messageCallbacks.add(callback);
+    this.#messageCallbacks.add(callback);
   };
 
   removeMessageHandler = (callback: MessageHandler): void => {
-    this._messageCallbacks.delete(callback);
+    this.#messageCallbacks.delete(callback);
   };
 
   destroy = () => {
-    this._port.removeEventListener('message', this._handleMessage);
-    this._port.close();
-    this._messageCallbacks.clear();
+    this.#port.removeEventListener('message', this.#handleMessage);
+    this.#port.close();
+    this.#messageCallbacks.clear();
+  };
+
+  #handleMessage = ({ data }: MessageEvent): void => {
+    if (!this.#validateReceivedMessage?.(data)) {
+      return;
+    }
+
+    for (const callback of this.#messageCallbacks) {
+      callback(data);
+    }
   };
 }
 

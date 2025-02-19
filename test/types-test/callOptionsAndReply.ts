@@ -59,8 +59,8 @@ assertType<Promise<number>>(
 assertType<Promise<number>>(
   child.multiplyWithPromisedReplyInstanceAndPromisedReturnValue(2, 3)
 );
-// A returned object with a reply-like structure should not be interpreted as a Reply instance, so the result here is correct.
-assertType<Promise<{ value: number }>>(child.multiplyWithReplyLikeObject(2, 3));
+// @ts-expect-error A reply-like structure should not be interpreted as a Reply instance
+assertType<Promise<Reply>>(child.multiplyWithReplyLikeObject(2, 3));
 
 const input1DataView = new DataView(new ArrayBuffer(4));
 input1DataView.setInt32(0, 2);

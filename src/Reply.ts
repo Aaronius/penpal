@@ -6,7 +6,8 @@ class Reply<T = unknown> {
 
   // Allows TypeScript to distinguish between an actual instance of this
   // class versus an object that looks structurally similar.
-  private [brand] = brand;
+  // eslint-disable-next-line no-unused-private-class-members
+  #brand = brand;
 
   constructor(
     value: T,

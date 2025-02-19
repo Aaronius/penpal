@@ -24,10 +24,10 @@ type Options = {
  * Handles the details of communicating with a child web worker.
  */
 class WorkerMessenger implements Messenger {
-  private _worker: MessageTarget;
-  private _validateReceivedMessage?: (data: unknown) => data is Message;
-  private _messageCallbacks = new Set<MessageHandler>();
-  private _port?: MessagePort;
+  #worker: MessageTarget;
+  #validateReceivedMessage?: (data: unknown) => data is Message;
+  #messageCallbacks = new Set<MessageHandler>();
+  #port?: MessagePort;
 
   constructor({ worker }: Options) {
     if (!worker) {
@@ -37,68 +37,34 @@ class WorkerMessenger implements Messenger {
       );
     }
 
-    this._worker = worker;
+    this.#worker = worker;
   }
 
   initialize = ({ validateReceivedMessage }: InitializeOptions) => {
-    this._validateReceivedMessage = validateReceivedMessage;
-    this._worker.addEventListener('message', this._handleMessage);
-  };
-
-  private _destroyPort = () => {
-    this._port?.removeEventListener('message', this._handleMessage);
-    this._port?.close();
-    this._port = undefined;
-  };
-
-  private _handleMessage = ({ ports, data }: MessageEvent): void => {
-    if (!this._validateReceivedMessage?.(data)) {
-      return;
-    }
-
-    if (isSynMessage(data)) {
-      // If we receive a SYN message and already have a port, it means
-      // the child is re-connecting, in which case we'll receive a new port.
-      // For this reason, we always make sure we destroy the existing port.
-      this._destroyPort();
-    }
-
-    if (isAck2Message(data)) {
-      this._port = ports[0];
-
-      if (!this._port) {
-        throw new PenpalBugError('No port received on ACK2');
-      }
-
-      this._port.addEventListener('message', this._handleMessage);
-      this._port.start();
-    }
-
-    for (const callback of this._messageCallbacks) {
-      callback(data);
-    }
+    this.#validateReceivedMessage = validateReceivedMessage;
+    this.#worker.addEventListener('message', this.#handleMessage);
   };
 
   sendMessage = (message: Message, transferables?: Transferable[]): void => {
     if (isSynMessage(message) || isAck1Message(message)) {
-      this._worker.postMessage(message, { transfer: transferables });
+      this.#worker.postMessage(message, { transfer: transferables });
       return;
     }
 
     if (isAck2Message(message)) {
       const { port1, port2 } = new MessageChannel();
-      this._port = port1;
-      port1.addEventListener('message', this._handleMessage);
+      this.#port = port1;
+      port1.addEventListener('message', this.#handleMessage);
       port1.start();
 
-      this._worker.postMessage(message, {
+      this.#worker.postMessage(message, {
         transfer: [port2, ...(transferables || [])],
       });
       return;
     }
 
-    if (this._port) {
-      this._port.postMessage(message, {
+    if (this.#port) {
+      this.#port.postMessage(message, {
         transfer: transferables,
       });
       return;
@@ -108,17 +74,51 @@ class WorkerMessenger implements Messenger {
   };
 
   addMessageHandler = (callback: MessageHandler): void => {
-    this._messageCallbacks.add(callback);
+    this.#messageCallbacks.add(callback);
   };
 
   removeMessageHandler = (callback: MessageHandler): void => {
-    this._messageCallbacks.delete(callback);
+    this.#messageCallbacks.delete(callback);
   };
 
   destroy = () => {
-    this._worker.removeEventListener('message', this._handleMessage);
-    this._destroyPort();
-    this._messageCallbacks.clear();
+    this.#worker.removeEventListener('message', this.#handleMessage);
+    this.#destroyPort();
+    this.#messageCallbacks.clear();
+  };
+
+  #destroyPort = () => {
+    this.#port?.removeEventListener('message', this.#handleMessage);
+    this.#port?.close();
+    this.#port = undefined;
+  };
+
+  #handleMessage = ({ ports, data }: MessageEvent): void => {
+    if (!this.#validateReceivedMessage?.(data)) {
+      return;
+    }
+
+    if (isSynMessage(data)) {
+      // If we receive a SYN message and already have a port, it means
+      // the child is re-connecting, in which case we'll receive a new port.
+      // For this reason, we always make sure we destroy the existing port.
+      this.#destroyPort();
+    }
+
+    if (isAck2Message(data)) {
+      this.#port = ports[0];
+
+      if (!this.#port) {
+        throw new PenpalBugError('No port received on ACK2');
+      }
+
+      this.#port.addEventListener('message', this.#handleMessage);
+      this.#port.start();
+    }
+
+    for (const callback of this.#messageCallbacks) {
+      callback(data);
+    }
   };
 }
 
