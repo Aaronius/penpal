@@ -12,7 +12,7 @@ import {
 import CallOptions from './CallOptions';
 import Messenger from './messengers/Messenger';
 import PenpalError from './PenpalError';
-import { isFunction, isReplyMessage } from './guards';
+import { isReplyMessage } from './guards';
 import namespace from './namespace';
 
 type ReplyHandler = {
@@ -22,19 +22,21 @@ type ReplyHandler = {
   timeoutId?: number;
 };
 
+const methodsToTreatAsNative = new Set(['apply', 'call', 'bind']);
+
 const createRemoteProxy = (
   callback: (path: MethodPath, args: unknown[]) => void,
   log?: Log,
   path: MethodPath = []
 ): Methods => {
   return new Proxy(
-    path
+    path.length
       ? () => {
           // Intentionally empty
         }
       : Object.create(null),
     {
-      get(_target, prop: string) {
+      get(target, prop: string) {
         // If a promise is resolved with this proxy object, the JavaScript
         // runtime will look for a `then` property on this object to determine
         // if it should be treated as a promise (to support promise chaining).
@@ -44,23 +46,29 @@ const createRemoteProxy = (
         if (prop === 'then') {
           return;
         }
+
+        // Because we're using a proxy and because Penpal supports developers
+        // exposing nested methods, we have a predicament. If a developer
+        // calls, for example, remote.auth.apply(), are they
+        // attempting to call a nested apply() method that a developer has
+        // explicitly exposed from the remote? Could they instead be attempting
+        // to call Function.prototype.apply() on the remote.auth() method?
+        // Without the remote telling the local Penpal which methods the
+        // developer has exposed, it has no way of knowing (and the main reason
+        // we use a proxy is so that Penpal doesn't have to communicate which
+        // methods are exposed). So, we treat certain methods as native methods
+        // and return the native method rather than a proxy. The downside of
+        // this is that if a developer has explicitly exposed a nested method
+        // with the same name as one of these native method names, the developer
+        // will be unable to call the exposed remote method because they will
+        // be calling the method on the Function prototype instead.
+        if (path.length && methodsToTreatAsNative.has(prop)) {
+          return Reflect.get(target, prop);
+        }
+
         return createRemoteProxy(callback, log, [...path, prop]);
       },
       apply(target, _thisArg, args) {
-        if (log) {
-          const lastPathSegment = path.at(-1);
-          const builtInFunction = (target as Record<string, unknown>)[
-            lastPathSegment!
-          ];
-          if (isFunction(builtInFunction)) {
-            log(
-              `You may be attempting to call the native ` +
-                `\`${lastPathSegment}\` method which is not supported. Call ` +
-                `will be sent to remote.`
-            );
-          }
-        }
-
         return callback(path, args);
       },
     }

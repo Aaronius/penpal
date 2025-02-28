@@ -1,10 +1,6 @@
 import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from '../constants';
 import { createAndAddIframe } from '../utils';
-import {
-  connect,
-  PenpalError,
-  WindowMessenger,
-} from '../../src/index';
+import { connect, PenpalError, WindowMessenger } from '../../src/index';
 import FixtureMethods from '../childFixtures/types/FixtureMethods';
 import { isDeprecatedMessage } from '../../src/backwardCompatibility';
 

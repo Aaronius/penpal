@@ -47,19 +47,26 @@ for (const variant of variants) {
       connection.destroy();
     });
 
-    it('methods on Function prototype (like `apply`) are sent to remote', async () => {
+    it('treats nested apply, call, and bind calls as Function prototype method calls', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
-      // Penpal doesn't know whether the developer is trying to call an
-      // `apply` method on the remote or is trying to call the built-in `apply`
-      // method found on the Function prototype. Because we want to allow for
-      // the case that the remote is legitimately exposing an `apply` method,
-      // the Penpal proxy sends a call to the remote rather than calling the
-      // built-in `apply` method. The same strategy is taken for other built-in
-      // methods like `bind` and `call`.
-      const value = await child.nested.apply();
-      expect(value).toEqual('apply result');
-      connection.destroy();
+      const resultForApply = await child.multiply.apply(child, [2, 5]);
+      expect(resultForApply).toEqual(10);
+      const resultForCall = await child.multiply.call(child, 2, 5);
+      expect(resultForCall).toEqual(10);
+      const resultForBind = await child.multiply.bind(child)(2, 5);
+      expect(resultForBind).toEqual(10);
+    });
+
+    it('treats top-level apply, call, and bind calls as remote method calls', async () => {
+      const connection = createConnection<FixtureMethods>();
+      const child = await connection.promise;
+      const resultForApply = await child.apply();
+      expect(resultForApply).toEqual('apply result');
+      const resultForCall = await child.call();
+      expect(resultForCall).toEqual('call result');
+      const resultForBind = await child.bind();
+      expect(resultForBind).toEqual('bind result');
     });
 
     it('handles transferables', async () => {

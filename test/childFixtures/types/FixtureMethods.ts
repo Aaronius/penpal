@@ -20,12 +20,14 @@ type FixtureMethods = {
   getUnclonableValue(): unknown;
   reload(): void;
   navigate(to: string): void;
+  apply(): string;
+  call(): string;
+  bind(): string;
   nested: {
     oneLevel<T>(input: T): T;
     by: {
       twoLevels<T>(input: T): T;
     };
-    apply(): string;
   };
   neverResolve(): Promise<void>;
   ['with.period'](): 'success';

@@ -67,6 +67,15 @@ const methods: Omit<
   getUnclonableValue() {
     return self;
   },
+  apply() {
+    return 'apply result';
+  },
+  call() {
+    return 'call result';
+  },
+  bind() {
+    return 'bind result';
+  },
   nested: {
     oneLevel(input) {
       return input;
@@ -75,9 +84,6 @@ const methods: Omit<
       twoLevels(input) {
         return input;
       },
-    },
-    apply() {
-      return 'apply result';
     },
   },
   neverResolve() {
