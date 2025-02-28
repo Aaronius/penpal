@@ -9,7 +9,7 @@
 </div>
 
 <p align="center">
-  Penpal simplifies communication with iframes, workers, windows, etc. by
+  Penpal simplifies communication with iframes, workers, and windows by
   <br/>
   using promise-based methods on top of postMessage.
   <br/>
