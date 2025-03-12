@@ -1,5 +1,8 @@
 import { Message } from '../types';
-import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
+import Messenger, {
+  InitializeMessengerOptions,
+  MessageHandler,
+} from './Messenger';
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards';
 import PenpalError from '../PenpalError';
 import PenpalBugError from '../PenpalBugError';
@@ -36,7 +39,7 @@ class WorkerMessenger implements Messenger {
     this.#worker = worker;
   }
 
-  initialize = ({ validateReceivedMessage }: InitializeOptions) => {
+  initialize = ({ validateReceivedMessage }: InitializeMessengerOptions) => {
     this.#validateReceivedMessage = validateReceivedMessage;
     this.#worker.addEventListener('message', this.#handleMessage);
   };

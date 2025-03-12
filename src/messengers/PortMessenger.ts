@@ -1,5 +1,8 @@
 import { Message } from '../types';
-import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
+import Messenger, {
+  InitializeMessengerOptions,
+  MessageHandler,
+} from './Messenger';
 import PenpalError from '../PenpalError';
 
 type Options = {
@@ -25,7 +28,7 @@ class PortMessenger implements Messenger {
     this.#port = port;
   }
 
-  initialize = ({ validateReceivedMessage }: InitializeOptions) => {
+  initialize = ({ validateReceivedMessage }: InitializeMessengerOptions) => {
     this.#validateReceivedMessage = validateReceivedMessage;
     this.#port.addEventListener('message', this.#handleMessage);
     this.#port.start();

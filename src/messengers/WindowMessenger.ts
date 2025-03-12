@@ -1,5 +1,8 @@
 import { Log, Message } from '../types';
-import Messenger, { InitializeOptions, MessageHandler } from './Messenger';
+import Messenger, {
+  InitializeMessengerOptions,
+  MessageHandler,
+} from './Messenger';
 import {
   downgradeMessage,
   isDeprecatedMessage,
@@ -49,7 +52,10 @@ class WindowMessenger implements Messenger {
       : [window.origin];
   }
 
-  initialize = ({ log, validateReceivedMessage }: InitializeOptions) => {
+  initialize = ({
+    log,
+    validateReceivedMessage,
+  }: InitializeMessengerOptions) => {
     this.#log = log;
     this.#validateReceivedMessage = validateReceivedMessage;
     window.addEventListener('message', this.#handleMessageFromRemoteWindow);
