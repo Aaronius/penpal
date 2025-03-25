@@ -1,7 +1,7 @@
-import CallOptions from './CallOptions';
-import Reply from './Reply';
-import namespace from './namespace';
-import ErrorCodeObj from './ErrorCodeObj';
+import CallOptions from './CallOptions.js';
+import Reply from './Reply.js';
+import namespace from './namespace.js';
+import ErrorCodeObj from './ErrorCodeObj.js';
 
 type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 

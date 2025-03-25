@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "module": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "es2022",
     "lib": ["ES2022", "DOM", "webworker"],
     "strict": true,

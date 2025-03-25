@@ -1,11 +1,14 @@
-import { serializeError } from './errorSerialization';
-import { Message, ReplyMessage, Methods, Log } from './types';
-import Reply from './Reply';
-import Messenger from './messengers/Messenger';
-import PenpalError from './PenpalError';
-import { formatMethodPath, getMethodAtMethodPath } from './methodSerialization';
-import { isCallMessage } from './guards';
-import namespace from './namespace';
+import { serializeError } from './errorSerialization.js';
+import { Message, ReplyMessage, Methods, Log } from './types.js';
+import Reply from './Reply.js';
+import Messenger from './messengers/Messenger.js';
+import PenpalError from './PenpalError.js';
+import {
+  formatMethodPath,
+  getMethodAtMethodPath,
+} from './methodSerialization.js';
+import { isCallMessage } from './guards.js';
+import namespace from './namespace.js';
 
 const createErrorReplyMessage = (
   channel: string | undefined,

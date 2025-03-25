@@ -1,10 +1,10 @@
-import { CHILD_SERVER } from './constants';
-import { connect, WorkerMessenger, WindowMessenger } from '../src/index';
-import FixtureMethods from './childFixtures/types/FixtureMethods';
+import { CHILD_SERVER } from './constants.js';
+import { connect, WorkerMessenger, WindowMessenger } from '../src/index.js';
+import FixtureMethods from './childFixtures/types/FixtureMethods.js';
 import {
   expectNeverFulfilledIframeConnection,
   getWorkerFixtureUrl,
-} from './utils';
+} from './utils.js';
 
 const htmlSrc = `
 <!DOCTYPE html>

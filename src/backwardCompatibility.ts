@@ -1,12 +1,12 @@
-import { Message, MethodPath } from './types';
-import namespace from './namespace';
+import { Message, MethodPath } from './types.js';
+import namespace from './namespace.js';
 import {
   isCallMessage,
   isReplyMessage,
   isAck1Message,
   isObject,
-} from './guards';
-import PenpalBugError from './PenpalBugError';
+} from './guards.js';
+import PenpalBugError from './PenpalBugError.js';
 
 export const DEPRECATED_PENPAL_PARTICIPANT_ID = 'deprecated-penpal';
 

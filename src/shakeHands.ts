@@ -1,4 +1,4 @@
-import Messenger from './messengers/Messenger';
+import Messenger from './messengers/Messenger.js';
 import {
   Ack2Message,
   Methods,
@@ -7,16 +7,16 @@ import {
   Ack1Message,
   SynMessage,
   Log,
-} from './types';
-import PenpalError from './PenpalError';
-import connectCallHandler from './connectCallHandler';
-import connectRemoteProxy from './connectRemoteProxy';
-import { isAck2Message, isAck1Message, isSynMessage } from './guards';
-import getPromiseWithResolvers from './getPromiseWithResolvers';
-import { extractMethodPathsFromMethods } from './methodSerialization';
-import generateId from './generateId';
-import { DEPRECATED_PENPAL_PARTICIPANT_ID } from './backwardCompatibility';
-import namespace from './namespace';
+} from './types.js';
+import PenpalError from './PenpalError.js';
+import connectCallHandler from './connectCallHandler.js';
+import connectRemoteProxy from './connectRemoteProxy.js';
+import { isAck2Message, isAck1Message, isSynMessage } from './guards.js';
+import getPromiseWithResolvers from './getPromiseWithResolvers.js';
+import { extractMethodPathsFromMethods } from './methodSerialization.js';
+import generateId from './generateId.js';
+import { DEPRECATED_PENPAL_PARTICIPANT_ID } from './backwardCompatibility.js';
+import namespace from './namespace.js';
 
 type Options = {
   messenger: Messenger;

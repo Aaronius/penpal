@@ -1,4 +1,4 @@
-import namespace from './namespace';
+import namespace from './namespace.js';
 import {
   Ack2Message,
   CallMessage,
@@ -7,7 +7,7 @@ import {
   Ack1Message,
   SynMessage,
   DestroyMessage,
-} from './types';
+} from './types.js';
 
 export const isObject = (
   value: unknown

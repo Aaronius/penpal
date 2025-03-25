@@ -1,12 +1,12 @@
-import { createAndAddIframe } from '../utils';
+import { createAndAddIframe } from '../utils.js';
 import {
   connect,
   CallOptions,
   PenpalError,
   WindowMessenger,
-} from '../../src/index';
-import FixtureMethods from '../childFixtures/types/FixtureMethods';
-import { CHILD_SERVER } from '../constants';
+} from '../../src/index.js';
+import FixtureMethods from '../childFixtures/types/FixtureMethods.js';
+import { CHILD_SERVER } from '../constants.js';
 
 describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`, () => {
   afterEach(() => {

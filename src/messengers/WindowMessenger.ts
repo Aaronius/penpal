@@ -1,16 +1,16 @@
-import { Log, Message } from '../types';
+import { Log, Message } from '../types.js';
 import Messenger, {
   InitializeMessengerOptions,
   MessageHandler,
-} from './Messenger';
+} from './Messenger.js';
 import {
   downgradeMessage,
   isDeprecatedMessage,
   upgradeMessage,
-} from '../backwardCompatibility';
-import { isAck2Message, isAck1Message, isSynMessage } from '../guards';
-import PenpalError from '../PenpalError';
-import PenpalBugError from '../PenpalBugError';
+} from '../backwardCompatibility.js';
+import { isAck2Message, isAck1Message, isSynMessage } from '../guards.js';
+import PenpalError from '../PenpalError.js';
+import PenpalBugError from '../PenpalBugError.js';
 
 type Options = {
   /**

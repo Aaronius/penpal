@@ -1,5 +1,5 @@
-import { SerializedError } from './types';
-import PenpalError from './PenpalError';
+import { SerializedError } from './types.js';
+import PenpalError from './PenpalError.js';
 
 /**
  * Converts an error object into a plain object.

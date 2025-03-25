@@ -1,6 +1,6 @@
-import { Connection, connect, Methods, WindowMessenger } from '../src/index';
-import { CHILD_SERVER } from './constants';
-import WorkerMessenger from '../src/messengers/WorkerMessenger';
+import { Connection, connect, Methods, WindowMessenger } from '../src/index.js';
+import { CHILD_SERVER } from './constants.js';
+import WorkerMessenger from '../src/messengers/WorkerMessenger.js';
 
 export const createAndAddIframe = (url: string) => {
   const iframe = document.createElement('iframe');

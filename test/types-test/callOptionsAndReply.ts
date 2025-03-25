@@ -1,11 +1,11 @@
-import assertType from './assertType';
+import assertType from './assertType.js';
 import {
   connect,
   CallOptions,
   WindowMessenger,
   RemoteProxy,
   Reply,
-} from '../../src/index';
+} from '../../src/index.js';
 
 type ChildMethods = {
   multiply(a: number, b: number): number;

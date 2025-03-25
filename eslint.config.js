@@ -2,6 +2,7 @@ import eslint from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import unusedImports from 'eslint-plugin-unused-imports';
+import importPlugin from 'eslint-plugin-import';
 
 const ECMA_VERSION = 2022;
 
@@ -13,6 +14,15 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/consistent-type-definitions': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off',
+      'import/extensions': [
+        'error',
+        'always',
+        {
+          js: 'always',
+          ts: 'always',
+          json: 'always',
+        },
+      ],
     },
   },
   {
@@ -44,6 +54,7 @@ export default tseslint.config(
   {
     plugins: {
       'unused-imports': unusedImports,
+      import: importPlugin,
     },
     rules: {
       '@typescript-eslint/no-unused-vars': 'off',

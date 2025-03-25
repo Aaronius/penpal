@@ -1,14 +1,14 @@
-import { CHILD_SERVER } from './constants';
+import { CHILD_SERVER } from './constants.js';
 import {
   createAndAddIframe,
   createIframeAndConnection,
   createWorkerAndConnection,
   getPageFixtureUrl,
   getWorkerFixtureUrl,
-} from './utils';
-import { connect, PenpalError, WindowMessenger } from '../src/index';
-import FixtureMethods from './childFixtures/types/FixtureMethods';
-import WorkerMessenger from '../src/messengers/WorkerMessenger';
+} from './utils.js';
+import { connect, PenpalError, WindowMessenger } from '../src/index.js';
+import FixtureMethods from './childFixtures/types/FixtureMethods.js';
+import WorkerMessenger from '../src/messengers/WorkerMessenger.js';
 
 describe('parent calling destroy()', () => {
   const variants = [

@@ -14,6 +14,8 @@ export default {
       compilerOptions: {
         outDir: 'dist',
         declaration: false,
+        module: 'esnext',
+        moduleResolution: 'bundler',
       },
     }),
   ],

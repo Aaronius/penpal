@@ -1,5 +1,5 @@
-import { connect, debug, Reply, WorkerMessenger } from '../../../src/index';
-import FixtureMethods from '../types/FixtureMethods';
+import { connect, debug, Reply, WorkerMessenger } from '../../../src/index.js';
+import FixtureMethods from '../types/FixtureMethods.js';
 
 declare const self: DedicatedWorkerGlobalScope;
 

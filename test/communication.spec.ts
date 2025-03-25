@@ -1,6 +1,9 @@
-import { createIframeAndConnection, createWorkerAndConnection } from './utils';
-import { CallOptions, PenpalError } from '../src/index';
-import FixtureMethods from './childFixtures/types/FixtureMethods';
+import {
+  createIframeAndConnection,
+  createWorkerAndConnection,
+} from './utils.js';
+import { CallOptions, PenpalError } from '../src/index.js';
+import FixtureMethods from './childFixtures/types/FixtureMethods.js';
 
 const variants = [
   {

@@ -1,10 +1,10 @@
-import { DestroyMessage, Connection, Log, Message, Methods } from './types';
-import PenpalError from './PenpalError';
-import Messenger from './messengers/Messenger';
-import shakeHands from './shakeHands';
-import { isDestroyMessage, isMessage } from './guards';
-import once from './once';
-import namespace from './namespace';
+import { DestroyMessage, Connection, Log, Message, Methods } from './types.js';
+import PenpalError from './PenpalError.js';
+import Messenger from './messengers/Messenger.js';
+import shakeHands from './shakeHands.js';
+import { isDestroyMessage, isMessage } from './guards.js';
+import once from './once.js';
+import namespace from './namespace.js';
 
 type Options = {
   /**

@@ -1,6 +1,6 @@
-import generateId from './generateId';
-import { deserializeError } from './errorSerialization';
-import { formatMethodPath } from './methodSerialization';
+import generateId from './generateId.js';
+import { deserializeError } from './errorSerialization.js';
+import { formatMethodPath } from './methodSerialization.js';
 import {
   Message,
   RemoteProxy,
@@ -8,12 +8,12 @@ import {
   MethodPath,
   CallMessage,
   Log,
-} from './types';
-import CallOptions from './CallOptions';
-import Messenger from './messengers/Messenger';
-import PenpalError from './PenpalError';
-import { isReplyMessage } from './guards';
-import namespace from './namespace';
+} from './types.js';
+import CallOptions from './CallOptions.js';
+import Messenger from './messengers/Messenger.js';
+import PenpalError from './PenpalError.js';
+import { isReplyMessage } from './guards.js';
+import namespace from './namespace.js';
 
 type ReplyHandler = {
   methodPath: MethodPath;

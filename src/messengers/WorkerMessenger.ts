@@ -1,11 +1,11 @@
-import { Message } from '../types';
+import { Message } from '../types.js';
 import Messenger, {
   InitializeMessengerOptions,
   MessageHandler,
-} from './Messenger';
-import { isAck2Message, isAck1Message, isSynMessage } from '../guards';
-import PenpalError from '../PenpalError';
-import PenpalBugError from '../PenpalBugError';
+} from './Messenger.js';
+import { isAck2Message, isAck1Message, isSynMessage } from '../guards.js';
+import PenpalError from '../PenpalError.js';
+import PenpalBugError from '../PenpalBugError.js';
 
 // This is needed to resolve some conflict errors. There may be a better way.
 type MessageTarget = Pick<

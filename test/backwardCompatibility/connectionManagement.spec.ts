@@ -1,8 +1,8 @@
-import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from '../constants';
-import { createAndAddIframe } from '../utils';
-import { connect, PenpalError, WindowMessenger } from '../../src/index';
-import FixtureMethods from '../childFixtures/types/FixtureMethods';
-import { isDeprecatedMessage } from '../../src/backwardCompatibility';
+import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from '../constants.js';
+import { createAndAddIframe } from '../utils.js';
+import { connect, PenpalError, WindowMessenger } from '../../src/index.js';
+import FixtureMethods from '../childFixtures/types/FixtureMethods.js';
+import { isDeprecatedMessage } from '../../src/backwardCompatibility.js';
 
 /**
  * Asserts that no connection is successfully made between the parent and the

@@ -1,9 +1,9 @@
-import { Message } from '../types';
+import { Message } from '../types.js';
 import Messenger, {
   InitializeMessengerOptions,
   MessageHandler,
-} from './Messenger';
-import PenpalError from '../PenpalError';
+} from './Messenger.js';
+import PenpalError from '../PenpalError.js';
 
 type Options = {
   /**

@@ -1,4 +1,4 @@
-import { connect, PortMessenger } from '../../../src/index';
+import { connect, PortMessenger } from '../../../src/index.js';
 
 declare const self: ServiceWorkerGlobalScope;
 

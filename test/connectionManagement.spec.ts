@@ -1,19 +1,19 @@
-import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants';
+import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from './constants.js';
 import {
   createAndAddIframe,
   getWorkerFixtureUrl,
   expectNeverFulfilledIframeConnection,
   getPageFixtureUrl,
-} from './utils';
+} from './utils.js';
 import {
   connect,
   PenpalError,
   PortMessenger,
   WindowMessenger,
-} from '../src/index';
-import FixtureMethods from './childFixtures/types/FixtureMethods';
-import WorkerMessenger from '../src/messengers/WorkerMessenger';
-import { isAck2Message, isAck1Message, isMessage } from '../src/guards';
+} from '../src/index.js';
+import FixtureMethods from './childFixtures/types/FixtureMethods.js';
+import WorkerMessenger from '../src/messengers/WorkerMessenger.js';
+import { isAck2Message, isAck1Message, isMessage } from '../src/guards.js';
 
 describe('connection management', () => {
   afterEach(() => {

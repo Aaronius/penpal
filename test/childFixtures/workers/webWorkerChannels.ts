@@ -3,8 +3,8 @@ import {
   WorkerMessenger,
   RemoteProxy,
   debug,
-} from '../../../src/index';
-import FixtureMethods from '../types/FixtureMethods';
+} from '../../../src/index.js';
+import FixtureMethods from '../types/FixtureMethods.js';
 
 declare const self: DedicatedWorkerGlobalScope;
 

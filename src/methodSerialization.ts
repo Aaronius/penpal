@@ -1,5 +1,5 @@
-import { MethodPath, Methods } from './types';
-import { isFunction, isObject } from './guards';
+import { MethodPath, Methods } from './types.js';
+import { isFunction, isObject } from './guards.js';
 
 // TODO: Used for backward-compatibility. Remove in next major version.
 /**
