@@ -34,12 +34,12 @@
   "type": "module",
   "exports": {
     "require": {
-      "default": "./cjs/index.js",
-      "types": "./cjs/index.d.ts"
+      "types": "./cjs/index.d.ts",
+      "default": "./cjs/index.js"
     },
     "import": {
-      "default": "./lib/index.js",
-      "types": "./lib/index.d.ts"
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
     }
   },
   "types": "./lib/index.d.ts",
