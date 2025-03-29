@@ -521,37 +521,6 @@ describe('connection management', () => {
     channelBConnection.destroy();
   });
 
-  const invalidOrigins = [
-    'localhost',
-    'null',
-    'http://:8080',
-    '://example.com',
-  ];
-
-  for (const invalidOrigin of invalidOrigins) {
-    it(`rejects connection when invalid origin of ${invalidOrigin} is used`, async () => {
-      const iframe = createAndAddIframe(getPageFixtureUrl('general'));
-
-      const messenger = new WindowMessenger({
-        remoteWindow: iframe.contentWindow!,
-        allowedOrigins: [invalidOrigin],
-      });
-
-      try {
-        const connection = connect<FixtureMethods>({
-          messenger,
-        });
-        await connection.promise;
-      } catch (error) {
-        expect(error).toEqual(jasmine.any(PenpalError));
-        expect((error as PenpalError).code).toBe('TRANSMISSION_FAILED');
-        return;
-      }
-
-      throw new Error('Expected error to be thrown');
-    });
-  }
-
   it('throws error when messenger is re-used', async () => {
     const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 

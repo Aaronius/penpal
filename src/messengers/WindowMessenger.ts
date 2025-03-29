@@ -136,11 +136,14 @@ class WindowMessenger implements Messenger {
   };
 
   #getOriginForSendingMessage = (message: Message) => {
+    // It's safe to send the SYN message to any origin because it doesn't contain
+    // anything sensitive. When Penpal receives a SYN message, the origin on
+    // the message (which we call the concrete origin) is validated against the
+    // configured allowed origins. All subsequent messages will be sent to the
+    // concrete origin.
+    // If you decide to change this, consider https://github.com/Aaronius/penpal/issues/103
     if (isSynMessage(message)) {
-      return this.#allowedOrigins.length > 1 ||
-        this.#allowedOrigins[0] instanceof RegExp
-        ? '*'
-        : this.#allowedOrigins[0];
+      return '*';
     }
 
     if (!this.#concreteRemoteOrigin) {
