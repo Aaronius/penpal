@@ -4,20 +4,42 @@ import { createServer } from 'http';
 import connect from 'connect';
 import karma from 'karma';
 import serveStatic from 'serve-static';
-import * as rollup from 'rollup';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import config from '../rollup.config.js';
+import { build } from 'tsup';
 
 const args = process.argv.slice(2); // Exclude `node` and script path
 const isWatchMode = args.includes('--watch');
 
 const ports = [9000, 9001];
+const servers = [];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const serveChildViews = () => {
+const startServer = async (app, port) => {
+  return new Promise((resolve, reject) => {
+    const server = createServer(app);
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(
+          `Port ${port} is already in use. Please free up this port and try again.`
+        );
+        reject(new Error(`Port ${port} is already in use`));
+      } else {
+        reject(err);
+      }
+    });
+
+    server.listen(port, () => {
+      console.log(`Server started on port ${port}`);
+      resolve(server);
+    });
+  });
+};
+
+const serveChildViews = async () => {
   const app = connect()
     .use(serveStatic('dist'))
     .use(serveStatic('test/childFixtures'))
@@ -25,8 +47,14 @@ const serveChildViews = () => {
       // Intentionally never respond
     });
 
-  for (const port of ports) {
-    createServer(app).listen(port);
+  try {
+    for (const port of ports) {
+      const server = await startServer(app, port);
+      servers.push(server);
+    }
+  } catch (err) {
+    console.error('Failed to start servers:', err);
+    process.exit(1);
   }
 };
 
@@ -40,20 +68,25 @@ const runTests = async () => {
   await new karma.Server(karmaConfig).start();
 };
 
-const build = () => {
-  const watcher = rollup.watch(config);
-  let testsRunning = false;
-
-  watcher.on('event', ({ code, error }) => {
-    if (code === 'END' && !testsRunning) {
-      runTests().catch(console.error);
-      testsRunning = true;
-      if (!isWatchMode) watcher.close();
-    } else if (code === 'ERROR' || code === 'FATAL') {
-      console.error(error);
-    }
+const buildPenpal = async () => {
+  const watcher = await build({
+    watch: isWatchMode,
+    config: true,
+    format: 'iife',
   });
+
+  if (watcher) {
+    watcher.on('success', () => {
+      runTests().catch(console.error);
+    });
+  } else {
+    await runTests();
+  }
 };
 
+process.on('exit', () => {
+  servers.forEach((server) => server.close());
+});
+
 serveChildViews();
-build();
+buildPenpal();

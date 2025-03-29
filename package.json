@@ -32,30 +32,24 @@
     "windows"
   ],
   "type": "module",
+  "types": "./dist/penpal.d.ts",
   "exports": {
-    "require": {
-      "types": "./cjs/index.d.ts",
-      "default": "./cjs/index.js"
-    },
     "import": {
-      "types": "./lib/index.d.ts",
-      "default": "./lib/index.js"
+      "types": "./dist/penpal.d.ts",
+      "default": "./dist/penpal.mjs"
+    },
+    "require": {
+      "types": "./dist/penpal.d.cts",
+      "default": "./dist/penpal.cjs"
     }
   },
-  "types": "./lib/index.d.ts",
   "scripts": {
-    "clean": "rimraf lib cjs dist",
-    "build:lib": "tsc --project src/tsconfig.json",
-    "build:cjs": "tsc --project src/tsconfig.cjs.json",
-    "build:dist": "rollup --config rollup.config.js && terser dist/penpal.js -o dist/penpal.min.js -m --source-map",
+    "build": "tsup --format esm,cjs,iife --dts && tsup --format iife --minify=terser --clean=false",
     "build:analysis": "node scripts/filesize.js dist/penpal.min.js",
-    "build": "npm-run-all clean build:lib build:cjs build:dist build:analysis",
     "lint": "eslint --cache --fix",
     "format": "prettier --write \"**/*.{json,ts,js,cjs,md,html}\"",
-    "test": "npm-run-all clean runTests",
-    "test:watch": "npm-run-all clean runTests:watch",
-    "runTests": "node scripts/test.js",
-    "runTests:watch": "npm run runTests -- --watch",
+    "test": "node scripts/test.js",
+    "test:watch": "npm run test -- --watch",
     "prepublishOnly": "npm-run-all format lint test build",
     "prepare": "husky install"
   },
@@ -68,8 +62,6 @@
     ]
   },
   "files": [
-    "lib",
-    "cjs",
     "dist"
   ],
   "devDependencies": {
@@ -97,10 +89,10 @@
     "npm-run-all": "^4.1.5",
     "prettier": "2.0.4",
     "rimraf": "^3.0.2",
-    "rollup": "^4.37.0",
     "serve-static": "^1.16.2",
-    "terser": "^5.36.0",
+    "terser": "^5.39.0",
     "tslib": "^2.8.1",
+    "tsup": "^8.0.2",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.28.0"
   }

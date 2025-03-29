@@ -3,9 +3,15 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "target": "es2022",
-    "lib": ["ES2022", "DOM", "webworker"],
+    "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "isolatedModules": true,
+    "lib": ["es2022", "dom", "webworker"]
   }
 }
