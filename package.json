@@ -1,6 +1,6 @@
 {
   "name": "penpal",
-  "version": "7.0.2",
+  "version": "7.0.3",
   "description": "Penpal simplifies communication with iframes, workers, and windows by using promise-based methods on top of postMessage.",
   "author": "Aaron Hardy <aaron@aaronhardy.com>",
   "license": "MIT",
