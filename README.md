@@ -21,6 +21,8 @@
 
 </div>
 
+Migration instructions for each major release can be found on the corresponding Github release tag. If you are migrating to v7, [see the v7 release tag for migration instructions](https://github.com/Aaronius/penpal/releases/tag/v7.0.0).
+
 ## Installation
 
 ### Using npm
