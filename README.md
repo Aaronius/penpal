@@ -432,6 +432,10 @@ self.addEventListener('message', async (event) => {
 
 </details>
 
+## Running Examples
+
+If you'd like to see running examples of the different types of usage, check out the [penpal-sandbox](https://github.com/Aaronius/penpal-sandbox) repository.
+
 ## Destroying the Connection
 
 At any point in time, call `connection.destroy()` to destroy the connection so that event listeners can be removed and objects can be properly garbage collected.
