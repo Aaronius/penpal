@@ -6,7 +6,7 @@ import {
   isAck1Message,
   isObject,
 } from './guards.js';
-import PenpalBugError from './PenpalBugError.js';
+import PenpalError from './PenpalError.js';
 
 export const DEPRECATED_PENPAL_PARTICIPANT_ID = 'deprecated-penpal';
 
@@ -90,9 +90,18 @@ const upgradeMethodPath = (methodPath: string): MethodPath =>
   methodPath.split('.');
 const downgradeMethodPath = (methodPath: MethodPath) => methodPath.join('.');
 
+const stringifyUnknownMessage = (message: unknown) => {
+  try {
+    return JSON.stringify(message);
+  } catch (_) {
+    return String(message);
+  }
+};
+
 const getUnexpectedMessageError = (message: unknown) => {
-  return new PenpalBugError(
-    `Unexpected message to translate: ${JSON.stringify(message)}`
+  return new PenpalError(
+    'TRANSMISSION_FAILED',
+    `Unexpected message to translate: ${stringifyUnknownMessage(message)}`
   );
 };
 

@@ -13,7 +13,12 @@ import {
 } from '../src/index.js';
 import FixtureMethods from './childFixtures/types/FixtureMethods.js';
 import WorkerMessenger from '../src/messengers/WorkerMessenger.js';
-import { isAck2Message, isAck1Message, isMessage } from '../src/guards.js';
+import {
+  isAck2Message,
+  isAck1Message,
+  isMessage,
+  isSynMessage,
+} from '../src/guards.js';
 
 describe('connection management', () => {
   afterEach(() => {
@@ -288,6 +293,46 @@ describe('connection management', () => {
       window.addEventListener('message', handleMessage);
       child.reload();
     });
+  });
+
+  it('rejects method calls during reconnect with transmission error', async () => {
+    const iframe = createAndAddIframe(getPageFixtureUrl('general'));
+
+    const messenger = new WindowMessenger({
+      remoteWindow: iframe.contentWindow!,
+      allowedOrigins: [CHILD_SERVER],
+    });
+
+    const connection = connect<FixtureMethods>({
+      messenger,
+    });
+
+    const child = await connection.promise;
+
+    const result = await new Promise<unknown>((resolve) => {
+      const handleMessage = (event: MessageEvent) => {
+        if (
+          event.source === iframe.contentWindow &&
+          isMessage(event.data) &&
+          isSynMessage(event.data)
+        ) {
+          window.removeEventListener('message', handleMessage);
+
+          child.multiply(2, 4).then(resolve, resolve);
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+      child.reload();
+    });
+
+    expect(result).toEqual(jasmine.any(PenpalError));
+    expect((result as PenpalError).code).toBe('TRANSMISSION_FAILED');
+    expect((result as Error).message).not.toContain(
+      "You've hit a bug in Penpal"
+    );
+
+    connection.destroy();
   });
 
   it('destroys other side of connection when connection is destroyed', async () => {

@@ -10,7 +10,6 @@ import {
 } from '../backwardCompatibility.js';
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards.js';
 import PenpalError from '../PenpalError.js';
-import PenpalBugError from '../PenpalBugError.js';
 
 type Options = {
   /**
@@ -110,7 +109,10 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    throw new PenpalBugError('Port is undefined');
+    throw new PenpalError(
+      'TRANSMISSION_FAILED',
+      'Cannot send message because the MessagePort is not connected'
+    );
   };
 
   addMessageHandler = (callback: MessageHandler): void => {
@@ -147,7 +149,10 @@ class WindowMessenger implements Messenger {
     }
 
     if (!this.#concreteRemoteOrigin) {
-      throw new PenpalBugError('Concrete remote origin not set');
+      throw new PenpalError(
+        'TRANSMISSION_FAILED',
+        'Cannot send message because the remote origin is not established'
+      );
     }
 
     // If the concrete remote origin (the origin we received from the remote
@@ -186,7 +191,14 @@ class WindowMessenger implements Messenger {
         'Please upgrade the child window to the latest version of Penpal.'
       );
       this.#isChildUsingDeprecatedProtocol = true;
-      data = upgradeMessage(data);
+      try {
+        data = upgradeMessage(data);
+      } catch (error) {
+        this.#log?.(
+          `Failed to translate deprecated message: ${(error as Error).message}`
+        );
+        return;
+      }
     }
 
     if (!this.#validateReceivedMessage?.(data)) {
@@ -218,7 +230,8 @@ class WindowMessenger implements Messenger {
       this.#port = ports[0];
 
       if (!this.#port) {
-        throw new PenpalBugError('No port received on ACK2');
+        this.#log?.('Ignoring ACK2 because it did not include a MessagePort');
+        return;
       }
 
       this.#port.addEventListener('message', this.#handleMessageFromPort);

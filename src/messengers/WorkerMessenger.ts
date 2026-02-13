@@ -1,11 +1,10 @@
-import { Message } from '../types.js';
+import { Log, Message } from '../types.js';
 import Messenger, {
   InitializeMessengerOptions,
   MessageHandler,
 } from './Messenger.js';
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards.js';
 import PenpalError from '../PenpalError.js';
-import PenpalBugError from '../PenpalBugError.js';
 
 // This is needed to resolve some conflict errors. There may be a better way.
 type MessageTarget = Pick<
@@ -27,6 +26,7 @@ type Options = {
  */
 class WorkerMessenger implements Messenger {
   #worker: MessageTarget;
+  #log?: Log;
   #validateReceivedMessage?: (data: unknown) => data is Message;
   #messageCallbacks = new Set<MessageHandler>();
   #port?: MessagePort;
@@ -39,7 +39,11 @@ class WorkerMessenger implements Messenger {
     this.#worker = worker;
   }
 
-  initialize = ({ validateReceivedMessage }: InitializeMessengerOptions) => {
+  initialize = ({
+    log,
+    validateReceivedMessage,
+  }: InitializeMessengerOptions) => {
+    this.#log = log;
     this.#validateReceivedMessage = validateReceivedMessage;
     this.#worker.addEventListener('message', this.#handleMessage);
   };
@@ -69,7 +73,10 @@ class WorkerMessenger implements Messenger {
       return;
     }
 
-    throw new PenpalBugError('Port is undefined');
+    throw new PenpalError(
+      'TRANSMISSION_FAILED',
+      'Cannot send message because the MessagePort is not connected'
+    );
   };
 
   addMessageHandler = (callback: MessageHandler): void => {
@@ -108,7 +115,8 @@ class WorkerMessenger implements Messenger {
       this.#port = ports[0];
 
       if (!this.#port) {
-        throw new PenpalBugError('No port received on ACK2');
+        this.#log?.('Ignoring ACK2 because it did not include a MessagePort');
+        return;
       }
 
       this.#port.addEventListener('message', this.#handleMessage);
