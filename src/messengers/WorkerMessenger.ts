@@ -6,8 +6,9 @@ import Messenger, {
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards.js';
 import PenpalError from '../PenpalError.js';
 
-// This is needed to resolve some conflict errors. There may be a better way.
-type MessageTarget = Pick<
+// Keep this structural so generated .d.ts files don't depend on
+// DedicatedWorkerGlobalScope being present in consumer tsconfig libs.
+type WorkerLike = Pick<
   Worker,
   'postMessage' | 'addEventListener' | 'removeEventListener'
 >;
@@ -18,14 +19,14 @@ type Options = {
    * If this messenger is being used within the worker, `worker` should
    * typically be set to `self`.
    */
-  worker: Worker | DedicatedWorkerGlobalScope;
+  worker: WorkerLike;
 };
 
 /**
  * Handles the details of communicating with a child web worker.
  */
 class WorkerMessenger implements Messenger {
-  #worker: MessageTarget;
+  #worker: WorkerLike;
   #log?: Log;
   #validateReceivedMessage?: (data: unknown) => data is Message;
   #messageCallbacks = new Set<MessageHandler>();
