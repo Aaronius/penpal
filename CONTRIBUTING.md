@@ -34,6 +34,19 @@ To run the full browser matrix:
 
 - `npm run test:all-browsers`
 
+## Release Workflow
+
+Penpal releases are managed with Changesets and GitHub Actions.
+
+- For any PR that should ship in npm, add a changeset file by running:
+  - `npx changeset`
+- For changes that should not trigger a release, use:
+  - `npx changeset --empty`
+- On pushes to `main`, `.github/workflows/release.yml` will:
+  - create or update a release PR when changesets are pending
+  - publish to npm when the release PR is merged
+  - create a GitHub release from the generated changelog
+
 ## NPM Scripts
 
 All scripts below are defined in `package.json`.
@@ -42,6 +55,12 @@ All scripts below are defined in `package.json`.
   - Builds ESM, CJS, and IIFE bundles, then builds a minified IIFE bundle.
 - `npm run build:analysis`
   - Prints minified bundle size analysis for `dist/penpal.min.js`.
+- `npm run changeset`
+  - Launches the interactive prompt to create a `.changeset/*.md` entry.
+- `npm run changeset:check`
+  - Validates that at least one changeset exists for changed packages since `origin/main`.
+- `npm run changeset:version`
+  - Applies pending changesets by updating package versions/changelogs.
 - `npm run lint`
   - Runs ESLint with autofix and cache enabled.
 - `npm run lint:check`
@@ -58,6 +77,8 @@ All scripts below are defined in `package.json`.
   - Runs formatting, linting, Chromium tests, type tests, and build before publish.
 - `npm run prepare`
   - Installs Husky git hooks.
+- `npm run release:publish`
+  - Publishes with Changesets in CI using npm trusted publishing.
 - `npm run test:watch:chromium`
   - Runs Vitest Browser Mode in watch mode using Chromium.
 - `npm run test:chromium:browser`

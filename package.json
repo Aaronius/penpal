@@ -46,10 +46,14 @@
   "scripts": {
     "build": "tsup --format esm,cjs,iife --dts && tsup --format iife --minify=terser --clean=false",
     "build:analysis": "node scripts/filesize.js dist/penpal.min.js",
+    "changeset": "changeset",
+    "changeset:check": "changeset status --since=origin/main",
+    "changeset:version": "changeset version",
     "lint": "eslint --cache --fix",
     "lint:check": "eslint --max-warnings=0",
     "format": "prettier --write \"**/*.{json,ts,js,cjs,md,html}\"",
     "format:check": "prettier --check \"**/*.{json,ts,js,cjs,md,html}\"",
+    "release:publish": "changeset publish --provenance",
     "test": "npm-run-all test:unit test:chromium",
     "test:watch": "npm run test:watch:chromium",
     "prepublishOnly": "npm-run-all format lint test test:types build",
@@ -85,6 +89,8 @@
     "dist"
   ],
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
     "@eslint/js": "^9.17.0",
     "@types/connect": "^3.4.38",
     "@types/serve-static": "^2.2.0",

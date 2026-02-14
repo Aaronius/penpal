@@ -1,0 +1,27 @@
+name: Changesets
+
+on:
+  pull_request:
+
+jobs:
+  validate:
+    name: Validate Changeset
+    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate changeset exists
+        run: npx changeset status --since=origin/${{ github.base_ref }}
