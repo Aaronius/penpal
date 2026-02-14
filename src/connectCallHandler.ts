@@ -103,7 +103,11 @@ const connectCallHandler = (
         replyMessage = createErrorReplyMessage(channel, callId, error as Error);
         log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
         messenger.sendMessage(replyMessage);
+        // Don't return prematurely here, because we still want the error to
+        // hit the console so it's easier for developers to notice and debug.
       }
+
+      throw error;
     }
   };
 

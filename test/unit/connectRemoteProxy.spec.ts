@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import CallOptions from '../../src/CallOptions.js';
 import connectRemoteProxy from '../../src/connectRemoteProxy.js';
 import namespace from '../../src/namespace.js';
@@ -21,27 +21,6 @@ const getLastCallMessage = (messenger: MockMessenger): CallMessage => {
 
   return message;
 };
-
-const globalAny = globalThis as {
-  window?: Pick<Window, 'setTimeout' | 'clearTimeout'>;
-};
-const originalWindow = globalAny.window;
-
-beforeAll(() => {
-  globalAny.window = {
-    setTimeout: globalThis.setTimeout.bind(globalThis),
-    clearTimeout: globalThis.clearTimeout.bind(globalThis),
-  } as Pick<Window, 'setTimeout' | 'clearTimeout'>;
-});
-
-afterAll(() => {
-  if (originalWindow === undefined) {
-    delete globalAny.window;
-    return;
-  }
-
-  globalAny.window = originalWindow;
-});
 
 describe('connectRemoteProxy', () => {
   it('sends CALL and resolves when receiving REPLY', async () => {
@@ -182,5 +161,36 @@ describe('connectRemoteProxy', () => {
     await expect(resultPromise).rejects.toMatchObject({
       code: 'CONNECTION_DESTROYED',
     });
+  });
+
+  it('clears method call timeout after receiving REPLY', async () => {
+    const messenger = new MockMessenger();
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+    const { remoteProxy, destroy } = connectRemoteProxy(
+      messenger,
+      undefined,
+      undefined
+    );
+    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+
+    const resultPromise = proxy.neverResolve(
+      new CallOptions({ timeout: 1000 })
+    );
+    const callMessage = getLastCallMessage(messenger);
+
+    await messenger.emit({
+      namespace,
+      channel: undefined,
+      type: 'REPLY',
+      callId: callMessage.id,
+      value: 'done',
+    });
+
+    await expect(resultPromise).resolves.toBe('done');
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+
+    clearTimeoutSpy.mockRestore();
+    destroy();
   });
 });

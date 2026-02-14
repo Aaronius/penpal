@@ -30,13 +30,18 @@ describe('connectCallHandler', () => {
       undefined
     );
 
-    await messenger.emit({
-      namespace,
-      channel: undefined,
-      type: 'CALL',
-      id: '1',
-      methodPath: ['getUnclonableValue'],
-      args: [],
+    await expect(
+      messenger.emit({
+        namespace,
+        channel: undefined,
+        type: 'CALL',
+        id: '1',
+        methodPath: ['getUnclonableValue'],
+        args: [],
+      })
+    ).rejects.toMatchObject({
+      name: 'DataCloneError',
+      message: 'Cannot clone value',
     });
 
     expect(sendCount).toBe(2);
@@ -75,6 +80,38 @@ describe('connectCallHandler', () => {
         penpalCode: 'METHOD_NOT_FOUND',
       },
     });
+
+    dispose();
+  });
+
+  it('rethrows non-DataCloneError send failures', async () => {
+    const messenger = new MockMessenger();
+
+    messenger.sendMessageImpl = () => {
+      throw new Error('send failed');
+    };
+
+    const dispose = connectCallHandler(
+      messenger,
+      {
+        ping() {
+          return 'pong';
+        },
+      },
+      undefined,
+      undefined
+    );
+
+    await expect(
+      messenger.emit({
+        namespace,
+        channel: undefined,
+        type: 'CALL',
+        id: '3',
+        methodPath: ['ping'],
+        args: [],
+      })
+    ).rejects.toThrow('send failed');
 
     dispose();
   });
