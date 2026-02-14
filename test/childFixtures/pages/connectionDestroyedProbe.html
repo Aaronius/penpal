@@ -1,0 +1,46 @@
+<script src="/penpal.js"></script>
+<script src="/pages/_fixtureHelpers.js"></script>
+<script>
+  let parentAPI;
+
+  PenpalFixture.connect({
+    methods: {},
+    allowedOrigins: ['*'],
+  }).promise.then((parent) => {
+    parentAPI = parent;
+  });
+
+  window.addEventListener('message', async (event) => {
+    const message = event.data;
+
+    if (
+      !message ||
+      typeof message !== 'object' ||
+      message.fixture !== 'connectionDestroyedProbe' ||
+      message.type !== 'REQUEST_ADD_USING_PARENT'
+    ) {
+      return;
+    }
+
+    try {
+      const result = await parentAPI.add(3, 6);
+      window.parent.postMessage(
+        {
+          fixture: 'connectionDestroyedProbe',
+          type: 'RESULT',
+          result,
+        },
+        '*'
+      );
+    } catch (error) {
+      window.parent.postMessage(
+        {
+          fixture: 'connectionDestroyedProbe',
+          type: 'RESULT_ERROR',
+          code: error?.code,
+        },
+        '*'
+      );
+    }
+  });
+</script>

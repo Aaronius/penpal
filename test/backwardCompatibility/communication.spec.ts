@@ -31,7 +31,7 @@ describe(`BACKWARD COMPATIBILITY: communication between parent and child iframe`
   it('calls an asynchronous function on the child', async () => {
     const connection = createConnection();
     const child = await connection.promise;
-    const value = await child.multiply(2, 5);
+    const value = await child.multiplyAsync(2, 5);
     expect(value).toEqual(10);
     connection.destroy();
   });

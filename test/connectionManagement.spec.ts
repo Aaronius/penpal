@@ -12,7 +12,7 @@ import {
   PortMessenger,
   WindowMessenger,
 } from '../src/index.js';
-import type { Methods } from '../src/index.js';
+import type { Methods, RemoteProxy } from '../src/index.js';
 import FixtureMethods from './childFixtures/types/FixtureMethods.js';
 import WorkerMessenger from '../src/messengers/WorkerMessenger.js';
 import {
@@ -36,6 +36,29 @@ type CreateIframeConnectionOptions = Omit<
 > & {
   pageName?: string;
   url?: string;
+};
+
+type ChannelParentMethods = {
+  getChannel(): string;
+};
+
+type ChannelChildMethods = Pick<
+  FixtureMethods,
+  'getChannel' | 'getChannelFromParent'
+>;
+
+const expectParallelChannelResults = async (
+  channelAChild: RemoteProxy<ChannelChildMethods>,
+  channelBChild: RemoteProxy<ChannelChildMethods>
+) => {
+  const results = await Promise.all([
+    channelAChild.getChannel(),
+    channelBChild.getChannel(),
+    channelAChild.getChannelFromParent(),
+    channelBChild.getChannelFromParent(),
+  ]);
+
+  expect(results).toEqual(['A', 'B', 'A', 'B']);
 };
 
 const createWindowConnection = <TMethods extends Methods>({
@@ -101,6 +124,7 @@ describe('connection management', () => {
     const { connection } = createIframeConnection<FixtureMethods>();
 
     await connection.promise;
+    connection.destroy();
   });
 
   it('connects to window when correct origin regex provided in parent', async () => {
@@ -109,6 +133,7 @@ describe('connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it('connects to worker', async () => {
@@ -117,6 +142,7 @@ describe('connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it('connects to window when matching origin provided in child', async () => {
@@ -126,15 +152,17 @@ describe('connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
-  it('connects to window connecting when matching origin regex provided in child', async () => {
+  it('connects to window when matching origin regex provided in child', async () => {
     const { connection } = createIframeConnection({
       pageName: 'matchingParentOriginRegex',
       allowedOrigins: ['http://example.com', CHILD_SERVER],
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it("doesn't connect to window when incorrect origin provided in parent", async () => {
@@ -155,7 +183,7 @@ describe('connection management', () => {
 
   it("doesn't connect to window when mismatched parent origin regex provided in child", async () => {
     const { iframe, connection } = createIframeConnection({
-      pageName: 'mismatchedParentOrigin',
+      pageName: 'mismatchedParentOriginRegex',
     });
 
     await expectNeverFulfilledIframeConnection(connection, iframe);
@@ -168,6 +196,7 @@ describe('connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it('connects to window when parent and child are on the same origin and origin is not set in parent or child', async () => {
@@ -177,6 +206,7 @@ describe('connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it("doesn't connect to window when child redirects to different origin and origin is not set in parent", async () => {
@@ -273,24 +303,69 @@ describe('connection management', () => {
   });
 
   it('destroys other side of connection when connection is destroyed', async () => {
-    const { iframe, connection } = createIframeConnection<FixtureMethods>();
+    const { iframe, connection } = createIframeConnection({
+      pageName: 'connectionDestroyedProbe',
+      methods: {
+        add(num1: number, num2: number) {
+          return num1 + num2;
+        },
+      },
+    });
 
     await connection.promise;
     connection.destroy();
 
-    return new Promise<void>((resolve) => {
-      window.addEventListener('message', (event) => {
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(
+          new Error('Timed out waiting for connection-destroyed probe result')
+        );
+      }, 5000);
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.source !== iframe.contentWindow) {
+          return;
+        }
+
+        const payload = event.data;
+
         if (
-          event.source === iframe.contentWindow &&
-          event.data.addUsingParentResultErrorCode
+          !payload ||
+          typeof payload !== 'object' ||
+          payload.fixture !== 'connectionDestroyedProbe'
         ) {
-          expect(event.data.addUsingParentResultErrorCode).toBe(
-            'CONNECTION_DESTROYED'
+          return;
+        }
+
+        if (payload.type === 'RESULT') {
+          clearTimeout(timeout);
+          window.removeEventListener('message', handleMessage);
+          reject(
+            new Error(
+              `Expected parent call to fail after destroy, but it succeeded with value ${
+                payload.result as number
+              }`
+            )
           );
+          return;
+        }
+
+        if (payload.type === 'RESULT_ERROR') {
+          clearTimeout(timeout);
+          window.removeEventListener('message', handleMessage);
+          expect(payload.code).toBe('CONNECTION_DESTROYED');
           resolve();
         }
-      });
-      iframe.contentWindow!.postMessage('addUsingParent', CHILD_SERVER);
+      };
+
+      window.addEventListener('message', handleMessage);
+      iframe.contentWindow!.postMessage(
+        {
+          fixture: 'connectionDestroyedProbe',
+          type: 'REQUEST_ADD_USING_PARENT',
+        },
+        CHILD_SERVER
+      );
     });
   });
 
@@ -346,6 +421,7 @@ describe('connection management', () => {
     expect(error).toEqual(expect.any(Error));
     expect((error as Error).message).toBe('Connection timed out after 0ms');
     expect((error as PenpalError).code).toBe('CONNECTION_TIMEOUT');
+    connection.destroy();
   });
 
   it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
@@ -395,14 +471,7 @@ describe('connection management', () => {
       channelBConnection.promise,
     ]);
 
-    const results = await Promise.all([
-      channelAChild.getChannel(),
-      channelBChild.getChannel(),
-      channelAChild.getChannelFromParent(),
-      channelBChild.getChannelFromParent(),
-    ]);
-
-    expect(results).toEqual(['A', 'B', 'A', 'B']);
+    await expectParallelChannelResults(channelAChild, channelBChild);
 
     channelAConnection.destroy();
     channelBConnection.destroy();
@@ -448,17 +517,97 @@ describe('connection management', () => {
       channelBConnection.promise,
     ]);
 
-    const results = await Promise.all([
-      channelAChild.getChannel(),
-      channelBChild.getChannel(),
-      channelAChild.getChannelFromParent(),
-      channelBChild.getChannelFromParent(),
-    ]);
-
-    expect(results).toEqual(['A', 'B', 'A', 'B']);
+    await expectParallelChannelResults(channelAChild, channelBChild);
 
     channelAConnection.destroy();
     channelBConnection.destroy();
+  });
+
+  it('connects through message ports in parallel with separate channels', async () => {
+    const { port1, port2 } = new MessageChannel();
+
+    const channelAParentRef: {
+      current?: RemoteProxy<ChannelParentMethods>;
+    } = {};
+    const channelBParentRef: {
+      current?: RemoteProxy<ChannelParentMethods>;
+    } = {};
+
+    const channelAChildConnection = connect<ChannelParentMethods>({
+      messenger: new PortMessenger({
+        port: port2,
+      }),
+      channel: 'A',
+      methods: {
+        getChannel() {
+          return 'A';
+        },
+        getChannelFromParent() {
+          return channelAParentRef.current!.getChannel();
+        },
+      },
+    });
+
+    const channelBChildConnection = connect<ChannelParentMethods>({
+      messenger: new PortMessenger({
+        port: port2,
+      }),
+      channel: 'B',
+      methods: {
+        getChannel() {
+          return 'B';
+        },
+        getChannelFromParent() {
+          return channelBParentRef.current!.getChannel();
+        },
+      },
+    });
+
+    const channelAParentConnection = connect<ChannelChildMethods>({
+      messenger: new PortMessenger({
+        port: port1,
+      }),
+      channel: 'A',
+      methods: {
+        getChannel() {
+          return 'A';
+        },
+      },
+    });
+
+    const channelBParentConnection = connect<ChannelChildMethods>({
+      messenger: new PortMessenger({
+        port: port1,
+      }),
+      channel: 'B',
+      methods: {
+        getChannel() {
+          return 'B';
+        },
+      },
+    });
+
+    const [
+      resolvedChannelAParent,
+      resolvedChannelBParent,
+      channelAChild,
+      channelBChild,
+    ] = await Promise.all([
+      channelAChildConnection.promise,
+      channelBChildConnection.promise,
+      channelAParentConnection.promise,
+      channelBParentConnection.promise,
+    ]);
+
+    channelAParentRef.current = resolvedChannelAParent;
+    channelBParentRef.current = resolvedChannelBParent;
+
+    await expectParallelChannelResults(channelAChild, channelBChild);
+
+    channelAParentConnection.destroy();
+    channelBParentConnection.destroy();
+    channelAChildConnection.destroy();
+    channelBChildConnection.destroy();
   });
 
   it('throws error when messenger is re-used', async () => {
@@ -469,21 +618,25 @@ describe('connection management', () => {
       allowedOrigins: [CHILD_SERVER],
     });
 
-    connect<FixtureMethods>({
+    const connection = connect<FixtureMethods>({
       messenger,
     });
 
     try {
-      connect<FixtureMethods>({
-        messenger,
-      });
-    } catch (error) {
-      expect(error).toEqual(expect.any(PenpalError));
-      expect((error as PenpalError).code).toBe('INVALID_ARGUMENT');
-      return;
-    }
+      try {
+        connect<FixtureMethods>({
+          messenger,
+        });
+      } catch (error) {
+        expect(error).toEqual(expect.any(PenpalError));
+        expect((error as PenpalError).code).toBe('INVALID_ARGUMENT');
+        return;
+      }
 
-    throw new Error('Expected error to be thrown');
+      throw new Error('Expected error to be thrown');
+    } finally {
+      connection.destroy();
+    }
   });
 
   it('connects to window created with window.open()', async () => {
@@ -496,6 +649,7 @@ describe('connection management', () => {
       });
 
       await connection.promise;
+      connection.destroy();
     } finally {
       childWindow?.close();
     }
@@ -508,11 +662,20 @@ describe('connection management', () => {
       port: worker.port,
     });
 
-    const connection = connect({
+    const connection = connect<FixtureMethods>({
       messenger,
+      methods: {
+        add(num1: number, num2: number) {
+          return num1 + num2;
+        },
+      },
     });
 
-    await connection.promise;
+    const child = await connection.promise;
+
+    await expect(child.multiply(3, 2)).resolves.toBe(6);
+    await child.addUsingParent();
+    await expect(child.getParentReturnValue()).resolves.toBe(9);
 
     connection.destroy();
   });
@@ -576,9 +739,18 @@ describe('connection management', () => {
 
       const connection = connect<FixtureMethods>({
         messenger,
+        methods: {
+          add(num1: number, num2: number) {
+            return num1 + num2;
+          },
+        },
       });
 
-      await connection.promise;
+      const child = await connection.promise;
+      await expect(child.multiply(3, 2)).resolves.toBe(6);
+      await child.addUsingParent();
+      await expect(child.getParentReturnValue()).resolves.toBe(9);
+
       connection.destroy();
     };
 

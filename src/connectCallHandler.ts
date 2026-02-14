@@ -104,7 +104,6 @@ const connectCallHandler = (
         log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
         messenger.sendMessage(replyMessage);
       }
-      throw error;
     }
   };
 

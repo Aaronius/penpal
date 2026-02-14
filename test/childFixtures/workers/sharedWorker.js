@@ -2,16 +2,31 @@ importScripts('/penpal.js');
 
 console.log('worker origin', self.origin);
 
-self.addEventListener('connect', async (event) => {
+self.addEventListener('connect', (event) => {
   const [port] = event.ports;
+  let parentAPI;
+  let parentReturnValue;
 
   const messenger = new Penpal.PortMessenger({
     port,
   });
 
-  const connection = Penpal.connect({
+  Penpal.connect({
     messenger,
+    methods: {
+      multiply(num1, num2) {
+        return num1 * num2;
+      },
+      addUsingParent() {
+        return parentAPI.add(3, 6).then((value) => {
+          parentReturnValue = value;
+        });
+      },
+      getParentReturnValue() {
+        return parentReturnValue;
+      },
+    },
+  }).promise.then((parent) => {
+    parentAPI = parent;
   });
-
-  await connection.promise;
 });

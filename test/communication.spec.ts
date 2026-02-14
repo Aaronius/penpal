@@ -1,5 +1,6 @@
 import {
   createIframeAndConnection,
+  createPortAndConnection,
   createWorkerAndConnection,
 } from './utils.js';
 import { CallOptions, PenpalError } from '../src/index.js';
@@ -13,6 +14,10 @@ const variants = [
   {
     childType: 'worker',
     createConnection: createWorkerAndConnection,
+  },
+  {
+    childType: 'port',
+    createConnection: createPortAndConnection,
   },
 ];
 
@@ -55,6 +60,7 @@ for (const variant of variants) {
       expect(resultForCall).toEqual(10);
       const resultForBind = await child.multiply.bind(child)(2, 5);
       expect(resultForBind).toEqual(10);
+      connection.destroy();
     });
 
     it('treats top-level apply, call, and bind calls as remote method calls', async () => {
@@ -66,6 +72,7 @@ for (const variant of variants) {
       expect(resultForCall).toEqual('call result');
       const resultForBind = await child.bind();
       expect(resultForBind).toEqual('bind result');
+      connection.destroy();
     });
 
     it('handles transferables', async () => {

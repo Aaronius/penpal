@@ -24,6 +24,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     >();
 
     await connection.promise;
+    connection.destroy();
   });
 
   it('connects to iframe when correct child origin regex provided', async () => {
@@ -34,6 +35,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it('connects to iframe connecting to parent with matching origin', async () => {
@@ -44,6 +46,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it('connects to iframe connecting to parent with matching origin regex', async () => {
@@ -54,6 +57,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it("doesn't connect to iframe when incorrect child origin provided", async () => {
@@ -99,6 +103,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     });
 
     await connection.promise;
+    connection.destroy();
   });
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is not set", async () => {
@@ -226,6 +231,7 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     expect(error).toEqual(expect.any(Error));
     expect((error as Error).message).toBe('Connection timed out after 0ms');
     expect((error as PenpalError).code).toBe('CONNECTION_TIMEOUT');
+    connection.destroy();
   });
 
   it("doesn't destroy connection if connection succeeds then timeout passes", async () => {

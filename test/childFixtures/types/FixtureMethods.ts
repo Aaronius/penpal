@@ -10,7 +10,7 @@ type FixtureMethods = {
   ): Promise<Reply<Promise<number>>>;
   getChannel(): string;
   getChannelFromParent(): string;
-  addUsingParent(): void;
+  addUsingParent(): Promise<void>;
   getParentReturnValue(): number | undefined;
   getPromiseRejectedWithString(): Promise<string>;
   getPromiseRejectedWithObject(): Promise<Record<string, string>>;
