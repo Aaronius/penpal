@@ -15,7 +15,8 @@ describe('connection management: timeout behavior across messengers', () => {
       timeout,
     });
 
-    await expectConnectionToTimeout(connection);
+    const error = await expectConnectionToTimeout(connection);
+    expect(error.message).toBe(`Connection timed out after ${timeout}ms`);
   });
 
   it('times out for non-responsive worker targets', async () => {
@@ -24,7 +25,8 @@ describe('connection management: timeout behavior across messengers', () => {
       timeout,
     });
 
-    await expectConnectionToTimeout(connection);
+    const error = await expectConnectionToTimeout(connection);
+    expect(error.message).toBe(`Connection timed out after ${timeout}ms`);
   });
 
   it('times out for message ports without a remote participant', async () => {
@@ -37,6 +39,7 @@ describe('connection management: timeout behavior across messengers', () => {
       timeout,
     });
 
-    await expectConnectionToTimeout(connection);
+    const error = await expectConnectionToTimeout(connection);
+    expect(error.message).toBe(`Connection timed out after ${timeout}ms`);
   });
 });

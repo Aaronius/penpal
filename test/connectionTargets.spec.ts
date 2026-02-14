@@ -82,8 +82,11 @@ describe('connection management: targets', () => {
     await waitForServiceWorkerController();
 
     const { port1, port2 } = new MessageChannel();
+    const controller = navigator.serviceWorker.controller;
 
-    navigator.serviceWorker.controller?.postMessage(
+    expect(controller).toBeDefined();
+
+    controller!.postMessage(
       {
         type: 'INIT_PENPAL',
         port: port2,

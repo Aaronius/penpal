@@ -158,8 +158,16 @@ export const expectPromiseToStayPending = async (
 };
 
 export const expectConnectionToTimeout = async (connection: Connection) => {
-  await expect(connection.promise).rejects.toMatchObject({
+  const error = await connection.promise.catch((caughtError) => {
+    return caughtError as Error & { code?: string };
+  });
+
+  expect(error).toEqual(expect.any(Error));
+  expect(error).toMatchObject({
     code: 'CONNECTION_TIMEOUT',
   });
+
   connection.destroy();
+
+  return error;
 };
