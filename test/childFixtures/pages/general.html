@@ -1,93 +1,34 @@
 <script src="/penpal.js"></script>
 <script src="/pages/_fixtureHelpers.js"></script>
+<script src="/shared/generalMethods.js"></script>
 <script>
-  let parentAPI;
   let parentReturnValue;
+  let parentApiPromise;
 
-  const methods = {
-    multiply(num1, num2) {
-      return num1 * num2;
+  const methods = PenpalGeneralFixtureMethods.createGeneralMethods({
+    getParentApi: () => parentApiPromise,
+    setParentReturnValue: (value) => {
+      parentReturnValue = value;
     },
-    multiplyAsync(num1, num2) {
-      return new Promise(function (resolve) {
-        resolve(num1 * num2);
-      });
-    },
-    double(numbersArray) {
-      const resultArray = numbersArray.map((num) => num * 2);
-      return new Penpal.Reply(resultArray, {
-        transferables: [resultArray.buffer],
-      });
-    },
-    multiplyWithPromisedReplyInstanceAndPromisedReturnValue(num1, num2) {
-      return Promise.resolve(new Penpal.Reply(Promise.resolve(num1 * num2)));
-    },
-    addUsingParent() {
-      return parentAPI.add(3, 6).then(function (value) {
-        parentReturnValue = value;
-      });
-    },
-    getParentReturnValue() {
+    getParentReturnValue: () => {
       return parentReturnValue;
     },
-    getPromiseRejectedWithString() {
-      return Promise.reject('test error string');
-    },
-    getPromiseRejectedWithObject() {
-      return Promise.reject({ a: 'b' });
-    },
-    getPromiseRejectedWithUndefined() {
-      return Promise.reject();
-    },
-    getPromiseRejectedWithError() {
-      return Promise.reject(new TypeError('test error object'));
-    },
-    throwError() {
-      throw new Error('Oh nos!');
-    },
-    getUnclonableValue() {
+    getUnclonableValue: () => {
       return window;
     },
-    reload() {
+    createReply: (value, options) => {
+      return new Penpal.Reply(value, options);
+    },
+    reload: () => {
       window.location.reload(true);
     },
-    navigate(to) {
+    navigate: (to) => {
       window.location.href = to;
     },
-    apply() {
-      return 'apply result';
-    },
-    call() {
-      return 'call result';
-    },
-    bind() {
-      return 'bind result';
-    },
-    nested: {
-      oneLevel(input) {
-        return input;
-      },
-      by: {
-        twoLevels(input) {
-          return input;
-        },
-      },
-      apply() {
-        return 'apply result';
-      },
-    },
-    neverResolve() {
-      return new Promise(() => {});
-    },
-    ['with.period']() {
-      return 'success';
-    },
-  };
+  });
 
-  PenpalFixture.connect({
+  parentApiPromise = PenpalFixture.connect({
     methods,
     allowedOrigins: ['*'],
-  }).promise.then((parent) => {
-    parentAPI = parent;
-  });
+  }).promise;
 </script>

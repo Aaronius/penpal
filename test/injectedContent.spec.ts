@@ -86,10 +86,15 @@ it('never connects iframe when src is set to data URI and allowed origin is not 
 
 it('connects and calls a function on the child worker when src is set to data URI', async () => {
   const response = await fetch(getWorkerFixtureUrl('webWorkerGeneral'));
-  const code = (await response.text()).replace(
-    "importScripts('/penpal.js');",
-    `importScripts('${CHILD_SERVER}/penpal.js');`
-  );
+  const code = (await response.text())
+    .replace(
+      "importScripts('/penpal.js');",
+      `importScripts('${CHILD_SERVER}/penpal.js');`
+    )
+    .replace(
+      "importScripts('/shared/generalMethods.js');",
+      `importScripts('${CHILD_SERVER}/shared/generalMethods.js');`
+    );
 
   const worker = new Worker(
     `data:application/javascript,${encodeURIComponent(code)}`
@@ -133,10 +138,15 @@ it('connects and calls a function on the child iframe when src is set to an obje
 
 it('connects and calls a function on the child worker when src is set to an object URL', async () => {
   const response = await fetch(getWorkerFixtureUrl('webWorkerGeneral'));
-  const code = (await response.text()).replace(
-    "importScripts('/penpal.js');",
-    `importScripts('${CHILD_SERVER}/penpal.js');`
-  );
+  const code = (await response.text())
+    .replace(
+      "importScripts('/penpal.js');",
+      `importScripts('${CHILD_SERVER}/penpal.js');`
+    )
+    .replace(
+      "importScripts('/shared/generalMethods.js');",
+      `importScripts('${CHILD_SERVER}/shared/generalMethods.js');`
+    );
   const blob = new Blob([code], { type: 'application/javascript' });
   const blobUrl = URL.createObjectURL(blob);
 

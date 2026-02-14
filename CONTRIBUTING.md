@@ -14,11 +14,13 @@ Thanks for contributing to Penpal.
 Penpal uses Vitest Browser Mode with Playwright for browser-based tests.
 
 - Browser suites live in `test/**/*.spec.ts`.
+- Unit suites live in `test/unit/**/*.spec.ts`.
 - File-protocol tests live in `test/fileProtocol` and are run via `scripts/testFileProtocol.js`.
 - Type tests live in `test/types` and run via `tsc --noEmit`.
 
-By default, `npm test` runs Chromium coverage (`test:chromium`), which includes both:
+By default, `npm test` runs unit tests and Chromium coverage, which includes:
 
+- the unit suite
 - the main browser suite
 - the file-protocol test
 
@@ -45,7 +47,7 @@ All scripts below are defined in `package.json`.
 - `npm run format`
   - Runs Prettier on JSON, TS, JS, CJS, Markdown, and HTML files.
 - `npm test`
-  - Alias for `npm run test:chromium`.
+  - Runs unit tests, then Chromium browser + file-protocol tests.
 - `npm run test:watch`
   - Alias for `npm run test:watch:chromium`.
 - `npm run prepublishOnly`
@@ -82,6 +84,8 @@ All scripts below are defined in `package.json`.
   - Runs WebKit browser suite and WebKit file-protocol tests.
 - `npm run test:all-browsers`
   - Runs Chromium, Firefox, Edge, and WebKit full test commands.
+- `npm run test:unit`
+  - Runs fast Node-based unit tests in `test/unit`.
 - `npm run test:types`
   - Runs TypeScript type tests with `tsconfig.typesTest.json`.
 - `npm run test:legacy:vendor -- <6.x.x-version>`

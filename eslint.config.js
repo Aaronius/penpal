@@ -44,7 +44,11 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*', 'vitest.browser.config.ts'],
+    files: [
+      'scripts/**/*',
+      'vitest.browser.config.ts',
+      'vitest.unit.config.ts',
+    ],
     languageOptions: {
       ecmaVersion: ECMA_VERSION,
       globals: globals.node,
@@ -60,10 +64,21 @@ export default tseslint.config(
         ...globals.worker,
         ...globals.serviceworker,
         Penpal: 'readonly',
+        PenpalGeneralFixtureMethods: 'readonly',
       },
     },
     rules: {
       '@typescript-eslint/no-empty-function': 'off',
+    },
+  },
+  {
+    files: ['test/childFixtures/shared/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.worker,
+        ...globals.serviceworker,
+      },
     },
   },
   {
@@ -73,6 +88,7 @@ export default tseslint.config(
         ...globals.browser,
         Penpal: 'readonly',
         PenpalFixture: 'readonly',
+        PenpalGeneralFixtureMethods: 'readonly',
         PenpalLegacyFixture: 'readonly',
       },
     },

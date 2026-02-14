@@ -5,11 +5,4 @@ afterEach(async () => {
   vi.useRealTimers();
 
   document.body.replaceChildren();
-
-  if ('serviceWorker' in navigator) {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(
-      registrations.map((registration) => registration.unregister())
-    );
-  }
 });

@@ -1,8 +1,6 @@
 import { CHILD_SERVER } from '../constants.js';
 import { expectNeverFulfilledIframeConnection } from '../utils.js';
-import type { PenpalError } from '../../src/index.js';
 import FixtureMethods from '../childFixtures/types/FixtureMethods.js';
-import { isDeprecatedMessage } from '../../src/backwardCompatibility.js';
 import { createBackwardCompatibilityIframeAndConnection } from './utils.js';
 
 const getAlternateFixtureOrigin = () => {
@@ -17,7 +15,7 @@ const getRedirectToUrl = () => {
   );
 };
 
-describe('BACKWARD COMPATIBILITY: connection management', () => {
+describe('BACKWARD COMPATIBILITY: connection management origins', () => {
   it('connects to iframe when correct child origin provided', async () => {
     const { connection } = createBackwardCompatibilityIframeAndConnection<
       FixtureMethods
@@ -143,111 +141,5 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     });
 
     await expectNeverFulfilledIframeConnection(connection, iframe);
-  });
-
-  it('reconnects after child reloads', async () => {
-    const {
-      iframe,
-      connection,
-    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>();
-
-    const child = await connection.promise;
-
-    return new Promise<void>((resolve) => {
-      const handleMessage = async (event: MessageEvent) => {
-        if (
-          event.source === iframe.contentWindow &&
-          event.data?.penpal === 'ack'
-        ) {
-          window.removeEventListener('message', handleMessage);
-          child.multiply(2, 4).then((value: number) => {
-            expect(value).toEqual(8);
-            connection.destroy();
-            resolve();
-          });
-        }
-      };
-
-      window.addEventListener('message', handleMessage);
-      child.reload();
-    });
-  });
-
-  it('reconnects after child navigates to other page with different methods', async () => {
-    const {
-      iframe,
-      connection,
-    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>();
-
-    const child = await connection.promise;
-
-    return new Promise<void>((resolve, reject) => {
-      const handleMessage = async (event: MessageEvent) => {
-        if (
-          event.source === iframe.contentWindow &&
-          isDeprecatedMessage(event.data) &&
-          event.data.penpal === 'ack'
-        ) {
-          window.removeEventListener('message', handleMessage);
-          try {
-            const result = await child.methodNotInGeneralPage();
-            expect(result).toBe('success');
-          } catch (error) {
-            reject(error);
-          }
-
-          try {
-            // This should fail because `multiply` is not a method exposed
-            // by the new page.
-            await child.multiply(2, 4);
-            reject(new Error('Successful call not expected'));
-          } catch (_) {
-            resolve();
-          }
-        }
-      };
-
-      window.addEventListener('message', handleMessage);
-      child.navigate(
-        '/pages/backwardCompatibility/methodNotInGeneralPage.html'
-      );
-    });
-  });
-
-  it('rejects promise if connection timeout passes', async () => {
-    const { connection } = createBackwardCompatibilityIframeAndConnection<
-      FixtureMethods
-    >({
-      url: `${CHILD_SERVER}/never-respond`,
-      timeout: 0,
-    });
-
-    let error;
-    try {
-      await connection.promise;
-    } catch (e) {
-      error = e;
-    }
-    expect(error).toEqual(expect.any(Error));
-    expect((error as Error).message).toBe('Connection timed out after 0ms');
-    expect((error as PenpalError).code).toBe('CONNECTION_TIMEOUT');
-    connection.destroy();
-  });
-
-  it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
-    vi.useFakeTimers();
-    const {
-      iframe,
-      connection,
-    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
-      timeout: 100000,
-    });
-
-    await connection.promise;
-    vi.advanceTimersByTime(10000);
-
-    expect(iframe.parentNode).not.toBeNull();
-
-    connection.destroy();
   });
 });

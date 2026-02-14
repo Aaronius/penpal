@@ -3,3 +3,4 @@ dist
 lib
 cjs
 .eslintcache
+test/__screenshots__/

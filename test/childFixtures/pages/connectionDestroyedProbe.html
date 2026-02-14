@@ -1,14 +1,12 @@
 <script src="/penpal.js"></script>
 <script src="/pages/_fixtureHelpers.js"></script>
 <script>
-  let parentAPI;
+  let parentApiPromise;
 
-  PenpalFixture.connect({
+  parentApiPromise = PenpalFixture.connect({
     methods: {},
     allowedOrigins: ['*'],
-  }).promise.then((parent) => {
-    parentAPI = parent;
-  });
+  }).promise;
 
   window.addEventListener('message', async (event) => {
     const message = event.data;
@@ -23,7 +21,8 @@
     }
 
     try {
-      const result = await parentAPI.add(3, 6);
+      const parentApi = await parentApiPromise;
+      const result = await parentApi.add(3, 6);
       window.parent.postMessage(
         {
           fixture: 'connectionDestroyedProbe',

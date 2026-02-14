@@ -48,7 +48,7 @@
     "build:analysis": "node scripts/filesize.js dist/penpal.min.js",
     "lint": "eslint --cache --fix",
     "format": "prettier --write \"**/*.{json,ts,js,cjs,md,html}\"",
-    "test": "npm run test:chromium",
+    "test": "npm-run-all test:unit test:chromium",
     "test:watch": "npm run test:watch:chromium",
     "prepublishOnly": "npm-run-all format lint test test:types build",
     "prepare": "husky install",
@@ -67,6 +67,7 @@
     "test:edge": "npm-run-all test:edge:browser test:file:edge",
     "test:webkit": "npm-run-all test:webkit:browser test:file:webkit",
     "test:all-browsers": "npm-run-all test:chromium test:firefox test:edge test:webkit",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:types": "tsc --noEmit -p tsconfig.typesTest.json",
     "test:legacy:vendor": "node scripts/updateLegacyPenpal.js"
   },

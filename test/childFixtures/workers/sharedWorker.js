@@ -1,32 +1,29 @@
 importScripts('/penpal.js');
+importScripts('/shared/generalMethods.js');
 
 console.log('worker origin', self.origin);
 
 self.addEventListener('connect', (event) => {
   const [port] = event.ports;
-  let parentAPI;
   let parentReturnValue;
+  let parentApiPromise;
 
   const messenger = new Penpal.PortMessenger({
     port,
   });
 
-  Penpal.connect({
-    messenger,
-    methods: {
-      multiply(num1, num2) {
-        return num1 * num2;
-      },
-      addUsingParent() {
-        return parentAPI.add(3, 6).then((value) => {
-          parentReturnValue = value;
-        });
-      },
-      getParentReturnValue() {
-        return parentReturnValue;
-      },
+  const methods = PenpalGeneralFixtureMethods.createParentRoundTripMethods({
+    getParentApi: () => parentApiPromise,
+    setParentReturnValue: (value) => {
+      parentReturnValue = value;
     },
-  }).promise.then((parent) => {
-    parentAPI = parent;
+    getParentReturnValue: () => {
+      return parentReturnValue;
+    },
   });
+
+  parentApiPromise = Penpal.connect({
+    messenger,
+    methods,
+  }).promise;
 });

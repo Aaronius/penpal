@@ -57,7 +57,7 @@ export default defineConfig({
     testTimeout: 15000,
     hookTimeout: 15000,
     include: testInclude,
-    exclude: ['test/types/**'],
+    exclude: ['test/types/**', 'test/unit/**'],
     setupFiles: ['./test/setup.ts'],
     globalSetup: ['./test/globalSetup.ts'],
     browser: {
