@@ -17,13 +17,18 @@ const getBackwardCompatibilityPageUrl = (path = 'general.html') => {
 
 export const createBackwardCompatibilityIframeAndConnection = <
   TMethods extends Methods
->({
-  path = 'general.html',
-  url,
-  allowedOrigins = [CHILD_SERVER],
-  methods,
-  timeout,
-}: CreateBackwardCompatibilityIframeAndConnectionOptions = {}) => {
+>(
+  options: CreateBackwardCompatibilityIframeAndConnectionOptions = {}
+) => {
+  const { path = 'general.html', url, methods, timeout } = options;
+  const hasAllowedOriginsOption = Object.prototype.hasOwnProperty.call(
+    options,
+    'allowedOrigins'
+  );
+  const allowedOrigins = hasAllowedOriginsOption
+    ? options.allowedOrigins
+    : [CHILD_SERVER];
+
   const iframe = createAndAddIframe(
     url ?? getBackwardCompatibilityPageUrl(path)
   );

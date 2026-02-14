@@ -1,31 +1,24 @@
 import { CHILD_SERVER } from '../constants.js';
-import type { PenpalError } from '../../../src/index.js';
-import FixtureMethods from '../fixtures/types/FixtureMethods.js';
+import type FixtureMethods from '../fixtures/types/FixtureMethods.js';
+import { expectConnectionToTimeout } from '../utils.js';
 import { createBackwardCompatibilityIframeAndConnection } from './utils.js';
 
 describe('BACKWARD COMPATIBILITY: connection management lifecycle', () => {
-  it('rejects promise if connection timeout passes', async () => {
+  it('times out for non-responsive iframe targets', async () => {
     const { connection } = createBackwardCompatibilityIframeAndConnection<
       FixtureMethods
     >({
       url: `${CHILD_SERVER}/never-respond`,
-      timeout: 0,
+      timeout: 100,
     });
 
-    let error;
-    try {
-      await connection.promise;
-    } catch (e) {
-      error = e;
-    }
-    expect(error).toEqual(expect.any(Error));
-    expect((error as Error).message).toBe('Connection timed out after 0ms');
-    expect((error as PenpalError).code).toBe('CONNECTION_TIMEOUT');
-    connection.destroy();
+    const error = await expectConnectionToTimeout(connection);
+    expect(error.message).toBe('Connection timed out after 100ms');
   });
 
-  it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
+  it('keeps iframe connection alive after timeout duration elapses', async () => {
     vi.useFakeTimers();
+
     const { connection } = createBackwardCompatibilityIframeAndConnection<
       FixtureMethods
     >({
@@ -33,8 +26,8 @@ describe('BACKWARD COMPATIBILITY: connection management lifecycle', () => {
     });
 
     const child = await connection.promise;
-    vi.advanceTimersByTime(200000);
 
+    vi.advanceTimersByTime(200000);
     await expect(child.multiply(2, 4)).resolves.toBe(8);
 
     connection.destroy();

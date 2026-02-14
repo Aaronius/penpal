@@ -4,6 +4,7 @@ import {
   createWorkerAndConnection,
 } from './utils.js';
 import { runCommunicationContract } from './contracts/communicationContract.js';
+import { runMethodCallLifecycleContract } from './contracts/methodCallLifecycleContract.js';
 
 const variants = [
   {
@@ -27,5 +28,10 @@ for (const variant of variants) {
     suiteName: `communication between parent and child ${childType}`,
     createConnection,
     includeAdvancedCases: true,
+  });
+
+  runMethodCallLifecycleContract({
+    suiteName: `method call lifecycle between parent and child ${childType}`,
+    createConnection,
   });
 }

@@ -1,40 +1,12 @@
 import { CallOptions } from '../../../src/index.js';
-import type {
-  Methods,
-  PenpalError,
-  RemoteProxy,
-  Connection,
-} from '../../../src/index.js';
 import type FixtureMethods from '../fixtures/types/FixtureMethods.js';
-
-type CreateConnection = (options?: {
-  methods?: Methods;
-}) => Connection<FixtureMethods>;
+import type { CreateConnection } from './contractUtils.js';
+import { withConnection } from './contractUtils.js';
 
 type Options = {
   suiteName: string;
-  createConnection: CreateConnection;
+  createConnection: CreateConnection<FixtureMethods>;
   includeAdvancedCases: boolean;
-};
-
-const withConnection = async (
-  createConnection: CreateConnection,
-  fn: (
-    child: RemoteProxy<FixtureMethods>,
-    connection: Connection<FixtureMethods>
-  ) => Promise<void> | void,
-  options?: {
-    methods?: Methods;
-  }
-) => {
-  const connection = createConnection(options);
-
-  try {
-    const child = await connection.promise;
-    await fn(child, connection);
-  } finally {
-    connection.destroy();
-  }
 };
 
 export const runCommunicationContract = ({
@@ -197,43 +169,5 @@ export const runCommunicationContract = ({
         });
       });
     }
-
-    it('rejects method call promise if method call timeout reached', async () => {
-      await withConnection(createConnection, async (child) => {
-        const promise = child.neverResolve(
-          new CallOptions({
-            timeout: 0,
-          })
-        );
-
-        const error = await promise.catch((caughtError) => {
-          return caughtError as PenpalError;
-        });
-
-        expect(error).toEqual(expect.any(Error));
-        expect(error.message).toBe(
-          'Method call neverResolve() timed out after 0ms'
-        );
-        expect(error.code).toBe('METHOD_CALL_TIMEOUT');
-      });
-    });
-
-    it('rejects method call promise if connection is destroyed before reply is received', async () => {
-      await withConnection(createConnection, async (child, connection) => {
-        const pending = child.neverResolve();
-
-        connection.destroy();
-
-        const error = await pending.catch((caughtError) => {
-          return caughtError as PenpalError;
-        });
-
-        expect(error).toEqual(expect.any(Error));
-        expect(error.message).toBe(
-          'Method call neverResolve() failed due to destroyed connection'
-        );
-        expect(error.code).toBe('CONNECTION_DESTROYED');
-      });
-    });
   });
 };

@@ -1,6 +1,5 @@
-import { waitForMessageFromSource } from '../asyncUtils.js';
-import FixtureMethods from '../fixtures/types/FixtureMethods.js';
 import { isDeprecatedMessage } from '../../../src/backwardCompatibility.js';
+import { waitForMessageFromSource } from '../asyncUtils.js';
 import { createBackwardCompatibilityIframeAndConnection } from './utils.js';
 
 describe('BACKWARD COMPATIBILITY: connection management reconnect', () => {
@@ -8,13 +7,12 @@ describe('BACKWARD COMPATIBILITY: connection management reconnect', () => {
     const {
       iframe,
       connection,
-    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>();
-
+    } = createBackwardCompatibilityIframeAndConnection();
     const child = await connection.promise;
 
     const ackPromise = waitForMessageFromSource({
       source: iframe.contentWindow!,
-      predicate: (event) => {
+      predicate(event) {
         return event.data?.penpal === 'ack';
       },
       timeoutMessage:
@@ -28,17 +26,16 @@ describe('BACKWARD COMPATIBILITY: connection management reconnect', () => {
     connection.destroy();
   });
 
-  it('reconnects after child navigates to other page with different methods', async () => {
+  it('reconnects after child navigates to a page with a different method set', async () => {
     const {
       iframe,
       connection,
-    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>();
-
+    } = createBackwardCompatibilityIframeAndConnection();
     const child = await connection.promise;
 
     const ackPromise = waitForMessageFromSource({
       source: iframe.contentWindow!,
-      predicate: (event) => {
+      predicate(event) {
         return isDeprecatedMessage(event.data) && event.data.penpal === 'ack';
       },
       timeoutMessage:
@@ -51,6 +48,7 @@ describe('BACKWARD COMPATIBILITY: connection management reconnect', () => {
     await ackPromise;
 
     await expect(child.methodNotInGeneralPage()).resolves.toBe('success');
+
     const error = await child.multiply(2, 4).catch((caughtError) => {
       return caughtError as Error;
     });
@@ -59,7 +57,6 @@ describe('BACKWARD COMPATIBILITY: connection management reconnect', () => {
     expect(error.name).toBe('TypeError');
     expect(error.message).toEqual(expect.any(String));
     expect(error.message.length).toBeGreaterThan(0);
-
     connection.destroy();
   });
 });

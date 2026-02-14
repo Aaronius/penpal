@@ -8,23 +8,23 @@ import FixtureMethods from './fixtures/types/FixtureMethods.js';
 describe('connection management: lifecycle', () => {
   const variants = [
     {
-      childType: 'iframe',
+      targetName: 'iframe',
       createConnection: createIframeAndConnection,
     },
     {
-      childType: 'worker',
+      targetName: 'worker',
       createConnection: createWorkerAndConnection,
     },
     {
-      childType: 'port',
+      targetName: 'port',
       createConnection: createPortAndConnection,
     },
   ];
 
   for (const variant of variants) {
-    const { childType, createConnection } = variant;
+    const { targetName, createConnection } = variant;
 
-    it(`keeps ${childType} connection alive after timeout duration elapses`, async () => {
+    it(`keeps ${targetName} connection alive after timeout duration elapses`, async () => {
       vi.useFakeTimers();
 
       const connection = createConnection<FixtureMethods>({

@@ -1,134 +1,166 @@
 import { CHILD_SERVER } from './constants.js';
-import { expectConnectionToTimeout } from './utils.js';
 import {
   createIframeConnection,
   getRedirectPageUrl,
 } from './connectionManagementHelpers.js';
 import type FixtureMethods from './fixtures/types/FixtureMethods.js';
+import { expectConnectionToTimeout } from './utils.js';
+
+type ScenarioOptions = {
+  allowedOrigins?: (string | RegExp)[];
+  timeout?: number;
+  fixturePage?: string;
+  url?: string;
+};
+
+type Scenario = {
+  name: string;
+  shouldConnect: boolean;
+  options?: ScenarioOptions;
+};
 
 describe('connection management: origins', () => {
-  const timeout = 100;
+  const defaultTimeoutMs = 100;
 
-  it('connects to window when correct origin provided in parent', async () => {
-    const { connection } = createIframeConnection<FixtureMethods>();
+  const scenarios: Scenario[] = [
+    {
+      name: 'connects to window when correct origin is provided in parent',
+      shouldConnect: true,
+    },
+    {
+      name:
+        'connects to window when correct origin regex is provided in parent',
+      shouldConnect: true,
+      options: {
+        allowedOrigins: [/^http/],
+      },
+    },
+    {
+      name: 'connects to window when matching origin is provided in child',
+      shouldConnect: true,
+      options: {
+        fixturePage: 'matchingParentOrigin',
+        allowedOrigins: ['http://example.com', CHILD_SERVER],
+      },
+    },
+    {
+      name:
+        'connects to window when matching origin regex is provided in child',
+      shouldConnect: true,
+      options: {
+        fixturePage: 'matchingParentOriginRegex',
+        allowedOrigins: ['http://example.com', CHILD_SERVER],
+      },
+    },
+    {
+      name:
+        "doesn't connect to window when incorrect origin is provided in parent",
+      shouldConnect: false,
+      options: {
+        allowedOrigins: ['http://example.com'],
+      },
+    },
+    {
+      name:
+        "doesn't connect to window when mismatched origin is provided in child",
+      shouldConnect: false,
+      options: {
+        fixturePage: 'mismatchedParentOrigin',
+      },
+    },
+    {
+      name:
+        "doesn't connect to window when mismatched parent origin regex is provided in child",
+      shouldConnect: false,
+      options: {
+        fixturePage: 'mismatchedParentOriginRegex',
+      },
+    },
+    {
+      name:
+        'connects to window when child redirects to a different origin and parent allowedOrigins is *',
+      shouldConnect: true,
+      options: {
+        url: getRedirectPageUrl(),
+        allowedOrigins: ['*'],
+      },
+    },
+    {
+      name:
+        'connects to window when parent and child are same-origin and neither side sets allowed origins',
+      shouldConnect: true,
+      options: {
+        url: '/pages/noParentOrigin.html',
+        allowedOrigins: undefined,
+      },
+    },
+    {
+      name:
+        "doesn't connect to window when child redirects to a different origin and parent omits allowed origins",
+      shouldConnect: false,
+      options: {
+        url: getRedirectPageUrl(),
+        allowedOrigins: undefined,
+      },
+    },
+    {
+      name:
+        "doesn't connect to window when child redirects to a different origin and parent sets a mismatched origin",
+      shouldConnect: false,
+      options: {
+        url: getRedirectPageUrl(),
+        allowedOrigins: [CHILD_SERVER],
+      },
+    },
+    {
+      name:
+        "doesn't connect to window when child redirects to a different origin and parent sets a mismatched origin regex",
+      shouldConnect: false,
+      options: {
+        url: getRedirectPageUrl(),
+        allowedOrigins: [/example\.com/],
+      },
+    },
+    {
+      name: "doesn't connect to window when no origin is set in child",
+      shouldConnect: false,
+      options: {
+        fixturePage: 'noParentOrigin',
+        allowedOrigins: [CHILD_SERVER],
+      },
+    },
+  ];
 
-    await connection.promise;
-    connection.destroy();
-  });
+  for (const scenario of scenarios) {
+    const { name, shouldConnect, options } = scenario;
 
-  it('connects to window when correct origin regex provided in parent', async () => {
-    const { connection } = createIframeConnection({
-      allowedOrigins: [/^http/],
+    it(name, async () => {
+      const timeout = shouldConnect
+        ? options?.timeout
+        : options?.timeout ?? defaultTimeoutMs;
+      const hasAllowedOriginsOption = Object.prototype.hasOwnProperty.call(
+        options ?? {},
+        'allowedOrigins'
+      );
+
+      const { connection } = createIframeConnection<FixtureMethods>({
+        ...(options?.fixturePage === undefined
+          ? {}
+          : { pageName: options.fixturePage }),
+        ...(options?.url === undefined ? {} : { url: options.url }),
+        ...(hasAllowedOriginsOption
+          ? { allowedOrigins: options?.allowedOrigins }
+          : {}),
+        ...(timeout === undefined ? {} : { timeout }),
+      });
+
+      if (shouldConnect) {
+        await connection.promise;
+        connection.destroy();
+        return;
+      }
+
+      await expectConnectionToTimeout(connection);
     });
-
-    await connection.promise;
-    connection.destroy();
-  });
-
-  it('connects to window when matching origin provided in child', async () => {
-    const { connection } = createIframeConnection({
-      pageName: 'matchingParentOrigin',
-      allowedOrigins: ['http://example.com', CHILD_SERVER],
-    });
-
-    await connection.promise;
-    connection.destroy();
-  });
-
-  it('connects to window when matching origin regex provided in child', async () => {
-    const { connection } = createIframeConnection({
-      pageName: 'matchingParentOriginRegex',
-      allowedOrigins: ['http://example.com', CHILD_SERVER],
-    });
-
-    await connection.promise;
-    connection.destroy();
-  });
-
-  it("doesn't connect to window when incorrect origin provided in parent", async () => {
-    const { connection } = createIframeConnection({
-      allowedOrigins: ['http://example.com'],
-      timeout,
-    });
-
-    await expectConnectionToTimeout(connection);
-  });
-
-  it("doesn't connect to window when mismatched origin provided in child", async () => {
-    const { connection } = createIframeConnection({
-      pageName: 'mismatchedParentOrigin',
-      timeout,
-    });
-
-    await expectConnectionToTimeout(connection);
-  });
-
-  it("doesn't connect to window when mismatched parent origin regex provided in child", async () => {
-    const { connection } = createIframeConnection({
-      pageName: 'mismatchedParentOriginRegex',
-      timeout,
-    });
-
-    await expectConnectionToTimeout(connection);
-  });
-
-  it('connects to window when child redirects to different origin and origin is set to * in parent', async () => {
-    const { connection } = createIframeConnection({
-      url: getRedirectPageUrl(),
-      allowedOrigins: ['*'],
-    });
-
-    await connection.promise;
-    connection.destroy();
-  });
-
-  it('connects to window when parent and child are on the same origin and origin is not set in parent or child', async () => {
-    const { connection } = createIframeConnection({
-      url: '/pages/noParentOrigin.html',
-      allowedOrigins: undefined,
-    });
-
-    await connection.promise;
-    connection.destroy();
-  });
-
-  it("doesn't connect to window when child redirects to different origin and origin is not set in parent", async () => {
-    const { connection } = createIframeConnection({
-      url: getRedirectPageUrl(),
-      allowedOrigins: undefined,
-      timeout,
-    });
-
-    await expectConnectionToTimeout(connection);
-  });
-
-  it("doesn't connect to window when child redirects to different origin and origin is set to a mismatched origin in parent", async () => {
-    const { connection } = createIframeConnection({
-      url: getRedirectPageUrl(),
-      allowedOrigins: [CHILD_SERVER],
-      timeout,
-    });
-
-    await expectConnectionToTimeout(connection);
-  });
-
-  it("doesn't connect to window when child redirects to different origin and origin is set to a mismatched origin regex in parent", async () => {
-    const { connection } = createIframeConnection({
-      url: getRedirectPageUrl(),
-      allowedOrigins: [/example\.com/],
-      timeout,
-    });
-
-    await expectConnectionToTimeout(connection);
-  });
-
-  it("doesn't connect to window when no origin set in child", async () => {
-    const { connection } = createIframeConnection({
-      pageName: 'noParentOrigin',
-      allowedOrigins: [CHILD_SERVER],
-      timeout,
-    });
-
-    await expectConnectionToTimeout(connection);
-  });
+  }
 });

@@ -2,7 +2,6 @@ import { CHILD_SERVER } from './constants.js';
 import { waitForMessageFromSource } from './asyncUtils.js';
 import { createIframeConnection } from './connectionManagementHelpers.js';
 import { PenpalError } from '../../src/index.js';
-import FixtureMethods from './fixtures/types/FixtureMethods.js';
 import {
   isAck1Message,
   isAck2Message,
@@ -12,12 +11,12 @@ import {
 
 describe('connection management: reconnect', () => {
   it('reconnects after child reloads', async () => {
-    const { iframe, connection } = createIframeConnection<FixtureMethods>();
+    const { iframe, connection } = createIframeConnection();
     const child = await connection.promise;
 
     const ackPromise = waitForMessageFromSource({
       source: iframe.contentWindow!,
-      predicate: (event) => {
+      predicate(event) {
         return (
           isMessage(event.data) &&
           (isAck1Message(event.data) || isAck2Message(event.data))
@@ -33,13 +32,39 @@ describe('connection management: reconnect', () => {
     connection.destroy();
   });
 
+  it('reconnects after child navigates to a page with a different method set', async () => {
+    const { iframe, connection } = createIframeConnection();
+    const child = await connection.promise;
+
+    const ackPromise = waitForMessageFromSource({
+      source: iframe.contentWindow!,
+      predicate(event) {
+        return (
+          isMessage(event.data) &&
+          (isAck1Message(event.data) || isAck2Message(event.data))
+        );
+      },
+      timeoutMessage: 'Timed out waiting for handshake ACK after navigation',
+    });
+
+    void child.navigate('/pages/methodNotInGeneralPage.html');
+    await ackPromise;
+
+    await expect(child.methodNotInGeneralPage()).resolves.toBe('success');
+    await expect(child.multiply(2, 4)).rejects.toMatchObject({
+      code: 'METHOD_NOT_FOUND',
+    });
+
+    connection.destroy();
+  });
+
   it('rejects method calls during reconnect with transmission error', async () => {
-    const { iframe, connection } = createIframeConnection<FixtureMethods>();
+    const { iframe, connection } = createIframeConnection();
     const child = await connection.promise;
 
     const synPromise = waitForMessageFromSource({
       source: iframe.contentWindow!,
-      predicate: (event) => {
+      predicate(event) {
         return isMessage(event.data) && isSynMessage(event.data);
       },
       timeoutMessage: 'Timed out waiting for handshake SYN during reload',
@@ -62,7 +87,7 @@ describe('connection management: reconnect', () => {
     connection.destroy();
   });
 
-  it('destroys other side of connection when connection is destroyed', async () => {
+  it('destroys the remote side when the parent destroys the connection', async () => {
     const { iframe, connection } = createIframeConnection({
       pageName: 'connectionDestroyedProbe',
       methods: {
@@ -82,7 +107,7 @@ describe('connection management: reconnect', () => {
       code?: string;
     }>({
       source: iframe.contentWindow!,
-      predicate: (event) => {
+      predicate(event) {
         const payload = event.data;
         return (
           !!payload &&
@@ -114,31 +139,5 @@ describe('connection management: reconnect', () => {
     }
 
     expect(payload.code).toBe('CONNECTION_DESTROYED');
-  });
-
-  it('reconnects after child navigates to other page with different methods', async () => {
-    const { iframe, connection } = createIframeConnection<FixtureMethods>();
-    const child = await connection.promise;
-
-    const ackPromise = waitForMessageFromSource({
-      source: iframe.contentWindow!,
-      predicate: (event) => {
-        return (
-          isMessage(event.data) &&
-          (isAck1Message(event.data) || isAck2Message(event.data))
-        );
-      },
-      timeoutMessage: 'Timed out waiting for handshake ACK after navigation',
-    });
-
-    void child.navigate('/pages/methodNotInGeneralPage.html');
-    await ackPromise;
-
-    await expect(child.methodNotInGeneralPage()).resolves.toBe('success');
-    await expect(child.multiply(2, 4)).rejects.toMatchObject({
-      code: 'METHOD_NOT_FOUND',
-    });
-
-    connection.destroy();
   });
 });
