@@ -1,10 +1,7 @@
 import { CHILD_SERVER } from './constants.js';
 import { connect, WorkerMessenger, WindowMessenger } from '../src/index.js';
 import FixtureMethods from './childFixtures/types/FixtureMethods.js';
-import {
-  expectNeverFulfilledIframeConnection,
-  getWorkerFixtureUrl,
-} from './utils.js';
+import { expectConnectionToTimeout, getWorkerFixtureUrl } from './utils.js';
 
 const htmlSrc = `
 <!DOCTYPE html>
@@ -74,6 +71,7 @@ it('never connects iframe when src is set to data URI and allowed origin is not 
 
   const connection = connect<FixtureMethods>({
     messenger,
+    timeout: 100,
   });
 
   // The connection will never be fulfilled because the child origin will
@@ -81,7 +79,7 @@ it('never connects iframe when src is set to data URI and allowed origin is not 
   // the child sends the SYN message to start the handshake, the parent will
   // ignore the message because the message's origin won't match what the parent
   // is expecting.
-  await expectNeverFulfilledIframeConnection(connection, iframe);
+  await expectConnectionToTimeout(connection);
 });
 
 it('connects and calls a function on the child worker when src is set to data URI', async () => {

@@ -1,38 +1,42 @@
-import { CHILD_SERVER } from './constants.js';
-import { createIframeConnection } from './connectionManagementHelpers.js';
-import { PenpalError } from '../src/index.js';
+import {
+  createIframeAndConnection,
+  createPortAndConnection,
+  createWorkerAndConnection,
+} from './utils.js';
 import FixtureMethods from './childFixtures/types/FixtureMethods.js';
 
 describe('connection management: lifecycle', () => {
-  it('rejects promise if connection timeout passes', async () => {
-    const { connection } = createIframeConnection<FixtureMethods>({
-      url: `${CHILD_SERVER}/never-respond`,
-      timeout: 0,
+  const variants = [
+    {
+      childType: 'iframe',
+      createConnection: createIframeAndConnection,
+    },
+    {
+      childType: 'worker',
+      createConnection: createWorkerAndConnection,
+    },
+    {
+      childType: 'port',
+      createConnection: createPortAndConnection,
+    },
+  ];
+
+  for (const variant of variants) {
+    const { childType, createConnection } = variant;
+
+    it(`keeps ${childType} connection alive after timeout duration elapses`, async () => {
+      vi.useFakeTimers();
+
+      const connection = createConnection<FixtureMethods>({
+        timeout: 100000,
+      });
+
+      const child = await connection.promise;
+
+      vi.advanceTimersByTime(200000);
+      await expect(child.multiply(2, 4)).resolves.toBe(8);
+
+      connection.destroy();
     });
-
-    let error;
-    try {
-      await connection.promise;
-    } catch (e) {
-      error = e;
-    }
-
-    expect(error).toEqual(expect.any(Error));
-    expect((error as Error).message).toBe('Connection timed out after 0ms');
-    expect((error as PenpalError).code).toBe('CONNECTION_TIMEOUT');
-    connection.destroy();
-  });
-
-  it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
-    vi.useFakeTimers();
-
-    const { iframe, connection } = createIframeConnection<FixtureMethods>();
-
-    await connection.promise;
-    vi.advanceTimersByTime(10000);
-
-    expect(iframe.parentNode).not.toBeNull();
-
-    connection.destroy();
-  });
+  }
 });

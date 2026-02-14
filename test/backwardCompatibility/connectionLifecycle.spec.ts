@@ -26,17 +26,16 @@ describe('BACKWARD COMPATIBILITY: connection management lifecycle', () => {
 
   it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
     vi.useFakeTimers();
-    const {
-      iframe,
-      connection,
-    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
+    const { connection } = createBackwardCompatibilityIframeAndConnection<
+      FixtureMethods
+    >({
       timeout: 100000,
     });
 
-    await connection.promise;
-    vi.advanceTimersByTime(10000);
+    const child = await connection.promise;
+    vi.advanceTimersByTime(200000);
 
-    expect(iframe.parentNode).not.toBeNull();
+    await expect(child.multiply(2, 4)).resolves.toBe(8);
 
     connection.destroy();
   });

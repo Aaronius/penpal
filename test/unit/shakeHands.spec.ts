@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEPRECATED_PENPAL_PARTICIPANT_ID } from '../../src/backwardCompatibility.js';
 import shakeHands from '../../src/shakeHands.js';
 import namespace from '../../src/namespace.js';
 import PenpalError from '../../src/PenpalError.js';
@@ -45,7 +46,7 @@ describe('shakeHands', () => {
       namespace,
       channel: undefined,
       type: 'SYN',
-      participantId: 'deprecated-penpal',
+      participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
     });
 
     await expect(handshakePromise).rejects.toMatchObject({

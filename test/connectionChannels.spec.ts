@@ -101,43 +101,6 @@ describe('connection management: channels', () => {
   it('connects through message ports in parallel with separate channels', async () => {
     const { port1, port2 } = new MessageChannel();
 
-    const channelAParentRef: {
-      current?: RemoteProxy<ChannelParentMethods>;
-    } = {};
-    const channelBParentRef: {
-      current?: RemoteProxy<ChannelParentMethods>;
-    } = {};
-
-    const channelAChildConnection = connect<ChannelParentMethods>({
-      messenger: new PortMessenger({
-        port: port2,
-      }),
-      channel: 'A',
-      methods: {
-        getChannel() {
-          return 'A';
-        },
-        getChannelFromParent() {
-          return channelAParentRef.current!.getChannel();
-        },
-      },
-    });
-
-    const channelBChildConnection = connect<ChannelParentMethods>({
-      messenger: new PortMessenger({
-        port: port2,
-      }),
-      channel: 'B',
-      methods: {
-        getChannel() {
-          return 'B';
-        },
-        getChannelFromParent() {
-          return channelBParentRef.current!.getChannel();
-        },
-      },
-    });
-
     const channelAParentConnection = connect<ChannelChildMethods>({
       messenger: new PortMessenger({
         port: port1,
@@ -162,20 +125,52 @@ describe('connection management: channels', () => {
       },
     });
 
-    const [
-      resolvedChannelAParent,
-      resolvedChannelBParent,
-      channelAChild,
-      channelBChild,
-    ] = await Promise.all([
+    const channelAParentPromise = channelAParentConnection.promise as Promise<
+      RemoteProxy<ChannelParentMethods>
+    >;
+    const channelBParentPromise = channelBParentConnection.promise as Promise<
+      RemoteProxy<ChannelParentMethods>
+    >;
+
+    const channelAChildConnection = connect<ChannelParentMethods>({
+      messenger: new PortMessenger({
+        port: port2,
+      }),
+      channel: 'A',
+      methods: {
+        getChannel() {
+          return 'A';
+        },
+        getChannelFromParent() {
+          return channelAParentPromise.then((parent) => parent.getChannel());
+        },
+      },
+    });
+
+    const channelBChildConnection = connect<ChannelParentMethods>({
+      messenger: new PortMessenger({
+        port: port2,
+      }),
+      channel: 'B',
+      methods: {
+        getChannel() {
+          return 'B';
+        },
+        getChannelFromParent() {
+          return channelBParentPromise.then((parent) => parent.getChannel());
+        },
+      },
+    });
+
+    await Promise.all([
       channelAChildConnection.promise,
       channelBChildConnection.promise,
+    ]);
+
+    const [channelAChild, channelBChild] = await Promise.all([
       channelAParentConnection.promise,
       channelBParentConnection.promise,
     ]);
-
-    channelAParentRef.current = resolvedChannelAParent;
-    channelBParentRef.current = resolvedChannelBParent;
 
     await expectParallelChannelResults(channelAChild, channelBChild);
 
@@ -198,17 +193,18 @@ describe('connection management: channels', () => {
     });
 
     try {
+      let error: unknown;
+
       try {
         connect<FixtureMethods>({
           messenger,
         });
-      } catch (error) {
-        expect(error).toEqual(expect.any(PenpalError));
-        expect((error as PenpalError).code).toBe('INVALID_ARGUMENT');
-        return;
+      } catch (caughtError) {
+        error = caughtError;
       }
 
-      throw new Error('Expected error to be thrown');
+      expect(error).toEqual(expect.any(PenpalError));
+      expect((error as PenpalError).code).toBe('INVALID_ARGUMENT');
     } finally {
       connection.destroy();
     }

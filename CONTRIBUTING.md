@@ -44,8 +44,12 @@ All scripts below are defined in `package.json`.
   - Prints minified bundle size analysis for `dist/penpal.min.js`.
 - `npm run lint`
   - Runs ESLint with autofix and cache enabled.
+- `npm run lint:check`
+  - Runs ESLint in check mode (no autofix), suitable for CI.
 - `npm run format`
   - Runs Prettier on JSON, TS, JS, CJS, Markdown, and HTML files.
+- `npm run format:check`
+  - Runs Prettier in check mode (no writes), suitable for CI.
 - `npm test`
   - Runs unit tests, then Chromium browser + file-protocol tests.
 - `npm run test:watch`

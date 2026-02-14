@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEPRECATED_PENPAL_PARTICIPANT_ID,
   downgradeMessage,
   isDeprecatedMessage,
   upgradeMessage,
@@ -17,7 +18,7 @@ describe('backward compatibility message translation', () => {
       namespace,
       channel: undefined,
       type: 'SYN',
-      participantId: 'deprecated-penpal',
+      participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
     });
   });
 

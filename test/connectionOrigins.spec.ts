@@ -1,5 +1,5 @@
 import { CHILD_SERVER } from './constants.js';
-import { expectNeverFulfilledIframeConnection } from './utils.js';
+import { expectConnectionToTimeout } from './utils.js';
 import {
   createIframeConnection,
   getRedirectPageUrl,
@@ -7,6 +7,8 @@ import {
 import type FixtureMethods from './childFixtures/types/FixtureMethods.js';
 
 describe('connection management: origins', () => {
+  const timeout = 100;
+
   it('connects to window when correct origin provided in parent', async () => {
     const { connection } = createIframeConnection<FixtureMethods>();
 
@@ -44,27 +46,30 @@ describe('connection management: origins', () => {
   });
 
   it("doesn't connect to window when incorrect origin provided in parent", async () => {
-    const { iframe, connection } = createIframeConnection({
+    const { connection } = createIframeConnection({
       allowedOrigins: ['http://example.com'],
+      timeout,
     });
 
-    await expectNeverFulfilledIframeConnection(connection, iframe);
+    await expectConnectionToTimeout(connection);
   });
 
   it("doesn't connect to window when mismatched origin provided in child", async () => {
-    const { iframe, connection } = createIframeConnection({
+    const { connection } = createIframeConnection({
       pageName: 'mismatchedParentOrigin',
+      timeout,
     });
 
-    await expectNeverFulfilledIframeConnection(connection, iframe);
+    await expectConnectionToTimeout(connection);
   });
 
   it("doesn't connect to window when mismatched parent origin regex provided in child", async () => {
-    const { iframe, connection } = createIframeConnection({
+    const { connection } = createIframeConnection({
       pageName: 'mismatchedParentOriginRegex',
+      timeout,
     });
 
-    await expectNeverFulfilledIframeConnection(connection, iframe);
+    await expectConnectionToTimeout(connection);
   });
 
   it('connects to window when child redirects to different origin and origin is set to * in parent', async () => {
@@ -88,38 +93,42 @@ describe('connection management: origins', () => {
   });
 
   it("doesn't connect to window when child redirects to different origin and origin is not set in parent", async () => {
-    const { iframe, connection } = createIframeConnection({
+    const { connection } = createIframeConnection({
       url: getRedirectPageUrl(),
       allowedOrigins: undefined,
+      timeout,
     });
 
-    await expectNeverFulfilledIframeConnection(connection, iframe);
+    await expectConnectionToTimeout(connection);
   });
 
   it("doesn't connect to window when child redirects to different origin and origin is set to a mismatched origin in parent", async () => {
-    const { iframe, connection } = createIframeConnection({
+    const { connection } = createIframeConnection({
       url: getRedirectPageUrl(),
       allowedOrigins: [CHILD_SERVER],
+      timeout,
     });
 
-    await expectNeverFulfilledIframeConnection(connection, iframe);
+    await expectConnectionToTimeout(connection);
   });
 
   it("doesn't connect to window when child redirects to different origin and origin is set to a mismatched origin regex in parent", async () => {
-    const { iframe, connection } = createIframeConnection({
+    const { connection } = createIframeConnection({
       url: getRedirectPageUrl(),
       allowedOrigins: [/example\.com/],
+      timeout,
     });
 
-    await expectNeverFulfilledIframeConnection(connection, iframe);
+    await expectConnectionToTimeout(connection);
   });
 
   it("doesn't connect to window when no origin set in child", async () => {
-    const { iframe, connection } = createIframeConnection({
+    const { connection } = createIframeConnection({
       pageName: 'noParentOrigin',
       allowedOrigins: [CHILD_SERVER],
+      timeout,
     });
 
-    await expectNeverFulfilledIframeConnection(connection, iframe);
+    await expectConnectionToTimeout(connection);
   });
 });

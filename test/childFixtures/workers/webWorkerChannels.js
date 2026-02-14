@@ -2,50 +2,34 @@ importScripts('/penpal.js');
 
 console.log('worker origin', self.origin);
 
-let channelBParent;
-
-const channelBMessenger = new Penpal.WorkerMessenger({
-  worker: self,
-});
-
-const channelBMethods = {
-  getChannel() {
-    return 'B';
-  },
-  getChannelFromParent() {
-    return channelBParent.getChannel();
-  },
-};
-
-Penpal.connect({
-  messenger: channelBMessenger,
+const channelBParentPromise = Penpal.connect({
+  messenger: new Penpal.WorkerMessenger({
+    worker: self,
+  }),
   channel: 'B',
-  methods: channelBMethods,
+  methods: {
+    getChannel() {
+      return 'B';
+    },
+    getChannelFromParent() {
+      return channelBParentPromise.then((parent) => parent.getChannel());
+    },
+  },
   log: Penpal.debug('Child Connection B'),
-}).promise.then((parent) => {
-  channelBParent = parent;
-});
+}).promise;
 
-let channelAParent;
-
-const channelAMessenger = new Penpal.WorkerMessenger({
-  worker: self,
-});
-
-const channelAMethods = {
-  getChannel() {
-    return 'A';
-  },
-  getChannelFromParent() {
-    return channelAParent.getChannel();
-  },
-};
-
-Penpal.connect({
-  messenger: channelAMessenger,
+const channelAParentPromise = Penpal.connect({
+  messenger: new Penpal.WorkerMessenger({
+    worker: self,
+  }),
   channel: 'A',
-  methods: channelAMethods,
+  methods: {
+    getChannel() {
+      return 'A';
+    },
+    getChannelFromParent() {
+      return channelAParentPromise.then((parent) => parent.getChannel());
+    },
+  },
   log: Penpal.debug('Child Connection A'),
-}).promise.then((parent) => {
-  channelAParent = parent;
-});
+}).promise;

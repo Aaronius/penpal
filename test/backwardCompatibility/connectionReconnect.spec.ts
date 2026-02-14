@@ -51,7 +51,14 @@ describe('BACKWARD COMPATIBILITY: connection management reconnect', () => {
     await ackPromise;
 
     await expect(child.methodNotInGeneralPage()).resolves.toBe('success');
-    await expect(child.multiply(2, 4)).rejects.toEqual(expect.any(Error));
+    const error = await child.multiply(2, 4).catch((caughtError) => {
+      return caughtError as Error;
+    });
+
+    expect(error).toEqual(expect.any(Error));
+    expect(error.name).toBe('TypeError');
+    expect(error.message).toEqual(expect.any(String));
+    expect(error.message.length).toBeGreaterThan(0);
 
     connection.destroy();
   });

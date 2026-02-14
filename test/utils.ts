@@ -1,14 +1,13 @@
 import {
   Connection,
+  Reply,
   connect,
   Methods,
   PortMessenger,
   WindowMessenger,
 } from '../src/index.js';
-import type { RemoteProxy } from '../src/index.js';
 import { CHILD_SERVER } from './constants.js';
 import WorkerMessenger from '../src/messengers/WorkerMessenger.js';
-import { createGeneralFixtureMethods } from './generalFixtureMethods.js';
 
 export const createAndAddIframe = (url: string) => {
   const iframe = document.createElement('iframe');
@@ -20,9 +19,11 @@ export const createAndAddIframe = (url: string) => {
 export const createIframeAndConnection = <TMethods extends Methods>({
   methods = {},
   pageName = 'general',
+  timeout,
 }: {
   methods?: Methods;
   pageName?: string;
+  timeout?: number;
 } = {}) => {
   const iframe = createAndAddIframe(getPageFixtureUrl(pageName, CHILD_SERVER));
   const messenger = new WindowMessenger({
@@ -32,6 +33,7 @@ export const createIframeAndConnection = <TMethods extends Methods>({
   const connection = connect<TMethods>({
     messenger,
     methods,
+    ...(timeout === undefined ? {} : { timeout }),
     // log: debug('Parent')
   });
   return connection;
@@ -40,9 +42,11 @@ export const createIframeAndConnection = <TMethods extends Methods>({
 export const createWorkerAndConnection = <TMethods extends Methods>({
   methods = {},
   workerName = 'webWorkerGeneral',
+  timeout,
 }: {
   methods?: Methods;
   workerName?: string;
+  timeout?: number;
 } = {}) => {
   const worker = new Worker(getWorkerFixtureUrl(workerName));
   const messenger = new WorkerMessenger({
@@ -51,6 +55,7 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   const connection = connect<TMethods>({
     messenger,
     methods,
+    ...(timeout === undefined ? {} : { timeout }),
     // log: debug('Parent')
   });
   return connection;
@@ -58,26 +63,41 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
 
 export const createPortAndConnection = <TMethods extends Methods>({
   methods = {},
+  timeout,
 }: {
   methods?: Methods;
+  timeout?: number;
 } = {}) => {
+  if (!window.PenpalGeneralFixtureMethods) {
+    throw new Error(
+      'window.PenpalGeneralFixtureMethods is not loaded in test setup'
+    );
+  }
+
   const { port1, port2 } = new MessageChannel();
 
   let parentReturnValue: number | undefined;
-  const parentProxyPromiseRef: { current?: Promise<RemoteProxy<Methods>> } = {};
+  const parentProxyPromiseRef: {
+    current?: Promise<Record<string, unknown>>;
+  } = {};
 
-  const remoteMethods = createGeneralFixtureMethods({
-    getParentApi: () => parentProxyPromiseRef.current!,
-    setParentReturnValue: (value) => {
-      parentReturnValue = value;
-    },
-    getParentReturnValue: () => {
-      return parentReturnValue;
-    },
-    getUnclonableValue: () => {
-      return window;
-    },
-  });
+  const remoteMethods = window.PenpalGeneralFixtureMethods.createGeneralMethods(
+    {
+      getParentApi: () => parentProxyPromiseRef.current!,
+      setParentReturnValue: (value) => {
+        parentReturnValue = value;
+      },
+      getParentReturnValue: () => {
+        return parentReturnValue;
+      },
+      getUnclonableValue: () => {
+        return window;
+      },
+      createReply: (value, options) => {
+        return new Reply(value, options);
+      },
+    }
+  );
 
   const remoteConnection = connect<Methods>({
     messenger: new PortMessenger({
@@ -87,7 +107,7 @@ export const createPortAndConnection = <TMethods extends Methods>({
   });
 
   parentProxyPromiseRef.current = remoteConnection.promise as Promise<
-    RemoteProxy<Methods>
+    Record<string, unknown>
   >;
 
   const connection = connect<TMethods>({
@@ -95,6 +115,7 @@ export const createPortAndConnection = <TMethods extends Methods>({
       port: port1,
     }),
     methods,
+    ...(timeout === undefined ? {} : { timeout }),
   });
 
   return {
@@ -136,38 +157,9 @@ export const expectPromiseToStayPending = async (
   expect(settled).toBe(false);
 };
 
-/**
- * Asserts that the connection promise is never resolved or rejected. This can
- * happen, for example, when a target origin is valid but doesn't match the
- * remote's origin or if the remote isn't running Penpal.
- */
-export const expectNeverFulfilledIframeConnection = (
-  connection: Connection,
-  iframe: HTMLIFrameElement
-) => {
-  const spy = vi.fn();
-
-  connection.promise.then(spy, spy);
-
-  const waitForLoad = () =>
-    new Promise<void>((resolve) => {
-      if (iframe.contentDocument?.readyState === 'complete') {
-        resolve();
-        return;
-      }
-
-      iframe.addEventListener('load', () => resolve(), { once: true });
-    });
-
-  return waitForLoad().then(
-    () =>
-      new Promise<void>((resolve) => {
-        // Give Penpal time to try to make a handshake.
-        setTimeout(() => {
-          expect(spy).not.toHaveBeenCalled();
-          connection.destroy();
-          resolve();
-        }, 200);
-      })
-  );
+export const expectConnectionToTimeout = async (connection: Connection) => {
+  await expect(connection.promise).rejects.toMatchObject({
+    code: 'CONNECTION_TIMEOUT',
+  });
+  connection.destroy();
 };

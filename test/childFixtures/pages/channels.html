@@ -1,43 +1,31 @@
 <script src="/penpal.js"></script>
 <script src="/pages/_fixtureHelpers.js"></script>
 <script>
-  let channelBParent;
-
-  const channelBMethods = {
-    getChannel() {
-      return 'B';
-    },
-    getChannelFromParent() {
-      return channelBParent.getChannel();
-    },
-  };
-
-  PenpalFixture.connect({
+  const channelBParentPromise = PenpalFixture.connect({
     channel: 'B',
-    methods: channelBMethods,
+    methods: {
+      getChannel() {
+        return 'B';
+      },
+      getChannelFromParent() {
+        return channelBParentPromise.then((parent) => parent.getChannel());
+      },
+    },
     allowedOrigins: ['*'],
     logLabel: 'Child Connection B',
-  }).promise.then((parent) => {
-    channelBParent = parent;
-  });
+  }).promise;
 
-  let channelAParent;
-
-  const channelAMethods = {
-    getChannel() {
-      return 'A';
-    },
-    getChannelFromParent() {
-      return channelAParent.getChannel();
-    },
-  };
-
-  PenpalFixture.connect({
+  const channelAParentPromise = PenpalFixture.connect({
     channel: 'A',
-    methods: channelAMethods,
+    methods: {
+      getChannel() {
+        return 'A';
+      },
+      getChannelFromParent() {
+        return channelAParentPromise.then((parent) => parent.getChannel());
+      },
+    },
     allowedOrigins: ['*'],
     logLabel: 'Child Connection A',
-  }).promise.then((parent) => {
-    channelAParent = parent;
-  });
+  }).promise;
 </script>
