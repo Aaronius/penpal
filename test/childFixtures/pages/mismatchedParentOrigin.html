@@ -1,29 +1,7 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
-
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="/penpal.js"></script>
-    <script>
-      const messenger = new Penpal.WindowMessenger({
-        remoteWindow: window.parent,
-        allowedOrigins: ['http://example.com'],
-      });
-
-      Penpal.connect({
-        messenger,
-        log: Penpal.debug('Child'),
-      }).promise.then(function (parent) {
-        parentAPI = parent;
-      });
-    </script>
-  </body>
-</html>
+<script src="/penpal.js"></script>
+<script src="/pages/_fixtureHelpers.js"></script>
+<script>
+  PenpalFixture.connect({
+    allowedOrigins: ['http://example.com'],
+  });
+</script>

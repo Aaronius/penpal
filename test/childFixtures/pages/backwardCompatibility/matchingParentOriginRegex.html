@@ -1,41 +1,17 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
+<script src="/vendor/penpal-v6.min.js"></script>
+<script src="/pages/backwardCompatibility/_fixtureHelpers.js"></script>
+<script>
+  const parentOrigin = PenpalLegacyFixture.getParentOrigin();
+  const parentOriginRegex = new RegExp(
+    PenpalLegacyFixture.escapeRegExp(parentOrigin)
+  );
 
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
-    <script>
-      const escapeRegExp = function (string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-      };
-
-      // A cheap way to get the parent origin for our tests.
-      const parentOrigin = document.referrer.substring(
-        0,
-        document.referrer.lastIndexOf('/')
-      );
-
-      const parentOriginRegex = new RegExp(escapeRegExp(parentOrigin));
-
-      const methods = {
-        multiply: function (num1, num2) {
-          return num1 * num2;
-        },
-      };
-
-      Penpal.connectToParent({
-        parentOrigin: parentOriginRegex,
-        methods: methods,
-        debug: true,
-      });
-    </script>
-  </body>
-</html>
+  PenpalLegacyFixture.connectToParent({
+    parentOrigin: parentOriginRegex,
+    methods: {
+      multiply: function (num1, num2) {
+        return num1 * num2;
+      },
+    },
+  });
+</script>

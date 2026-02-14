@@ -1,224 +1,150 @@
-import { CHILD_SERVER, CHILD_SERVER_ALTERNATE } from '../constants.js';
-import { createAndAddIframe } from '../utils.js';
-import { connect, PenpalError, WindowMessenger } from '../../src/index.js';
+import { CHILD_SERVER } from '../constants.js';
+import { expectNeverFulfilledIframeConnection } from '../utils.js';
+import type { PenpalError } from '../../src/index.js';
 import FixtureMethods from '../childFixtures/types/FixtureMethods.js';
 import { isDeprecatedMessage } from '../../src/backwardCompatibility.js';
+import { createBackwardCompatibilityIframeAndConnection } from './utils.js';
 
-/**
- * Asserts that no connection is successfully made between the parent and the
- * child.
- */
-const expectNoSuccessfulConnection = (
-  connectionPromise: Promise<unknown>,
-  iframe: HTMLIFrameElement
-) => {
-  const spy = jasmine.createSpy();
+const getAlternateFixtureOrigin = () => {
+  const url = new URL(CHILD_SERVER);
+  url.hostname = url.hostname === 'localhost' ? '127.0.0.1' : 'localhost';
+  return url.origin;
+};
 
-  connectionPromise.then(spy);
-
-  return new Promise<void>((resolve) => {
-    iframe.addEventListener('load', function () {
-      // Give Penpal time to try to make a handshake.
-      setTimeout(() => {
-        expect(spy).not.toHaveBeenCalled();
-        resolve();
-      }, 100);
-    });
-  });
+const getRedirectToUrl = () => {
+  return encodeURIComponent(
+    `${getAlternateFixtureOrigin()}/pages/backwardCompatibility/general.html`
+  );
 };
 
 describe('BACKWARD COMPATIBILITY: connection management', () => {
-  afterEach(() => {
-    jasmine.clock().uninstall();
-  });
-
   it('connects to iframe when correct child origin provided', async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
-    });
+    const { connection } = createBackwardCompatibilityIframeAndConnection<
+      FixtureMethods
+    >();
 
     await connection.promise;
   });
 
   it('connects to iframe when correct child origin regex provided', async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
+    const { connection } = createBackwardCompatibilityIframeAndConnection<
+      FixtureMethods
+    >({
       allowedOrigins: [/^http/],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
     });
 
     await connection.promise;
   });
 
   it('connects to iframe connecting to parent with matching origin', async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/matchingParentOrigin.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
+    const { connection } = createBackwardCompatibilityIframeAndConnection<
+      FixtureMethods
+    >({
+      path: 'matchingParentOrigin.html',
     });
 
     await connection.promise;
   });
 
   it('connects to iframe connecting to parent with matching origin regex', async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/matchingParentOriginRegex.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
+    const { connection } = createBackwardCompatibilityIframeAndConnection<
+      FixtureMethods
+    >({
+      path: 'matchingParentOriginRegex.html',
     });
 
     await connection.promise;
   });
 
   it("doesn't connect to iframe when incorrect child origin provided", async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
       allowedOrigins: ['http://bogus.com'],
     });
-    const connection = connect<FixtureMethods>({
-      messenger,
-    });
 
-    await expectNoSuccessfulConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe connecting to mismatched parent origin", async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/mismatchedParentOrigin.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
+      path: 'mismatchedParentOrigin.html',
     });
 
-    await expectNoSuccessfulConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe connecting to mismatched parent origin regex", async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/mismatchedParentOriginRegex.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
+      path: 'mismatchedParentOriginRegex.html',
     });
 
-    await expectNoSuccessfulConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it('connects to iframe when child redirects to different origin and child origin is set to *', async () => {
-    const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/pages/backwardCompatibility/general.html`
-    );
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
+    const redirectToUrl = getRedirectToUrl();
+    const { connection } = createBackwardCompatibilityIframeAndConnection<
+      FixtureMethods
+    >({
+      path: `redirect.html?to=${redirectToUrl}`,
       allowedOrigins: ['*'],
-    });
-    const connection = connect({
-      messenger,
     });
 
     await connection.promise;
   });
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is not set", async () => {
-    const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/pages/backwardCompatibility/general.html`
-    );
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
+    const redirectToUrl = getRedirectToUrl();
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
+      path: `redirect.html?to=${redirectToUrl}`,
+      allowedOrigins: undefined,
     });
 
-    await expectNoSuccessfulConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin", async () => {
-    const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/pages/backwardCompatibility/general.html`
-    );
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
+    const redirectToUrl = getRedirectToUrl();
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
+      path: `redirect.html?to=${redirectToUrl}`,
       allowedOrigins: [CHILD_SERVER],
     });
-    const connection = connect<FixtureMethods>({
-      messenger,
-    });
 
-    await expectNoSuccessfulConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it("doesn't connect to iframe when child redirects to different origin and child origin is set to a mismatched origin regex", async () => {
-    const redirectToUrl = encodeURIComponent(
-      `${CHILD_SERVER_ALTERNATE}/pages/backwardCompatibility/general.html`
-    );
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/redirect.html?to=${redirectToUrl}`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
+    const redirectToUrl = getRedirectToUrl();
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
+      path: `redirect.html?to=${redirectToUrl}`,
       allowedOrigins: [/example\.com/],
     });
-    const connection = connect<FixtureMethods>({
-      messenger,
-    });
 
-    await expectNoSuccessfulConnection(connection.promise, iframe);
+    await expectNeverFulfilledIframeConnection(connection, iframe);
   });
 
   it('reconnects after child reloads', async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
-    });
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>();
 
     const child = await connection.promise;
 
@@ -243,16 +169,10 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
   });
 
   it('reconnects after child navigates to other page with different methods', async () => {
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
-    });
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>();
 
     const child = await connection.promise;
 
@@ -290,13 +210,10 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
   });
 
   it('rejects promise if connection timeout passes', async () => {
-    const iframe = createAndAddIframe(`${CHILD_SERVER}/never-respond`);
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
+    const { connection } = createBackwardCompatibilityIframeAndConnection<
+      FixtureMethods
+    >({
+      url: `${CHILD_SERVER}/never-respond`,
       timeout: 0,
     });
 
@@ -306,27 +223,22 @@ describe('BACKWARD COMPATIBILITY: connection management', () => {
     } catch (e) {
       error = e;
     }
-    expect(error).toEqual(jasmine.any(Error));
+    expect(error).toEqual(expect.any(Error));
     expect((error as Error).message).toBe('Connection timed out after 0ms');
     expect((error as PenpalError).code).toBe('CONNECTION_TIMEOUT');
   });
 
   it("doesn't destroy connection if connection succeeds then timeout passes", async () => {
-    jasmine.clock().install();
-    const iframe = createAndAddIframe(
-      `${CHILD_SERVER}/pages/backwardCompatibility/general.html`
-    );
-    const messenger = new WindowMessenger({
-      remoteWindow: iframe.contentWindow!,
-      allowedOrigins: [CHILD_SERVER],
-    });
-    const connection = connect<FixtureMethods>({
-      messenger,
+    vi.useFakeTimers();
+    const {
+      iframe,
+      connection,
+    } = createBackwardCompatibilityIframeAndConnection<FixtureMethods>({
       timeout: 100000,
     });
 
     await connection.promise;
-    jasmine.clock().tick(10000);
+    vi.advanceTimersByTime(10000);
 
     expect(iframe.parentNode).not.toBeNull();
 

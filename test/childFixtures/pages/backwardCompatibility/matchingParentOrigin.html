@@ -1,35 +1,14 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
+<script src="/vendor/penpal-v6.min.js"></script>
+<script src="/pages/backwardCompatibility/_fixtureHelpers.js"></script>
+<script>
+  const parentOrigin = PenpalLegacyFixture.getParentOrigin();
 
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
-    <script>
-      // A cheap way to get the parent origin for our tests.
-      const parentOrigin = document.referrer.substring(
-        0,
-        document.referrer.lastIndexOf('/')
-      );
-
-      const methods = {
-        multiply: function (num1, num2) {
-          return num1 * num2;
-        },
-      };
-
-      Penpal.connectToParent({
-        parentOrigin: parentOrigin,
-        methods: methods,
-        debug: true,
-      });
-    </script>
-  </body>
-</html>
+  PenpalLegacyFixture.connectToParent({
+    parentOrigin,
+    methods: {
+      multiply: function (num1, num2) {
+        return num1 * num2;
+      },
+    },
+  });
+</script>

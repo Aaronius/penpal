@@ -1,85 +1,68 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
+<script src="/vendor/penpal-v6.min.js"></script>
+<script src="/pages/backwardCompatibility/_fixtureHelpers.js"></script>
+<script>
+  let parentAPI;
+  let parentReturnValue;
 
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
-    <script>
-      let parentAPI;
-      let parentReturnValue;
-
-      const methods = {
-        multiply: function (num1, num2) {
-          return num1 * num2;
-        },
-        multiplyAsync: function (num1, num2) {
-          return new Promise(function (resolve) {
-            resolve(num1 * num2);
-          });
-        },
-        addUsingParent: function () {
-          return parentAPI.add(3, 6).then(function (value) {
-            parentReturnValue = value;
-          });
-        },
-        getParentReturnValue: function () {
-          return parentReturnValue;
-        },
-        getPromiseRejectedWithString() {
-          return Promise.reject('test error string');
-        },
-        getPromiseRejectedWithObject() {
-          return Promise.reject({ a: 'b' });
-        },
-        getPromiseRejectedWithUndefined() {
-          return Promise.reject();
-        },
-        getPromiseRejectedWithError() {
-          // Using TypeError instead of Error just to make sure the "name" property
-          // on the error instance gets properly serialized.
-          return Promise.reject(new TypeError('test error object'));
-        },
-        throwError: function () {
-          throw new Error('Oh nos!');
-        },
-        getUnclonableValue: function () {
-          return window;
-        },
-        reload: function () {
-          window.location.reload(true);
-        },
-        navigate: function (to) {
-          window.location.href = to;
-        },
-        nested: {
-          oneLevel: function (input) {
-            return input;
-          },
-          by: {
-            twoLevels: function (input) {
-              return input;
-            },
-          },
-        },
-        neverResolve() {
-          return new Promise(() => {});
-        },
-      };
-
-      Penpal.connectToParent({
-        methods: methods,
-        debug: true,
-      }).promise.then(function (parent) {
-        parentAPI = parent;
+  const methods = {
+    multiply: function (num1, num2) {
+      return num1 * num2;
+    },
+    multiplyAsync: function (num1, num2) {
+      return new Promise(function (resolve) {
+        resolve(num1 * num2);
       });
-    </script>
-  </body>
-</html>
+    },
+    addUsingParent: function () {
+      return parentAPI.add(3, 6).then(function (value) {
+        parentReturnValue = value;
+      });
+    },
+    getParentReturnValue: function () {
+      return parentReturnValue;
+    },
+    getPromiseRejectedWithString() {
+      return Promise.reject('test error string');
+    },
+    getPromiseRejectedWithObject() {
+      return Promise.reject({ a: 'b' });
+    },
+    getPromiseRejectedWithUndefined() {
+      return Promise.reject();
+    },
+    getPromiseRejectedWithError() {
+      return Promise.reject(new TypeError('test error object'));
+    },
+    throwError: function () {
+      throw new Error('Oh nos!');
+    },
+    getUnclonableValue: function () {
+      return window;
+    },
+    reload: function () {
+      window.location.reload(true);
+    },
+    navigate: function (to) {
+      window.location.href = to;
+    },
+    nested: {
+      oneLevel: function (input) {
+        return input;
+      },
+      by: {
+        twoLevels: function (input) {
+          return input;
+        },
+      },
+    },
+    neverResolve() {
+      return new Promise(() => {});
+    },
+  };
+
+  PenpalLegacyFixture.connectToParent({
+    methods,
+  }).promise.then(function (parent) {
+    parentAPI = parent;
+  });
+</script>

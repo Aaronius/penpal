@@ -3,3 +3,4 @@
 
 npx lint-staged
 npm run test
+npm run test:types

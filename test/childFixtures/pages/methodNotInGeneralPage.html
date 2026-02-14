@@ -1,38 +1,12 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
-
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="/penpal.js"></script>
-    <script>
-      let parentAPI;
-
-      const messenger = new Penpal.WindowMessenger({
-        remoteWindow: window.parent,
-        allowedOrigins: ['*'],
-      });
-
-      const methods = {
-        methodNotInGeneralPage() {
-          return 'success';
-        },
-      };
-
-      Penpal.connect({
-        messenger,
-        methods: methods,
-        log: Penpal.debug('Child'),
-      }).promise.then(function (parent) {
-        parentAPI = parent;
-      });
-    </script>
-  </body>
-</html>
+<script src="/penpal.js"></script>
+<script src="/pages/_fixtureHelpers.js"></script>
+<script>
+  PenpalFixture.connect({
+    methods: {
+      methodNotInGeneralPage() {
+        return 'success';
+      },
+    },
+    allowedOrigins: ['*'],
+  });
+</script>

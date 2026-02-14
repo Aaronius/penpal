@@ -1,40 +1,14 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
+<script src="/penpal.js"></script>
+<script src="/pages/_fixtureHelpers.js"></script>
+<script>
+  const parentOrigin = PenpalFixture.getParentOrigin();
 
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="/penpal.js"></script>
-    <script>
-      // A cheap way to get the parent origin for our tests.
-      const parentOrigin = document.referrer.substring(
-        0,
-        document.referrer.lastIndexOf('/')
-      );
-
-      const messenger = new Penpal.WindowMessenger({
-        remoteWindow: window.parent,
-        allowedOrigins: [parentOrigin],
-      });
-
-      const methods = {
-        multiply(num1, num2) {
-          return num1 * num2;
-        },
-      };
-
-      Penpal.connect({
-        messenger,
-        methods: methods,
-        log: Penpal.debug('Child'),
-      });
-    </script>
-  </body>
-</html>
+  PenpalFixture.connect({
+    methods: {
+      multiply(num1, num2) {
+        return num1 * num2;
+      },
+    },
+    allowedOrigins: [parentOrigin],
+  });
+</script>

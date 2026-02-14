@@ -1,46 +1,34 @@
-import { connect, debug, Reply, WorkerMessenger } from '../../../src/index.js';
-import FixtureMethods from '../types/FixtureMethods.js';
-
-declare const self: DedicatedWorkerGlobalScope;
+importScripts('/penpal.js');
 
 console.log('worker origin', self.origin);
 
-type ParentAPI = Record<'add', (num1: number, num2: number) => Promise<number>>;
+let parentAPI;
+let parentReturnValue;
 
-let parentAPI: ParentAPI;
-let parentReturnValue: number;
-
-const messenger = new WorkerMessenger({
+const messenger = new Penpal.WorkerMessenger({
   worker: self,
 });
 
-const methods: Omit<
-  FixtureMethods,
-  | 'reload'
-  | 'navigate'
-  | 'methodNotInGeneralPage'
-  | 'getChannel'
-  | 'getChannelFromParent'
-> = {
-  multiply(num1: number, num2: number) {
+const methods = {
+  multiply(num1, num2) {
     return num1 * num2;
   },
-  multiplyAsync(num1: number, num2: number) {
-    return new Promise(function (resolve) {
+  multiplyAsync(num1, num2) {
+    return new Promise((resolve) => {
       resolve(num1 * num2);
     });
   },
-  double(numbersArray: Int32Array) {
+  double(numbersArray) {
     const resultArray = numbersArray.map((num) => num * 2);
-    return new Reply(resultArray, {
+    return new Penpal.Reply(resultArray, {
       transferables: [resultArray.buffer],
     });
   },
   multiplyWithPromisedReplyInstanceAndPromisedReturnValue(num1, num2) {
-    return Promise.resolve(new Reply(Promise.resolve(num1 * num2)));
+    return Promise.resolve(new Penpal.Reply(Promise.resolve(num1 * num2)));
   },
   addUsingParent() {
-    return parentAPI.add(3, 6).then(function (value: number) {
+    return parentAPI.add(3, 6).then((value) => {
       parentReturnValue = value;
     });
   },
@@ -85,20 +73,22 @@ const methods: Omit<
         return input;
       },
     },
+    apply() {
+      return 'apply result';
+    },
   },
   neverResolve() {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     return new Promise(() => {});
   },
-  ['with.period']: () => {
+  ['with.period']() {
     return 'success';
   },
 };
 
-connect<ParentAPI>({
+Penpal.connect({
   messenger,
-  methods: methods,
-  log: debug('Child'),
+  methods,
+  log: Penpal.debug('Child'),
 }).promise.then((parent) => {
   parentAPI = parent;
 });

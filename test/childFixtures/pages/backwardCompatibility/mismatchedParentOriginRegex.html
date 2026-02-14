@@ -1,29 +1,12 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
-
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="https://unpkg.com/penpal@^6/dist/penpal.min.js"></script>
-    <script>
-      const methods = {
-        multiply: function (num1, num2) {
-          return num1 * num2;
-        },
-      };
-
-      Penpal.connectToParent({
-        parentOrigin: /example\.com/,
-        methods: methods,
-        debug: true,
-      });
-    </script>
-  </body>
-</html>
+<script src="/vendor/penpal-v6.min.js"></script>
+<script src="/pages/backwardCompatibility/_fixtureHelpers.js"></script>
+<script>
+  PenpalLegacyFixture.connectToParent({
+    parentOrigin: /example\.com/,
+    methods: {
+      multiply: function (num1, num2) {
+        return num1 * num2;
+      },
+    },
+  });
+</script>

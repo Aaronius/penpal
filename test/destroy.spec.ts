@@ -3,6 +3,7 @@ import {
   createAndAddIframe,
   createIframeAndConnection,
   createWorkerAndConnection,
+  expectPromiseToStayPending,
   getPageFixtureUrl,
   getWorkerFixtureUrl,
 } from './utils.js';
@@ -30,7 +31,7 @@ describe('parent calling destroy()', () => {
         const connection = createConnection<FixtureMethods>();
         connection.destroy();
 
-        await expectAsync(connection.promise).toBePending();
+        await expectPromiseToStayPending(connection.promise);
       });
 
       it('prevents method calls from being sent', async () => {
@@ -47,7 +48,7 @@ describe('parent calling destroy()', () => {
         } catch (e) {
           error = e;
         }
-        expect(error).toEqual(jasmine.any(Error));
+        expect(error).toEqual(expect.any(Error));
         expect((error as Error).message).toBe(
           'Method call multiply() failed due to destroyed connection'
         );
@@ -56,14 +57,8 @@ describe('parent calling destroy()', () => {
     });
 
     it('removes method listener from window', async () => {
-      const addEventListenerSpy = spyOn(
-        window,
-        'addEventListener'
-      ).and.callThrough();
-      const removeEventListenerSpy = spyOn(
-        window,
-        'removeEventListener'
-      ).and.callThrough();
+      const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
       const iframe = createAndAddIframe(getPageFixtureUrl('general'));
 
@@ -80,23 +75,17 @@ describe('parent calling destroy()', () => {
       await connection.promise;
       connection.destroy();
 
-      expect(addEventListenerSpy.calls.count()).toBe(1);
-      addEventListenerSpy.calls.allArgs().forEach((args) => {
-        expect(removeEventListenerSpy).toHaveBeenCalledWith(...args);
+      expect(addEventListenerSpy.mock.calls.length).toBe(1);
+      addEventListenerSpy.mock.calls.forEach((args) => {
+        expect(removeEventListenerSpy.mock.calls).toContainEqual(args);
       });
     });
 
     it('removes method listener from worker', async () => {
       const worker = new Worker(getWorkerFixtureUrl('webWorkerGeneral'));
 
-      const addEventListenerSpy = spyOn(
-        worker,
-        'addEventListener'
-      ).and.callThrough();
-      const removeEventListenerSpy = spyOn(
-        worker,
-        'removeEventListener'
-      ).and.callThrough();
+      const addEventListenerSpy = vi.spyOn(worker, 'addEventListener');
+      const removeEventListenerSpy = vi.spyOn(worker, 'removeEventListener');
 
       const messenger = new WorkerMessenger({
         worker,
@@ -110,9 +99,9 @@ describe('parent calling destroy()', () => {
       await connection.promise;
       connection.destroy();
 
-      expect(addEventListenerSpy.calls.count()).toBe(1);
-      addEventListenerSpy.calls.allArgs().forEach((args) => {
-        expect(removeEventListenerSpy).toHaveBeenCalledWith(...args);
+      expect(addEventListenerSpy.mock.calls.length).toBe(1);
+      addEventListenerSpy.mock.calls.forEach((args) => {
+        expect(removeEventListenerSpy.mock.calls).toContainEqual(args);
       });
     });
   }

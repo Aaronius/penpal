@@ -1,34 +1,12 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
-
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="/penpal.js"></script>
-    <script>
-      const messenger = new Penpal.WindowMessenger({
-        remoteWindow: window.parent,
-        allowedOrigins: [/example\.com/],
-      });
-
-      const methods = {
-        multiply(num1, num2) {
-          return num1 * num2;
-        },
-      };
-
-      Penpal.connect({
-        messenger,
-        methods: methods,
-        log: Penpal.debug('Child'),
-      });
-    </script>
-  </body>
-</html>
+<script src="/penpal.js"></script>
+<script src="/pages/_fixtureHelpers.js"></script>
+<script>
+  PenpalFixture.connect({
+    methods: {
+      multiply(num1, num2) {
+        return num1 * num2;
+      },
+    },
+    allowedOrigins: [/example\.com/],
+  });
+</script>

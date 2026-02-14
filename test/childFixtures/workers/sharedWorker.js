@@ -1,17 +1,15 @@
-import { connect, PortMessenger } from '../../../src/index.js';
-
-declare const self: SharedWorkerGlobalScope;
+importScripts('/penpal.js');
 
 console.log('worker origin', self.origin);
 
 self.addEventListener('connect', async (event) => {
   const [port] = event.ports;
 
-  const messenger = new PortMessenger({
+  const messenger = new Penpal.PortMessenger({
     port,
   });
 
-  const connection = connect({
+  const connection = Penpal.connect({
     messenger,
   });
 

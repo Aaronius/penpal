@@ -872,3 +872,7 @@ This library is inspired by:
 ## License
 
 MIT
+
+## Contributing
+
+If you'd like to contribute or run the full local test/build workflows, see [CONTRIBUTING.md](./CONTRIBUTING.md).

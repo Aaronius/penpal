@@ -20,10 +20,6 @@ for (const variant of variants) {
   const { childType, createConnection } = variant;
 
   describe(`communication between parent and child ${childType}`, () => {
-    afterEach(() => {
-      jasmine.clock().uninstall();
-    });
-
     it('calls a function on the child', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
@@ -127,7 +123,7 @@ for (const variant of variants) {
     it('handles promises rejected with strings', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
-      await expectAsync(child.getPromiseRejectedWithString()).toBeRejectedWith(
+      await expect(child.getPromiseRejectedWithString()).rejects.toBe(
         'test error string'
       );
       connection.destroy();
@@ -157,7 +153,7 @@ for (const variant of variants) {
         catchCalled = true;
         error = e;
       }
-      expect(catchCalled).toBeTrue();
+      expect(catchCalled).toBe(true);
       expect(error).toBeUndefined();
       connection.destroy();
     });
@@ -171,10 +167,10 @@ for (const variant of variants) {
       } catch (e) {
         error = e;
       }
-      expect(error).toEqual(jasmine.any(Error));
+      expect(error).toEqual(expect.any(Error));
       expect((error as Error).name).toBe('TypeError');
       expect((error as Error).message).toBe('test error object');
-      expect((error as Error).stack).toEqual(jasmine.any(String));
+      expect((error as Error).stack).toEqual(expect.any(String));
       connection.destroy();
     });
 
@@ -187,7 +183,7 @@ for (const variant of variants) {
       } catch (e) {
         error = e;
       }
-      expect(error).toEqual(jasmine.any(Error));
+      expect(error).toEqual(expect.any(Error));
       expect((error as Error).message).toBe('Oh nos!');
       connection.destroy();
     });
@@ -201,7 +197,7 @@ for (const variant of variants) {
       } catch (e) {
         error = e;
       }
-      expect(error).toEqual(jasmine.any(Error));
+      expect(error).toEqual(expect.any(Error));
       expect((error as Error).name).toBe('DataCloneError');
       connection.destroy();
     });
@@ -209,7 +205,7 @@ for (const variant of variants) {
     it('handles methods with periods in the name', async () => {
       const connection = createConnection<FixtureMethods>();
       const child = await connection.promise;
-      await expectAsync(child['with.period']()).toBeResolvedTo('success');
+      await expect(child['with.period']()).resolves.toBe('success');
       connection.destroy();
     });
 
@@ -229,7 +225,7 @@ for (const variant of variants) {
         error = e;
       }
 
-      expect(error).toEqual(jasmine.any(Error));
+      expect(error).toEqual(expect.any(Error));
       expect((error as Error).message).toBe(
         'Method call neverResolve() timed out after 0ms'
       );
@@ -251,7 +247,7 @@ for (const variant of variants) {
       // Wait for microtask queue to drain
       await Promise.resolve();
 
-      expect(error!).toEqual(jasmine.any(Error));
+      expect(error!).toEqual(expect.any(Error));
       expect(error!.message).toBe(
         'Method call neverResolve() failed due to destroyed connection'
       );

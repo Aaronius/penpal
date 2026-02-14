@@ -16,9 +16,9 @@ const htmlSrc = `
     Test Iframe
     <!--
     When this HTML is loaded into an iframe usng a data URI, the browser
-    treats the HTML as an inline resource. Any external URLs 
+    treats the HTML as an inline resource. Any external URLs
     (such as /penpal.js) will be relative to the inline resource itself and
-    not relative to the parent document that contains the iframe. 
+    not relative to the parent document that contains the iframe.
     This is why we must specify a server in this script's src rather than
     just specify a path of /penpal.js.
     -->
@@ -28,7 +28,7 @@ const htmlSrc = `
         remoteWindow: window.parent,
         allowedOrigins: ['*'],
       });
-      
+
       Penpal.connect({
         messenger,
         methods: {
@@ -86,7 +86,10 @@ it('never connects iframe when src is set to data URI and allowed origin is not 
 
 it('connects and calls a function on the child worker when src is set to data URI', async () => {
   const response = await fetch(getWorkerFixtureUrl('webWorkerGeneral'));
-  const code = await response.text();
+  const code = (await response.text()).replace(
+    "importScripts('/penpal.js');",
+    `importScripts('${CHILD_SERVER}/penpal.js');`
+  );
 
   const worker = new Worker(
     `data:application/javascript,${encodeURIComponent(code)}`
@@ -130,7 +133,10 @@ it('connects and calls a function on the child iframe when src is set to an obje
 
 it('connects and calls a function on the child worker when src is set to an object URL', async () => {
   const response = await fetch(getWorkerFixtureUrl('webWorkerGeneral'));
-  const code = await response.text();
+  const code = (await response.text()).replace(
+    "importScripts('/penpal.js');",
+    `importScripts('${CHILD_SERVER}/penpal.js');`
+  );
   const blob = new Blob([code], { type: 'application/javascript' });
   const blobUrl = URL.createObjectURL(blob);
 

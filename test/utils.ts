@@ -56,6 +56,28 @@ export const getWorkerFixtureUrl = (workerName: string) => {
   return `/workers/${workerName}.js`;
 };
 
+export const expectPromiseToStayPending = async (
+  promise: Promise<unknown>,
+  waitTimeMs = 50
+) => {
+  let settled = false;
+
+  promise.then(
+    () => {
+      settled = true;
+    },
+    () => {
+      settled = true;
+    }
+  );
+
+  await new Promise((resolve) => {
+    setTimeout(resolve, waitTimeMs);
+  });
+
+  expect(settled).toBe(false);
+};
+
 /**
  * Asserts that the connection promise is never resolved or rejected. This can
  * happen, for example, when a target origin is valid but doesn't match the
@@ -65,17 +87,28 @@ export const expectNeverFulfilledIframeConnection = (
   connection: Connection,
   iframe: HTMLIFrameElement
 ) => {
-  const spy = jasmine.createSpy();
+  const spy = vi.fn();
 
   connection.promise.then(spy, spy);
 
-  return new Promise<void>((resolve) => {
-    iframe.addEventListener('load', function () {
-      // Give Penpal time to try to make a handshake.
-      setTimeout(() => {
-        expect(spy).not.toHaveBeenCalled();
+  const waitForLoad = () =>
+    new Promise<void>((resolve) => {
+      if (iframe.contentDocument?.readyState === 'complete') {
         resolve();
-      }, 100);
+        return;
+      }
+
+      iframe.addEventListener('load', () => resolve(), { once: true });
     });
-  });
+
+  return waitForLoad().then(
+    () =>
+      new Promise<void>((resolve) => {
+        // Give Penpal time to try to make a handshake.
+        setTimeout(() => {
+          expect(spy).not.toHaveBeenCalled();
+          resolve();
+        }, 200);
+      })
+  );
 };

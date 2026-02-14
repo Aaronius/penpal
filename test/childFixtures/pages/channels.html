@@ -1,67 +1,43 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
+<script src="/penpal.js"></script>
+<script src="/pages/_fixtureHelpers.js"></script>
+<script>
+  let channelBParent;
 
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="/penpal.js"></script>
-    <script>
-      let channelBParent;
+  const channelBMethods = {
+    getChannel() {
+      return 'B';
+    },
+    getChannelFromParent() {
+      return channelBParent.getChannel();
+    },
+  };
 
-      const channelBMessenger = new Penpal.WindowMessenger({
-        remoteWindow: window.parent,
-        allowedOrigins: ['*'],
-      });
+  PenpalFixture.connect({
+    channel: 'B',
+    methods: channelBMethods,
+    allowedOrigins: ['*'],
+    logLabel: 'Child Connection B',
+  }).promise.then((parent) => {
+    channelBParent = parent;
+  });
 
-      const channelBMethods = {
-        getChannel() {
-          return 'B';
-        },
-        getChannelFromParent() {
-          return channelBParent.getChannel();
-        },
-      };
+  let channelAParent;
 
-      Penpal.connect({
-        messenger: channelBMessenger,
-        channel: 'B',
-        methods: channelBMethods,
-        log: Penpal.debug('Child Connection B'),
-      }).promise.then((parent) => {
-        channelBParent = parent;
-      });
+  const channelAMethods = {
+    getChannel() {
+      return 'A';
+    },
+    getChannelFromParent() {
+      return channelAParent.getChannel();
+    },
+  };
 
-      let channelAParent;
-
-      const channelAMessenger = new Penpal.WindowMessenger({
-        remoteWindow: window.parent,
-        allowedOrigins: ['*'],
-      });
-
-      const channelAMethods = {
-        getChannel() {
-          return 'A';
-        },
-        getChannelFromParent() {
-          return channelAParent.getChannel();
-        },
-      };
-
-      Penpal.connect({
-        messenger: channelAMessenger,
-        channel: 'A',
-        methods: channelAMethods,
-        log: Penpal.debug('Child Connection A'),
-      }).promise.then((parent) => {
-        channelAParent = parent;
-      });
-    </script>
-  </body>
-</html>
+  PenpalFixture.connect({
+    channel: 'A',
+    methods: channelAMethods,
+    allowedOrigins: ['*'],
+    logLabel: 'Child Connection A',
+  }).promise.then((parent) => {
+    channelAParent = parent;
+  });
+</script>

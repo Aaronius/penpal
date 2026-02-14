@@ -26,7 +26,7 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/', 'lib/', 'cjs/'],
+    ignores: ['dist/', 'lib/', 'cjs/', 'test/childFixtures/vendor/**'],
   },
   {
     files: ['*.cjs'],
@@ -38,16 +38,43 @@ export default tseslint.config(
     },
   },
   {
-    files: ['test/types-test/**/*'],
+    files: ['test/types/**/*'],
     rules: {
       '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   {
-    files: ['scripts/**/*', 'karma.conf.cjs'],
+    files: ['scripts/**/*', 'vitest.browser.config.ts'],
     languageOptions: {
       ecmaVersion: ECMA_VERSION,
       globals: globals.node,
+    },
+    rules: {
+      'import/extensions': 'off',
+    },
+  },
+  {
+    files: ['test/childFixtures/workers/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.worker,
+        ...globals.serviceworker,
+        Penpal: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-empty-function': 'off',
+    },
+  },
+  {
+    files: ['test/childFixtures/pages/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        Penpal: 'readonly',
+        PenpalFixture: 'readonly',
+        PenpalLegacyFixture: 'readonly',
+      },
     },
   },
   // See https://www.npmjs.com/package/eslint-plugin-unused-imports

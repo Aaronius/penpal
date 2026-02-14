@@ -1,132 +1,108 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Test Iframe</title>
-  </head>
-  <body>
-    Test Iframe
+<script src="/penpal.js"></script>
+<script src="/pages/_fixtureHelpers.js"></script>
+<script>
+  let parentAPI;
+  let parentReturnValue;
 
-    <script>
-      window.onerror = function () {
-        console.log.apply(console, arguments);
-      };
-    </script>
-    <script src="/penpal.js"></script>
-    <script>
-      let parentAPI;
-      let parentReturnValue;
-
-      const messenger = new Penpal.WindowMessenger({
-        remoteWindow: window.parent,
-        allowedOrigins: ['*'],
+  const methods = {
+    multiply(num1, num2) {
+      return num1 * num2;
+    },
+    multiplyAsync(num1, num2) {
+      return new Promise(function (resolve) {
+        resolve(num1 * num2);
       });
-
-      const methods = {
-        multiply(num1, num2) {
-          return num1 * num2;
-        },
-        multiplyAsync(num1, num2) {
-          return new Promise(function (resolve) {
-            resolve(num1 * num2);
-          });
-        },
-        double(numbersArray) {
-          const resultArray = numbersArray.map((num) => num * 2);
-          return new Penpal.Reply(resultArray, {
-            transferables: [resultArray.buffer],
-          });
-        },
-        multiplyWithPromisedReplyInstanceAndPromisedReturnValue(num1, num2) {
-          return Promise.resolve(
-            new Penpal.Reply(Promise.resolve(num1 * num2))
-          );
-        },
-        addUsingParent() {
-          return parentAPI.add(3, 6).then(function (value) {
-            parentReturnValue = value;
-          });
-        },
-        getParentReturnValue() {
-          return parentReturnValue;
-        },
-        getPromiseRejectedWithString() {
-          return Promise.reject('test error string');
-        },
-        getPromiseRejectedWithObject() {
-          return Promise.reject({ a: 'b' });
-        },
-        getPromiseRejectedWithUndefined() {
-          return Promise.reject();
-        },
-        getPromiseRejectedWithError() {
-          // Using TypeError instead of Error just to make sure the "name" property
-          // on the error instance gets properly serialized.
-          return Promise.reject(new TypeError('test error object'));
-        },
-        throwError() {
-          throw new Error('Oh nos!');
-        },
-        getUnclonableValue() {
-          return window;
-        },
-        reload() {
-          window.location.reload(true);
-        },
-        navigate(to) {
-          window.location.href = to;
-        },
-        apply() {
-          return 'apply result';
-        },
-        call() {
-          return 'call result';
-        },
-        bind() {
-          return 'bind result';
-        },
-        nested: {
-          oneLevel(input) {
-            return input;
-          },
-          by: {
-            twoLevels(input) {
-              return input;
-            },
-          },
-          apply() {
-            return 'apply result';
-          },
-        },
-        neverResolve() {
-          return new Promise(() => {});
-        },
-        ['with.period']() {
-          return 'success';
-        },
-      };
-
-      Penpal.connect({
-        messenger,
-        methods: methods,
-        log: Penpal.debug('Child'),
-      }).promise.then((parent) => {
-        parentAPI = parent;
+    },
+    double(numbersArray) {
+      const resultArray = numbersArray.map((num) => num * 2);
+      return new Penpal.Reply(resultArray, {
+        transferables: [resultArray.buffer],
       });
-
-      window.addEventListener('message', async (event) => {
-        if (event.data === 'addUsingParent') {
-          try {
-            const result = await parentAPI.add(3, 6);
-            window.parent.postMessage({ addUsingParentResult: result }, '*');
-          } catch (error) {
-            console.log(error);
-            window.parent.postMessage(
-              { addUsingParentResultErrorCode: error.code },
-              '*'
-            );
-          }
-        }
+    },
+    multiplyWithPromisedReplyInstanceAndPromisedReturnValue(num1, num2) {
+      return Promise.resolve(new Penpal.Reply(Promise.resolve(num1 * num2)));
+    },
+    addUsingParent() {
+      return parentAPI.add(3, 6).then(function (value) {
+        parentReturnValue = value;
       });
-    </script>
-  </body>
-</html>
+    },
+    getParentReturnValue() {
+      return parentReturnValue;
+    },
+    getPromiseRejectedWithString() {
+      return Promise.reject('test error string');
+    },
+    getPromiseRejectedWithObject() {
+      return Promise.reject({ a: 'b' });
+    },
+    getPromiseRejectedWithUndefined() {
+      return Promise.reject();
+    },
+    getPromiseRejectedWithError() {
+      return Promise.reject(new TypeError('test error object'));
+    },
+    throwError() {
+      throw new Error('Oh nos!');
+    },
+    getUnclonableValue() {
+      return window;
+    },
+    reload() {
+      window.location.reload(true);
+    },
+    navigate(to) {
+      window.location.href = to;
+    },
+    apply() {
+      return 'apply result';
+    },
+    call() {
+      return 'call result';
+    },
+    bind() {
+      return 'bind result';
+    },
+    nested: {
+      oneLevel(input) {
+        return input;
+      },
+      by: {
+        twoLevels(input) {
+          return input;
+        },
+      },
+      apply() {
+        return 'apply result';
+      },
+    },
+    neverResolve() {
+      return new Promise(() => {});
+    },
+    ['with.period']() {
+      return 'success';
+    },
+  };
+
+  PenpalFixture.connect({
+    methods,
+    allowedOrigins: ['*'],
+  }).promise.then((parent) => {
+    parentAPI = parent;
+  });
+
+  window.addEventListener('message', async (event) => {
+    if (event.data === 'addUsingParent') {
+      try {
+        const result = await parentAPI.add(3, 6);
+        window.parent.postMessage({ addUsingParentResult: result }, '*');
+      } catch (error) {
+        console.log(error);
+        window.parent.postMessage(
+          { addUsingParentResultErrorCode: error.code },
+          '*'
+        );
+      }
+    }
+  });
+</script>
