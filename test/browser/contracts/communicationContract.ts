@@ -1,11 +1,11 @@
-import { CallOptions } from '../../src/index.js';
+import { CallOptions } from '../../../src/index.js';
 import type {
   Methods,
   PenpalError,
   RemoteProxy,
   Connection,
-} from '../../src/index.js';
-import type FixtureMethods from '../childFixtures/types/FixtureMethods.js';
+} from '../../../src/index.js';
+import type FixtureMethods from '../fixtures/types/FixtureMethods.js';
 
 type CreateConnection = (options?: {
   methods?: Methods;

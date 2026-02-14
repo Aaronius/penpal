@@ -1,8 +1,8 @@
 import { CHILD_SERVER } from './constants.js';
 import { createAndAddIframe, getPageFixtureUrl } from './utils.js';
-import { connect, WindowMessenger } from '../src/index.js';
-import type { Methods, RemoteProxy } from '../src/index.js';
-import type FixtureMethods from './childFixtures/types/FixtureMethods.js';
+import { connect, WindowMessenger } from '../../src/index.js';
+import type { Methods, RemoteProxy } from '../../src/index.js';
+import type FixtureMethods from './fixtures/types/FixtureMethods.js';
 
 type CreateWindowConnectionOptions = {
   remoteWindow: Window;

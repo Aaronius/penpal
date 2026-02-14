@@ -3,7 +3,7 @@ import {
   createPortAndConnection,
   createWorkerAndConnection,
 } from './utils.js';
-import FixtureMethods from './childFixtures/types/FixtureMethods.js';
+import FixtureMethods from './fixtures/types/FixtureMethods.js';
 
 describe('connection management: lifecycle', () => {
   const variants = [

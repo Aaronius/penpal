@@ -1,5 +1,5 @@
-import type { Methods } from '../../src/index.js';
-import FixtureMethods from '../childFixtures/types/FixtureMethods.js';
+import type { Methods } from '../../../src/index.js';
+import FixtureMethods from '../fixtures/types/FixtureMethods.js';
 import { runCommunicationContract } from '../contracts/communicationContract.js';
 import { createBackwardCompatibilityIframeAndConnection } from './utils.js';
 

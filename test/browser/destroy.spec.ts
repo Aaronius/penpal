@@ -13,9 +13,9 @@ import {
   PenpalError,
   PortMessenger,
   WindowMessenger,
-} from '../src/index.js';
-import FixtureMethods from './childFixtures/types/FixtureMethods.js';
-import WorkerMessenger from '../src/messengers/WorkerMessenger.js';
+} from '../../src/index.js';
+import FixtureMethods from './fixtures/types/FixtureMethods.js';
+import WorkerMessenger from '../../src/messengers/WorkerMessenger.js';
 
 describe('parent calling destroy()', () => {
   const variants = [

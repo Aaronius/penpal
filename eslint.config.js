@@ -26,7 +26,7 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/', 'lib/', 'cjs/', 'test/childFixtures/vendor/**'],
+    ignores: ['dist/', 'lib/', 'cjs/', 'test/browser/fixtures/vendor/**'],
   },
   {
     files: ['*.cjs'],
@@ -58,7 +58,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['test/childFixtures/workers/**/*.js'],
+    files: ['test/browser/fixtures/workers/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.worker,
@@ -72,7 +72,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['test/childFixtures/shared/**/*.js'],
+    files: ['test/browser/fixtures/shared/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -82,7 +82,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['test/childFixtures/pages/**/*.js'],
+    files: ['test/browser/fixtures/pages/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.browser,

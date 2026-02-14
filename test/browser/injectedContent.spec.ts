@@ -1,6 +1,6 @@
 import { CHILD_SERVER } from './constants.js';
-import { connect, WorkerMessenger, WindowMessenger } from '../src/index.js';
-import FixtureMethods from './childFixtures/types/FixtureMethods.js';
+import { connect, WorkerMessenger, WindowMessenger } from '../../src/index.js';
+import FixtureMethods from './fixtures/types/FixtureMethods.js';
 import { expectConnectionToTimeout, getWorkerFixtureUrl } from './utils.js';
 
 const htmlSrc = `

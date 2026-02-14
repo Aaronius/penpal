@@ -13,9 +13,9 @@ Thanks for contributing to Penpal.
 
 Penpal uses Vitest Browser Mode with Playwright for browser-based tests.
 
-- Browser suites live in `test/**/*.spec.ts`.
+- Browser suites live in `test/browser/**/*.spec.ts`.
 - Unit suites live in `test/unit/**/*.spec.ts`.
-- File-protocol tests live in `test/fileProtocol` and are run via `scripts/testFileProtocol.js`.
+- File-protocol tests live in `test/browser/fileProtocol` and are run via `scripts/testFileProtocol.js`.
 - Type tests live in `test/types` and run via `tsc --noEmit`.
 
 By default, `npm test` runs unit tests and Chromium coverage, which includes:

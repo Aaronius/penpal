@@ -1,14 +1,14 @@
 import { CHILD_SERVER } from './constants.js';
 import { waitForMessageFromSource } from './asyncUtils.js';
 import { createIframeConnection } from './connectionManagementHelpers.js';
-import { PenpalError } from '../src/index.js';
-import FixtureMethods from './childFixtures/types/FixtureMethods.js';
+import { PenpalError } from '../../src/index.js';
+import FixtureMethods from './fixtures/types/FixtureMethods.js';
 import {
   isAck1Message,
   isAck2Message,
   isMessage,
   isSynMessage,
-} from '../src/guards.js';
+} from '../../src/guards.js';
 
 describe('connection management: reconnect', () => {
   it('reconnects after child reloads', async () => {

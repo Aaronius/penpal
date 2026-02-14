@@ -1,5 +1,5 @@
-import { connect, WindowMessenger } from '../../src/index.js';
-import type { Methods } from '../../src/index.js';
+import { connect, WindowMessenger } from '../../../src/index.js';
+import type { Methods } from '../../../src/index.js';
 import { CHILD_SERVER } from '../constants.js';
 import { createAndAddIframe } from '../utils.js';
 

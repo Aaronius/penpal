@@ -1,4 +1,4 @@
-import { connect, PortMessenger } from '../src/index.js';
+import { connect, PortMessenger } from '../../src/index.js';
 import { CHILD_SERVER } from './constants.js';
 import { createIframeConnection } from './connectionManagementHelpers.js';
 import {

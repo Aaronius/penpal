@@ -9,9 +9,9 @@ import {
   unregisterAllServiceWorkers,
   waitForServiceWorkerController,
 } from './serviceWorkerTestUtils.js';
-import { connect, PortMessenger } from '../src/index.js';
-import type { RemoteProxy } from '../src/index.js';
-import FixtureMethods from './childFixtures/types/FixtureMethods.js';
+import { connect, PortMessenger } from '../../src/index.js';
+import type { RemoteProxy } from '../../src/index.js';
+import FixtureMethods from './fixtures/types/FixtureMethods.js';
 
 const createParentMethods = () => {
   return {

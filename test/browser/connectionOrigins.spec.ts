@@ -4,7 +4,7 @@ import {
   createIframeConnection,
   getRedirectPageUrl,
 } from './connectionManagementHelpers.js';
-import type FixtureMethods from './childFixtures/types/FixtureMethods.js';
+import type FixtureMethods from './fixtures/types/FixtureMethods.js';
 
 describe('connection management: origins', () => {
   const timeout = 100;

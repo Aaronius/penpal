@@ -23,8 +23,9 @@ if (!(browserTarget in launchers)) {
   );
 }
 
-const parentUrl = pathToFileURL(path.resolve('test/fileProtocol/parent.html'))
-  .href;
+const parentUrl = pathToFileURL(
+  path.resolve('test/browser/fileProtocol/parent.html')
+).href;
 const expectedText = '3 X 2 = 6';
 const timeoutMs = 15000;
 

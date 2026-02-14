@@ -1,6 +1,6 @@
 import { CHILD_SERVER } from '../constants.js';
-import type { PenpalError } from '../../src/index.js';
-import FixtureMethods from '../childFixtures/types/FixtureMethods.js';
+import type { PenpalError } from '../../../src/index.js';
+import FixtureMethods from '../fixtures/types/FixtureMethods.js';
 import { createBackwardCompatibilityIframeAndConnection } from './utils.js';
 
 describe('BACKWARD COMPATIBILITY: connection management lifecycle', () => {

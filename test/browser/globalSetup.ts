@@ -58,7 +58,7 @@ export default async function globalSetup() {
         clean: false,
       });
 
-      const serveWorkers = serveStatic('test/childFixtures/workers');
+      const serveWorkers = serveStatic('test/browser/fixtures/workers');
 
       const app = connect()
         .use('/serviceWorker.js', (req, res, next) => {
@@ -67,7 +67,7 @@ export default async function globalSetup() {
           serveWorkers(req, res, next);
         })
         .use(serveStatic('dist'))
-        .use(serveStatic('test/childFixtures'))
+        .use(serveStatic('test/browser/fixtures'))
         .use('/never-respond', () => {
           // Intentionally never respond.
         });

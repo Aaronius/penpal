@@ -12,11 +12,11 @@ import {
   PenpalError,
   PortMessenger,
   WindowMessenger,
-} from '../src/index.js';
-import type { RemoteProxy } from '../src/index.js';
+} from '../../src/index.js';
+import type { RemoteProxy } from '../../src/index.js';
 import { CHILD_SERVER } from './constants.js';
-import FixtureMethods from './childFixtures/types/FixtureMethods.js';
-import WorkerMessenger from '../src/messengers/WorkerMessenger.js';
+import FixtureMethods from './fixtures/types/FixtureMethods.js';
+import WorkerMessenger from '../../src/messengers/WorkerMessenger.js';
 
 type ChannelParentMethods = {
   getChannel(): string;

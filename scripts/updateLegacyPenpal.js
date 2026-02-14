@@ -29,7 +29,7 @@ try {
 
   const sourceFile = path.join(tmpDir, 'package', 'dist', 'penpal.min.js');
   const destinationFile = path.resolve(
-    'test/childFixtures/vendor/penpal-v6.min.js'
+    'test/browser/fixtures/vendor/penpal-v6.min.js'
   );
 
   fs.mkdirSync(path.dirname(destinationFile), { recursive: true });

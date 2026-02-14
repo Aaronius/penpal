@@ -8,7 +8,7 @@ const isEdge = browserTarget === 'edge';
 const browserName = isEdge ? 'chromium' : browserTarget;
 const testInclude = process.env.TEST_GLOB
   ? [process.env.TEST_GLOB]
-  : ['test/**/*.spec.ts'];
+  : ['test/browser/**/*.spec.ts'];
 
 if (!['chromium', 'firefox', 'webkit'].includes(browserName)) {
   throw new Error(
@@ -16,7 +16,7 @@ if (!['chromium', 'firefox', 'webkit'].includes(browserName)) {
   );
 }
 
-const fixtureRoot = path.resolve('test/childFixtures');
+const fixtureRoot = path.resolve('test/browser/fixtures');
 const workerRoot = path.join(fixtureRoot, 'workers');
 const distRoot = path.resolve('dist');
 
@@ -58,8 +58,8 @@ export default defineConfig({
     hookTimeout: 15000,
     include: testInclude,
     exclude: ['test/types/**', 'test/unit/**'],
-    setupFiles: ['./test/setup.ts'],
-    globalSetup: ['./test/globalSetup.ts'],
+    setupFiles: ['./test/browser/setup.ts'],
+    globalSetup: ['./test/browser/globalSetup.ts'],
     browser: {
       enabled: true,
       headless: true,

@@ -1,6 +1,6 @@
 import { CHILD_SERVER } from '../constants.js';
 import { expectConnectionToTimeout } from '../utils.js';
-import FixtureMethods from '../childFixtures/types/FixtureMethods.js';
+import FixtureMethods from '../fixtures/types/FixtureMethods.js';
 import { createBackwardCompatibilityIframeAndConnection } from './utils.js';
 
 const getAlternateFixtureOrigin = () => {

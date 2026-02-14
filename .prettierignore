@@ -2,4 +2,4 @@ dist
 lib
 cjs
 package-lock.json
-test/childFixtures/vendor/**
+test/browser/fixtures/vendor/**

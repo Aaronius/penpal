@@ -1,4 +1,4 @@
-import { Reply } from '../../../src/index.js';
+import { Reply } from '../../../../src/index.js';
 
 type FixtureMethods = {
   multiply(num1: number, num2: number): number;

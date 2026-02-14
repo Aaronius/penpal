@@ -1,6 +1,6 @@
 import { waitForMessageFromSource } from '../asyncUtils.js';
-import FixtureMethods from '../childFixtures/types/FixtureMethods.js';
-import { isDeprecatedMessage } from '../../src/backwardCompatibility.js';
+import FixtureMethods from '../fixtures/types/FixtureMethods.js';
+import { isDeprecatedMessage } from '../../../src/backwardCompatibility.js';
 import { createBackwardCompatibilityIframeAndConnection } from './utils.js';
 
 describe('BACKWARD COMPATIBILITY: connection management reconnect', () => {
