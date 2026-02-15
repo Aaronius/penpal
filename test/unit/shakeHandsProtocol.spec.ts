@@ -163,10 +163,16 @@ describe('shakeHands protocol behavior', () => {
       methodPaths: [],
     });
 
-    await expect(handshakePromise).rejects.toMatchObject({
+    const error = await handshakePromise.catch((caughtError) => {
+      return caughtError as PenpalError;
+    });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error).toMatchObject({
+      name: 'PenpalError',
       code: 'TRANSMISSION_FAILED',
       message: 'ack2 failed',
-    } as PenpalError);
+    });
 
     expect(connectCallHandlerMock).not.toHaveBeenCalled();
     expect(connectRemoteProxyMock).not.toHaveBeenCalled();
@@ -190,6 +196,14 @@ describe('shakeHands protocol behavior', () => {
     });
 
     await vi.advanceTimersByTimeAsync(50);
+
+    await expect(caughtErrorPromise).resolves.toEqual(
+      expect.objectContaining({
+        name: 'PenpalError',
+        code: 'CONNECTION_TIMEOUT',
+        message: 'Connection timed out after 50ms',
+      })
+    );
 
     await expect(caughtErrorPromise).resolves.toMatchObject({
       code: 'CONNECTION_TIMEOUT',

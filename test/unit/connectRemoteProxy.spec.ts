@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import CallOptions from '../../src/CallOptions.js';
 import connectRemoteProxy from '../../src/connectRemoteProxy.js';
 import namespace from '../../src/namespace.js';
+import PenpalError from '../../src/PenpalError.js';
 import type { CallMessage } from '../../src/types.js';
 import { MockMessenger } from './mockMessenger.js';
 
@@ -102,9 +103,15 @@ describe('connectRemoteProxy', () => {
 
     const resultPromise = proxy.neverResolve(new CallOptions({ timeout: 0 }));
 
-    await expect(resultPromise).rejects.toMatchObject({
-      code: 'METHOD_CALL_TIMEOUT',
+    const error = await resultPromise.catch((caughtError) => {
+      return caughtError as PenpalError;
     });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error.code).toBe('METHOD_CALL_TIMEOUT');
+    expect(error.message).toBe(
+      'Method call neverResolve() timed out after 0ms'
+    );
 
     destroy();
   });
@@ -158,9 +165,15 @@ describe('connectRemoteProxy', () => {
 
     destroy();
 
-    await expect(resultPromise).rejects.toMatchObject({
-      code: 'CONNECTION_DESTROYED',
+    const error = await resultPromise.catch((caughtError) => {
+      return caughtError as PenpalError;
     });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error.code).toBe('CONNECTION_DESTROYED');
+    expect(error.message).toBe(
+      'Method call neverResolve() failed due to destroyed connection'
+    );
   });
 
   it('clears method call timeout after receiving REPLY', async () => {

@@ -1,5 +1,4 @@
-import { CallOptions } from '../../../src/index.js';
-import type { PenpalError } from '../../../src/index.js';
+import { CallOptions, PenpalError } from '../../../src/index.js';
 import type FixtureMethods from '../fixtures/types/FixtureMethods.js';
 import type { CreateConnection } from './contractUtils.js';
 import { withConnection } from './contractUtils.js';
@@ -26,7 +25,7 @@ export const runMethodCallLifecycleContract = ({
           return caughtError as PenpalError;
         });
 
-        expect(error).toEqual(expect.any(Error));
+        expect(error).toEqual(expect.any(PenpalError));
         expect(error.message).toBe(
           'Method call neverResolve() timed out after 0ms'
         );
@@ -44,7 +43,7 @@ export const runMethodCallLifecycleContract = ({
           return caughtError as PenpalError;
         });
 
-        expect(error).toEqual(expect.any(Error));
+        expect(error).toEqual(expect.any(PenpalError));
         expect(error.message).toBe(
           'Method call neverResolve() failed due to destroyed connection'
         );

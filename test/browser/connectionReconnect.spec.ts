@@ -51,9 +51,12 @@ describe('connection management: reconnect', () => {
     await ackPromise;
 
     await expect(child.methodNotInGeneralPage()).resolves.toBe('success');
-    await expect(child.multiply(2, 4)).rejects.toMatchObject({
-      code: 'METHOD_NOT_FOUND',
+    const error = await child.multiply(2, 4).catch((caughtError) => {
+      return caughtError as PenpalError;
     });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error.code).toBe('METHOD_NOT_FOUND');
 
     connection.destroy();
   });

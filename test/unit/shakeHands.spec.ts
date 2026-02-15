@@ -12,18 +12,22 @@ describe('shakeHands', () => {
       throw new Error('postMessage failed');
     };
 
-    await expect(
-      shakeHands({
-        messenger,
-        methods: {},
-        timeout: undefined,
-        channel: undefined,
-        log: undefined,
-      })
-    ).rejects.toMatchObject({
+    const error = await shakeHands({
+      messenger,
+      methods: {},
+      timeout: undefined,
+      channel: undefined,
+      log: undefined,
+    }).catch((caughtError) => {
+      return caughtError as PenpalError;
+    });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error).toMatchObject({
+      name: 'PenpalError',
       code: 'TRANSMISSION_FAILED',
       message: 'postMessage failed',
-    } as PenpalError);
+    });
   });
 
   it('rejects with TRANSMISSION_FAILED when sending ACK1 fails', async () => {
@@ -49,9 +53,15 @@ describe('shakeHands', () => {
       participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
     });
 
-    await expect(handshakePromise).rejects.toMatchObject({
+    const error = await handshakePromise.catch((caughtError) => {
+      return caughtError as PenpalError;
+    });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error).toMatchObject({
+      name: 'PenpalError',
       code: 'TRANSMISSION_FAILED',
       message: 'ack1 failed',
-    } as PenpalError);
+    });
   });
 });
