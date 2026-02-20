@@ -43,9 +43,9 @@ describe('PortMessenger', () => {
       participantId: 'participant',
     });
 
-    await waitForTick();
-
-    expect(callback).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
     expect(callback.mock.calls[0][0]).toMatchObject({
       type: 'SYN',
       participantId: 'participant',
