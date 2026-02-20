@@ -26,6 +26,9 @@ export const createIframeAndConnection = <TMethods extends Methods>({
   pageName?: string;
   timeout?: number;
 } = {}) => {
+  // For iframe tests, the remote side is provided by the fixture page
+  // (e.g. pages/general.html), so this helper only needs to create the
+  // parent-side connection.
   const iframe = createAndAddIframe(getPageFixtureUrl(pageName, CHILD_SERVER));
   const messenger = new WindowMessenger({
     remoteWindow: iframe.contentWindow!,
@@ -49,6 +52,8 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   workerName?: string;
   timeout?: number;
 } = {}) => {
+  // For worker tests, the worker fixture already initializes Penpal and
+  // exposes methods, so this helper only creates the parent-side connection.
   const worker = new Worker(getWorkerFixtureUrl(workerName));
   const messenger = new WorkerMessenger({
     worker,
@@ -82,6 +87,10 @@ export const createPortAndConnection = <TMethods extends Methods>({
     current?: Promise<Record<string, unknown>>;
   } = {};
 
+  // Unlike iframe/worker helpers, a MessageChannel has no fixture-backed
+  // "remote app". We must bootstrap both sides in-process: port1 is the
+  // parent-side connection returned to the test, and port2 acts as the
+  // remote-side connection with fixture-equivalent methods.
   const remoteMethods = window.PenpalGeneralFixtureMethods.createGeneralMethods(
     {
       getParentApi: () => parentProxyPromiseRef.current!,
