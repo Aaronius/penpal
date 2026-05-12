@@ -438,7 +438,25 @@ If you'd like to see running examples of the different types of usage, check out
 
 ## Destroying the Connection
 
-At any point in time, call `connection.destroy()` to destroy the connection so that event listeners can be removed and objects can be properly garbage collected.
+At any point in time, call `connection.destroy()` to destroy the connection so that event listeners can be removed and objects can be properly garbage collected. If the connection is destroyed before it has been established, the promise found at `connection.promise` will be rejected with a `CONNECTION_DESTROYED` error.
+
+```javascript
+import { connect, ErrorCode } from 'penpal';
+
+const connection = connect({
+  messenger,
+});
+
+connection.destroy();
+
+try {
+  await connection.promise;
+} catch (error) {
+  if (error.code === ErrorCode.ConnectionDestroyed) {
+    // Connection failed because it was destroyed.
+  }
+}
+```
 
 ## Debugging
 
@@ -664,7 +682,7 @@ Penpal will throw or reject promises with errors in certain situations. Each err
 
 `CONNECTION_DESTROYED`
 
-This error will be thrown when attempting to call a method and the connection was previously destroyed.
+This error will be thrown when attempting to call a method and the connection was previously destroyed. The promise found at `connection.promise` will also be rejected with this error if the connection is destroyed before it has been established.
 
 `CONNECTION_TIMEOUT`
 
@@ -805,7 +823,7 @@ A promise which will be resolved once communication has been established. The pr
 
 `destroy: () => void`
 
-A method that, when called, will disconnect any messaging channels, event listeners, etc. You may call this even before a connection has been established. See [Destroying the Connection](#destroying-the-connection) for more information.
+A method that, when called, will disconnect any messaging channels, event listeners, etc. You may call this even before a connection has been established. If called before a connection has been established, the promise found at `connection.promise` will be rejected with a `CONNECTION_DESTROYED` error. See [Destroying the Connection](#destroying-the-connection) for more information.
 
 ---
 

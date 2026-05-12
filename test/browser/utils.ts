@@ -115,6 +115,10 @@ export const createPortAndConnection = <TMethods extends Methods>({
     }),
     methods: remoteMethods,
   });
+  void remoteConnection.promise.catch(() => {
+    // Remote-side destruction is expected when the parent-side test connection
+    // is destroyed before both sides finish establishing the connection.
+  });
 
   parentProxyPromiseRef.current = remoteConnection.promise as Promise<
     Record<string, unknown>
@@ -143,28 +147,6 @@ export const getPageFixtureUrl = (pageName: string, server = CHILD_SERVER) => {
 
 export const getWorkerFixtureUrl = (workerName: string) => {
   return `/workers/${workerName}.js`;
-};
-
-export const expectPromiseToStayPending = async (
-  promise: Promise<unknown>,
-  waitTimeMs = 50
-) => {
-  let settled = false;
-
-  promise.then(
-    () => {
-      settled = true;
-    },
-    () => {
-      settled = true;
-    }
-  );
-
-  await new Promise((resolve) => {
-    setTimeout(resolve, waitTimeMs);
-  });
-
-  expect(settled).toBe(false);
 };
 
 export const expectConnectionToTimeout = async (connection: Connection) => {

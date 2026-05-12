@@ -63,6 +63,12 @@ const createMessenger = (): TestMessenger => {
   return messenger;
 };
 
+const createPendingPromise = () => {
+  return new Promise(() => {
+    // Intentionally left pending.
+  });
+};
+
 describe('connect', () => {
   beforeEach(() => {
     shakeHandsMock.mockReset();
@@ -132,6 +138,36 @@ describe('connect', () => {
     expect(messenger.destroySpy).toHaveBeenCalledTimes(1);
   });
 
+  it('rejects pending connection promise when destroy() is called', async () => {
+    const messenger = createMessenger();
+
+    shakeHandsMock.mockReturnValue(createPendingPromise());
+
+    const connection = connect({
+      messenger,
+      channel: 'channel-c',
+    });
+
+    connection.destroy();
+
+    const error = await connection.promise.catch((caughtError) => {
+      return caughtError as PenpalError;
+    });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error).toMatchObject({
+      name: 'PenpalError',
+      code: 'CONNECTION_DESTROYED',
+      message: 'Connection destroyed',
+    });
+    expect(messenger.sentMessages).toContainEqual({
+      namespace,
+      channel: 'channel-c',
+      type: 'DESTROY',
+    });
+    expect(messenger.destroySpy).toHaveBeenCalledTimes(1);
+  });
+
   it('does not send DESTROY when remote sends DESTROY first', async () => {
     const messenger = createMessenger();
     const remoteDestroy = vi.fn();
@@ -159,6 +195,36 @@ describe('connect', () => {
     expect(messenger.sentMessages).toHaveLength(0);
 
     connection.destroy();
+  });
+
+  it('rejects pending connection promise when remote sends DESTROY first', async () => {
+    const messenger = createMessenger();
+
+    shakeHandsMock.mockReturnValue(createPendingPromise());
+
+    const connection = connect({
+      messenger,
+      channel: 'channel-d',
+    });
+
+    messenger.emit({
+      namespace,
+      channel: 'channel-d',
+      type: 'DESTROY',
+    });
+
+    const error = await connection.promise.catch((caughtError) => {
+      return caughtError as PenpalError;
+    });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error).toMatchObject({
+      name: 'PenpalError',
+      code: 'CONNECTION_DESTROYED',
+      message: 'Connection destroyed',
+    });
+    expect(messenger.sentMessages).toHaveLength(0);
+    expect(messenger.destroySpy).toHaveBeenCalledTimes(1);
   });
 
   it('tears down connection state if handshake fails', async () => {

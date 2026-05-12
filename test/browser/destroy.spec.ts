@@ -4,7 +4,6 @@ import {
   createIframeAndConnection,
   createPortAndConnection,
   createWorkerAndConnection,
-  expectPromiseToStayPending,
   getPageFixtureUrl,
   getWorkerFixtureUrl,
 } from './utils.js';
@@ -36,12 +35,20 @@ describe('parent calling destroy()', () => {
   for (const variant of variants) {
     const { childType, createConnection } = variant;
     describe(`when child is ${childType}`, () => {
-      // Issue #51
-      it('does not resolve or reject promise', async () => {
+      it('rejects the connection promise when destroyed before establishment', async () => {
         const connection = createConnection<FixtureMethods>();
         connection.destroy();
 
-        await expectPromiseToStayPending(connection.promise);
+        const error = await connection.promise.catch((caughtError) => {
+          return caughtError as PenpalError;
+        });
+
+        expect(error).toEqual(expect.any(PenpalError));
+        expect(error).toMatchObject({
+          name: 'PenpalError',
+          code: 'CONNECTION_DESTROYED',
+          message: 'Connection destroyed',
+        });
       });
 
       it('prevents method calls from being sent', async () => {

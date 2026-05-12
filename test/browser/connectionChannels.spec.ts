@@ -206,6 +206,7 @@ describe('connection management: channels', () => {
       expect(error).toEqual(expect.any(PenpalError));
       expect((error as PenpalError).code).toBe('INVALID_ARGUMENT');
     } finally {
+      await connection.promise.catch(() => undefined);
       connection.destroy();
     }
   });

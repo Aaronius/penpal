@@ -1,10 +1,18 @@
-import { DestroyMessage, Connection, Log, Message, Methods } from './types.js';
+import {
+  DestroyMessage,
+  Connection,
+  Log,
+  Message,
+  Methods,
+  RemoteProxy,
+} from './types.js';
 import PenpalError from './PenpalError.js';
 import Messenger from './messengers/Messenger.js';
 import shakeHands from './shakeHands.js';
 import { isDestroyMessage, isMessage } from './guards.js';
 import once from './once.js';
 import namespace from './namespace.js';
+import getPromiseWithResolvers from './getPromiseWithResolvers.js';
 
 type Options = {
   /**
@@ -35,6 +43,10 @@ type Options = {
 
 const usedMessengers = new WeakSet<Messenger>();
 
+const getConnectionDestroyedError = () => {
+  return new PenpalError('CONNECTION_DESTROYED', 'Connection destroyed');
+};
+
 /**
  * Attempts to establish communication with the remote.
  */
@@ -58,67 +70,87 @@ const connect = <TMethods extends Methods>({
 
   usedMessengers.add(messenger);
 
-  const connectionDestroyedHandlers: (() => void)[] = [messenger.destroy];
+  const connectionPromise = getPromiseWithResolvers<
+    RemoteProxy<TMethods>,
+    PenpalError
+  >();
+  let isConnectionDestroyed = false;
+  let destroyHandshake: (() => void) | undefined;
 
-  const destroyConnection = once((notifyOtherParticipant: boolean) => {
-    if (notifyOtherParticipant) {
-      const destroyMessage: DestroyMessage = {
-        namespace,
-        channel,
-        type: 'DESTROY',
-      };
+  const sendDestroyMessage = () => {
+    const destroyMessage: DestroyMessage = {
+      namespace,
+      channel,
+      type: 'DESTROY',
+    };
 
-      try {
-        messenger.sendMessage(destroyMessage);
-      } catch (_) {
-        // We do our best to notify the other participant of the connection, but
-        // if there's an error in doing so (e.g., maybe the handshake hasn't
-        // completed and a messenger can't send the message), it's probably not
-        // worth bothering the consumer with an error.
+    try {
+      messenger.sendMessage(destroyMessage);
+    } catch (_) {
+      // We do our best to notify the other participant of the connection,
+      // but if there's an error in doing so (e.g., maybe the handshake
+      // hasn't completed and a messenger can't send the message), it's
+      // probably not worth bothering the consumer with an error.
+    }
+  };
+
+  const destroyConnection = once(
+    (
+      connectionPromiseRejection: PenpalError,
+      notifyOtherParticipant: boolean
+    ) => {
+      isConnectionDestroyed = true;
+
+      if (notifyOtherParticipant) {
+        sendDestroyMessage();
       }
-    }
 
-    for (const connectionDestroyedHandler of connectionDestroyedHandlers) {
-      connectionDestroyedHandler();
-    }
+      messenger.destroy();
+      destroyHandshake?.();
 
-    log?.('Connection destroyed');
-  });
+      connectionPromise.reject(connectionPromiseRejection);
+
+      log?.('Connection destroyed');
+    }
+  );
 
   const validateReceivedMessage = (data: unknown): data is Message => {
     return isMessage(data) && data.channel === channel;
   };
 
-  const promise = (async () => {
+  void (async () => {
     try {
       messenger.initialize({ log, validateReceivedMessage });
       messenger.addMessageHandler((message) => {
         if (isDestroyMessage(message)) {
-          destroyConnection(false);
+          destroyConnection(getConnectionDestroyedError(), false);
         }
       });
 
-      const { remoteProxy, destroy } = await shakeHands<TMethods>({
+      const handshake = await shakeHands<TMethods>({
         messenger,
         methods,
         timeout,
         channel,
         log,
       });
-      connectionDestroyedHandlers.push(destroy);
-      return remoteProxy;
+
+      if (isConnectionDestroyed) {
+        handshake.destroy();
+        return;
+      }
+
+      destroyHandshake = handshake.destroy;
+      connectionPromise.resolve(handshake.remoteProxy);
     } catch (error) {
-      destroyConnection(true);
-      throw error as PenpalError;
+      destroyConnection(error as PenpalError, true);
     }
   })();
 
   return {
-    promise,
-    // Why we don't reject the connection promise when consumer calls destroy():
-    // https://github.com/Aaronius/penpal/issues/51
+    promise: connectionPromise.promise,
     destroy: () => {
-      destroyConnection(true);
+      destroyConnection(getConnectionDestroyedError(), true);
     },
   };
 };
