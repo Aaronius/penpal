@@ -12,7 +12,6 @@ import shakeHands from './shakeHands.js';
 import { isDestroyMessage, isMessage } from './guards.js';
 import once from './once.js';
 import namespace from './namespace.js';
-import getPromiseWithResolvers from './getPromiseWithResolvers.js';
 
 type Options = {
   /**
@@ -70,10 +69,7 @@ const connect = <TMethods extends Methods>({
 
   usedMessengers.add(messenger);
 
-  const connectionPromise = getPromiseWithResolvers<
-    RemoteProxy<TMethods>,
-    PenpalError
-  >();
+  const connectionPromise = Promise.withResolvers<RemoteProxy<TMethods>>();
   let isConnectionDestroyed = false;
   let destroyHandshake: (() => void) | undefined;
 

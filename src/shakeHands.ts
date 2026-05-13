@@ -12,7 +12,6 @@ import PenpalError from './PenpalError.js';
 import connectCallHandler from './connectCallHandler.js';
 import connectRemoteProxy from './connectRemoteProxy.js';
 import { isAck2Message, isAck1Message, isSynMessage } from './guards.js';
-import getPromiseWithResolvers from './getPromiseWithResolvers.js';
 import { extractMethodPathsFromMethods } from './methodSerialization.js';
 import generateId from './generateId.js';
 import { DEPRECATED_PENPAL_PARTICIPANT_ID } from './backwardCompatibility.js';
@@ -106,9 +105,8 @@ const shakeHands = <TMethods extends Methods>({
 
   const methodPaths = extractMethodPathsFromMethods(methods);
 
-  const { promise, resolve, reject } = getPromiseWithResolvers<
-    HandshakeResult<TMethods>,
-    PenpalError
+  const { promise, resolve, reject } = Promise.withResolvers<
+    HandshakeResult<TMethods>
   >();
 
   const timeoutId =
