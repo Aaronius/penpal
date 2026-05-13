@@ -57,7 +57,7 @@ describe('shakeHands protocol behavior', () => {
       },
     };
 
-    const handshakePromise = shakeHands({
+    const handshake = shakeHands({
       messenger,
       methods,
       timeout: undefined,
@@ -79,7 +79,7 @@ describe('shakeHands protocol behavior', () => {
       methodPaths: [['remote', 'multiply']],
     });
 
-    const result = await handshakePromise;
+    const remoteProxy = await handshake.promise;
 
     expect(messenger.sentMessages).toContainEqual({
       namespace,
@@ -99,9 +99,9 @@ describe('shakeHands protocol behavior', () => {
       'test-channel',
       undefined
     );
-    expect(result.remoteProxy).toBe(remoteProxyMock);
+    expect(remoteProxy).toBe(remoteProxyMock);
 
-    result.destroy();
+    handshake.destroy();
 
     expect(callHandlerDestroyMock).toHaveBeenCalledTimes(1);
     expect(remoteProxyDestroyMock).toHaveBeenCalledTimes(1);
@@ -111,7 +111,7 @@ describe('shakeHands protocol behavior', () => {
   it('keeps handshake completion idempotent when ACK2 is received multiple times', async () => {
     const messenger = new MockMessenger();
 
-    const handshakePromise = shakeHands({
+    const handshake = shakeHands({
       messenger,
       methods: {},
       timeout: undefined,
@@ -125,7 +125,7 @@ describe('shakeHands protocol behavior', () => {
       type: 'ACK2',
     });
 
-    const result = await handshakePromise;
+    await handshake.promise;
 
     await messenger.emit({
       namespace,
@@ -136,7 +136,7 @@ describe('shakeHands protocol behavior', () => {
     expect(connectCallHandlerMock).toHaveBeenCalledTimes(1);
     expect(connectRemoteProxyMock).toHaveBeenCalledTimes(1);
 
-    result.destroy();
+    handshake.destroy();
   });
 
   it('rejects with TRANSMISSION_FAILED when sending ACK2 fails', async () => {
@@ -148,7 +148,7 @@ describe('shakeHands protocol behavior', () => {
       }
     };
 
-    const handshakePromise = shakeHands({
+    const handshake = shakeHands({
       messenger,
       methods: {},
       timeout: undefined,
@@ -163,7 +163,7 @@ describe('shakeHands protocol behavior', () => {
       methodPaths: [],
     });
 
-    const error = await handshakePromise.catch((caughtError) => {
+    const error = await handshake.promise.catch((caughtError) => {
       return caughtError as PenpalError;
     });
 
@@ -183,7 +183,7 @@ describe('shakeHands protocol behavior', () => {
 
     const messenger = new MockMessenger();
 
-    const handshakePromise = shakeHands({
+    const handshake = shakeHands({
       messenger,
       methods: {},
       timeout: 50,
@@ -191,7 +191,7 @@ describe('shakeHands protocol behavior', () => {
       log: undefined,
     });
 
-    const caughtErrorPromise = handshakePromise.catch((caughtError) => {
+    const caughtErrorPromise = handshake.promise.catch((caughtError) => {
       return caughtError as PenpalError;
     });
 
@@ -209,5 +209,38 @@ describe('shakeHands protocol behavior', () => {
       code: 'CONNECTION_TIMEOUT',
       message: 'Connection timed out after 50ms',
     });
+    expect(messenger.handlers.size).toBe(0);
+  });
+
+  it('cancels pending handshake state when destroyed before completion', async () => {
+    vi.useFakeTimers();
+
+    const messenger = new MockMessenger();
+    const handshake = shakeHands({
+      messenger,
+      methods: {},
+      timeout: 50,
+      channel: undefined,
+      log: undefined,
+    });
+    const caughtErrorPromise = handshake.promise.catch((caughtError) => {
+      return caughtError as PenpalError;
+    });
+
+    expect(messenger.handlers.size).toBe(1);
+
+    handshake.destroy();
+
+    expect(messenger.handlers.size).toBe(0);
+    await expect(caughtErrorPromise).resolves.toMatchObject({
+      code: 'CONNECTION_DESTROYED',
+      message: 'Connection destroyed',
+    });
+
+    await vi.advanceTimersByTimeAsync(50);
+
+    expect(messenger.handlers.size).toBe(0);
+    expect(connectCallHandlerMock).not.toHaveBeenCalled();
+    expect(connectRemoteProxyMock).not.toHaveBeenCalled();
   });
 });

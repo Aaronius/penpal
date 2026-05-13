@@ -123,7 +123,7 @@ const connect = <TMethods extends Methods>({
         }
       });
 
-      const handshake = await shakeHands<TMethods>({
+      const handshake = shakeHands<TMethods>({
         messenger,
         methods,
         timeout,
@@ -131,13 +131,16 @@ const connect = <TMethods extends Methods>({
         log,
       });
 
+      destroyHandshake = handshake.destroy;
+
+      const remoteProxy = await handshake.promise;
+
       if (isConnectionDestroyed) {
         handshake.destroy();
         return;
       }
 
-      destroyHandshake = handshake.destroy;
-      connectionPromise.resolve(handshake.remoteProxy);
+      connectionPromise.resolve(remoteProxy);
     } catch (error) {
       destroyConnection(error as PenpalError, true);
     }

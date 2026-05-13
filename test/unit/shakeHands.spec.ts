@@ -12,13 +12,15 @@ describe('shakeHands', () => {
       throw new Error('postMessage failed');
     };
 
-    const error = await shakeHands({
+    const handshake = shakeHands({
       messenger,
       methods: {},
       timeout: undefined,
       channel: undefined,
       log: undefined,
-    }).catch((caughtError) => {
+    });
+
+    const error = await handshake.promise.catch((caughtError) => {
       return caughtError as PenpalError;
     });
 
@@ -38,7 +40,7 @@ describe('shakeHands', () => {
       }
     };
 
-    const handshakePromise = shakeHands({
+    const handshake = shakeHands({
       messenger,
       methods: {},
       timeout: undefined,
@@ -53,7 +55,7 @@ describe('shakeHands', () => {
       participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
     });
 
-    const error = await handshakePromise.catch((caughtError) => {
+    const error = await handshake.promise.catch((caughtError) => {
       return caughtError as PenpalError;
     });
 

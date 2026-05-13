@@ -69,6 +69,14 @@ const createPendingPromise = () => {
   });
 };
 
+const createHandshake = ({
+  promise = Promise.resolve({}),
+  destroy = vi.fn(),
+} = {}) => ({
+  promise,
+  destroy,
+});
+
 describe('connect', () => {
   beforeEach(() => {
     shakeHandsMock.mockReset();
@@ -90,10 +98,7 @@ describe('connect', () => {
   it('throws INVALID_ARGUMENT when messenger is re-used', async () => {
     const messenger = createMessenger();
 
-    shakeHandsMock.mockResolvedValue({
-      remoteProxy: {},
-      destroy: vi.fn(),
-    });
+    shakeHandsMock.mockReturnValue(createHandshake());
 
     const connection = connect({
       messenger,
@@ -116,10 +121,12 @@ describe('connect', () => {
     const messenger = createMessenger();
     const remoteDestroy = vi.fn();
 
-    shakeHandsMock.mockResolvedValue({
-      remoteProxy: {},
-      destroy: remoteDestroy,
-    });
+    shakeHandsMock.mockReturnValue(
+      createHandshake({
+        promise: Promise.resolve({}),
+        destroy: remoteDestroy,
+      })
+    );
 
     const connection = connect({
       messenger,
@@ -140,8 +147,14 @@ describe('connect', () => {
 
   it('rejects pending connection promise when destroy() is called', async () => {
     const messenger = createMessenger();
+    const handshakeDestroy = vi.fn();
 
-    shakeHandsMock.mockReturnValue(createPendingPromise());
+    shakeHandsMock.mockReturnValue(
+      createHandshake({
+        promise: createPendingPromise(),
+        destroy: handshakeDestroy,
+      })
+    );
 
     const connection = connect({
       messenger,
@@ -165,6 +178,7 @@ describe('connect', () => {
       channel: 'channel-c',
       type: 'DESTROY',
     });
+    expect(handshakeDestroy).toHaveBeenCalledTimes(1);
     expect(messenger.destroySpy).toHaveBeenCalledTimes(1);
   });
 
@@ -172,10 +186,12 @@ describe('connect', () => {
     const messenger = createMessenger();
     const remoteDestroy = vi.fn();
 
-    shakeHandsMock.mockResolvedValue({
-      remoteProxy: {},
-      destroy: remoteDestroy,
-    });
+    shakeHandsMock.mockReturnValue(
+      createHandshake({
+        promise: Promise.resolve({}),
+        destroy: remoteDestroy,
+      })
+    );
 
     const connection = connect({
       messenger,
@@ -199,8 +215,14 @@ describe('connect', () => {
 
   it('rejects pending connection promise when remote sends DESTROY first', async () => {
     const messenger = createMessenger();
+    const handshakeDestroy = vi.fn();
 
-    shakeHandsMock.mockReturnValue(createPendingPromise());
+    shakeHandsMock.mockReturnValue(
+      createHandshake({
+        promise: createPendingPromise(),
+        destroy: handshakeDestroy,
+      })
+    );
 
     const connection = connect({
       messenger,
@@ -224,13 +246,20 @@ describe('connect', () => {
       message: 'Connection destroyed',
     });
     expect(messenger.sentMessages).toHaveLength(0);
+    expect(handshakeDestroy).toHaveBeenCalledTimes(1);
     expect(messenger.destroySpy).toHaveBeenCalledTimes(1);
   });
 
   it('tears down connection state if handshake fails', async () => {
     const messenger = createMessenger();
 
-    shakeHandsMock.mockRejectedValue(new Error('handshake failed'));
+    const handshakeDestroy = vi.fn();
+    shakeHandsMock.mockReturnValue(
+      createHandshake({
+        promise: Promise.reject(new Error('handshake failed')),
+        destroy: handshakeDestroy,
+      })
+    );
 
     const connection = connect({
       messenger,
@@ -243,6 +272,7 @@ describe('connect', () => {
       channel: undefined,
       type: 'DESTROY',
     });
+    expect(handshakeDestroy).toHaveBeenCalledTimes(1);
     expect(messenger.destroySpy).toHaveBeenCalledTimes(1);
   });
 });

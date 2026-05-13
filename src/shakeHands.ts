@@ -25,8 +25,8 @@ type Options = {
   log: Log | undefined;
 };
 
-type HandshakeResult<TMethods extends Methods> = {
-  remoteProxy: RemoteProxy<TMethods>;
+type Handshake<TMethods extends Methods> = {
+  promise: Promise<RemoteProxy<TMethods>>;
   destroy: () => void;
 };
 
@@ -97,22 +97,23 @@ const shakeHands = <TMethods extends Methods>({
   timeout,
   channel,
   log,
-}: Options): Promise<HandshakeResult<TMethods>> => {
+}: Options): Handshake<TMethods> => {
   const participantId = generateId();
   let remoteParticipantId: string;
   const destroyHandlers: (() => void)[] = [];
   let isComplete = false;
+  let isDestroyed = false;
 
   const methodPaths = extractMethodPathsFromMethods(methods);
 
   const { promise, resolve, reject } = Promise.withResolvers<
-    HandshakeResult<TMethods>
+    RemoteProxy<TMethods>
   >();
 
   const timeoutId =
     timeout !== undefined
       ? setTimeout(() => {
-          reject(
+          rejectAndCleanUp(
             new PenpalError(
               'CONNECTION_TIMEOUT',
               `Connection timed out after ${timeout}ms`
@@ -121,16 +122,34 @@ const shakeHands = <TMethods extends Methods>({
         }, timeout)
       : undefined;
 
-  const destroy = () => {
-    for (const destroyHandler of destroyHandlers) {
+  const cleanUp = () => {
+    clearTimeout(timeoutId);
+
+    for (const destroyHandler of destroyHandlers.splice(0)) {
       destroyHandler();
     }
   };
 
-  const connectCallHandlerAndMethodProxies = () => {
-    if (isComplete) {
-      // If we get here, it means the remote is attempting to re-connect. While
-      // that's supported, we don't need to run the rest of this function again.
+  const rejectAndCleanUp = (error: PenpalError) => {
+    if (isDestroyed) {
+      return;
+    }
+
+    isDestroyed = true;
+    cleanUp();
+    reject(error);
+  };
+
+  const destroy = () => {
+    rejectAndCleanUp(
+      new PenpalError('CONNECTION_DESTROYED', 'Connection destroyed')
+    );
+  };
+
+  const completeHandshake = () => {
+    if (isDestroyed || isComplete) {
+      // Ignore messages after cleanup, and keep completion idempotent when
+      // the remote attempts to re-connect.
       return;
     }
 
@@ -145,10 +164,27 @@ const shakeHands = <TMethods extends Methods>({
     clearTimeout(timeoutId);
     isComplete = true;
 
-    resolve({
-      remoteProxy,
-      destroy: destroy,
-    });
+    resolve(remoteProxy);
+  };
+
+  const sendHandshakeMessage = (
+    message: SynMessage | Ack1Message | Ack2Message
+  ) => {
+    if (isDestroyed) {
+      return false;
+    }
+
+    log?.(`Sending handshake ${message.type}`, message);
+
+    try {
+      messenger.sendMessage(message);
+      return true;
+    } catch (error) {
+      rejectAndCleanUp(
+        new PenpalError('TRANSMISSION_FAILED', (error as Error).message)
+      );
+      return false;
+    }
   };
 
   const sendSynMessage = () => {
@@ -158,13 +194,8 @@ const shakeHands = <TMethods extends Methods>({
       channel,
       participantId: participantId,
     };
-    log?.(`Sending handshake SYN`, synMessage);
 
-    try {
-      messenger.sendMessage(synMessage);
-    } catch (error) {
-      reject(new PenpalError('TRANSMISSION_FAILED', (error as Error).message));
-    }
+    return sendHandshakeMessage(synMessage);
   };
 
   const handleSynMessage = (message: SynMessage) => {
@@ -182,7 +213,9 @@ const shakeHands = <TMethods extends Methods>({
 
     // We send another SYN message in case the other participant was not ready
     // when we sent the first SYN message.
-    sendSynMessage();
+    if (!sendSynMessage()) {
+      return;
+    }
 
     const isHandshakeLeader =
       participantId > remoteParticipantId ||
@@ -199,12 +232,8 @@ const shakeHands = <TMethods extends Methods>({
       type: 'ACK1',
       methodPaths,
     };
-    log?.(`Sending handshake ACK1`, ack1Message);
 
-    try {
-      messenger.sendMessage(ack1Message);
-    } catch (error) {
-      reject(new PenpalError('TRANSMISSION_FAILED', (error as Error).message));
+    if (!sendHandshakeMessage(ack1Message)) {
       return;
     }
   };
@@ -216,33 +245,27 @@ const shakeHands = <TMethods extends Methods>({
       channel,
       type: 'ACK2',
     };
-    log?.(`Sending handshake ACK2`, ack2Message);
 
-    try {
-      messenger.sendMessage(ack2Message);
-    } catch (error) {
-      reject(new PenpalError('TRANSMISSION_FAILED', (error as Error).message));
-      return;
+    if (sendHandshakeMessage(ack2Message)) {
+      completeHandshake();
     }
-
-    connectCallHandlerAndMethodProxies();
   };
 
   const handleAck2Message = (message: Ack2Message) => {
     log?.(`Received handshake ACK2`, message);
-    connectCallHandlerAndMethodProxies();
+    completeHandshake();
   };
 
   const handleMessage = (message: Message) => {
+    if (isDestroyed) {
+      return;
+    }
+
     if (isSynMessage(message)) {
       handleSynMessage(message);
-    }
-
-    if (isAck1Message(message)) {
+    } else if (isAck1Message(message)) {
       handleAck1Message(message);
-    }
-
-    if (isAck2Message(message)) {
+    } else if (isAck2Message(message)) {
       handleAck2Message(message);
     }
   };
@@ -252,7 +275,10 @@ const shakeHands = <TMethods extends Methods>({
 
   sendSynMessage();
 
-  return promise;
+  return {
+    promise,
+    destroy,
+  };
 };
 
 export default shakeHands;
