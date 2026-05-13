@@ -116,6 +116,42 @@ describe('connectRemoteProxy', () => {
     destroy();
   });
 
+  it('cleans up method call state when sending CALL fails', async () => {
+    const messenger = new MockMessenger();
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+    const sendError = new Error('send failed');
+
+    messenger.sendMessageImpl = () => {
+      throw sendError;
+    };
+
+    const { remoteProxy, destroy } = connectRemoteProxy(
+      messenger,
+      undefined,
+      undefined
+    );
+    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+
+    const resultPromise = proxy.neverResolve(
+      new CallOptions({ timeout: 1000 })
+    );
+
+    const error = await resultPromise.catch((caughtError) => {
+      return caughtError as PenpalError;
+    });
+
+    expect(error).toEqual(expect.any(PenpalError));
+    expect(error.code).toBe('TRANSMISSION_FAILED');
+    expect(error.message).toBe(sendError.message);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+
+    destroy();
+
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+
+    clearTimeoutSpy.mockRestore();
+  });
+
   it('rejects with deserialized Error when REPLY includes serialized error', async () => {
     const messenger = new MockMessenger();
 

@@ -169,6 +169,8 @@ const connectRemoteProxy = <TMethods extends Methods>(
         log?.(`Sending ${formatMethodPath(methodPath)}() call`, callMessage);
         messenger.sendMessage(callMessage, transferables);
       } catch (error) {
+        replyHandlers.delete(callId);
+        clearTimeout(timeoutId);
         reject(
           new PenpalError('TRANSMISSION_FAILED', (error as Error).message)
         );
