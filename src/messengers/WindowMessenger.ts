@@ -90,15 +90,21 @@ class WindowMessenger implements Messenger {
 
     if (isAck2Message(message)) {
       const { port1, port2 } = new MessageChannel();
-      this.#port = port1;
-      port1.addEventListener('message', this.#handleMessageFromPort);
-      port1.start();
+      this.#setPort(port1);
       const transferablesToSend = [port2, ...(transferables || [])];
       const originForSending = this.#getOriginForSendingMessage(message);
-      this.#remoteWindow.postMessage(message, {
-        targetOrigin: originForSending,
-        transfer: transferablesToSend,
-      });
+
+      try {
+        this.#remoteWindow.postMessage(message, {
+          targetOrigin: originForSending,
+          transfer: transferablesToSend,
+        });
+      } catch (error) {
+        this.#destroyPort();
+        port2.close();
+        throw error;
+      }
+
       return;
     }
 
@@ -175,6 +181,13 @@ class WindowMessenger implements Messenger {
     this.#port = undefined;
   };
 
+  #setPort = (port: MessagePort) => {
+    this.#destroyPort();
+    this.#port = port;
+    this.#port.addEventListener('message', this.#handleMessageFromPort);
+    this.#port.start();
+  };
+
   #handleMessageFromRemoteWindow = ({
     source,
     origin,
@@ -227,15 +240,14 @@ class WindowMessenger implements Messenger {
       // communication through the window.
       !this.#isChildUsingDeprecatedProtocol
     ) {
-      this.#port = ports[0];
+      const port = ports[0];
 
-      if (!this.#port) {
+      if (!port) {
         this.#log?.('Ignoring ACK2 because it did not include a MessagePort');
         return;
       }
 
-      this.#port.addEventListener('message', this.#handleMessageFromPort);
-      this.#port.start();
+      this.#setPort(port);
     }
 
     for (const callback of this.#messageCallbacks) {
