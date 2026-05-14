@@ -47,7 +47,11 @@ export const getMethodAtMethodPath = (
 ) => {
   const result = methodPath.reduce<Methods | Function | undefined>(
     (acc, pathSegment) => {
-      return isObject(acc) ? acc[pathSegment] : undefined;
+      if (!isObject(acc) || !Object.hasOwn(acc, pathSegment)) {
+        return undefined;
+      }
+
+      return acc[pathSegment];
     },
     methods
   );

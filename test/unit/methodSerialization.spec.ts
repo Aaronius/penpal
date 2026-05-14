@@ -4,6 +4,7 @@ import {
   formatMethodPath,
   getMethodAtMethodPath,
 } from '../../src/methodSerialization.js';
+import type { Methods } from '../../src/types.js';
 
 describe('method serialization', () => {
   it('extracts nested method paths from methods object', () => {
@@ -49,6 +50,34 @@ describe('method serialization', () => {
     );
     expect(
       getMethodAtMethodPath(['nested', 'missing'], methods)
+    ).toBeUndefined();
+  });
+
+  it('does not get methods from the prototype chain', () => {
+    class MethodApi {
+      inheritedMethod() {
+        return undefined;
+      }
+    }
+
+    const methods = new MethodApi() as Methods;
+
+    expect(getMethodAtMethodPath(['inheritedMethod'], methods)).toBeUndefined();
+  });
+
+  it('does not get nested methods from the prototype chain', () => {
+    const inheritedMethod = () => {
+      return undefined;
+    };
+    const nested = Object.create({
+      inheritedMethod,
+    }) as Methods;
+    const methods = {
+      nested,
+    };
+
+    expect(
+      getMethodAtMethodPath(['nested', 'inheritedMethod'], methods)
     ).toBeUndefined();
   });
 
