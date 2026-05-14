@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import sirv from 'sirv';
 import type { RequestHandler } from 'sirv';
-import { build } from 'tsup';
+import { build } from 'tsdown';
 
 const TEST_SERVER_STATE = '__PENPAL_TEST_SERVER_STATE__';
 const FIXTURE_PORT = 9000;
@@ -78,7 +78,8 @@ export default async function globalSetup() {
     state.setupPromise = (async () => {
       // Ensure an up-to-date browser bundle is available before tests run.
       await build({
-        config: true,
+        config: 'tsdown.config.ts',
+        dts: false,
         format: 'iife',
         clean: false,
       });

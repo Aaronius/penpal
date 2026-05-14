@@ -44,7 +44,7 @@
     }
   },
   "scripts": {
-    "build": "tsup --format esm,cjs,iife --dts && tsup --format iife --minify=terser --clean=false",
+    "build": "tsdown --format esm --format cjs --format iife && tsdown --format iife --minify --no-clean",
     "build:analysis": "node scripts/filesize.js dist/penpal.min.js",
     "changeset": "changeset",
     "changeset:check": "changeset status --since=origin/main",
@@ -106,8 +106,8 @@
     "prettier": "^3.8.3",
     "sirv": "^3.0.2",
     "terser": "^5.47.1",
-    "tsup": "^8.5.1",
-    "typescript": "~5.9.3",
+    "tsdown": "^0.22.0",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.3",
     "vitest": "^4.1.6"
   }
