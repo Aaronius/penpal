@@ -85,7 +85,8 @@
     ]
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
