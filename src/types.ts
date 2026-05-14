@@ -72,8 +72,6 @@ export type SynMessage = MessageBase & {
 
 export type Ack1Message = MessageBase & {
   type: 'ACK1';
-  // TODO: Used for backward-compatibility. Remove in next major version.
-  methodPaths: MethodPath[];
 };
 
 export type Ack2Message = MessageBase & {

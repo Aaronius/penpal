@@ -113,5 +113,3 @@ All scripts below are defined in `package.json`.
   - Runs fast Node-based unit tests in `test/unit`.
 - `npm run test:types`
   - Runs TypeScript type tests with `tsconfig.typesTest.json`.
-- `npm run test:legacy:vendor -- <6.x.x-version>`
-  - Downloads and vendors a Penpal 6 build used by backward-compatibility fixtures.

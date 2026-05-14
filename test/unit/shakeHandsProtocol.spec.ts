@@ -76,7 +76,6 @@ describe('shakeHands protocol behavior', () => {
       namespace,
       channel: 'test-channel',
       type: 'ACK1',
-      methodPaths: [['remote', 'multiply']],
     });
 
     const remoteProxy = await handshake.promise;
@@ -160,7 +159,6 @@ describe('shakeHands protocol behavior', () => {
       namespace,
       channel: undefined,
       type: 'ACK1',
-      methodPaths: [],
     });
 
     const error = await handshake.promise.catch((caughtError) => {

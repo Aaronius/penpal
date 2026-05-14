@@ -74,8 +74,7 @@
     "test:webkit": "npm-run-all test:webkit:browser test:file:webkit",
     "test:all-browsers": "npm-run-all test:chromium test:firefox test:edge test:webkit",
     "test:unit": "vitest run --config vitest.unit.config.ts",
-    "test:types": "tsc --noEmit -p tsconfig.typesTest.json",
-    "test:legacy:vendor": "node scripts/updateLegacyPenpal.js"
+    "test:types": "tsc --noEmit -p tsconfig.typesTest.json"
   },
   "lint-staged": {
     "**/*": [

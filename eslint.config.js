@@ -26,7 +26,7 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/', 'lib/', 'cjs/', 'test/browser/fixtures/vendor/**'],
+    ignores: ['dist/', 'lib/', 'cjs/'],
   },
   {
     files: ['*.cjs'],
@@ -89,7 +89,6 @@ export default tseslint.config(
         Penpal: 'readonly',
         PenpalFixture: 'readonly',
         PenpalGeneralFixtureMethods: 'readonly',
-        PenpalLegacyFixture: 'readonly',
       },
     },
   },

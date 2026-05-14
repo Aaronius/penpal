@@ -1,6 +1,6 @@
 import generateId from './generateId.js';
 import { deserializeError } from './errorSerialization.js';
-import { formatMethodPath } from './methodSerialization.js';
+import { formatMethodPath } from './methodPath.js';
 import {
   Message,
   RemoteProxy,

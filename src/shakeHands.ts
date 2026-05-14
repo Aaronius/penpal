@@ -12,9 +12,7 @@ import PenpalError from './PenpalError.js';
 import connectCallHandler from './connectCallHandler.js';
 import connectRemoteProxy from './connectRemoteProxy.js';
 import { isAck2Message, isAck1Message, isSynMessage } from './guards.js';
-import { extractMethodPathsFromMethods } from './methodSerialization.js';
 import generateId from './generateId.js';
-import { DEPRECATED_PENPAL_PARTICIPANT_ID } from './backwardCompatibility.js';
 import namespace from './namespace.js';
 
 type Options = {
@@ -103,8 +101,6 @@ const shakeHands = <TMethods extends Methods>({
   const destroyHandlers: (() => void)[] = [];
   let isComplete = false;
   let isDestroyed = false;
-
-  const methodPaths = extractMethodPathsFromMethods(methods);
 
   const { promise, resolve, reject } = Promise.withResolvers<
     RemoteProxy<TMethods>
@@ -201,11 +197,7 @@ const shakeHands = <TMethods extends Methods>({
   const handleSynMessage = (message: SynMessage) => {
     log?.(`Received handshake SYN`, message);
 
-    if (
-      message.participantId === remoteParticipantId &&
-      // TODO: Used for backward-compatibility. Remove in next major version.
-      remoteParticipantId !== DEPRECATED_PENPAL_PARTICIPANT_ID
-    ) {
+    if (message.participantId === remoteParticipantId) {
       return;
     }
 
@@ -217,10 +209,7 @@ const shakeHands = <TMethods extends Methods>({
       return;
     }
 
-    const isHandshakeLeader =
-      participantId > remoteParticipantId ||
-      // TODO: Used for backward-compatibility. Remove in next major version.
-      remoteParticipantId === DEPRECATED_PENPAL_PARTICIPANT_ID;
+    const isHandshakeLeader = participantId > remoteParticipantId;
 
     if (!isHandshakeLeader) {
       return;
@@ -230,7 +219,6 @@ const shakeHands = <TMethods extends Methods>({
       namespace,
       channel,
       type: 'ACK1',
-      methodPaths,
     };
 
     if (!sendHandshakeMessage(ack1Message)) {

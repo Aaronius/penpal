@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEPRECATED_PENPAL_PARTICIPANT_ID } from '../../src/backwardCompatibility.js';
 import WindowMessenger from '../../src/messengers/WindowMessenger.js';
 import namespace from '../../src/namespace.js';
 import PenpalError from '../../src/PenpalError.js';
@@ -142,60 +141,6 @@ describe('WindowMessenger', () => {
     });
 
     expect(callback).toHaveBeenCalledTimes(1);
-
-    messenger.destroy();
-  });
-
-  it('upgrades deprecated SYN and downgrades outgoing ACK1 for deprecated peers', () => {
-    const postMessage = vi.fn();
-    const remoteWindow = ({
-      postMessage,
-    } as unknown) as Window;
-
-    const callback = vi.fn();
-
-    const messenger = new WindowMessenger({
-      remoteWindow,
-      allowedOrigins: ['*'],
-    });
-
-    messenger.initialize({
-      validateReceivedMessage,
-      log: vi.fn(),
-    });
-    messenger.addMessageHandler(callback);
-
-    fakeWindow.dispatch({
-      source: remoteWindow,
-      origin: 'http://legacy.test',
-      data: {
-        penpal: 'syn',
-      },
-      ports: [],
-    });
-
-    expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback.mock.calls[0][0]).toMatchObject({
-      namespace,
-      channel: undefined,
-      type: 'SYN',
-      participantId: DEPRECATED_PENPAL_PARTICIPANT_ID,
-    });
-
-    messenger.sendMessage({
-      namespace,
-      channel: undefined,
-      type: 'ACK1',
-      methodPaths: [['nested', 'method']],
-    });
-
-    expect(postMessage.mock.calls[0][0]).toEqual({
-      penpal: 'synAck',
-      methodNames: ['nested.method'],
-    });
-    expect(postMessage.mock.calls[0][1]).toMatchObject({
-      targetOrigin: 'http://legacy.test',
-    });
 
     messenger.destroy();
   });

@@ -3,11 +3,6 @@ import Messenger, {
   InitializeMessengerOptions,
   MessageHandler,
 } from './Messenger.js';
-import {
-  downgradeMessage,
-  isDeprecatedMessage,
-  upgradeMessage,
-} from '../backwardCompatibility.js';
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards.js';
 import PenpalError from '../PenpalError.js';
 
@@ -37,8 +32,6 @@ class WindowMessenger implements Messenger {
   #concreteRemoteOrigin?: string;
   #messageCallbacks = new Set<(message: Message) => void>();
   #port?: MessagePort;
-  // TODO: Used for backward-compatibility. Remove in next major version.
-  #isChildUsingDeprecatedProtocol = false;
 
   constructor({ remoteWindow, allowedOrigins }: Options) {
     if (!remoteWindow) {
@@ -70,18 +63,9 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    if (
-      isAck1Message(message) ||
-      // If the child is using a previous version of Penpal, we need to
-      // downgrade the message and send it through the window rather than
-      // the port because older versions of Penpal don't use MessagePorts.
-      this.#isChildUsingDeprecatedProtocol
-    ) {
-      const payload = this.#isChildUsingDeprecatedProtocol
-        ? downgradeMessage(message)
-        : message;
+    if (isAck1Message(message)) {
       const originForSending = this.#getOriginForSendingMessage(message);
-      this.#remoteWindow.postMessage(payload, {
+      this.#remoteWindow.postMessage(message, {
         targetOrigin: originForSending,
         transfer: transferables,
       });
@@ -198,22 +182,6 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    // TODO: Used for backward-compatibility. Remove in next major version.
-    if (isDeprecatedMessage(data)) {
-      this.#log?.(
-        'Please upgrade the child window to the latest version of Penpal.'
-      );
-      this.#isChildUsingDeprecatedProtocol = true;
-      try {
-        data = upgradeMessage(data);
-      } catch (error) {
-        this.#log?.(
-          `Failed to translate deprecated message: ${(error as Error).message}`
-        );
-        return;
-      }
-    }
-
     if (!this.#validateReceivedMessage?.(data)) {
       return;
     }
@@ -234,12 +202,7 @@ class WindowMessenger implements Messenger {
       this.#concreteRemoteOrigin = origin;
     }
 
-    if (
-      isAck2Message(data) &&
-      // Previous versions of Penpal don't use MessagePorts and do all
-      // communication through the window.
-      !this.#isChildUsingDeprecatedProtocol
-    ) {
+    if (isAck2Message(data)) {
       const port = ports[0];
 
       if (!port) {
@@ -256,9 +219,6 @@ class WindowMessenger implements Messenger {
   };
 
   #handleMessageFromPort = ({ data }: MessageEvent): void => {
-    // Unlike in _handleMessageFromWindow, we don't need to check if
-    // the message is from a deprecated version of Penpal because older versions
-    // of Penpal don't use MessagePorts.
     if (!this.#validateReceivedMessage?.(data)) {
       return;
     }

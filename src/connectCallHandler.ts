@@ -3,10 +3,7 @@ import { Message, ReplyMessage, Methods, Log } from './types.js';
 import Reply from './Reply.js';
 import Messenger from './messengers/Messenger.js';
 import PenpalError from './PenpalError.js';
-import {
-  formatMethodPath,
-  getMethodAtMethodPath,
-} from './methodSerialization.js';
+import { formatMethodPath, getMethodAtMethodPath } from './methodPath.js';
 import { isCallMessage } from './guards.js';
 import namespace from './namespace.js';
 
