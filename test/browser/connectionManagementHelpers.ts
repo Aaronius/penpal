@@ -51,7 +51,7 @@ export const createIframeConnection = <TMethods extends Methods>({
   const { pageName = 'general', url, methods, timeout, channel } = options;
   const hasAllowedOriginsOption = Object.prototype.hasOwnProperty.call(
     options,
-    'allowedOrigins'
+    'allowedOrigins',
   );
   const allowedOrigins = hasAllowedOriginsOption
     ? options.allowedOrigins
@@ -78,14 +78,14 @@ export const getAlternateFixtureOrigin = () => {
 
 export const getRedirectPageUrl = () => {
   const redirectToUrl = encodeURIComponent(
-    getPageFixtureUrl('general', getAlternateFixtureOrigin())
+    getPageFixtureUrl('general', getAlternateFixtureOrigin()),
   );
   return `${getPageFixtureUrl('redirect')}?to=${redirectToUrl}`;
 };
 
 export const expectParallelChannelResults = async (
   channelAChild: RemoteProxy<ChannelChildMethods>,
-  channelBChild: RemoteProxy<ChannelChildMethods>
+  channelBChild: RemoteProxy<ChannelChildMethods>,
 ) => {
   const results = await Promise.all([
     channelAChild.getChannel(),

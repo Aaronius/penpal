@@ -67,7 +67,7 @@ describe('parent calling destroy()', () => {
         }
         expect(error).toEqual(expect.any(PenpalError));
         expect((error as Error).message).toBe(
-          'Method call multiply() failed due to destroyed connection'
+          'Method call multiply() failed due to destroyed connection',
         );
         expect((error as PenpalError).code).toBe('CONNECTION_DESTROYED');
       });

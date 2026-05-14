@@ -17,7 +17,7 @@ declare const child: RemoteProxy<ChildMethods>;
 
 expectTypeOf(child.multiply(2, 3)).toEqualTypeOf<Promise<number>>();
 expectTypeOf(
-  child.multiply(2, 3, new CallOptions({ timeout: 123 }))
+  child.multiply(2, 3, new CallOptions({ timeout: 123 })),
 ).toEqualTypeOf<Promise<number>>();
 
 expectTypeOf(child['with.period']()).toEqualTypeOf<Promise<'success'>>();

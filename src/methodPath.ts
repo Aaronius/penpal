@@ -3,7 +3,7 @@ import { isFunction, isObject } from './guards.js';
 
 export const getMethodAtMethodPath = (
   methodPath: MethodPath,
-  methods: Methods
+  methods: Methods,
 ) => {
   const result = methodPath.reduce<Methods | Function | undefined>(
     (acc, pathSegment) => {
@@ -13,7 +13,7 @@ export const getMethodAtMethodPath = (
 
       return acc[pathSegment];
     },
-    methods
+    methods,
   );
 
   return isFunction(result) ? result : undefined;

@@ -12,12 +12,10 @@ export class MockMessenger implements Messenger {
   readonly destroy = () => {
     // no-op for tests
   };
-  sendMessageImpl: (
-    message: Message,
-    transferables?: Transferable[]
-  ) => void = () => {
-    // no-op for tests
-  };
+  sendMessageImpl: (message: Message, transferables?: Transferable[]) => void =
+    () => {
+      // no-op for tests
+    };
 
   initialize = (options: InitializeMessengerOptions) => {
     this.initializeCalls.push(options);
@@ -38,8 +36,8 @@ export class MockMessenger implements Messenger {
 
   emit = async (message: Message) => {
     for (const handler of this.handlers) {
-      await ((handler as unknown) as (message: Message) => Promise<void>)(
-        message
+      await (handler as unknown as (message: Message) => Promise<void>)(
+        message,
       );
     }
   };

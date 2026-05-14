@@ -12,7 +12,7 @@ const testInclude = process.env.TEST_GLOB
 
 if (!['chromium', 'firefox', 'webkit'].includes(browserName)) {
   throw new Error(
-    `Unsupported browser target "${browserTarget}". Use one of chromium, firefox, webkit, edge.`
+    `Unsupported browser target "${browserTarget}". Use one of chromium, firefox, webkit, edge.`,
   );
 }
 

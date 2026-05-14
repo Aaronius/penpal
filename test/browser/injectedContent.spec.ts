@@ -87,15 +87,15 @@ it('connects and calls a function on the child worker when src is set to data UR
   const code = (await response.text())
     .replace(
       "importScripts('/penpal.js');",
-      `importScripts('${CHILD_SERVER}/penpal.js');`
+      `importScripts('${CHILD_SERVER}/penpal.js');`,
     )
     .replace(
       "importScripts('/shared/generalMethods.js');",
-      `importScripts('${CHILD_SERVER}/shared/generalMethods.js');`
+      `importScripts('${CHILD_SERVER}/shared/generalMethods.js');`,
     );
 
   const worker = new Worker(
-    `data:application/javascript,${encodeURIComponent(code)}`
+    `data:application/javascript,${encodeURIComponent(code)}`,
   );
 
   const messenger = new WorkerMessenger({
@@ -139,11 +139,11 @@ it('connects and calls a function on the child worker when src is set to an obje
   const code = (await response.text())
     .replace(
       "importScripts('/penpal.js');",
-      `importScripts('${CHILD_SERVER}/penpal.js');`
+      `importScripts('${CHILD_SERVER}/penpal.js');`,
     )
     .replace(
       "importScripts('/shared/generalMethods.js');",
-      `importScripts('${CHILD_SERVER}/shared/generalMethods.js');`
+      `importScripts('${CHILD_SERVER}/shared/generalMethods.js');`,
     );
   const blob = new Blob([code], { type: 'application/javascript' });
   const blobUrl = URL.createObjectURL(blob);

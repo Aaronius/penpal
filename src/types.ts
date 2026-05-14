@@ -15,8 +15,8 @@ export type RemoteProxy<TMethods extends Methods = Methods> = {
         ...args: [...A, CallOptions?]
       ) => Promise<ExtractValueFromReply<Awaited<R>>>
     : TMethods[K] extends Methods
-    ? RemoteProxy<TMethods[K]>
-    : never;
+      ? RemoteProxy<TMethods[K]>
+      : never;
 };
 
 /**
@@ -49,7 +49,7 @@ export type Methods = {
  */
 export type MethodPath = string[];
 
-export type ErrorCode = typeof ErrorCodeObj[keyof typeof ErrorCodeObj];
+export type ErrorCode = (typeof ErrorCodeObj)[keyof typeof ErrorCodeObj];
 
 export type SerializedError = {
   name: string;

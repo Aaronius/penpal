@@ -3,7 +3,7 @@
 <script>
   const parentOrigin = PenpalFixture.getParentOrigin();
   const parentOriginRegex = new RegExp(
-    PenpalFixture.escapeRegExp(parentOrigin)
+    PenpalFixture.escapeRegExp(parentOrigin),
   );
 
   PenpalFixture.connect({

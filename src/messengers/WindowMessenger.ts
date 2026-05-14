@@ -101,7 +101,7 @@ class WindowMessenger implements Messenger {
 
     throw new PenpalError(
       'TRANSMISSION_FAILED',
-      'Cannot send message because the MessagePort is not connected'
+      'Cannot send message because the MessagePort is not connected',
     );
   };
 
@@ -123,7 +123,7 @@ class WindowMessenger implements Messenger {
     return this.#allowedOrigins.some((allowedOrigin) =>
       allowedOrigin instanceof RegExp
         ? allowedOrigin.test(origin)
-        : allowedOrigin === origin || allowedOrigin === '*'
+        : allowedOrigin === origin || allowedOrigin === '*',
     );
   };
 
@@ -141,7 +141,7 @@ class WindowMessenger implements Messenger {
     if (!this.#concreteRemoteOrigin) {
       throw new PenpalError(
         'TRANSMISSION_FAILED',
-        'Cannot send message because the remote origin is not established'
+        'Cannot send message because the remote origin is not established',
       );
     }
 
@@ -189,7 +189,7 @@ class WindowMessenger implements Messenger {
     if (!this.#isAllowedOrigin(origin)) {
       this.#log?.(
         `Received a message from origin \`${origin}\` which did not match ` +
-          `allowed origins \`[${this.#allowedOrigins.join(', ')}]\``
+          `allowed origins \`[${this.#allowedOrigins.join(', ')}]\``,
       );
       return;
     }

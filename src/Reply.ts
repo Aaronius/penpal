@@ -13,7 +13,7 @@ class Reply<T = unknown> {
     value: T,
     options?: {
       transferables?: Transferable[];
-    }
+    },
   ) {
     this.value = value;
     this.transferables = options?.transferables;

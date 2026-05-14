@@ -61,7 +61,7 @@ export const runCommunicationContract = ({
             numbersArray,
             new CallOptions({
               transferables: [numbersArray.buffer],
-            })
+            }),
           );
 
           // This is undefined because the underlying array buffer should
@@ -78,7 +78,7 @@ export const runCommunicationContract = ({
       it('handles a promised reply instance with a promised return value', async () => {
         await withConnection(createConnection, async (child) => {
           await expect(
-            child.multiplyWithPromisedReplyInstanceAndPromisedReturnValue(2, 5)
+            child.multiplyWithPromisedReplyInstanceAndPromisedReturnValue(2, 5),
           ).resolves.toBe(10);
         });
       });
@@ -97,14 +97,14 @@ export const runCommunicationContract = ({
               return num1 + num2;
             },
           },
-        }
+        },
       );
     });
 
     it('handles promises rejected with strings', async () => {
       await withConnection(createConnection, async (child) => {
         await expect(child.getPromiseRejectedWithString()).rejects.toBe(
-          'test error string'
+          'test error string',
         );
       });
     });
@@ -120,7 +120,7 @@ export const runCommunicationContract = ({
     it('handles promises rejected with undefined', async () => {
       await withConnection(createConnection, async (child) => {
         await expect(child.getPromiseRejectedWithUndefined()).rejects.toBe(
-          undefined
+          undefined,
         );
       });
     });

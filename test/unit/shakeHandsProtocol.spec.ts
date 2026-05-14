@@ -90,13 +90,13 @@ describe('shakeHands protocol behavior', () => {
       messenger,
       methods,
       'test-channel',
-      undefined
+      undefined,
     );
     expect(connectRemoteProxyMock).toHaveBeenCalledTimes(1);
     expect(connectRemoteProxyMock).toHaveBeenCalledWith(
       messenger,
       'test-channel',
-      undefined
+      undefined,
     );
     expect(remoteProxy).toBe(remoteProxyMock);
 
@@ -200,7 +200,7 @@ describe('shakeHands protocol behavior', () => {
         name: 'PenpalError',
         code: 'CONNECTION_TIMEOUT',
         message: 'Connection timed out after 50ms',
-      })
+      }),
     );
 
     await expect(caughtErrorPromise).resolves.toMatchObject({

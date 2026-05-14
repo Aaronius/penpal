@@ -6,16 +6,16 @@ type ConnectionOptions = {
 };
 
 export type CreateConnection<TMethods extends Methods> = (
-  options?: ConnectionOptions
+  options?: ConnectionOptions,
 ) => Connection<TMethods>;
 
 export const withConnection = async <TMethods extends Methods>(
   createConnection: CreateConnection<TMethods>,
   fn: (
     child: RemoteProxy<TMethods>,
-    connection: Connection<TMethods>
+    connection: Connection<TMethods>,
   ) => Promise<void> | void,
-  options?: ConnectionOptions
+  options?: ConnectionOptions,
 ) => {
   const connection = createConnection(options);
 

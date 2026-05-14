@@ -8,7 +8,7 @@ type WaitForMessageOptions<TData = unknown> = {
 export const withTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number,
-  timeoutMessage: string
+  timeoutMessage: string,
 ) => {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
@@ -52,7 +52,7 @@ export const waitForMessageFromSource = async <TData = unknown>({
         window.addEventListener('message', handleMessage as EventListener);
       }),
       timeoutMs,
-      timeoutMessage
+      timeoutMessage,
     );
   } finally {
     if (handleMessage) {

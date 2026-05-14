@@ -13,7 +13,7 @@ const ensureGeneralFixtureMethodsLoaded = async () => {
       'error',
       () =>
         reject(new Error('Failed to load /shared/generalMethods.js fixture')),
-      { once: true }
+      { once: true },
     );
     document.head.appendChild(script);
   });
@@ -39,14 +39,14 @@ const ignoredUnhandledRejectionHandler = (event: PromiseRejectionEvent) => {
 beforeAll(() => {
   window.addEventListener(
     'unhandledrejection',
-    ignoredUnhandledRejectionHandler
+    ignoredUnhandledRejectionHandler,
   );
 });
 
 afterAll(() => {
   window.removeEventListener(
     'unhandledrejection',
-    ignoredUnhandledRejectionHandler
+    ignoredUnhandledRejectionHandler,
   );
 });
 

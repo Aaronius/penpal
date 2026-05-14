@@ -10,7 +10,7 @@ declare global {
         getUnclonableValue: () => unknown;
         createReply: (
           value: unknown,
-          options?: { transferables?: Transferable[] }
+          options?: { transferables?: Transferable[] },
         ) => unknown;
         reload?: () => void;
         navigate?: (to: string) => void;

@@ -14,20 +14,20 @@ type ChildMethods = {
   multiplyWithReplyInstance(a: number, b: number): Reply<number>;
   multiplyWithPromisedReplyInstance(
     a: number,
-    b: number
+    b: number,
   ): Promise<Reply<number>>;
   multiplyWithReplyInstanceAndPromisedReturnValue(
     a: number,
-    b: number
+    b: number,
   ): Reply<Promise<number>>;
   multiplyWithPromisedReplyInstanceAndPromisedReturnValue(
     a: number,
-    b: number
+    b: number,
   ): Promise<Reply<Promise<number>>>;
   multiplyWithReplyLikeObject(a: number, b: number): { value: number };
   multiplyWithTransferables(
     aDataView: DataView,
-    bDataView: DataView
+    bDataView: DataView,
   ): Reply<DataView>;
 };
 
@@ -52,7 +52,7 @@ expectTypeOf(child.multiply(2, 3, new CallOptions({}))).toEqualTypeOf<
   Promise<number>
 >();
 expectTypeOf(
-  child.multiply(2, 3, new CallOptions({ transferables: [] }))
+  child.multiply(2, 3, new CallOptions({ transferables: [] })),
 ).toEqualTypeOf<Promise<number>>();
 // @ts-expect-error Message options must be an instance of CallOptions.
 void child.multiply(2, 3, { transferables: [] });
@@ -63,10 +63,10 @@ expectTypeOf(child.multiplyWithPromisedReplyInstance(2, 3)).toEqualTypeOf<
   Promise<number>
 >();
 expectTypeOf(
-  child.multiplyWithReplyInstanceAndPromisedReturnValue(2, 3)
+  child.multiplyWithReplyInstanceAndPromisedReturnValue(2, 3),
 ).toEqualTypeOf<Promise<number>>();
 expectTypeOf(
-  child.multiplyWithPromisedReplyInstanceAndPromisedReturnValue(2, 3)
+  child.multiplyWithPromisedReplyInstanceAndPromisedReturnValue(2, 3),
 ).toEqualTypeOf<Promise<number>>();
 const replyLikeResult = child.multiplyWithReplyLikeObject(2, 3);
 // @ts-expect-error A reply-like structure should not be interpreted as a Reply instance.
@@ -80,6 +80,6 @@ expectTypeOf(
     input2DataView,
     new CallOptions({
       transferables: [input1DataView.buffer, input2DataView.buffer],
-    })
-  )
+    }),
+  ),
 ).toEqualTypeOf<Promise<DataView>>();

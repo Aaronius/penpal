@@ -354,7 +354,7 @@ const initPenpal = async () => {
     },
     {
       transfer: [port2],
-    }
+    },
   );
 
   const messenger = new PortMessenger({

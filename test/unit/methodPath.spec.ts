@@ -18,10 +18,10 @@ describe('method path', () => {
     };
 
     expect(getMethodAtMethodPath(['nested', 'multiply'], methods)).toBe(
-      multiply
+      multiply,
     );
     expect(
-      getMethodAtMethodPath(['nested', 'missing'], methods)
+      getMethodAtMethodPath(['nested', 'missing'], methods),
     ).toBeUndefined();
   });
 
@@ -49,13 +49,13 @@ describe('method path', () => {
     };
 
     expect(
-      getMethodAtMethodPath(['nested', 'inheritedMethod'], methods)
+      getMethodAtMethodPath(['nested', 'inheritedMethod'], methods),
     ).toBeUndefined();
   });
 
   it('formats method path', () => {
     expect(formatMethodPath(['nested', 'by', 'twoLevels'])).toBe(
-      'nested.by.twoLevels'
+      'nested.by.twoLevels',
     );
   });
 });

@@ -6,7 +6,7 @@ type FixtureMethods = {
   double(numbers: Int32Array): Reply<Int32Array>;
   multiplyWithPromisedReplyInstanceAndPromisedReturnValue(
     num1: number,
-    num2: number
+    num2: number,
   ): Promise<Reply<Promise<number>>>;
   getChannel(): string;
   getChannelFromParent(): string;

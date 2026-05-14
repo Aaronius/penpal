@@ -85,7 +85,7 @@ describe('connect', () => {
   it('throws INVALID_ARGUMENT when messenger is undefined', () => {
     try {
       connect({
-        messenger: (undefined as unknown) as Messenger,
+        messenger: undefined as unknown as Messenger,
       });
 
       throw new Error('Expected connect to throw');
@@ -125,7 +125,7 @@ describe('connect', () => {
       createHandshake({
         promise: Promise.resolve({}),
         destroy: remoteDestroy,
-      })
+      }),
     );
 
     const connection = connect({
@@ -153,7 +153,7 @@ describe('connect', () => {
       createHandshake({
         promise: createPendingPromise(),
         destroy: handshakeDestroy,
-      })
+      }),
     );
 
     const connection = connect({
@@ -190,7 +190,7 @@ describe('connect', () => {
       createHandshake({
         promise: Promise.resolve({}),
         destroy: remoteDestroy,
-      })
+      }),
     );
 
     const connection = connect({
@@ -221,7 +221,7 @@ describe('connect', () => {
       createHandshake({
         promise: createPendingPromise(),
         destroy: handshakeDestroy,
-      })
+      }),
     );
 
     const connection = connect({
@@ -258,7 +258,7 @@ describe('connect', () => {
       createHandshake({
         promise: Promise.reject(new Error('handshake failed')),
         destroy: handshakeDestroy,
-      })
+      }),
     );
 
     const connection = connect({

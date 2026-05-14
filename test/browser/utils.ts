@@ -76,7 +76,7 @@ export const createPortAndConnection = <TMethods extends Methods>({
 } = {}) => {
   if (!window.PenpalGeneralFixtureMethods) {
     throw new Error(
-      'window.PenpalGeneralFixtureMethods is not loaded in test setup'
+      'window.PenpalGeneralFixtureMethods is not loaded in test setup',
     );
   }
 
@@ -106,7 +106,7 @@ export const createPortAndConnection = <TMethods extends Methods>({
       createReply: (value, options) => {
         return new Reply(value, options);
       },
-    }
+    },
   );
 
   const remoteConnection = connect<Methods>({

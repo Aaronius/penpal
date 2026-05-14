@@ -30,9 +30,9 @@ describe('connectRemoteProxy', () => {
     const { remoteProxy, destroy } = connectRemoteProxy(
       messenger,
       undefined,
-      undefined
+      undefined,
     );
-    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+    const proxy = remoteProxy as unknown as TestRemoteProxy;
 
     const resultPromise = proxy.multiply(2, 3);
 
@@ -66,14 +66,14 @@ describe('connectRemoteProxy', () => {
     const { remoteProxy, destroy } = connectRemoteProxy(
       messenger,
       undefined,
-      undefined
+      undefined,
     );
-    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+    const proxy = remoteProxy as unknown as TestRemoteProxy;
 
     const buffer = new ArrayBuffer(8);
 
     const resultPromise = proxy.sendBuffer(
-      new CallOptions({ transferables: [buffer] })
+      new CallOptions({ transferables: [buffer] }),
     );
 
     const callMessage = getLastCallMessage(messenger);
@@ -97,9 +97,9 @@ describe('connectRemoteProxy', () => {
     const { remoteProxy, destroy } = connectRemoteProxy(
       messenger,
       undefined,
-      undefined
+      undefined,
     );
-    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+    const proxy = remoteProxy as unknown as TestRemoteProxy;
 
     const resultPromise = proxy.neverResolve(new CallOptions({ timeout: 0 }));
 
@@ -110,7 +110,7 @@ describe('connectRemoteProxy', () => {
     expect(error).toEqual(expect.any(PenpalError));
     expect(error.code).toBe('METHOD_CALL_TIMEOUT');
     expect(error.message).toBe(
-      'Method call neverResolve() timed out after 0ms'
+      'Method call neverResolve() timed out after 0ms',
     );
 
     destroy();
@@ -128,12 +128,12 @@ describe('connectRemoteProxy', () => {
     const { remoteProxy, destroy } = connectRemoteProxy(
       messenger,
       undefined,
-      undefined
+      undefined,
     );
-    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+    const proxy = remoteProxy as unknown as TestRemoteProxy;
 
     const resultPromise = proxy.neverResolve(
-      new CallOptions({ timeout: 1000 })
+      new CallOptions({ timeout: 1000 }),
     );
 
     const error = await resultPromise.catch((caughtError) => {
@@ -158,9 +158,9 @@ describe('connectRemoteProxy', () => {
     const { remoteProxy, destroy } = connectRemoteProxy(
       messenger,
       undefined,
-      undefined
+      undefined,
     );
-    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+    const proxy = remoteProxy as unknown as TestRemoteProxy;
 
     const resultPromise = proxy.explode();
 
@@ -193,9 +193,9 @@ describe('connectRemoteProxy', () => {
     const { remoteProxy, destroy } = connectRemoteProxy(
       messenger,
       undefined,
-      undefined
+      undefined,
     );
-    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+    const proxy = remoteProxy as unknown as TestRemoteProxy;
 
     const resultPromise = proxy.neverResolve();
 
@@ -208,7 +208,7 @@ describe('connectRemoteProxy', () => {
     expect(error).toEqual(expect.any(PenpalError));
     expect(error.code).toBe('CONNECTION_DESTROYED');
     expect(error.message).toBe(
-      'Method call neverResolve() failed due to destroyed connection'
+      'Method call neverResolve() failed due to destroyed connection',
     );
   });
 
@@ -219,12 +219,12 @@ describe('connectRemoteProxy', () => {
     const { remoteProxy, destroy } = connectRemoteProxy(
       messenger,
       undefined,
-      undefined
+      undefined,
     );
-    const proxy = (remoteProxy as unknown) as TestRemoteProxy;
+    const proxy = remoteProxy as unknown as TestRemoteProxy;
 
     const resultPromise = proxy.neverResolve(
-      new CallOptions({ timeout: 1000 })
+      new CallOptions({ timeout: 1000 }),
     );
     const callMessage = getLastCallMessage(messenger);
 

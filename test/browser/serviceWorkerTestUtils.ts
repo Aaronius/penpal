@@ -23,7 +23,7 @@ export const unregisterAllServiceWorkers = async () => {
 
   const registrations = await navigator.serviceWorker.getRegistrations();
   await Promise.all(
-    registrations.map((registration) => registration.unregister())
+    registrations.map((registration) => registration.unregister()),
   );
   await waitForNoServiceWorkerRegistrations();
 };
@@ -42,14 +42,14 @@ export const waitForServiceWorkerController = async (timeoutMs = 5000) => {
       clearTimeout(timeout);
       navigator.serviceWorker.removeEventListener(
         'controllerchange',
-        handleControllerChange
+        handleControllerChange,
       );
       resolve();
     };
 
     navigator.serviceWorker.addEventListener(
       'controllerchange',
-      handleControllerChange
+      handleControllerChange,
     );
   });
 };

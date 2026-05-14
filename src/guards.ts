@@ -10,7 +10,7 @@ import {
 } from './types.js';
 
 export const isObject = (
-  value: unknown
+  value: unknown,
 ): value is Record<string | number | symbol, unknown> => {
   return typeof value === 'object' && value !== null;
 };
@@ -44,7 +44,7 @@ export const isReplyMessage = (message: Message): message is ReplyMessage => {
 };
 
 export const isDestroyMessage = (
-  message: Message
+  message: Message,
 ): message is DestroyMessage => {
   return message.type === 'DESTROY';
 };

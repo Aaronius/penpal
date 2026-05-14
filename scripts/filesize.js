@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import filesize from 'filesize';
+import { filesize } from 'filesize';
 import fs from 'fs';
 import zlib from 'zlib';
 
@@ -21,5 +21,5 @@ const uncompressedSize = filesize(fs.statSync(fileName).size);
 const compressedSize = await getGzippedSize(fileName);
 
 console.log(
-  `File size of '${fileName}' is: ${uncompressedSize} uncompressed, ${compressedSize} compressed (gzip)`
+  `File size of '${fileName}' is: ${uncompressedSize} uncompressed, ${compressedSize} compressed (gzip)`,
 );

@@ -28,8 +28,7 @@ describe('connection management: origins', () => {
       shouldConnect: true,
     },
     {
-      name:
-        'connects to window when correct origin regex is provided in parent',
+      name: 'connects to window when correct origin regex is provided in parent',
       shouldConnect: true,
       options: {
         allowedOrigins: [/^http/],
@@ -44,8 +43,7 @@ describe('connection management: origins', () => {
       },
     },
     {
-      name:
-        'connects to window when matching origin regex is provided in child',
+      name: 'connects to window when matching origin regex is provided in child',
       shouldConnect: true,
       options: {
         fixturePage: 'matchingParentOriginRegex',
@@ -53,32 +51,28 @@ describe('connection management: origins', () => {
       },
     },
     {
-      name:
-        "doesn't connect to window when incorrect origin is provided in parent",
+      name: "doesn't connect to window when incorrect origin is provided in parent",
       shouldConnect: false,
       options: {
         allowedOrigins: ['http://example.com'],
       },
     },
     {
-      name:
-        "doesn't connect to window when mismatched origin is provided in child",
+      name: "doesn't connect to window when mismatched origin is provided in child",
       shouldConnect: false,
       options: {
         fixturePage: 'mismatchedParentOrigin',
       },
     },
     {
-      name:
-        "doesn't connect to window when mismatched parent origin regex is provided in child",
+      name: "doesn't connect to window when mismatched parent origin regex is provided in child",
       shouldConnect: false,
       options: {
         fixturePage: 'mismatchedParentOriginRegex',
       },
     },
     {
-      name:
-        'connects to window when child redirects to a different origin and parent allowedOrigins is *',
+      name: 'connects to window when child redirects to a different origin and parent allowedOrigins is *',
       shouldConnect: true,
       options: {
         url: getRedirectPageUrl(),
@@ -86,8 +80,7 @@ describe('connection management: origins', () => {
       },
     },
     {
-      name:
-        'connects to window when parent and child are same-origin and neither side sets allowed origins',
+      name: 'connects to window when parent and child are same-origin and neither side sets allowed origins',
       shouldConnect: true,
       options: {
         url: '/pages/noParentOrigin.html',
@@ -95,8 +88,7 @@ describe('connection management: origins', () => {
       },
     },
     {
-      name:
-        "doesn't connect to window when child redirects to a different origin and parent omits allowed origins",
+      name: "doesn't connect to window when child redirects to a different origin and parent omits allowed origins",
       shouldConnect: false,
       options: {
         url: getRedirectPageUrl(),
@@ -104,8 +96,7 @@ describe('connection management: origins', () => {
       },
     },
     {
-      name:
-        "doesn't connect to window when child redirects to a different origin and parent sets a mismatched origin",
+      name: "doesn't connect to window when child redirects to a different origin and parent sets a mismatched origin",
       shouldConnect: false,
       options: {
         url: getRedirectPageUrl(),
@@ -113,8 +104,7 @@ describe('connection management: origins', () => {
       },
     },
     {
-      name:
-        "doesn't connect to window when child redirects to a different origin and parent sets a mismatched origin regex",
+      name: "doesn't connect to window when child redirects to a different origin and parent sets a mismatched origin regex",
       shouldConnect: false,
       options: {
         url: getRedirectPageUrl(),
@@ -137,10 +127,10 @@ describe('connection management: origins', () => {
     it(name, async () => {
       const timeout = shouldConnect
         ? options?.timeout
-        : options?.timeout ?? defaultTimeoutMs;
+        : (options?.timeout ?? defaultTimeoutMs);
       const hasAllowedOriginsOption = Object.prototype.hasOwnProperty.call(
         options ?? {},
-        'allowedOrigins'
+        'allowedOrigins',
       );
 
       const { connection } = createIframeConnection<FixtureMethods>({

@@ -81,7 +81,7 @@ class WorkerMessenger implements Messenger {
 
     throw new PenpalError(
       'TRANSMISSION_FAILED',
-      'Cannot send message because the MessagePort is not connected'
+      'Cannot send message because the MessagePort is not connected',
     );
   };
 

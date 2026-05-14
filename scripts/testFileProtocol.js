@@ -19,12 +19,12 @@ const launchers = {
 
 if (!(browserTarget in launchers)) {
   throw new Error(
-    `Unsupported BROWSER "${browserTarget}". Use chromium, firefox, webkit, edge.`
+    `Unsupported BROWSER "${browserTarget}". Use chromium, firefox, webkit, edge.`,
   );
 }
 
 const parentUrl = pathToFileURL(
-  path.resolve('test/browser/fileProtocol/parent.html')
+  path.resolve('test/browser/fileProtocol/parent.html'),
 ).href;
 const expectedText = '3 X 2 = 6';
 const timeoutMs = 15000;
@@ -42,7 +42,7 @@ try {
 } catch (error) {
   const bodyText = await page.textContent('body').catch(() => '');
   console.error(
-    `[${browserTarget}] file protocol test failed for ${parentUrl}`
+    `[${browserTarget}] file protocol test failed for ${parentUrl}`,
   );
   console.error(`[${browserTarget}] body text at failure:\n${bodyText}`);
   throw error;

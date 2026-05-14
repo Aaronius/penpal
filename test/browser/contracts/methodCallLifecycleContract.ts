@@ -18,7 +18,7 @@ export const runMethodCallLifecycleContract = ({
         const promise = child.neverResolve(
           new CallOptions({
             timeout: 0,
-          })
+          }),
         );
 
         const error = await promise.catch((caughtError) => {
@@ -27,7 +27,7 @@ export const runMethodCallLifecycleContract = ({
 
         expect(error).toEqual(expect.any(PenpalError));
         expect(error.message).toBe(
-          'Method call neverResolve() timed out after 0ms'
+          'Method call neverResolve() timed out after 0ms',
         );
         expect(error.code).toBe('METHOD_CALL_TIMEOUT');
       });
@@ -45,7 +45,7 @@ export const runMethodCallLifecycleContract = ({
 
         expect(error).toEqual(expect.any(PenpalError));
         expect(error.message).toBe(
-          'Method call neverResolve() failed due to destroyed connection'
+          'Method call neverResolve() failed due to destroyed connection',
         );
         expect(error.code).toBe('CONNECTION_DESTROYED');
       });

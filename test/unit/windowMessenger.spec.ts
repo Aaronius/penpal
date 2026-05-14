@@ -19,13 +19,13 @@ class FakeHostWindow {
   addEventListener = vi.fn(
     (_eventType: string, listener: EventListenerOrEventListenerObject) => {
       this.#listeners.add(listener as MessageListener);
-    }
+    },
   );
 
   removeEventListener = vi.fn(
     (_eventType: string, listener: EventListenerOrEventListenerObject) => {
       this.#listeners.delete(listener as MessageListener);
-    }
+    },
   );
 
   dispatch(event: Partial<MessageEvent>) {
@@ -44,15 +44,15 @@ const validateReceivedMessage = (data: unknown): data is Message => {
 };
 
 const createFakePort = (): FakeMessagePort =>
-  (({
+  ({
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     start: vi.fn(),
     close: vi.fn(),
-  } as unknown) as FakeMessagePort);
+  }) as unknown as FakeMessagePort;
 
 const mockMessageChannels = (
-  channels: { port1: MessagePort; port2: MessagePort }[]
+  channels: { port1: MessagePort; port2: MessagePort }[],
 ) => {
   const originalMessageChannel = globalThis.MessageChannel;
   let channelIndex = 0;
@@ -98,9 +98,9 @@ describe('WindowMessenger', () => {
   });
 
   it('filters out messages from disallowed origins', () => {
-    const remoteWindow = ({
+    const remoteWindow = {
       postMessage: vi.fn(),
-    } as unknown) as Window;
+    } as unknown as Window;
 
     const messenger = new WindowMessenger({
       remoteWindow,
@@ -146,9 +146,9 @@ describe('WindowMessenger', () => {
   });
 
   it('ignores ACK2 without a MessagePort and keeps port disconnected', () => {
-    const remoteWindow = ({
+    const remoteWindow = {
       postMessage: vi.fn(),
-    } as unknown) as Window;
+    } as unknown as Window;
 
     const callback = vi.fn();
     const log = vi.fn();
@@ -189,7 +189,7 @@ describe('WindowMessenger', () => {
 
     expect(callback).toHaveBeenCalledTimes(1);
     expect(log).toHaveBeenCalledWith(
-      'Ignoring ACK2 because it did not include a MessagePort'
+      'Ignoring ACK2 because it did not include a MessagePort',
     );
 
     try {
@@ -209,9 +209,9 @@ describe('WindowMessenger', () => {
   });
 
   it('sends non-handshake messages over MessagePort after ACK2 includes a port', async () => {
-    const remoteWindow = ({
+    const remoteWindow = {
       postMessage: vi.fn(),
-    } as unknown) as Window;
+    } as unknown as Window;
 
     const messenger = new WindowMessenger({
       remoteWindow,
@@ -269,9 +269,9 @@ describe('WindowMessenger', () => {
   });
 
   it('closes previous inbound MessagePort when ACK2 includes a replacement port', async () => {
-    const remoteWindow = ({
+    const remoteWindow = {
       postMessage: vi.fn(),
-    } as unknown) as Window;
+    } as unknown as Window;
 
     const messenger = new WindowMessenger({
       remoteWindow,
@@ -294,10 +294,8 @@ describe('WindowMessenger', () => {
       ports: [],
     });
 
-    const {
-      port1: firstRemotePort,
-      port2: firstMessengerPort,
-    } = new MessageChannel();
+    const { port1: firstRemotePort, port2: firstMessengerPort } =
+      new MessageChannel();
     const firstCloseSpy = vi.spyOn(firstMessengerPort, 'close');
 
     fakeWindow.dispatch({
@@ -311,10 +309,8 @@ describe('WindowMessenger', () => {
       ports: [firstMessengerPort],
     });
 
-    const {
-      port1: secondRemotePort,
-      port2: secondMessengerPort,
-    } = new MessageChannel();
+    const { port1: secondRemotePort, port2: secondMessengerPort } =
+      new MessageChannel();
     const messagePromise = new Promise<Message>((resolve) => {
       secondRemotePort.addEventListener('message', ({ data }) => {
         resolve(data as Message);
@@ -352,9 +348,9 @@ describe('WindowMessenger', () => {
   });
 
   it('keeps existing inbound MessagePort when ACK2 has no MessagePort', async () => {
-    const remoteWindow = ({
+    const remoteWindow = {
       postMessage: vi.fn(),
-    } as unknown) as Window;
+    } as unknown as Window;
     const log = vi.fn();
 
     const messenger = new WindowMessenger({
@@ -412,7 +408,7 @@ describe('WindowMessenger', () => {
 
     expect(closeSpy).not.toHaveBeenCalled();
     expect(log).toHaveBeenCalledWith(
-      'Ignoring ACK2 because it did not include a MessagePort'
+      'Ignoring ACK2 because it did not include a MessagePort',
     );
 
     messenger.sendMessage({
@@ -437,9 +433,9 @@ describe('WindowMessenger', () => {
       { port1: firstPort, port2: createFakePort() },
       { port1: secondPort, port2: createFakePort() },
     ]);
-    const remoteWindow = ({
+    const remoteWindow = {
       postMessage: vi.fn(),
-    } as unknown) as Window;
+    } as unknown as Window;
     const messenger = new WindowMessenger({
       remoteWindow,
       allowedOrigins: ['*'],

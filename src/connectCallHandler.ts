@@ -10,7 +10,7 @@ import namespace from './namespace.js';
 const createErrorReplyMessage = (
   channel: string | undefined,
   callId: string,
-  error: unknown
+  error: unknown,
 ): ReplyMessage => ({
   namespace,
   channel,
@@ -30,7 +30,7 @@ const connectCallHandler = (
   messenger: Messenger,
   methods: Methods,
   channel: string | undefined,
-  log: Log | undefined
+  log: Log | undefined,
 ) => {
   let isDestroyed = false;
 
@@ -60,7 +60,7 @@ const connectCallHandler = (
       if (!method) {
         throw new PenpalError(
           'METHOD_NOT_FOUND',
-          `Method \`${formatMethodPath(methodPath)}\` is not found.`
+          `Method \`${formatMethodPath(methodPath)}\` is not found.`,
         );
       }
 

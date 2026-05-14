@@ -29,7 +29,7 @@
           type: 'RESULT',
           result,
         },
-        '*'
+        '*',
       );
     } catch (error) {
       window.parent.postMessage(
@@ -38,7 +38,7 @@
           type: 'RESULT_ERROR',
           code: error?.code,
         },
-        '*'
+        '*',
       );
     }
   });

@@ -102,9 +102,8 @@ const shakeHands = <TMethods extends Methods>({
   let isComplete = false;
   let isDestroyed = false;
 
-  const { promise, resolve, reject } = Promise.withResolvers<
-    RemoteProxy<TMethods>
-  >();
+  const { promise, resolve, reject } =
+    Promise.withResolvers<RemoteProxy<TMethods>>();
 
   const timeoutId =
     timeout !== undefined
@@ -112,8 +111,8 @@ const shakeHands = <TMethods extends Methods>({
           rejectAndCleanUp(
             new PenpalError(
               'CONNECTION_TIMEOUT',
-              `Connection timed out after ${timeout}ms`
-            )
+              `Connection timed out after ${timeout}ms`,
+            ),
           );
         }, timeout)
       : undefined;
@@ -138,7 +137,7 @@ const shakeHands = <TMethods extends Methods>({
 
   const destroy = () => {
     rejectAndCleanUp(
-      new PenpalError('CONNECTION_DESTROYED', 'Connection destroyed')
+      new PenpalError('CONNECTION_DESTROYED', 'Connection destroyed'),
     );
   };
 
@@ -151,9 +150,8 @@ const shakeHands = <TMethods extends Methods>({
 
     destroyHandlers.push(connectCallHandler(messenger, methods, channel, log));
 
-    const { remoteProxy, destroy: destroyMethodProxies } = connectRemoteProxy<
-      TMethods
-    >(messenger, channel, log);
+    const { remoteProxy, destroy: destroyMethodProxies } =
+      connectRemoteProxy<TMethods>(messenger, channel, log);
 
     destroyHandlers.push(destroyMethodProxies);
 
@@ -164,7 +162,7 @@ const shakeHands = <TMethods extends Methods>({
   };
 
   const sendHandshakeMessage = (
-    message: SynMessage | Ack1Message | Ack2Message
+    message: SynMessage | Ack1Message | Ack2Message,
   ) => {
     if (isDestroyed) {
       return false;
@@ -177,7 +175,7 @@ const shakeHands = <TMethods extends Methods>({
       return true;
     } catch (error) {
       rejectAndCleanUp(
-        new PenpalError('TRANSMISSION_FAILED', (error as Error).message)
+        new PenpalError('TRANSMISSION_FAILED', (error as Error).message),
       );
       return false;
     }

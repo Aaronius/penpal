@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const once = <T extends (...args: any[]) => any>(
-  fn: T
+  fn: T,
 ): ((...args: Parameters<T>) => ReturnType<T>) => {
   let isCalled = false;
   let result: ReturnType<T>;

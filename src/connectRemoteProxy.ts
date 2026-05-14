@@ -27,7 +27,7 @@ const methodsToTreatAsNative = new Set(['apply', 'call', 'bind']);
 const createRemoteProxy = (
   callback: (path: MethodPath, args: unknown[]) => void,
   log?: Log,
-  path: MethodPath = []
+  path: MethodPath = [],
 ): Methods => {
   return new Proxy(
     path.length
@@ -71,7 +71,7 @@ const createRemoteProxy = (
       apply(target, _thisArg, args) {
         return callback(path, args);
       },
-    }
+    },
   );
 };
 
@@ -79,8 +79,8 @@ const getDestroyedConnectionMethodCallError = (methodPath: MethodPath) => {
   return new PenpalError(
     'CONNECTION_DESTROYED',
     `Method call ${formatMethodPath(
-      methodPath
-    )}() failed due to destroyed connection`
+      methodPath,
+    )}() failed due to destroyed connection`,
   );
 };
 
@@ -92,7 +92,7 @@ const getDestroyedConnectionMethodCallError = (methodPath: MethodPath) => {
 const connectRemoteProxy = <TMethods extends Methods>(
   messenger: Messenger,
   channel: string | undefined,
-  log: Log | undefined
+  log: Log | undefined,
 ) => {
   let isDestroyed = false;
   const replyHandlers = new Map<string, ReplyHandler>();
@@ -113,12 +113,12 @@ const connectRemoteProxy = <TMethods extends Methods>(
     clearTimeout(replyHandler.timeoutId);
     log?.(
       `Received ${formatMethodPath(replyHandler.methodPath)}() call`,
-      message
+      message,
     );
 
     if (isError) {
       replyHandler.reject(
-        isSerializedErrorInstance ? deserializeError(value) : value
+        isSerializedErrorInstance ? deserializeError(value) : value,
       );
     } else {
       replyHandler.resolve(value);
@@ -148,9 +148,9 @@ const connectRemoteProxy = <TMethods extends Methods>(
                 new PenpalError(
                   'METHOD_CALL_TIMEOUT',
                   `Method call ${formatMethodPath(
-                    methodPath
-                  )}() timed out after ${timeout}ms`
-                )
+                    methodPath,
+                  )}() timed out after ${timeout}ms`,
+                ),
               );
             }, timeout)
           : undefined;
@@ -172,7 +172,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
         replyHandlers.delete(callId);
         clearTimeout(timeoutId);
         reject(
-          new PenpalError('TRANSMISSION_FAILED', (error as Error).message)
+          new PenpalError('TRANSMISSION_FAILED', (error as Error).message),
         );
       }
     });

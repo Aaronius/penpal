@@ -27,7 +27,7 @@ describe('connectCallHandler', () => {
         },
       },
       undefined,
-      undefined
+      undefined,
     );
 
     await expect(
@@ -38,7 +38,7 @@ describe('connectCallHandler', () => {
         id: '1',
         methodPath: ['getUnclonableValue'],
         args: [],
-      })
+      }),
     ).rejects.toMatchObject({
       name: 'DataCloneError',
       message: 'Cannot clone value',
@@ -99,7 +99,7 @@ describe('connectCallHandler', () => {
         },
       },
       undefined,
-      undefined
+      undefined,
     );
 
     await expect(
@@ -110,7 +110,7 @@ describe('connectCallHandler', () => {
         id: '3',
         methodPath: ['ping'],
         args: [],
-      })
+      }),
     ).rejects.toThrow('send failed');
 
     dispose();
@@ -126,7 +126,7 @@ describe('connectCallHandler', () => {
         },
       },
       undefined,
-      undefined
+      undefined,
     );
 
     await messenger.emit({

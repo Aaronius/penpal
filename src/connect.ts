@@ -63,7 +63,7 @@ const connect = <TMethods extends Methods>({
   if (usedMessengers.has(messenger)) {
     throw new PenpalError(
       'INVALID_ARGUMENT',
-      'A messenger can only be used for a single connection'
+      'A messenger can only be used for a single connection',
     );
   }
 
@@ -93,7 +93,7 @@ const connect = <TMethods extends Methods>({
   const destroyConnection = once(
     (
       connectionPromiseRejection: PenpalError,
-      notifyOtherParticipant: boolean
+      notifyOtherParticipant: boolean,
     ) => {
       isConnectionDestroyed = true;
 
@@ -107,7 +107,7 @@ const connect = <TMethods extends Methods>({
       connectionPromise.reject(connectionPromiseRejection);
 
       log?.('Connection destroyed');
-    }
+    },
   );
 
   const validateReceivedMessage = (data: unknown): data is Message => {

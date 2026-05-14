@@ -78,13 +78,13 @@ describe('connection management: reconnect', () => {
 
     const result = await child.multiply(2, 4).then(
       (value) => value,
-      (error) => error
+      (error) => error,
     );
 
     expect(result).toEqual(expect.any(PenpalError));
     expect((result as PenpalError).code).toBe('TRANSMISSION_FAILED');
     expect((result as Error).message).not.toContain(
-      "You've hit a bug in Penpal"
+      "You've hit a bug in Penpal",
     );
 
     connection.destroy();
@@ -127,7 +127,7 @@ describe('connection management: reconnect', () => {
         fixture: 'connectionDestroyedProbe',
         type: 'REQUEST_ADD_USING_PARENT',
       },
-      CHILD_SERVER
+      CHILD_SERVER,
     );
 
     const resultEvent = await resultPromise;
@@ -137,7 +137,7 @@ describe('connection management: reconnect', () => {
       throw new Error(
         `Expected parent call to fail after destroy, but it succeeded with value ${
           payload.result as number
-        }`
+        }`,
       );
     }
 

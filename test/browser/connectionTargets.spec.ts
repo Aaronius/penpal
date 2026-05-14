@@ -93,7 +93,7 @@ describe('connection management: targets', () => {
       },
       {
         transfer: [port2],
-      }
+      },
     );
 
     const connection = connect<FixtureMethods>({

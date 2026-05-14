@@ -36,15 +36,15 @@ const validateReceivedMessage = (data: unknown): data is Message => {
 };
 
 const createFakePort = (): FakeMessagePort =>
-  (({
+  ({
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     start: vi.fn(),
     close: vi.fn(),
-  } as unknown) as FakeMessagePort);
+  }) as unknown as FakeMessagePort;
 
 const mockMessageChannels = (
-  channels: { port1: MessagePort; port2: MessagePort }[]
+  channels: { port1: MessagePort; port2: MessagePort }[],
 ) => {
   const originalMessageChannel = globalThis.MessageChannel;
   let channelIndex = 0;
@@ -163,10 +163,8 @@ describe('WorkerMessenger', () => {
       validateReceivedMessage,
     });
 
-    const {
-      port1: firstRemotePort,
-      port2: firstMessengerPort,
-    } = new MessageChannel();
+    const { port1: firstRemotePort, port2: firstMessengerPort } =
+      new MessageChannel();
     const firstCloseSpy = vi.spyOn(firstMessengerPort, 'close');
 
     worker.emit({
@@ -178,10 +176,8 @@ describe('WorkerMessenger', () => {
       ports: [firstMessengerPort],
     } as MessageEvent);
 
-    const {
-      port1: secondRemotePort,
-      port2: secondMessengerPort,
-    } = new MessageChannel();
+    const { port1: secondRemotePort, port2: secondMessengerPort } =
+      new MessageChannel();
     const messageReceived = new Promise<Message>((resolve) => {
       secondRemotePort.addEventListener('message', ({ data }) => {
         resolve(data as Message);
@@ -257,7 +253,7 @@ describe('WorkerMessenger', () => {
 
     expect(closeSpy).not.toHaveBeenCalled();
     expect(log).toHaveBeenCalledWith(
-      'Ignoring ACK2 because it did not include a MessagePort'
+      'Ignoring ACK2 because it did not include a MessagePort',
     );
 
     messenger.sendMessage({
