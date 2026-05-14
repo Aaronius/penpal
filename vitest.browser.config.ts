@@ -1,5 +1,5 @@
 import path from 'node:path';
-import serveStatic from 'serve-static';
+import sirv from 'sirv';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 
@@ -25,9 +25,9 @@ export default defineConfig({
     {
       name: 'penpal-test-fixtures',
       configureServer(server) {
-        const serveDist = serveStatic(distRoot);
-        const serveFixtures = serveStatic(fixtureRoot);
-        const serveWorkers = serveStatic(workerRoot);
+        const serveDist = sirv(distRoot, { dev: true });
+        const serveFixtures = sirv(fixtureRoot, { dev: true });
+        const serveWorkers = sirv(workerRoot, { dev: true });
 
         server.middlewares.use('/never-respond', () => {
           // Intentionally never respond.
@@ -41,9 +41,9 @@ export default defineConfig({
 
           const originalUrl = req.url;
           req.url = '/serviceWorker.js';
-          serveWorkers(req, res, (error) => {
+          serveWorkers(req, res, () => {
             req.url = originalUrl;
-            next(error);
+            next();
           });
         });
 

@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
-import type { Server } from 'node:http';
-import connect from 'connect';
-import serveStatic from 'serve-static';
+import type { IncomingMessage, Server, ServerResponse } from 'node:http';
+import sirv from 'sirv';
+import type { RequestHandler } from 'sirv';
 import { build } from 'tsup';
 
 const TEST_SERVER_STATE = '__PENPAL_TEST_SERVER_STATE__';
@@ -17,9 +17,12 @@ type GlobalState = {
   ownsFixtureServer: boolean;
 };
 
-const startServer = (app: ReturnType<typeof connect>, port: number) => {
+const startServer = (
+  handler: (req: IncomingMessage, res: ServerResponse) => void,
+  port: number,
+) => {
   return new Promise<Server>((resolve, reject) => {
-    const server = createServer(app);
+    const server = createServer(handler);
 
     server.on('error', (error: NodeJS.ErrnoException) => {
       reject(error);
@@ -27,6 +30,28 @@ const startServer = (app: ReturnType<typeof connect>, port: number) => {
 
     server.listen(port, () => resolve(server));
   });
+};
+
+const serveInOrder = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  handlers: RequestHandler[],
+) => {
+  let index = 0;
+
+  const next = () => {
+    const handler = handlers[index];
+    index += 1;
+
+    if (handler) {
+      handler(req, res, next);
+    } else {
+      res.statusCode = 404;
+      res.end('Not found');
+    }
+  };
+
+  next();
 };
 
 const getGlobalState = (): GlobalState => {
@@ -58,24 +83,36 @@ export default async function globalSetup() {
         clean: false,
       });
 
-      const serveWorkers = serveStatic('test/browser/fixtures/workers');
+      const serveWorkers = sirv('test/browser/fixtures/workers', {
+        dev: true,
+      });
+      const serveDist = sirv('dist', { dev: true });
+      const serveFixtures = sirv('test/browser/fixtures', { dev: true });
 
-      const app = connect()
-        .use('/serviceWorker.js', (req, res, next) => {
-          // Service worker scripts must be served from a stable root-like path.
-          req.url = '/serviceWorker.js';
-          serveWorkers(req, res, next);
-        })
-        .use(serveStatic('dist'))
-        .use(serveStatic('test/browser/fixtures'))
-        .use('/never-respond', () => {
+      const handler = (req: IncomingMessage, res: ServerResponse) => {
+        if (req.url?.split('?')[0] === '/never-respond') {
           // Intentionally never respond.
-        });
+          return;
+        }
+
+        if (req.url?.split('?')[0] === '/serviceWorker.js') {
+          // Service worker scripts must be served from a stable root-like path.
+          const originalUrl = req.url;
+          req.url = '/serviceWorker.js';
+          serveWorkers(req, res, () => {
+            req.url = originalUrl;
+            serveInOrder(req, res, [serveDist, serveFixtures]);
+          });
+          return;
+        }
+
+        serveInOrder(req, res, [serveDist, serveFixtures]);
+      };
 
       // Keep one dedicated fixture origin; cross-origin redirects use a
       // different hostname on the same fixture server port.
       try {
-        state.fixtureServer = await startServer(app, FIXTURE_PORT);
+        state.fixtureServer = await startServer(handler, FIXTURE_PORT);
         state.ownsFixtureServer = true;
       } catch (error) {
         const err = error as NodeJS.ErrnoException;
