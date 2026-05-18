@@ -45,6 +45,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Verify prerelease branch
         if: github.event_name == 'workflow_dispatch' && github.ref_name != '8.x'
         run: |
