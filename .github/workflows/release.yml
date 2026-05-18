@@ -68,12 +68,14 @@ jobs:
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
 
       - name: Publish prerelease to next
         if: github.event_name == 'workflow_dispatch'
         run: npm run release:publish -- --tag next
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
 
       - name: Push prerelease tags
         if: github.event_name == 'workflow_dispatch'

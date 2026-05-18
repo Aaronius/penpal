@@ -56,7 +56,7 @@
     "lint:check": "eslint --max-warnings=0",
     "format": "prettier --write \"**/*.{json,ts,js,cjs,md,html}\"",
     "format:check": "prettier --check \"**/*.{json,ts,js,cjs,md,html}\"",
-    "release:publish": "changeset publish --provenance",
+    "release:publish": "changeset publish",
     "test": "npm-run-all test:unit test:chromium",
     "test:watch": "npm run test:watch:chromium",
     "prepublishOnly": "npm-run-all format:check lint:check test test:types build",
