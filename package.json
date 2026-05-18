@@ -32,6 +32,9 @@
     "windows"
   ],
   "type": "module",
+  "sideEffects": false,
+  "unpkg": "./dist/penpal.min.js",
+  "jsdelivr": "./dist/penpal.min.js",
   "types": "./dist/penpal.d.ts",
   "exports": {
     "import": {
@@ -56,7 +59,7 @@
     "release:publish": "changeset publish --provenance",
     "test": "npm-run-all test:unit test:chromium",
     "test:watch": "npm run test:watch:chromium",
-    "prepublishOnly": "npm-run-all format lint test test:types build",
+    "prepublishOnly": "npm-run-all format:check lint:check test test:types build",
     "prepare": "husky",
     "test:watch:chromium": "cross-env BROWSER=chromium vitest --config vitest.browser.config.ts --browser",
     "test:chromium:browser": "cross-env BROWSER=chromium vitest run --config vitest.browser.config.ts --browser",

@@ -74,7 +74,7 @@ All scripts below are defined in `package.json`.
 - `npm run test:watch`
   - Alias for `npm run test:watch:chromium`.
 - `npm run prepublishOnly`
-  - Runs formatting, linting, Chromium tests, type tests, and build before publish.
+  - Runs formatting checks, lint checks, Chromium tests, type tests, and build before publish.
 - `npm run prepare`
   - Installs Husky git hooks.
 - `npm run release:publish`

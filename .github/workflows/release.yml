@@ -38,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Verify release prerequisites
-        run: npm run lint:check && npm run format:check && npm run test:unit && npm run test:types && npm run build
+        run: npm run prepublishOnly
 
       - name: Create release PR or publish
         uses: changesets/action@v1
