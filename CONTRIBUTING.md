@@ -46,6 +46,10 @@ Penpal releases are managed with Changesets and GitHub Actions.
   - create or update a release PR when changesets are pending
   - publish to npm when the release PR is merged
   - create a GitHub release from the generated changelog
+- To publish an 8.x prerelease, put the branch in Changesets prerelease mode
+  with the `next` tag, run `npm run changeset:version`, commit the result, and
+  manually dispatch `.github/workflows/release.yml` from the `8.x` branch. The
+  manual workflow path publishes with the `next` npm dist tag.
 
 ## NPM Scripts
 

@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "penpal": "7.0.6"
+  },
+  "changesets": ["v8-prerelease"]
+}

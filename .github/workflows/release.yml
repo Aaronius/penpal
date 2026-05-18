@@ -5,6 +5,14 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the current 8.x prerelease to the next npm dist tag
+        required: true
+        type: choice
+        options:
+          - next
+        default: next
 
 permissions:
   contents: write
@@ -37,10 +45,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify prerelease branch
+        if: github.event_name == 'workflow_dispatch' && github.ref_name != '8.x'
+        run: |
+          echo "Prereleases must be published from the 8.x branch."
+          exit 1
+
       - name: Verify release prerequisites
         run: npm run prepublishOnly
 
       - name: Create release PR or publish
+        if: github.event_name == 'push'
         uses: changesets/action@v1
         with:
           commit: 'chore: release packages'
@@ -50,3 +65,13 @@ jobs:
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish prerelease to next
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run release:publish -- --tag next
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push prerelease tags
+        if: github.event_name == 'workflow_dispatch'
+        run: git push --follow-tags
