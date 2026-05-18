@@ -70,9 +70,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
+      - name: Verify next prerelease state
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs';
+
+          const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const preJson = JSON.parse(fs.readFileSync('.changeset/pre.json', 'utf8'));
+
+          if (preJson.mode !== 'pre' || preJson.tag !== 'next') {
+            throw new Error('Expected Changesets prerelease mode with the next tag.');
+          }
+
+          if (!packageJson.version.includes('-next.')) {
+            throw new Error('Expected package version to be a next prerelease.');
+          }
+          EOF
+
       - name: Publish prerelease to next
         if: github.event_name == 'workflow_dispatch'
-        run: npm run release:publish -- --tag next
+        run: npm run release:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
