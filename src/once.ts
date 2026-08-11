@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line typescript/no-explicit-any
 const once = <T extends (...args: any[]) => any>(
   fn: T,
 ): ((...args: Parameters<T>) => ReturnType<T>) => {

@@ -1,0 +1,6 @@
+{
+  "singleQuote": true,
+  "printWidth": 80,
+  "sortPackageJson": false,
+  "ignorePatterns": ["dist", "lib", "cjs", "package-lock.json"]
+}

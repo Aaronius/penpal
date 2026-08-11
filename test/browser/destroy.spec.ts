@@ -61,7 +61,7 @@ describe('parent calling destroy()', () => {
 
         let error;
         try {
-          child.multiply(2, 3);
+          void child.multiply(2, 3);
         } catch (e) {
           error = e;
         }

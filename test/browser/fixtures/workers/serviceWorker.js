@@ -5,33 +5,37 @@ console.log('worker origin', self.origin);
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', () => self.clients.claim());
-self.addEventListener('message', async (event) => {
+self.addEventListener('message', (event) => {
   if (event.data?.type !== 'INIT_PENPAL') {
     return;
   }
 
-  const { port } = event.data;
-  let parentReturnValue;
-  let parentApiPromise;
+  event.waitUntil(
+    (async () => {
+      const { port } = event.data;
+      let parentReturnValue;
+      let parentApiPromise;
 
-  const messenger = new Penpal.PortMessenger({
-    port,
-  });
+      const messenger = new Penpal.PortMessenger({
+        port,
+      });
 
-  const methods = PenpalGeneralFixtureMethods.createParentRoundTripMethods({
-    getParentApi: () => parentApiPromise,
-    setParentReturnValue: (value) => {
-      parentReturnValue = value;
-    },
-    getParentReturnValue: () => {
-      return parentReturnValue;
-    },
-  });
+      const methods = PenpalGeneralFixtureMethods.createParentRoundTripMethods({
+        getParentApi: () => parentApiPromise,
+        setParentReturnValue: (value) => {
+          parentReturnValue = value;
+        },
+        getParentReturnValue: () => {
+          return parentReturnValue;
+        },
+      });
 
-  parentApiPromise = Penpal.connect({
-    messenger,
-    methods,
-  }).promise;
+      parentApiPromise = Penpal.connect({
+        messenger,
+        methods,
+      }).promise;
 
-  await parentApiPromise;
+      await parentApiPromise;
+    })(),
+  );
 });

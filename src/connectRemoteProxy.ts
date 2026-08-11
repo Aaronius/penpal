@@ -25,7 +25,7 @@ type ReplyHandler = {
 const methodsToTreatAsNative = new Set(['apply', 'call', 'bind']);
 
 const createRemoteProxy = (
-  callback: (path: MethodPath, args: unknown[]) => void,
+  callback: (path: MethodPath, args: unknown[]) => Promise<unknown>,
   log?: Log,
   path: MethodPath = [],
 ): Methods => {

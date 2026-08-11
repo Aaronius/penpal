@@ -11,8 +11,6 @@ export default defineConfig((inlineConfig) => {
     dts: isMinified
       ? false
       : {
-          oxc: false,
-          resolver: 'tsc',
           sourcemap: true,
         },
     globalName: 'Penpal',

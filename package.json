@@ -52,10 +52,10 @@
     "changeset": "changeset",
     "changeset:check": "changeset status --since=origin/main",
     "changeset:version": "changeset version",
-    "lint": "eslint --cache --fix",
-    "lint:check": "eslint --max-warnings=0",
-    "format": "prettier --write \"**/*.{json,ts,js,cjs,md,html}\"",
-    "format:check": "prettier --check \"**/*.{json,ts,js,cjs,md,html}\"",
+    "lint": "oxlint --fix --max-warnings=0",
+    "lint:check": "oxlint --max-warnings=0",
+    "format": "oxfmt --write \"**/*.{json,ts,js,cjs,md,html}\"",
+    "format:check": "oxfmt --check \"**/*.{json,ts,js,cjs,md,html}\"",
     "release:publish": "changeset publish",
     "test": "npm-run-all test:unit test:chromium",
     "test:watch": "npm run test:watch:chromium",
@@ -80,11 +80,11 @@
     "test:types": "tsc --noEmit -p tsconfig.typesTest.json"
   },
   "lint-staged": {
-    "**/*": [
-      "eslint --cache --fix"
+    "**/*.{js,cjs,mjs,ts,cts,mts}": [
+      "oxlint --fix --max-warnings=0"
     ],
-    "**/*.{json,ts,js,md,html,eslintrc}": [
-      "prettier --write"
+    "**/*.{json,ts,js,cjs,md,html}": [
+      "oxfmt --write"
     ]
   },
   "files": [
@@ -94,25 +94,21 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
-    "@eslint/js": "^9.39.4",
-    "@vitest/browser": "^4.1.6",
-    "@vitest/browser-playwright": "^4.1.6",
+    "@vitest/browser": "^4.1.10",
+    "@vitest/browser-playwright": "^4.1.10",
     "cross-env": "^10.1.0",
-    "eslint": "^9.39.4",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-unused-imports": "^4.4.1",
     "filesize": "^11.0.17",
-    "globals": "^17.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
     "npm-run-all2": "^8.0.4",
+    "oxfmt": "0.62.0",
+    "oxlint": "1.77.0",
+    "oxlint-tsgolint": "7.0.2001",
     "playwright": "^1.60.0",
-    "prettier": "^3.8.3",
     "sirv": "^3.0.2",
     "terser": "^5.47.1",
-    "tsdown": "^0.22.0",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.3",
-    "vitest": "^4.1.6"
+    "tsdown": "0.22.14",
+    "typescript": "7.0.2",
+    "vitest": "^4.1.10"
   }
 }

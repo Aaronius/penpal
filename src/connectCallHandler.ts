@@ -34,7 +34,7 @@ const connectCallHandler = (
 ) => {
   let isDestroyed = false;
 
-  const handleMessage = async (message: Message) => {
+  const handleCallMessage = async (message: Message): Promise<void> => {
     if (isDestroyed) {
       // It's possible to throw an error here, but it would only be catchable
       // using window.onerror since we're in an asynchronously-called function.
@@ -106,6 +106,14 @@ const connectCallHandler = (
 
       throw error;
     }
+  };
+
+  // Messenger dispatch is synchronous, so start the async work without
+  // returning its Promise and handle any rejection here.
+  const handleMessage = (message: Message): void => {
+    void handleCallMessage(message).catch((error: unknown) => {
+      console.error(error);
+    });
   };
 
   messenger.addMessageHandler(handleMessage);

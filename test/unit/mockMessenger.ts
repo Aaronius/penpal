@@ -34,11 +34,11 @@ export class MockMessenger implements Messenger {
     this.handlers.delete(callback);
   };
 
-  emit = async (message: Message) => {
+  emit = (message: Message): Promise<void> => {
     for (const handler of this.handlers) {
-      await (handler as unknown as (message: Message) => Promise<void>)(
-        message,
-      );
+      handler(message);
     }
+
+    return Promise.resolve();
   };
 }

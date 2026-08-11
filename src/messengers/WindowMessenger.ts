@@ -30,7 +30,7 @@ class WindowMessenger implements Messenger {
   #log?: Log;
   #validateReceivedMessage?: (data: unknown) => data is Message;
   #concreteRemoteOrigin?: string;
-  #messageCallbacks = new Set<(message: Message) => void>();
+  #messageCallbacks = new Set<MessageHandler>();
   #port?: MessagePort;
 
   constructor({ remoteWindow, allowedOrigins }: Options) {
