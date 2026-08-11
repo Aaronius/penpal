@@ -1,6 +1,6 @@
 {
   "name": "penpal",
-  "version": "8.0.0-next.0",
+  "version": "8.0.0-next.1",
   "description": "Penpal simplifies communication with iframes, workers, and windows by using promise-based methods on top of postMessage.",
   "author": "Aaron Hardy <aaron@aaronhardy.com>",
   "license": "MIT",
@@ -49,14 +49,10 @@
   "scripts": {
     "build": "tsdown --format esm --format cjs --format iife && tsdown --format iife --minify --no-clean",
     "build:analysis": "node scripts/filesize.js dist/penpal.min.js",
-    "changeset": "changeset",
-    "changeset:check": "changeset status --since=origin/main",
-    "changeset:version": "changeset version",
     "lint": "oxlint --fix --max-warnings=0",
     "lint:check": "oxlint --max-warnings=0",
     "format": "oxfmt --write \"**/*.{json,ts,js,cjs,md,html}\"",
     "format:check": "oxfmt --check \"**/*.{json,ts,js,cjs,md,html}\"",
-    "release:publish": "changeset publish",
     "test": "npm-run-all test:unit test:chromium",
     "test:watch": "npm run test:watch:chromium",
     "prepublishOnly": "npm-run-all format:check lint:check test test:types build",
@@ -77,7 +73,9 @@
     "test:webkit": "npm-run-all test:webkit:browser test:file:webkit",
     "test:all-browsers": "npm-run-all test:chromium test:firefox test:edge test:webkit",
     "test:unit": "vitest run --config vitest.unit.config.ts",
-    "test:types": "tsc --noEmit -p tsconfig.typesTest.json"
+    "test:types": "npm-run-all test:types:source test:types:package",
+    "test:types:source": "tsc --noEmit -p tsconfig.typesTest.json",
+    "test:types:package": "npm run build && tsc --noEmit -p tsconfig.workerTypesTest.json"
   },
   "lint-staged": {
     "**/*.{js,cjs,mjs,ts,cts,mts}": [
@@ -92,8 +90,6 @@
     "src"
   ],
   "devDependencies": {
-    "@changesets/changelog-github": "^0.7.0",
-    "@changesets/cli": "^2.31.1",
     "@vitest/browser": "^4.1.10",
     "@vitest/browser-playwright": "^4.1.10",
     "cross-env": "^10.1.0",
@@ -101,8 +97,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
     "npm-run-all2": "^8.0.4",
-    "oxfmt": "0.62.0",
-    "oxlint": "1.77.0",
+    "oxfmt": "0.63.0",
+    "oxlint": "1.78.0",
     "oxlint-tsgolint": "7.0.2001",
     "playwright": "^1.62.1",
     "sirv": "^3.0.2",

@@ -1,23 +1,11 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
-    inputs:
-      publish:
-        description: Publish the current 8.x prerelease to the next npm dist tag
-        required: true
-        type: choice
-        options:
-          - next
-        default: next
 
 permissions:
   contents: write
   id-token: write
-  pull-requests: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -29,72 +17,129 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Upgrade npm for trusted publishing
         run: npm install --global npm@^11.5.1
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Verify prerelease branch
-        if: github.event_name == 'workflow_dispatch' && github.ref_name != '8.x'
-        run: |
-          echo "Prereleases must be published from the 8.x branch."
-          exit 1
-
-      - name: Verify release prerequisites
-        run: npm run prepublishOnly
-
-      - name: Create release PR or publish
-        if: github.event_name == 'push'
-        uses: changesets/action@v1
-        with:
-          commit: 'chore: release packages'
-          title: 'chore: release packages'
-          version: npm run changeset:version
-          publish: npm run release:publish
-          createGithubReleases: true
+      - name: Determine release state
+        id: release-state
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
-
-      - name: Verify next prerelease state
-        if: github.event_name == 'workflow_dispatch'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node --input-type=module <<'EOF'
+          import { execFileSync } from 'node:child_process';
           import fs from 'node:fs';
 
           const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const preJson = JSON.parse(fs.readFileSync('.changeset/pre.json', 'utf8'));
+          const { name, version } = packageJson;
+          const major = /^(\d+)\./.exec(version)?.[1];
 
-          if (preJson.mode !== 'pre' || preJson.tag !== 'next') {
-            throw new Error('Expected Changesets prerelease mode with the next tag.');
+          if (major === undefined) {
+            throw new Error(`Expected a semantic version, received ${version}.`);
           }
 
-          if (!packageJson.version.includes('-next.')) {
-            throw new Error('Expected package version to be a next prerelease.');
+          const prerelease = version.includes('-');
+          const expectedBranch = prerelease ? `${major}.x` : 'main';
+          const branch = process.env.GITHUB_REF_NAME;
+
+          if (branch !== expectedBranch) {
+            throw new Error(
+              `${version} must be released from ${expectedBranch}, not ${branch}.`,
+            );
           }
+
+          const publishedVersions = JSON.parse(
+            execFileSync('npm', ['view', name, 'versions', '--json'], {
+              encoding: 'utf8',
+            }),
+          );
+          const tag = `v${version}`;
+          const published = publishedVersions.includes(version);
+          const githubHeaders = {
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+          };
+
+          if (process.env.GH_TOKEN) {
+            githubHeaders.Authorization = `Bearer ${process.env.GH_TOKEN}`;
+          }
+
+          const releaseResponse = await fetch(
+            `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/releases/tags/${encodeURIComponent(tag)}`,
+            {
+              headers: githubHeaders,
+            },
+          );
+
+          if (!releaseResponse.ok && releaseResponse.status !== 404) {
+            throw new Error(
+              `Unable to check GitHub release ${tag}: ${releaseResponse.status} ${releaseResponse.statusText}`,
+            );
+          }
+
+          const releaseExists = releaseResponse.ok;
+
+          const outputs = {
+            version,
+            tag,
+            dist_tag: prerelease ? 'next' : 'latest',
+            prerelease,
+            publish_needed: !published,
+            release_needed: !releaseExists,
+          };
+
+          fs.appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            Object.entries(outputs)
+              .map(([key, value]) => `${key}=${value}`)
+              .join('\n') + '\n',
+          );
+
+          console.log(
+            `${name}@${version}: npm ${published ? 'published' : 'missing'}, GitHub release ${releaseExists ? 'present' : 'missing'}`,
+          );
           EOF
 
-      - name: Publish prerelease to next
-        if: github.event_name == 'workflow_dispatch'
-        run: npm run release:publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
+      - name: Install dependencies
+        if: steps.release-state.outputs.publish_needed == 'true'
+        run: npm ci
 
-      - name: Push prerelease tags
-        if: github.event_name == 'workflow_dispatch'
-        run: git push --follow-tags
+      - name: Install Chromium
+        if: steps.release-state.outputs.publish_needed == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Publish to npm
+        if: steps.release-state.outputs.publish_needed == 'true'
+        env:
+          NPM_CONFIG_PROVENANCE: true
+          NPM_DIST_TAG: ${{ steps.release-state.outputs.dist_tag }}
+        run: npm publish --tag "$NPM_DIST_TAG"
+
+      - name: Create GitHub release
+        if: steps.release-state.outputs.release_needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRERELEASE: ${{ steps.release-state.outputs.prerelease }}
+          RELEASE_TAG: ${{ steps.release-state.outputs.tag }}
+          VERSION: ${{ steps.release-state.outputs.version }}
+        run: |
+          PRERELEASE_ARGS=()
+          if [ "$PRERELEASE" = "true" ]; then
+            PRERELEASE_ARGS+=(--prerelease --latest=false)
+          fi
+
+          gh release create "$RELEASE_TAG" \
+            --target "$GITHUB_SHA" \
+            --generate-notes \
+            --title "v${VERSION}" \
+            "${PRERELEASE_ARGS[@]}"

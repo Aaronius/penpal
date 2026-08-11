@@ -1,0 +1,4 @@
+interface:
+  display_name: "Penpal Release"
+  short_description: "Prepare, publish, and document Penpal releases"
+  default_prompt: "Use $penpal-release to prepare and publish an exact Penpal version through GitHub Actions and curate its GitHub Release."

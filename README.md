@@ -21,7 +21,7 @@
 
 </div>
 
-Migration instructions for each major release can be found on the corresponding GitHub release tag. If you are migrating to v7, [see the v7 release tag for migration instructions](https://github.com/Aaronius/penpal/releases/tag/v7.0.0).
+Migration instructions for each major release can be found on the corresponding GitHub release tag.
 
 ## Installation
 
@@ -35,7 +35,7 @@ Install Penpal from npm as follows:
 
 Alternatively, load a build of Penpal that is already hosted on a CDN:
 
-`<script src="https://unpkg.com/penpal@^7/dist/penpal.min.js"></script>`
+`<script src="https://unpkg.com/penpal@^8/dist/penpal.min.js"></script>`
 
 Penpal will then be installed on `window.Penpal`. Usage is similar to if you were using it from npm, which is documented below, but instead of importing each module, you would access it on the `Penpal` global variable instead.
 
@@ -58,7 +58,7 @@ const messenger = new WindowMessenger({
   // Defaults to the current origin.
   allowedOrigins: ['https://childorigin.example.com'],
   // Alternatively,
-  // allowedOrigins: [new Url(iframe.src).origin]
+  // allowedOrigins: [new URL(iframe.src).origin]
 });
 
 const connection = connect({
@@ -134,7 +134,7 @@ const messenger = new WindowMessenger({
   // Defaults to the current origin.
   allowedOrigins: ['https://childorigin.example.com'],
   // Alternatively,
-  // allowedOrigins: [new Url(windowUrl).origin]
+  // allowedOrigins: [new URL(windowUrl).origin]
 });
 
 const connection = connect({
@@ -727,7 +727,7 @@ Penpal is built in TypeScript and provides full TypeScript support. When calling
 ```typescript
 import { WorkerMessenger, connect } from 'penpal';
 
-// This interace could be in a module imported by both the window and worker.
+// This interface could be in a module imported by both the window and worker.
 interface WorkerApi {
   multiply(...args: number[]): number;
 }
@@ -762,7 +762,7 @@ This lets TypeScript know which type of worker you're creating, and you'll run i
 Penpal exports several types for your usage. Import types as follows:
 
 ```typescript
-import { Connection, Methods, RemoteProxy } from 'penpal';
+import type { Connection, Methods, RemoteProxy } from 'penpal';
 ```
 
 The types are described as follows:
@@ -873,6 +873,7 @@ A reference to the port. Each of the two participants in a Penpal connection wil
 
 ## Documentation for Previous Versions
 
+- [v7 documentation](https://github.com/Aaronius/penpal/tree/7.x)
 - [v6 documentation](https://github.com/Aaronius/penpal/tree/6.x)
 - [v5 documentation](https://github.com/Aaronius/penpal/tree/5.x)
 - [v4 documentation](https://github.com/Aaronius/penpal/tree/4.x)

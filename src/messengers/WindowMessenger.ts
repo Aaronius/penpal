@@ -7,11 +7,25 @@ import type {
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards.js';
 import PenpalError from '../PenpalError.js';
 
+// Keep this structural so generated .d.ts files don't reference the DOM-only
+// Window global. Penpal also supports worker-only projects, and those projects
+// should be able to type-check the package without adding "dom" to tsconfig libs
+// just because WindowMessenger is one of Penpal's exports.
+type WindowLike = {
+  postMessage: (
+    message: unknown,
+    options?: {
+      targetOrigin?: string;
+      transfer?: Transferable[];
+    },
+  ) => void;
+};
+
 type Options = {
   /**
    * The window with which the current window will communicate.
    */
-  remoteWindow: Window;
+  remoteWindow: WindowLike;
   /**
    * An array of strings or regular expressions defining to which origins
    * communication will be allowed. If not provided, communication will be
@@ -26,7 +40,7 @@ type Options = {
  * Handles the details of communicating with a child window.
  */
 class WindowMessenger implements Messenger {
-  readonly #remoteWindow: Window;
+  readonly #remoteWindow: WindowLike;
   readonly #allowedOrigins: [string | RegExp, ...(string | RegExp)[]];
   #log: Log | undefined;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;

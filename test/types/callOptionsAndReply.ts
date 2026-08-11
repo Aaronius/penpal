@@ -35,6 +35,15 @@ type ChildMethods = {
 
 declare const messenger: WindowMessenger;
 declare const remoteWindow: Window;
+declare const windowLike: {
+  postMessage: (
+    message: unknown,
+    options?: {
+      targetOrigin?: string;
+      transfer?: Transferable[];
+    },
+  ) => void;
+};
 
 expectTypeOf<CallOptions>().toExtend<{
   readonly transferables: Transferable[] | undefined;
@@ -65,6 +74,7 @@ void new WindowMessenger({
   remoteWindow,
   allowedOrigins: undefined,
 });
+void new WindowMessenger({ remoteWindow: windowLike });
 void connect<ChildMethods>({
   messenger,
   methods: undefined,
