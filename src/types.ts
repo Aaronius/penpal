@@ -1,5 +1,5 @@
-import CallOptions from './CallOptions.js';
-import Reply from './Reply.js';
+import type CallOptions from './CallOptions.js';
+import type Reply from './Reply.js';
 import namespace from './namespace.js';
 import ErrorCodeObj from './ErrorCodeObj.js';
 
@@ -54,8 +54,8 @@ export type ErrorCode = (typeof ErrorCodeObj)[keyof typeof ErrorCodeObj];
 export type SerializedError = {
   name: string;
   message: string;
-  stack?: string;
-  penpalCode?: ErrorCode;
+  stack?: string | undefined;
+  penpalCode?: ErrorCode | undefined;
 };
 
 type MessageBase = {

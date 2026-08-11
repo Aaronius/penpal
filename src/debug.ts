@@ -1,4 +1,4 @@
-import { Log } from './types.js';
+import type { Log } from './types.js';
 
 const debug = (prefix?: string): Log => {
   return (...args: unknown[]) => {

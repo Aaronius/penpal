@@ -31,4 +31,13 @@ describe('error serialization', () => {
     expect(deserialized.message).toBe('Missing method');
     expect(deserialized.stack).toBe('penpal-stack');
   });
+
+  it('clears the local stack when the serialized stack is absent', () => {
+    const deserialized = deserializeError({
+      name: 'Error',
+      message: 'Without a stack',
+    });
+
+    expect(deserialized).toHaveProperty('stack', undefined);
+  });
 });

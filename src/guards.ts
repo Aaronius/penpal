@@ -1,5 +1,5 @@
 import namespace from './namespace.js';
-import {
+import type {
   Ack2Message,
   CallMessage,
   Message,
@@ -15,7 +15,7 @@ export const isObject = (
   return typeof value === 'object' && value !== null;
 };
 
-export const isFunction = (value: unknown) => {
+export const isFunction = (value: unknown): value is Function => {
   return typeof value === 'function';
 };
 

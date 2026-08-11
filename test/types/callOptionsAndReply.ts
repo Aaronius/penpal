@@ -2,10 +2,12 @@ import { expectTypeOf } from 'vitest';
 import {
   connect,
   CallOptions,
-  WindowMessenger,
-  Connection,
-  RemoteProxy,
   Reply,
+  WindowMessenger,
+  type Connection,
+  type InitializeMessengerOptions,
+  type Message,
+  type RemoteProxy,
 } from '../../src/index.js';
 
 type ChildMethods = {
@@ -32,6 +34,44 @@ type ChildMethods = {
 };
 
 declare const messenger: WindowMessenger;
+declare const remoteWindow: Window;
+
+expectTypeOf<CallOptions>().toExtend<{
+  readonly transferables: Transferable[] | undefined;
+  readonly timeout: number | undefined;
+}>();
+expectTypeOf<Reply>().toExtend<{
+  readonly transferables: Transferable[] | undefined;
+}>();
+
+const validateReceivedMessage = (data: unknown): data is Message =>
+  Boolean(data);
+const initializeOptionsWithoutLog: InitializeMessengerOptions = {
+  validateReceivedMessage,
+};
+const initializeOptionsWithUndefinedLog: InitializeMessengerOptions = {
+  log: undefined,
+  validateReceivedMessage,
+};
+void initializeOptionsWithoutLog;
+void initializeOptionsWithUndefinedLog;
+
+void new CallOptions({
+  transferables: undefined,
+  timeout: undefined,
+});
+void new Reply('value', { transferables: undefined });
+void new WindowMessenger({
+  remoteWindow,
+  allowedOrigins: undefined,
+});
+void connect<ChildMethods>({
+  messenger,
+  methods: undefined,
+  timeout: undefined,
+  channel: undefined,
+  log: undefined,
+});
 
 const connection = connect<ChildMethods>({ messenger });
 expectTypeOf(connection).toEqualTypeOf<Connection<ChildMethods>>();

@@ -5,13 +5,21 @@
     "target": "es2024",
     "esModuleInterop": true,
     "strict": true,
+    "erasableSyntaxOnly": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
+    "isolatedDeclarations": true,
     "sourceMap": true,
+    "rootDir": "src",
     "outDir": "dist",
     "isolatedModules": true,
     "lib": ["es2024", "dom", "webworker"]
-  }
+  },
+  "include": ["src/**/*.ts"]
 }

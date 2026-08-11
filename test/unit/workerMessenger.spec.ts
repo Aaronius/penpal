@@ -13,7 +13,7 @@ type FakeMessagePort = MessagePort & {
 };
 
 class FakeWorker {
-  #listener?: WorkerMessageListener;
+  #listener: WorkerMessageListener | undefined;
   readonly postMessage = vi.fn();
 
   addEventListener = (_eventType: string, listener: WorkerMessageListener) => {

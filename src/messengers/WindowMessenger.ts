@@ -1,5 +1,6 @@
-import { Log, Message } from '../types.js';
-import Messenger, {
+import type { Log, Message } from '../types.js';
+import type Messenger from './Messenger.js';
+import type {
   InitializeMessengerOptions,
   MessageHandler,
 } from './Messenger.js';
@@ -18,7 +19,7 @@ type Options = {
    * origin of `*` to not restrict communication, but beware the risks of
    * doing so.
    */
-  allowedOrigins?: (string | RegExp)[];
+  allowedOrigins?: (string | RegExp)[] | undefined;
 };
 
 /**
@@ -27,11 +28,11 @@ type Options = {
 class WindowMessenger implements Messenger {
   readonly #remoteWindow: Window;
   readonly #allowedOrigins: [string | RegExp, ...(string | RegExp)[]];
-  #log?: Log;
-  #validateReceivedMessage?: (data: unknown) => data is Message;
-  #concreteRemoteOrigin?: string;
+  #log: Log | undefined;
+  #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
+  #concreteRemoteOrigin: string | undefined;
   #messageCallbacks = new Set<MessageHandler>();
-  #port?: MessagePort;
+  #port: MessagePort | undefined;
 
   constructor({ remoteWindow, allowedOrigins }: Options) {
     if (!remoteWindow) {
@@ -47,7 +48,7 @@ class WindowMessenger implements Messenger {
   initialize = ({
     log,
     validateReceivedMessage,
-  }: InitializeMessengerOptions) => {
+  }: InitializeMessengerOptions): void => {
     this.#log = log;
     this.#validateReceivedMessage = validateReceivedMessage;
     window.addEventListener('message', this.#handleMessageFromRemoteWindow);
@@ -58,7 +59,7 @@ class WindowMessenger implements Messenger {
       const originForSending = this.#getOriginForSendingMessage(message);
       this.#remoteWindow.postMessage(message, {
         targetOrigin: originForSending,
-        transfer: transferables,
+        ...(transferables === undefined ? {} : { transfer: transferables }),
       });
       return;
     }
@@ -67,7 +68,7 @@ class WindowMessenger implements Messenger {
       const originForSending = this.#getOriginForSendingMessage(message);
       this.#remoteWindow.postMessage(message, {
         targetOrigin: originForSending,
-        transfer: transferables,
+        ...(transferables === undefined ? {} : { transfer: transferables }),
       });
       return;
     }
@@ -94,7 +95,7 @@ class WindowMessenger implements Messenger {
 
     if (this.#port) {
       this.#port.postMessage(message, {
-        transfer: transferables,
+        ...(transferables === undefined ? {} : { transfer: transferables }),
       });
       return;
     }
@@ -113,7 +114,7 @@ class WindowMessenger implements Messenger {
     this.#messageCallbacks.delete(callback);
   };
 
-  destroy = () => {
+  destroy = (): void => {
     window.removeEventListener('message', this.#handleMessageFromRemoteWindow);
     this.#destroyPort();
     this.#messageCallbacks.clear();

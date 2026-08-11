@@ -1,4 +1,4 @@
-import { SerializedError } from './types.js';
+import type { SerializedError } from './types.js';
 import PenpalError from './PenpalError.js';
 
 /**
@@ -25,7 +25,12 @@ export const deserializeError = ({
     : new Error(message);
 
   deserializedError.name = name;
-  deserializedError.stack = stack;
+  // TypeScript declares Error.stack as `stack?: string`. With
+  // exactOptionalPropertyTypes, that permits a missing property but rejects
+  // assigning undefined. A serialized error can legitimately have no stack,
+  // and Penpal must overwrite the locally generated stack with that undefined
+  // value to preserve the remote error, so widen the property for this write.
+  (deserializedError as { stack: string | undefined }).stack = stack;
 
   return deserializedError;
 };

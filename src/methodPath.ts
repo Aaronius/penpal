@@ -1,10 +1,10 @@
-import { MethodPath, Methods } from './types.js';
+import type { MethodPath, Methods } from './types.js';
 import { isFunction, isObject } from './guards.js';
 
 export const getMethodAtMethodPath = (
   methodPath: MethodPath,
   methods: Methods,
-) => {
+): Function | undefined => {
   const result = methodPath.reduce<Methods | Function | undefined>(
     (acc, pathSegment) => {
       if (!isObject(acc) || !Object.hasOwn(acc, pathSegment)) {
@@ -19,6 +19,6 @@ export const getMethodAtMethodPath = (
   return isFunction(result) ? result : undefined;
 };
 
-export const formatMethodPath = (methodPath: MethodPath) => {
+export const formatMethodPath = (methodPath: MethodPath): string => {
   return methodPath.join('.');
 };

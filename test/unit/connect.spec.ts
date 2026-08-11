@@ -19,7 +19,7 @@ import connect from '../../src/connect.js';
 type TestMessenger = Messenger & {
   sentMessages: Message[];
   handlers: Set<MessageHandler>;
-  initializeOptions?: InitializeMessengerOptions;
+  initializeOptions: InitializeMessengerOptions | undefined;
   destroySpy: ReturnType<typeof vi.fn>;
   emit: (message: unknown) => void;
 };

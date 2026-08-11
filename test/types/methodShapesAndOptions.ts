@@ -1,5 +1,5 @@
 import { expectTypeOf } from 'vitest';
-import { CallOptions, RemoteProxy } from '../../src/index.js';
+import { CallOptions, type RemoteProxy } from '../../src/index.js';
 
 type ChildMethods = {
   multiply(a: number, b: number): number;

@@ -1,5 +1,6 @@
-import { Log, Message } from '../types.js';
-import Messenger, {
+import type { Log, Message } from '../types.js';
+import type Messenger from './Messenger.js';
+import type {
   InitializeMessengerOptions,
   MessageHandler,
 } from './Messenger.js';
@@ -27,10 +28,10 @@ type Options = {
  */
 class WorkerMessenger implements Messenger {
   #worker: WorkerLike;
-  #log?: Log;
-  #validateReceivedMessage?: (data: unknown) => data is Message;
+  #log: Log | undefined;
+  #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
   #messageCallbacks = new Set<MessageHandler>();
-  #port?: MessagePort;
+  #port: MessagePort | undefined;
 
   constructor({ worker }: Options) {
     if (!worker) {
@@ -43,7 +44,7 @@ class WorkerMessenger implements Messenger {
   initialize = ({
     log,
     validateReceivedMessage,
-  }: InitializeMessengerOptions) => {
+  }: InitializeMessengerOptions): void => {
     this.#log = log;
     this.#validateReceivedMessage = validateReceivedMessage;
     this.#worker.addEventListener('message', this.#handleMessage);
@@ -51,7 +52,9 @@ class WorkerMessenger implements Messenger {
 
   sendMessage = (message: Message, transferables?: Transferable[]): void => {
     if (isSynMessage(message) || isAck1Message(message)) {
-      this.#worker.postMessage(message, { transfer: transferables });
+      this.#worker.postMessage(message, {
+        ...(transferables === undefined ? {} : { transfer: transferables }),
+      });
       return;
     }
 
@@ -74,7 +77,7 @@ class WorkerMessenger implements Messenger {
 
     if (this.#port) {
       this.#port.postMessage(message, {
-        transfer: transferables,
+        ...(transferables === undefined ? {} : { transfer: transferables }),
       });
       return;
     }
@@ -93,7 +96,7 @@ class WorkerMessenger implements Messenger {
     this.#messageCallbacks.delete(callback);
   };
 
-  destroy = () => {
+  destroy = (): void => {
     this.#worker.removeEventListener('message', this.#handleMessage);
     this.#destroyPort();
     this.#messageCallbacks.clear();

@@ -1,9 +1,9 @@
 import {
-  Connection,
+  type Connection,
   PenpalError,
   Reply,
   connect,
-  Methods,
+  type Methods,
   PortMessenger,
   WindowMessenger,
 } from '../../src/index.js';

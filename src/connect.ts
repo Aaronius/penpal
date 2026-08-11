@@ -1,4 +1,4 @@
-import {
+import type {
   DestroyMessage,
   Connection,
   Log,
@@ -7,7 +7,7 @@ import {
   RemoteProxy,
 } from './types.js';
 import PenpalError from './PenpalError.js';
-import Messenger from './messengers/Messenger.js';
+import type Messenger from './messengers/Messenger.js';
 import shakeHands from './shakeHands.js';
 import { isDestroyMessage, isMessage } from './guards.js';
 import once from './once.js';
@@ -21,23 +21,23 @@ type Options = {
   /**
    * Methods that may be called by the remote.
    */
-  methods?: Methods;
+  methods?: Methods | undefined;
   /**
    * The amount of time, in milliseconds, Penpal should wait
    * for a connection to be established before rejecting the connection promise.
    */
-  timeout?: number;
+  timeout?: number | undefined;
   /**
    * A string identifier that disambiguates communication when establishing
    * multiple, parallel connections between two participants (e.g., two windows,
    * a window and a worker).
    */
-  channel?: string;
+  channel?: string | undefined;
   /**
    * A function for logging debug messages. Debug messages will only be
    * logged when this is defined.
    */
-  log?: Log;
+  log?: Log | undefined;
 };
 
 const usedMessengers = new WeakSet<Messenger>();

@@ -13,7 +13,7 @@ import {
   PortMessenger,
   WindowMessenger,
 } from '../../src/index.js';
-import FixtureMethods from './fixtures/types/FixtureMethods.js';
+import type FixtureMethods from './fixtures/types/FixtureMethods.js';
 import WorkerMessenger from '../../src/messengers/WorkerMessenger.js';
 
 describe('parent calling destroy()', () => {

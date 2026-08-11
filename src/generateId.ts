@@ -2,7 +2,8 @@
  * @return A unique ID
  */
 // crypto.randomUUID is not available in insecure contexts.
-export default crypto.randomUUID?.bind(crypto) ??
+const generateId: () => string =
+  crypto.randomUUID?.bind(crypto) ??
   (() =>
     new Array(4)
       .fill(0)
@@ -10,3 +11,5 @@ export default crypto.randomUUID?.bind(crypto) ??
         Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16),
       )
       .join('-'));
+
+export default generateId;

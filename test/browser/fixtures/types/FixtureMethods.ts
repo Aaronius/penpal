@@ -1,6 +1,6 @@
-import { Reply } from '../../../../src/index.js';
+import type { Reply } from '../../../../src/index.js';
 
-type FixtureMethods = {
+export default interface FixtureMethods {
   multiply(num1: number, num2: number): number;
   multiplyAsync(num1: number, num2: number): Promise<number>;
   double(numbers: Int32Array): Reply<Int32Array>;
@@ -32,6 +32,4 @@ type FixtureMethods = {
   neverResolve(): Promise<void>;
   ['with.period'](): 'success';
   methodNotInGeneralPage: () => 'success';
-};
-
-export default FixtureMethods;
+}

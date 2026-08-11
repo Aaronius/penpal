@@ -2,7 +2,7 @@ const brand: unique symbol = Symbol('Reply');
 
 class Reply<T = unknown> {
   readonly value: T;
-  readonly transferables?: Transferable[];
+  readonly transferables: Transferable[] | undefined;
 
   // Allows TypeScript to distinguish between an actual instance of this
   // class versus an object that looks structurally similar.
@@ -12,7 +12,7 @@ class Reply<T = unknown> {
   constructor(
     value: T,
     options?: {
-      transferables?: Transferable[];
+      transferables?: Transferable[] | undefined;
     },
   ) {
     this.value = value;

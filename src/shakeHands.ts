@@ -1,5 +1,5 @@
-import Messenger from './messengers/Messenger.js';
-import {
+import type Messenger from './messengers/Messenger.js';
+import type {
   Ack2Message,
   Methods,
   Message,

@@ -1,7 +1,7 @@
 import { serializeError } from './errorSerialization.js';
-import { Message, ReplyMessage, Methods, Log } from './types.js';
+import type { Message, ReplyMessage, Methods, Log } from './types.js';
 import Reply from './Reply.js';
-import Messenger from './messengers/Messenger.js';
+import type Messenger from './messengers/Messenger.js';
 import PenpalError from './PenpalError.js';
 import { formatMethodPath, getMethodAtMethodPath } from './methodPath.js';
 import { isCallMessage } from './guards.js';
@@ -31,7 +31,7 @@ const connectCallHandler = (
   methods: Methods,
   channel: string | undefined,
   log: Log | undefined,
-) => {
+): (() => void) => {
   let isDestroyed = false;
 
   const handleCallMessage = async (message: Message): Promise<void> => {

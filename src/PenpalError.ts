@@ -1,4 +1,4 @@
-import { ErrorCode } from './types.js';
+import type { ErrorCode } from './types.js';
 
 class PenpalError extends Error {
   public code: ErrorCode;

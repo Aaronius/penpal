@@ -1,7 +1,7 @@
 import generateId from './generateId.js';
 import { deserializeError } from './errorSerialization.js';
 import { formatMethodPath } from './methodPath.js';
-import {
+import type {
   Message,
   RemoteProxy,
   Methods,
@@ -10,7 +10,7 @@ import {
   Log,
 } from './types.js';
 import CallOptions from './CallOptions.js';
-import Messenger from './messengers/Messenger.js';
+import type Messenger from './messengers/Messenger.js';
 import PenpalError from './PenpalError.js';
 import { isReplyMessage } from './guards.js';
 import namespace from './namespace.js';
@@ -19,14 +19,19 @@ type ReplyHandler = {
   methodPath: MethodPath;
   resolve: (value: unknown) => void;
   reject: (reason: unknown) => void;
-  timeoutId?: ReturnType<typeof globalThis.setTimeout>;
+  timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+};
+
+type ConnectedRemoteProxy<TMethods extends Methods> = {
+  remoteProxy: RemoteProxy<TMethods>;
+  destroy: () => void;
 };
 
 const methodsToTreatAsNative = new Set(['apply', 'call', 'bind']);
 
 const createRemoteProxy = (
   callback: (path: MethodPath, args: unknown[]) => Promise<unknown>,
-  log?: Log,
+  log: Log | undefined,
   path: MethodPath = [],
 ): Methods => {
   return new Proxy(
@@ -93,7 +98,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
   messenger: Messenger,
   channel: string | undefined,
   log: Log | undefined,
-) => {
+): ConnectedRemoteProxy<TMethods> => {
   let isDestroyed = false;
   const replyHandlers = new Map<string, ReplyHandler>();
 
