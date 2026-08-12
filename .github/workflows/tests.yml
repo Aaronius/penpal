@@ -83,6 +83,10 @@ jobs:
       - name: Run browser tests
         run: npm run test:${{ matrix.browser }}
 
+      - name: Run example smoke tests
+        if: matrix.browser == 'chromium'
+        run: npm run test:examples
+
   types:
     name: Type Tests
     runs-on: ubuntu-latest

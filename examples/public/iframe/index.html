@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iframe | Penpal Examples</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <header class="example-header">
+      <a href="../index.html">Penpal examples</a>
+      <span class="status" data-status data-state="connecting">Connecting</span>
+    </header>
+    <main class="example-layout">
+      <section>
+        <h1>Window and iframe</h1>
+        <dl class="results">
+          <div class="result-row">
+            <dt>remote.multiply(2, 6)</dt>
+            <dd><output data-result="multiply">-</output></dd>
+          </div>
+          <div class="result-row">
+            <dt>remote.divide(12, 4)</dt>
+            <dd><output data-result="divide">-</output></dd>
+          </div>
+          <div class="result-row">
+            <dt>parent.add(2, 6)</dt>
+            <dd><output data-result="add">-</output></dd>
+          </div>
+        </dl>
+      </section>
+      <iframe
+        class="endpoint"
+        data-remote-frame
+        src="./child.html"
+        title="Connected iframe"
+      ></iframe>
+    </main>
+    <script type="module" src="./parent.js"></script>
+  </body>
+</html>

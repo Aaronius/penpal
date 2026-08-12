@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Penpal Examples</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <picture>
+        <source
+          media="(prefers-color-scheme: dark)"
+          srcset="./assets/penpal-white.png"
+        />
+        <img src="./assets/penpal-black.png" alt="Penpal" />
+      </picture>
+      <p>Running examples</p>
+    </header>
+    <main class="example-index">
+      <nav aria-label="Penpal examples">
+        <a href="./iframe/index.html">
+          <strong>Iframe</strong>
+          <span>WindowMessenger</span>
+        </a>
+        <a href="./opened-window/index.html">
+          <strong>Opened window</strong>
+          <span>WindowMessenger</span>
+        </a>
+        <a href="./worker/index.html">
+          <strong>Dedicated worker</strong>
+          <span>WorkerMessenger</span>
+        </a>
+        <a href="./shared-worker/index.html">
+          <strong>Shared worker</strong>
+          <span>PortMessenger</span>
+        </a>
+        <a href="./service-worker/index.html">
+          <strong>Service worker</strong>
+          <span>PortMessenger</span>
+        </a>
+      </nav>
+    </main>
+  </body>
+</html>

@@ -434,7 +434,23 @@ self.addEventListener('message', async (event) => {
 
 ## Running Examples
 
-If you'd like to see running examples of the different types of usage, check out the [penpal-sandbox](https://github.com/Aaronius/penpal-sandbox) repository.
+The [`examples`](./examples) directory contains running examples for each
+supported communication target:
+
+- [iframe](./examples/src/iframe)
+- [opened window](./examples/src/opened-window)
+- [dedicated worker](./examples/src/worker)
+- [shared worker](./examples/src/shared-worker)
+- [service worker](./examples/src/service-worker)
+
+Build Penpal and the examples, then start the local example server:
+
+```sh
+npm install
+npm run examples:dev
+```
+
+Open [http://127.0.0.1:4173](http://127.0.0.1:4173) and select an example.
 
 ## Destroying the Connection
 

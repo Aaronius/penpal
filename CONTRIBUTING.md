@@ -11,11 +11,14 @@ Thanks for contributing to Penpal.
 
 ## Testing Overview
 
-Penpal's test suite includes browser, unit, file-protocol, and type checks.
+Penpal's test suite includes browser, unit, file-protocol, example smoke, and
+type checks.
 
 - Browser suites live in `test/browser/**/*.spec.ts`.
 - Unit suites live in `test/unit/**/*.spec.ts`.
 - File-protocol tests live in `test/browser/fileProtocol` and are run via `scripts/testFileProtocol.js`.
+- Example smoke tests exercise every app in `examples` against a freshly built
+  package.
 - Type tests live in `test/types` and run via `npm run test:types`.
 
 By default, `npm test` runs unit tests and Chromium coverage, which includes:
@@ -29,6 +32,7 @@ Additional browser runs:
 - `npm run test:firefox`
 - `npm run test:webkit`
 - `npm run test:edge` (requires Microsoft Edge installed locally)
+- `npm run test:examples` (requires Chromium installed locally)
 
 To run the full browser matrix:
 
@@ -124,6 +128,12 @@ All scripts below are defined in `package.json`.
   - Builds ESM, CJS, and IIFE bundles, then builds a minified IIFE bundle.
 - `npm run build:analysis`
   - Prints minified bundle size analysis for `dist/penpal.min.js`.
+- `npm run examples:build`
+  - Builds Penpal and all local examples.
+- `npm run examples:dev`
+  - Builds and serves the local examples at `http://127.0.0.1:4173`.
+- `npm run examples:serve`
+  - Serves an existing example build without rebuilding it.
 - `npm run lint`
   - Runs lint checks and applies safe fixes.
 - `npm run lint:check`
@@ -137,7 +147,7 @@ All scripts below are defined in `package.json`.
 - `npm run test:watch`
   - Alias for `npm run test:watch:chromium`.
 - `npm run prepublishOnly`
-  - Runs formatting checks, lint checks, Chromium tests, type tests, and build before publish.
+  - Runs formatting, lint, Chromium, example, and type checks, then builds the package before publish.
 - `npm run prepare`
   - Installs Husky git hooks.
 - `npm run test:watch:chromium`
@@ -166,6 +176,8 @@ All scripts below are defined in `package.json`.
   - Runs Firefox browser suite and Firefox file-protocol tests.
 - `npm run test:edge`
   - Runs Edge browser suite and Edge file-protocol tests.
+- `npm run test:examples`
+  - Builds and smoke-tests every local example in Chromium.
 - `npm run test:webkit`
   - Runs WebKit browser suite and WebKit file-protocol tests.
 - `npm run test:all-browsers`
@@ -174,3 +186,5 @@ All scripts below are defined in `package.json`.
   - Runs fast Node-based unit tests in `test/unit`.
 - `npm run test:types`
   - Runs type checks.
+- `npm run test:types:examples`
+  - Checks the example source against its TypeScript configuration.
