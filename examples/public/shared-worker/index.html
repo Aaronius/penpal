@@ -16,20 +16,34 @@
     <main class="example-layout">
       <section>
         <h1>Window and shared worker</h1>
-        <dl class="results">
-          <div class="result-row">
-            <dt>remote.multiply(2, 6)</dt>
-            <dd><output data-result="multiply">-</output></dd>
-          </div>
-          <div class="result-row">
-            <dt>remote.divide(12, 4)</dt>
-            <dd><output data-result="divide">-</output></dd>
-          </div>
-          <div class="result-row">
-            <dt>parent.add(2, 6)</dt>
-            <dd><output data-result="add">-</output></dd>
-          </div>
-        </dl>
+        <table class="results">
+          <thead>
+            <tr>
+              <th scope="col">Remote method call</th>
+              <th scope="col">Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="result-row">
+              <td>
+                <code>sharedWorkerMethods.<wbr />multiply(2, 6)</code>
+              </td>
+              <td><output data-result="multiply">-</output></td>
+            </tr>
+            <tr class="result-row">
+              <td>
+                <code>sharedWorkerMethods.<wbr />divide(12, 4)</code>
+              </td>
+              <td><output data-result="divide">-</output></td>
+            </tr>
+            <tr class="result-row">
+              <td>
+                <code>windowMethods.<wbr />add(2, 6)</code>
+              </td>
+              <td><output data-result="add">-</output></td>
+            </tr>
+          </tbody>
+        </table>
       </section>
     </main>
     <script type="module" src="./parent.js"></script>

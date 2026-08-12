@@ -172,27 +172,42 @@ button:disabled {
 }
 
 .results {
+  width: 100%;
   margin: 0;
-  border-top: 1px solid #d4d4d4;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
 
-.result-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 64px;
-  align-items: center;
-  min-height: 56px;
+.results th {
+  padding: 0 0 10px;
   border-bottom: 1px solid #d4d4d4;
+  color: #525252;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
 }
 
-.result-row dt {
+.results th:last-child,
+.result-row td:last-child {
+  width: 64px;
+  text-align: right;
+}
+
+.result-row td {
+  height: 56px;
+  padding: 0;
+  border-bottom: 1px solid #d4d4d4;
+  vertical-align: middle;
+}
+
+.result-row td:first-child {
+  padding-right: 16px;
+}
+
+.result-row code {
   color: #404040;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.88rem;
-}
-
-.result-row dd {
-  margin: 0;
-  text-align: right;
 }
 
 .result-row output {
@@ -243,7 +258,8 @@ iframe.endpoint {
   .site-header p,
   .example-index span,
   .example-header a,
-  .result-row dt {
+  .results th,
+  .result-row code {
     color: #a3a3a3;
   }
 
