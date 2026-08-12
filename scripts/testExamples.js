@@ -70,9 +70,11 @@ try {
         .waitFor({ timeout: 15000 });
 
       for (const [key, expectedValue] of Object.entries(expectedResults)) {
-        const value = await page
-          .locator(`[data-result="${key}"]`)
-          .evaluate((output) => output.value);
+        const output = page.locator(
+          `[data-result="${key}"][data-ready="true"]`,
+        );
+        await output.waitFor({ timeout: 15000 });
+        const value = await output.evaluate((element) => element.value);
         assert.equal(
           value,
           expectedValue,

@@ -1,6 +1,6 @@
-import type { ReportResult, ResultKey } from './protocol.js';
-
 type ExampleState = 'connected' | 'connecting' | 'error' | 'ready';
+type ResultKey = 'add' | 'divide' | 'multiply';
+type ReportResult = (key: ResultKey, value: number) => void;
 
 export type ExampleUi = {
   fail: (error: unknown) => void;
@@ -33,6 +33,7 @@ export const createExampleUi = (): ExampleUi => {
       `[data-result="${key}"]`,
     );
     output.value = String(value);
+    output.dataset.ready = 'true';
   };
 
   return {
@@ -43,12 +44,6 @@ export const createExampleUi = (): ExampleUi => {
     reportResult,
     setState,
   };
-};
-
-export const runExample = (ui: ExampleUi, task: () => Promise<void>): void => {
-  void task().catch((error: unknown) => {
-    ui.fail(error);
-  });
 };
 
 export const setEndpointState = (label: string): void => {

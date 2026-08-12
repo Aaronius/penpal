@@ -1,5 +1,25 @@
-import { WorkerMessenger } from 'penpal';
-import { connectRemote } from '../shared/protocol.js';
+import { connect, WorkerMessenger } from 'penpal';
+
+type WindowMethods = {
+  add: (num1: number, num2: number) => number;
+};
 
 const messenger = new WorkerMessenger({ worker: globalThis });
-await connectRemote(messenger);
+const connection = connect<WindowMethods>({
+  messenger,
+  methods: {
+    multiply(num1: number, num2: number) {
+      return num1 * num2;
+    },
+    divide(num1: number, num2: number) {
+      return new Promise<number>((resolve) => {
+        setTimeout(() => {
+          resolve(num1 / num2);
+        }, 250);
+      });
+    },
+  },
+});
+
+const windowMethods = await connection.promise;
+await windowMethods.add(2, 6);

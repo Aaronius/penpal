@@ -1,7 +1,32 @@
-import { PortMessenger } from 'penpal';
-import { connectRemote } from '../shared/protocol.js';
+import { connect, PortMessenger } from 'penpal';
+
+type WindowMethods = {
+  add: (num1: number, num2: number) => number;
+};
 
 const workerGlobal = globalThis as unknown as SharedWorkerGlobalScope;
+
+const connectToWindow = async (port: MessagePort): Promise<void> => {
+  const messenger = new PortMessenger({ port });
+  const connection = connect<WindowMethods>({
+    messenger,
+    methods: {
+      multiply(num1: number, num2: number) {
+        return num1 * num2;
+      },
+      divide(num1: number, num2: number) {
+        return new Promise<number>((resolve) => {
+          setTimeout(() => {
+            resolve(num1 / num2);
+          }, 250);
+        });
+      },
+    },
+  });
+
+  const windowMethods = await connection.promise;
+  await windowMethods.add(2, 6);
+};
 
 workerGlobal.addEventListener('connect', (event) => {
   const port = event.ports[0];
@@ -10,6 +35,7 @@ workerGlobal.addEventListener('connect', (event) => {
     return;
   }
 
-  const messenger = new PortMessenger({ port });
-  void connectRemote(messenger);
+  void connectToWindow(port).catch((error: unknown) => {
+    console.error(error);
+  });
 });

@@ -1,6 +1,10 @@
-import { PortMessenger } from 'penpal';
-import { connectParent } from '../shared/protocol.js';
-import { createExampleUi, runExample } from '../shared/ui.js';
+import { connect, PortMessenger } from 'penpal';
+import { createExampleUi } from '../shared/ui.js';
+
+type ServiceWorkerMethods = {
+  multiply: (num1: number, num2: number) => number;
+  divide: (num1: number, num2: number) => Promise<number>;
+};
 
 const ui = createExampleUi();
 
@@ -31,7 +35,7 @@ const waitForController = async (): Promise<ServiceWorker> => {
   });
 };
 
-runExample(ui, async () => {
+const run = async (): Promise<void> => {
   await navigator.serviceWorker.register(
     new URL('./service-worker.js', import.meta.url),
     {
@@ -51,6 +55,27 @@ runExample(ui, async () => {
   );
 
   const messenger = new PortMessenger({ port: port1 });
-  await connectParent(messenger, ui.reportResult);
+  const connection = connect<ServiceWorkerMethods>({
+    messenger,
+    methods: {
+      add(num1: number, num2: number) {
+        const result = num1 + num2;
+        ui.reportResult('add', result);
+        return result;
+      },
+    },
+  });
+
+  const serviceWorkerMethods = await connection.promise;
   ui.setState('connected', 'Connected');
+
+  const multiplicationResult = await serviceWorkerMethods.multiply(2, 6);
+  ui.reportResult('multiply', multiplicationResult);
+
+  const divisionResult = await serviceWorkerMethods.divide(12, 4);
+  ui.reportResult('divide', divisionResult);
+};
+
+void run().catch((error: unknown) => {
+  ui.fail(error);
 });
