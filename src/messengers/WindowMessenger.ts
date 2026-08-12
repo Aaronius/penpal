@@ -135,11 +135,15 @@ class WindowMessenger implements Messenger {
   };
 
   #isAllowedOrigin = (origin: string) => {
-    return this.#allowedOrigins.some((allowedOrigin) =>
-      allowedOrigin instanceof RegExp
-        ? allowedOrigin.test(origin)
-        : allowedOrigin === origin || allowedOrigin === '*',
-    );
+    return this.#allowedOrigins.some((allowedOrigin) => {
+      if (allowedOrigin instanceof RegExp) {
+        // RegExp.test() mutates lastIndex for global and sticky expressions,
+        // so test a copy to keep repeated handshake messages deterministic.
+        return new RegExp(allowedOrigin).test(origin);
+      }
+
+      return allowedOrigin === origin || allowedOrigin === '*';
+    });
   };
 
   #getOriginForSendingMessage = (message: Message) => {

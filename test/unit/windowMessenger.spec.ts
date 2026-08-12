@@ -145,6 +145,55 @@ describe('WindowMessenger', () => {
     messenger.destroy();
   });
 
+  it.each([
+    {
+      allowedOrigin: /^http:\/\/allowed\.test$/g,
+      flagName: 'global',
+    },
+    {
+      allowedOrigin: /^http:\/\/allowed\.test$/y,
+      flagName: 'sticky',
+    },
+  ])(
+    'accepts repeated messages when the allowed origin regex uses the $flagName flag',
+    ({ allowedOrigin }) => {
+      const remoteWindow = {
+        postMessage: vi.fn(),
+      } as unknown as Window;
+      const messenger = new WindowMessenger({
+        remoteWindow,
+        allowedOrigins: [allowedOrigin],
+      });
+      const callback = vi.fn();
+      const message = {
+        namespace,
+        channel: undefined,
+        type: 'SYN',
+        participantId: 'abc',
+      } as const;
+
+      messenger.initialize({ validateReceivedMessage });
+      messenger.addMessageHandler(callback);
+
+      fakeWindow.dispatch({
+        source: remoteWindow,
+        origin: 'http://allowed.test',
+        data: message,
+        ports: [],
+      });
+      fakeWindow.dispatch({
+        source: remoteWindow,
+        origin: 'http://allowed.test',
+        data: message,
+        ports: [],
+      });
+
+      expect(callback).toHaveBeenCalledTimes(2);
+
+      messenger.destroy();
+    },
+  );
+
   it('ignores ACK2 without a MessagePort and keeps port disconnected', () => {
     const remoteWindow = {
       postMessage: vi.fn(),

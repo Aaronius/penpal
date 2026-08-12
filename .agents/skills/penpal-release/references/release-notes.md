@@ -64,6 +64,9 @@ Version X is here! <Brief statement of the release's scope.>
   code. Make sequencing and cross-version compatibility explicit.
 - Group breaking changes separately. Give each meaningful change `What` and
   `Why` subsections, as Penpal's v5-v7 major notes do.
+- When a release requires newer JavaScript built-ins or changes the supported
+  runtime baseline, describe the consumer-visible compatibility impact. Name
+  the relevant built-in when that helps consumers diagnose or migrate.
 - Follow with new features and bug fixes. Include only sections supported by
   actual release content; do not add filler such as an unverified claim that no
   bugs exist.

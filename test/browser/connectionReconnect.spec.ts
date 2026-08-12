@@ -9,9 +9,15 @@ import {
   isSynMessage,
 } from '../../src/guards.js';
 
+const escapeRegExp = (value: string) => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 describe('connection management: reconnect', () => {
-  it('reconnects after child reloads', async () => {
-    const { iframe, connection } = createIframeConnection();
+  it('reconnects after child reloads with a stateful allowed-origin regex', async () => {
+    const { iframe, connection } = createIframeConnection({
+      allowedOrigins: [new RegExp(`^${escapeRegExp(CHILD_SERVER)}$`, 'g')],
+    });
     const child = await connection.promise;
 
     const ackPromise = waitForMessageFromSource({
