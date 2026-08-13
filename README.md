@@ -434,6 +434,8 @@ self.addEventListener('message', async (event) => {
 
 ## Running Examples
 
+View the [running examples](https://aaronius.github.io/penpal/) online.
+
 The [`examples`](./examples) directory contains running examples for each
 supported communication target:
 
@@ -443,7 +445,8 @@ supported communication target:
 - [shared worker](./examples/src/shared-worker)
 - [service worker](./examples/src/service-worker)
 
-Build Penpal and the examples, then start the local example server:
+To run the examples locally, build Penpal and the examples, then start the
+example server:
 
 ```sh
 npm install
