@@ -6,6 +6,11 @@ import PenpalError from './PenpalError.js';
 import { formatMethodPath, getMethodAtMethodPath } from './methodPath.js';
 import { isCallMessage } from './guards.js';
 import namespace from './namespace.js';
+import {
+  asyncIterableIteratorToReadableStream,
+  isAsyncIterableIterator,
+  type ManagedReadableStream,
+} from './asyncIterable.js';
 
 const createErrorReplyMessage = (
   channel: string | undefined,
@@ -33,6 +38,16 @@ const connectCallHandler = (
   log: Log | undefined,
 ): (() => void) => {
   let isDestroyed = false;
+  const activeIteratorStreams = new Set<ManagedReadableStream>();
+
+  const destroyIteratorStream = (
+    iteratorStream: ManagedReadableStream,
+    reason: unknown,
+  ) => {
+    void iteratorStream.destroy(reason).catch((error: unknown) => {
+      console.error(error);
+    });
+  };
 
   const handleCallMessage = async (message: Message): Promise<void> => {
     if (isDestroyed) {
@@ -53,6 +68,7 @@ const connectCallHandler = (
     const { methodPath, args, id: callId } = message;
     let replyMessage: ReplyMessage;
     let transferables: Transferable[] | undefined;
+    let iteratorStream: ManagedReadableStream | undefined;
 
     try {
       const method = getMethodAtMethodPath(methodPath, methods);
@@ -71,6 +87,30 @@ const connectCallHandler = (
         value = await value.value;
       }
 
+      if (isAsyncIterableIterator(value)) {
+        try {
+          iteratorStream = asyncIterableIteratorToReadableStream(value, () => {
+            if (iteratorStream) {
+              activeIteratorStreams.delete(iteratorStream);
+            }
+          });
+        } catch (error) {
+          try {
+            await value.return?.();
+          } catch (cleanupError) {
+            console.error(cleanupError);
+          }
+          throw error;
+        }
+
+        activeIteratorStreams.add(iteratorStream);
+        value = iteratorStream.readableStream;
+        transferables = [
+          ...(transferables ?? []),
+          iteratorStream.readableStream,
+        ];
+      }
+
       replyMessage = {
         namespace,
         channel,
@@ -86,6 +126,12 @@ const connectCallHandler = (
     // check it again because we've made async calls, and the connection may
     // have been destroyed in the meantime.
     if (isDestroyed) {
+      if (iteratorStream) {
+        destroyIteratorStream(
+          iteratorStream,
+          new PenpalError('CONNECTION_DESTROYED', 'Connection destroyed'),
+        );
+      }
       return;
     }
 
@@ -93,6 +139,10 @@ const connectCallHandler = (
       log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
       messenger.sendMessage(replyMessage, transferables);
     } catch (error) {
+      if (iteratorStream) {
+        destroyIteratorStream(iteratorStream, error);
+      }
+
       // If a consumer attempts to send an object that's not
       // cloneable (e.g., window), we want to ensure the receiver's promise
       // gets rejected.
@@ -121,6 +171,17 @@ const connectCallHandler = (
   return () => {
     isDestroyed = true;
     messenger.removeMessageHandler(handleMessage);
+
+    const error = new PenpalError(
+      'CONNECTION_DESTROYED',
+      'Connection destroyed',
+    );
+
+    for (const iteratorStream of activeIteratorStreams) {
+      destroyIteratorStream(iteratorStream, error);
+    }
+
+    activeIteratorStreams.clear();
   };
 };
 

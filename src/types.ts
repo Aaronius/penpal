@@ -5,6 +5,9 @@ import ErrorCodeObj from './ErrorCodeObj.js';
 
 type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 
+type TransformRemoteValue<R> =
+  R extends AsyncIterableIterator<infer T> ? ReadableStream<T> : R;
+
 /**
  * An object representing methods exposed by the remote but that can be called
  * locally.
@@ -13,7 +16,7 @@ export type RemoteProxy<TMethods extends Methods = Methods> = {
   [K in keyof TMethods]: TMethods[K] extends (...args: infer A) => infer R
     ? (
         ...args: [...A, CallOptions?]
-      ) => Promise<ExtractValueFromReply<Awaited<R>>>
+      ) => Promise<TransformRemoteValue<ExtractValueFromReply<Awaited<R>>>>
     : TMethods[K] extends Methods
       ? RemoteProxy<TMethods[K]>
       : never;

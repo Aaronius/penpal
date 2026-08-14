@@ -3,6 +3,7 @@ import type { Reply } from '../../../../src/index.js';
 export default interface FixtureMethods {
   multiply(num1: number, num2: number): number;
   multiplyAsync(num1: number, num2: number): Promise<number>;
+  streamValues(prefix: string): AsyncGenerator<string>;
   double(numbers: Int32Array): Reply<Int32Array>;
   multiplyWithPromisedReplyInstanceAndPromisedReturnValue(
     num1: number,

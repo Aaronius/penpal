@@ -15,6 +15,11 @@
       multiplyAsync(num1, num2) {
         return Promise.resolve(num1 * num2);
       },
+      async *streamValues(prefix) {
+        yield `${prefix}-1`;
+        await Promise.resolve();
+        yield `${prefix}-2`;
+      },
       double(numbersArray) {
         const resultArray = numbersArray.map((num) => num * 2);
         return createReply(resultArray, {

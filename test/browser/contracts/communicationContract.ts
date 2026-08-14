@@ -34,6 +34,18 @@ export const runCommunicationContract = ({
       });
     });
 
+    it('streams values from an async generator on the child', async () => {
+      await withConnection(createConnection, async (child) => {
+        const values: string[] = [];
+
+        for await (const value of await child.streamValues('result')) {
+          values.push(value);
+        }
+
+        expect(values).toEqual(['result-1', 'result-2']);
+      });
+    });
+
     if (includeAdvancedCases) {
       it('treats nested apply, call, and bind calls as Function prototype method calls', async () => {
         await withConnection(createConnection, async (child) => {

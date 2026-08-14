@@ -607,6 +607,90 @@ const connection = connect({
 });
 ```
 
+## Streaming Async Generator Results
+
+Normally, a remote method returns one value when all of its work is finished.
+That is ideal for most calls, but it can be inconvenient when a method produces
+several results over time. For example, a search might load multiple pages, or
+a worker might process a large file one section at a time. Waiting for every
+result delays the first useful value and may require keeping the entire result
+in memory.
+
+An async generator lets the method send each value as soon as it is ready. The
+`yield` keyword is similar to `return`, except that it produces one value and
+then pauses the method so it can continue later. This is useful when:
+
+- results are produced gradually;
+- the complete number of results is not known in advance;
+- the consumer may stop after finding what it needs; or
+- producing everything up front would use unnecessary time or memory.
+
+When an exposed method returns an async generator, Penpal automatically turns
+it into a transferable `ReadableStream`. Each yielded value becomes a chunk in
+that stream. The consumer can process the chunks with a regular
+`for await...of` loop—no polling or custom progress-message protocol is needed.
+
+```javascript
+// Producer
+const connection = connect({
+  messenger,
+  methods: {
+    async *search() {
+      try {
+        yield 'a';
+        await fetchNextPage();
+        yield 'b';
+      } finally {
+        // Runs when iteration finishes, the consumer cancels, or the Penpal
+        // connection is destroyed.
+        releaseSearchResources();
+      }
+    },
+  },
+});
+
+// Consumer
+const remote = await connection.promise;
+const results = await remote.search(); // ReadableStream
+
+for await (const result of results) {
+  console.log(result);
+
+  if (shouldStop(result)) {
+    // Breaking cancels the stream and asks the producer iterator to return.
+    break;
+  }
+}
+```
+
+The stream also provides backpressure: the producer advances as the consumer
+reads, rather than eagerly generating every value. If the consumer exits the
+loop early with `break`, Penpal cancels the stream and cleans up the producer.
+Putting resource cleanup in the generator's `finally` block ensures that it
+runs whether the generator finishes normally, is cancelled, or its Penpal
+connection is destroyed.
+
+For a small operation that produces only one final result, a normal synchronous
+or async method remains simpler and is left unchanged.
+
+### Streaming Details and Limitations
+
+This is a yielded-value stream abstraction. A final value from
+`return someValue` is not sent, and remote `next(value)` or `throw()` control is
+not exposed. Yielded chunks use the browser's native transferred-stream and
+structured-clone behavior; Penpal does not provide per-chunk `Reply` objects or
+transfer lists. A non-cloneable chunk therefore errors the stream according to
+the browser's native behavior.
+
+Only async iterable iterators are converted. An async-iterable-only object is
+left unchanged, and a `ReadableStream` is never reinterpreted. Cancellation and
+connection destruction call `iterator.return()`; if a `next()` call is already
+in progress, JavaScript runs the iterator cleanup after that call settles.
+Cleanup rejections follow native transferred-stream cancellation behavior and
+may be reported in the producer context. Environments without native
+`ReadableStream` support are unaffected unless a method returns an async
+iterable iterator, in which case that call rejects with a clear error.
+
 ## Parallel Connections
 
 In fairly rare cases, you may wish to make parallel connections between two participants. To illustrate, let's use a scenario where you wish to make two parallel connections between a parent window and an iframe window. In other words, you will be calling `connect()` twice within the parent window and twice within the iframe window.
