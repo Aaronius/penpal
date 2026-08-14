@@ -117,7 +117,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
     replyHandlers.delete(callId);
     clearTimeout(replyHandler.timeoutId);
     log?.(
-      `Received ${formatMethodPath(replyHandler.methodPath)}() call`,
+      `Received ${formatMethodPath(replyHandler.methodPath)}() reply`,
       message,
     );
 

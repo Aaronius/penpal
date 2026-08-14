@@ -3,7 +3,7 @@ import CallOptions from '../../src/CallOptions.js';
 import connectRemoteProxy from '../../src/connectRemoteProxy.js';
 import namespace from '../../src/namespace.js';
 import PenpalError from '../../src/PenpalError.js';
-import type { CallMessage } from '../../src/types.js';
+import type { CallMessage, ReplyMessage } from '../../src/types.js';
 import { MockMessenger } from './mockMessenger.js';
 
 type TestRemoteProxy = {
@@ -26,11 +26,12 @@ const getLastCallMessage = (messenger: MockMessenger): CallMessage => {
 describe('connectRemoteProxy', () => {
   it('sends CALL and resolves when receiving REPLY', async () => {
     const messenger = new MockMessenger();
+    const log = vi.fn();
 
     const { remoteProxy, destroy } = connectRemoteProxy(
       messenger,
       undefined,
-      undefined,
+      log,
     );
     const proxy = remoteProxy as unknown as TestRemoteProxy;
 
@@ -42,16 +43,23 @@ describe('connectRemoteProxy', () => {
       methodPath: ['multiply'],
       args: [2, 3],
     });
+    expect(log).toHaveBeenCalledWith('Sending multiply() call', callMessage);
 
-    await messenger.emit({
+    const replyMessage: ReplyMessage = {
       namespace,
       channel: undefined,
       type: 'REPLY',
       callId: callMessage.id,
       value: 6,
-    });
+    };
+
+    await messenger.emit(replyMessage);
 
     await expect(resultPromise).resolves.toBe(6);
+    expect(log).toHaveBeenLastCalledWith(
+      'Received multiply() reply',
+      replyMessage,
+    );
     destroy();
   });
 
