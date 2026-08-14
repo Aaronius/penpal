@@ -1,4 +1,4 @@
-import { connect, WindowMessenger } from 'penpal';
+import { connect, debug, WindowMessenger } from 'penpal';
 import { createExampleUi, getRequiredElement } from '../shared/ui.js';
 
 type OpenedWindowMethods = {
@@ -20,6 +20,7 @@ const connectToOpenedWindow = async (): Promise<void> => {
   const messenger = new WindowMessenger({ remoteWindow });
   const connection = connect<OpenedWindowMethods>({
     messenger,
+    log: debug('opener window'),
     methods: {
       add(num1: number, num2: number) {
         const result = num1 + num2;

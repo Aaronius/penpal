@@ -1,4 +1,4 @@
-import { connect, WorkerMessenger } from 'penpal';
+import { connect, debug, WorkerMessenger } from 'penpal';
 import { createExampleUi } from '../shared/ui.js';
 
 type WorkerMethods = {
@@ -15,6 +15,7 @@ const run = async (): Promise<void> => {
   const messenger = new WorkerMessenger({ worker });
   const connection = connect<WorkerMethods>({
     messenger,
+    log: debug('window'),
     methods: {
       add(num1: number, num2: number) {
         const result = num1 + num2;

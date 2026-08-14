@@ -1,4 +1,4 @@
-import { connect, WindowMessenger } from 'penpal';
+import { connect, debug, WindowMessenger } from 'penpal';
 import { setEndpointState } from '../shared/ui.js';
 
 type ParentMethods = {
@@ -8,6 +8,7 @@ type ParentMethods = {
 const messenger = new WindowMessenger({ remoteWindow: window.parent });
 const connection = connect<ParentMethods>({
   messenger,
+  log: debug('iframe'),
   methods: {
     multiply(num1: number, num2: number) {
       return num1 * num2;

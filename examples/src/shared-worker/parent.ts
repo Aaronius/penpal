@@ -1,4 +1,4 @@
-import { connect, PortMessenger } from 'penpal';
+import { connect, debug, PortMessenger } from 'penpal';
 import { createExampleUi } from '../shared/ui.js';
 
 type SharedWorkerMethods = {
@@ -16,6 +16,7 @@ const run = async (): Promise<void> => {
   const messenger = new PortMessenger({ port: worker.port });
   const connection = connect<SharedWorkerMethods>({
     messenger,
+    log: debug('window'),
     methods: {
       add(num1: number, num2: number) {
         const result = num1 + num2;

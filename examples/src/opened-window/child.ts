@@ -1,4 +1,4 @@
-import { connect, WindowMessenger } from 'penpal';
+import { connect, debug, WindowMessenger } from 'penpal';
 import { setEndpointState } from '../shared/ui.js';
 
 type ParentMethods = {
@@ -12,6 +12,7 @@ if (!window.opener) {
 const messenger = new WindowMessenger({ remoteWindow: window.opener });
 const connection = connect<ParentMethods>({
   messenger,
+  log: debug('opened window'),
   methods: {
     multiply(num1: number, num2: number) {
       return num1 * num2;

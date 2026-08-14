@@ -1,4 +1,4 @@
-import { connect, WorkerMessenger } from 'penpal';
+import { connect, debug, WorkerMessenger } from 'penpal';
 
 type WindowMethods = {
   add: (num1: number, num2: number) => number;
@@ -7,6 +7,7 @@ type WindowMethods = {
 const messenger = new WorkerMessenger({ worker: globalThis });
 const connection = connect<WindowMethods>({
   messenger,
+  log: debug('dedicated worker'),
   methods: {
     multiply(num1: number, num2: number) {
       return num1 * num2;
