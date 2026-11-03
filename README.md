@@ -1,10 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/readme-banner-white.png">
-  <source media="(prefers-color-scheme: light)" srcset=".github/assets/readme-banner-black.png">
-  <img alt="Penpal Logo" src=".github/assets/readme-banner-black.png">
-</picture>
+<img alt="Penpal Logo" src=".github/assets/readme-banner.svg">
 
 </div>
 
