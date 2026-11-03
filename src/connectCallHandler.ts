@@ -1,5 +1,10 @@
 import { serializeError } from './errorSerialization.js';
-import type { Message, ReplyMessage, Log } from './types.js';
+import type {
+  Log,
+  Message,
+  PenpalTransferable,
+  ReplyMessage,
+} from './types.js';
 import Reply from './Reply.js';
 import type Messenger from './messengers/Messenger.js';
 import PenpalError from './PenpalError.js';
@@ -52,7 +57,7 @@ const connectCallHandler = (
 
     const { methodPath, args, id: callId } = message;
     let replyMessage: ReplyMessage;
-    let transferables: Transferable[] | undefined;
+    let transferables: PenpalTransferable[] | undefined;
 
     try {
       const method = getMethodAtMethodPath(methodPath, methods);

@@ -9,7 +9,7 @@ import {
   WindowMessenger,
 } from '../../src/index.js';
 import { CHILD_SERVER } from './constants.js';
-import WorkerMessenger from '../../src/messengers/WorkerMessenger.js';
+import WebWorkerMessenger from '../../src/messengers/WebWorkerMessenger.js';
 
 export const createAndAddIframe = (url: string) => {
   const iframe = document.createElement('iframe');
@@ -64,7 +64,7 @@ export const createWorkerAndConnection = <
   // For worker tests, the worker fixture already initializes Penpal and
   // exposes methods, so this helper only creates the parent-side connection.
   const worker = new Worker(getWorkerFixtureUrl(workerName));
-  const messenger = new WorkerMessenger({
+  const messenger = new WebWorkerMessenger({
     worker,
   });
   const connection = connect<TRemoteMethods>({

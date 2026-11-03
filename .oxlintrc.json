@@ -182,6 +182,8 @@
     {
       "files": [
         "scripts/**/*",
+        "test/node/**/*.js",
+        "examples/node-worker/**/*.js",
         "vitest.browser.config.ts",
         "vitest.unit.config.ts"
       ],

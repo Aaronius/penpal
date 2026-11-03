@@ -1,7 +1,7 @@
 import type CallOptions from './CallOptions.js';
 import type Reply from './Reply.js';
-import namespace from './namespace.js';
-import ErrorCodeObj from './ErrorCodeObj.js';
+import type namespace from './namespace.js';
+import type ErrorCodeObj from './ErrorCodeObj.js';
 
 type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 
@@ -138,3 +138,79 @@ export type Message =
   | DestroyMessage;
 
 export type Log = (...args: unknown[]) => void;
+
+/**
+ * The message event properties Penpal reads from workers and message ports.
+ * Describing them here avoids requiring the browser's MessageEvent type in
+ * Node-only projects. The payload stays unknown until the messenger validates it.
+ */
+export type MessageEventLike = Event & {
+  readonly data: unknown;
+  readonly ports: readonly MessagePortLike[];
+};
+
+// Browser workers and both browser and Node MessagePorts use EventTarget APIs.
+// Match their accepted listener forms (a callback, a handleEvent() object, or
+// null) so their native declarations are compatible with this shared interface.
+// Penpal itself only registers callbacks. Node workers use a separate
+// EventEmitter API, which NodeWorkerMessenger handles directly.
+type MessageListener =
+  | ((event: MessageEventLike) => void)
+  | { handleEvent(event: MessageEventLike): void }
+  | null;
+
+/** The message listener operations shared by browser workers and browser/Node ports. */
+export type MessageEventTarget = {
+  addEventListener(type: 'message', listener: MessageListener): void;
+  removeEventListener(type: 'message', listener: MessageListener): void;
+};
+
+/**
+ * The port operations Penpal needs. Both browser and Node MessagePorts match
+ * this shape, so consumers only need declarations for their own environment.
+ */
+export type MessagePortLike = MessageEventTarget & {
+  postMessage(
+    value: unknown,
+    transferList?: readonly PenpalTransferable[],
+  ): void;
+  start(): void;
+  close(): void;
+};
+
+// Extract the type of one transferable item from an API parameter. Native APIs
+// accept either a transfer list directly, such as [port], or an options object,
+// such as { transfer: [port] }, so handle both forms.
+type TransferableFromArgument<Argument> =
+  Argument extends readonly (infer Item)[]
+    ? Item
+    : Argument extends { transfer?: readonly (infer Item)[] }
+      ? Item
+      : never;
+
+/**
+ * The full native port type, obtained from the global MessagePort constructor.
+ * It resolves to the browser port when browser declarations are present, and
+ * the Node port in Node-only projects. Its postMessage() parameters let us
+ * infer the platform's transferable types below.
+ */
+type NativeMessagePort = InstanceType<typeof MessagePort>;
+
+/**
+ * Transferable values described by the consumer's browser and/or Node types.
+ * Infer them from native APIs instead of importing Node types or requiring the
+ * browser's global Transferable type, so each environment can compile on its own.
+ *
+ * When a project loads both browser libraries and Node typings, structuredClone()
+ * has signatures from both environments. Parameters<typeof structuredClone>
+ * extracts parameters from only the last overload, which can be Node's version.
+ * Its transfer list leaves out browser-only types such as ImageBitmap.
+ *
+ * The global MessagePort uses the browser's declaration in these projects.
+ * Its postMessage() parameters supply the missing browser transfer types.
+ * Combine both sources so this type includes Node and browser transferables.
+ */
+export type PenpalTransferable = TransferableFromArgument<
+  | Parameters<typeof structuredClone>[1]
+  | Parameters<NativeMessagePort['postMessage']>[1]
+>;

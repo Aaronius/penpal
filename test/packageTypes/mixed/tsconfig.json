@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2024", "dom"],
+    "types": ["node"]
+  },
+  "include": [
+    "../browser/**/*.ts",
+    "../browser/**/*.cts",
+    "../node/**/*.ts",
+    "../node/**/*.cts"
+  ]
+}

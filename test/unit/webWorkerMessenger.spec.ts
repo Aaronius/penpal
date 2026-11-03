@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import WorkerMessenger from '../../src/messengers/WorkerMessenger.js';
+import WebWorkerMessenger from '../../src/messengers/WebWorkerMessenger.js';
 import PenpalError from '../../src/PenpalError.js';
 import namespace from '../../src/namespace.js';
 import type { Message } from '../../src/types.js';
@@ -70,10 +70,10 @@ const mockMessageChannels = (
   };
 };
 
-describe('WorkerMessenger', () => {
+describe('WebWorkerMessenger', () => {
   it('keeps port disconnected when ACK2 has no MessagePort', () => {
     const worker = new FakeWorker();
-    const messenger = new WorkerMessenger({
+    const messenger = new WebWorkerMessenger({
       worker,
     });
 
@@ -88,7 +88,7 @@ describe('WorkerMessenger', () => {
         type: 'ACK2',
       },
       ports: [],
-    } as MessageEvent);
+    } as unknown as MessageEvent);
 
     expect(() => {
       messenger.sendMessage({
@@ -113,7 +113,7 @@ describe('WorkerMessenger', () => {
 
   it('sends over MessagePort after ACK2 contains a port', async () => {
     const worker = new FakeWorker();
-    const messenger = new WorkerMessenger({
+    const messenger = new WebWorkerMessenger({
       worker,
     });
 
@@ -137,7 +137,7 @@ describe('WorkerMessenger', () => {
         type: 'ACK2',
       },
       ports: [port2],
-    } as MessageEvent);
+    } as unknown as MessageEvent);
 
     messenger.sendMessage({
       namespace,
@@ -155,7 +155,7 @@ describe('WorkerMessenger', () => {
 
   it('closes previous inbound MessagePort when ACK2 includes a replacement port', async () => {
     const worker = new FakeWorker();
-    const messenger = new WorkerMessenger({
+    const messenger = new WebWorkerMessenger({
       worker,
     });
 
@@ -174,7 +174,7 @@ describe('WorkerMessenger', () => {
         type: 'ACK2',
       },
       ports: [firstMessengerPort],
-    } as MessageEvent);
+    } as unknown as MessageEvent);
 
     const { port1: secondRemotePort, port2: secondMessengerPort } =
       new MessageChannel();
@@ -192,7 +192,7 @@ describe('WorkerMessenger', () => {
         type: 'ACK2',
       },
       ports: [secondMessengerPort],
-    } as MessageEvent);
+    } as unknown as MessageEvent);
 
     expect(firstCloseSpy).toHaveBeenCalledTimes(1);
 
@@ -215,7 +215,7 @@ describe('WorkerMessenger', () => {
   it('keeps existing inbound MessagePort when ACK2 has no MessagePort', async () => {
     const worker = new FakeWorker();
     const log = vi.fn();
-    const messenger = new WorkerMessenger({
+    const messenger = new WebWorkerMessenger({
       worker,
     });
 
@@ -240,7 +240,7 @@ describe('WorkerMessenger', () => {
         type: 'ACK2',
       },
       ports: [messengerPort],
-    } as MessageEvent);
+    } as unknown as MessageEvent);
 
     worker.emit({
       data: {
@@ -249,7 +249,7 @@ describe('WorkerMessenger', () => {
         type: 'ACK2',
       },
       ports: [],
-    } as MessageEvent);
+    } as unknown as MessageEvent);
 
     expect(closeSpy).not.toHaveBeenCalled();
     expect(log).toHaveBeenCalledWith(
@@ -279,7 +279,7 @@ describe('WorkerMessenger', () => {
       { port1: secondPort, port2: createFakePort() },
     ]);
     const worker = new FakeWorker();
-    const messenger = new WorkerMessenger({
+    const messenger = new WebWorkerMessenger({
       worker,
     });
 

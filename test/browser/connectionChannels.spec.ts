@@ -16,7 +16,7 @@ import {
 import type { RemoteProxy } from '../../src/index.js';
 import { CHILD_SERVER } from './constants.js';
 import type FixtureMethods from './fixtures/types/FixtureMethods.js';
-import WorkerMessenger from '../../src/messengers/WorkerMessenger.js';
+import WebWorkerMessenger from '../../src/messengers/WebWorkerMessenger.js';
 
 type ChannelParentMethods = {
   getChannel(): string;
@@ -68,7 +68,7 @@ describe('connection management: channels', () => {
     const worker = new Worker(getWorkerFixtureUrl('webWorkerChannels'));
 
     const channelAConnection = connect<FixtureMethods>({
-      messenger: new WorkerMessenger({ worker }),
+      messenger: new WebWorkerMessenger({ worker }),
       channel: 'A',
       methods: {
         getChannel() {
@@ -78,7 +78,7 @@ describe('connection management: channels', () => {
     });
 
     const channelBConnection = connect<FixtureMethods>({
-      messenger: new WorkerMessenger({ worker }),
+      messenger: new WebWorkerMessenger({ worker }),
       channel: 'B',
       methods: {
         getChannel() {

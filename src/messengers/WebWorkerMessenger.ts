@@ -1,4 +1,11 @@
-import type { Log, Message } from '../types.js';
+import type {
+  Log,
+  Message,
+  MessageEventLike,
+  MessageEventTarget,
+  MessagePortLike,
+  PenpalTransferable,
+} from '../types.js';
 import type Messenger from './Messenger.js';
 import type {
   InitializeMessengerOptions,
@@ -7,10 +14,32 @@ import type {
 import { isAck2Message, isAck1Message, isSynMessage } from '../guards.js';
 import PenpalError from '../PenpalError.js';
 
-// Keep this structural so generated .d.ts files don't depend on
-// DedicatedWorkerGlobalScope being present in consumer tsconfig libs.
+// The minimal worker API this messenger uses internally in every environment.
+// Also used for the public `worker` option when no global Worker type is
+// available, such as in Node-only projects. Avoid referencing browser-only
+// Worker and DedicatedWorkerGlobalScope types so those projects can import
+// Penpal without browser declarations.
+type WorkerEndpoint = MessageEventTarget & {
+  postMessage(
+    message: unknown,
+    options?: { transfer?: PenpalTransferable[] },
+  ): void;
+};
+
+// When browser types are available, derive the instance type from the global
+// Worker constructor. This lets the `worker` option retain the browser's full
+// addEventListener/removeEventListener signatures (e.g. 'error' events and
+// options such as { once: true }), rather than only our 'message' signature.
+// In Node-only projects without a global Worker, use WorkerEndpoint instead
+// so importing Penpal does not require browser types.
+type NativeWorker = typeof globalThis extends {
+  Worker: { prototype: infer Instance };
+}
+  ? Instance
+  : WorkerEndpoint;
+
 type WorkerLike = Pick<
-  Worker,
+  NativeWorker,
   'postMessage' | 'addEventListener' | 'removeEventListener'
 >;
 
@@ -26,12 +55,12 @@ type Options = {
 /**
  * Handles the details of communicating with a child web worker.
  */
-class WorkerMessenger implements Messenger {
-  #worker: WorkerLike;
+class WebWorkerMessenger implements Messenger {
+  #worker: WorkerEndpoint;
   #log: Log | undefined;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
   #messageCallbacks = new Set<MessageHandler>();
-  #port: MessagePort | undefined;
+  #port: MessagePortLike | undefined;
 
   constructor({ worker }: Options) {
     if (!worker) {
@@ -50,7 +79,10 @@ class WorkerMessenger implements Messenger {
     this.#worker.addEventListener('message', this.#handleMessage);
   };
 
-  sendMessage = (message: Message, transferables?: Transferable[]): void => {
+  sendMessage = (
+    message: Message,
+    transferables?: PenpalTransferable[],
+  ): void => {
     if (isSynMessage(message) || isAck1Message(message)) {
       this.#worker.postMessage(message, {
         ...(transferables === undefined ? {} : { transfer: transferables }),
@@ -76,9 +108,7 @@ class WorkerMessenger implements Messenger {
     }
 
     if (this.#port) {
-      this.#port.postMessage(message, {
-        ...(transferables === undefined ? {} : { transfer: transferables }),
-      });
+      this.#port.postMessage(message, transferables);
       return;
     }
 
@@ -108,14 +138,14 @@ class WorkerMessenger implements Messenger {
     this.#port = undefined;
   };
 
-  #setPort = (port: MessagePort) => {
+  #setPort = (port: MessagePortLike) => {
     this.#destroyPort();
     this.#port = port;
     this.#port.addEventListener('message', this.#handleMessage);
     this.#port.start();
   };
 
-  #handleMessage = ({ ports, data }: MessageEvent): void => {
+  #handleMessage = ({ ports, data }: MessageEventLike): void => {
     if (!this.#validateReceivedMessage?.(data)) {
       return;
     }
@@ -144,4 +174,4 @@ class WorkerMessenger implements Messenger {
   };
 }
 
-export default WorkerMessenger;
+export default WebWorkerMessenger;

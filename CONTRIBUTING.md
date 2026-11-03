@@ -19,7 +19,16 @@ type checks.
 - File-protocol tests live in `test/browser/fileProtocol` and are run via `scripts/testFileProtocol.js`.
 - Example smoke tests exercise every app in `examples` against a freshly built
   package.
-- Type tests live in `test/types` and run via `npm run test:types`.
+- Source type tests live in `test/types`; published package type tests live in
+  `test/packageTypes`. Run both, along with the example type checks, via
+  `npm run test:types`.
+
+Each package type-test environment has its own directory and `tsconfig.json`:
+`browser`, `worker`, `node`, and `mixed`. They share compiler settings through
+`test/packageTypes/tsconfig.base.json`, while each configuration explicitly sets
+its platform libraries and ambient types. This lets editors discover the same
+configuration used by the type-check command. The mixed configuration checks
+all browser and Node fixtures together.
 
 By default, `npm test` runs unit tests and Chromium coverage, which includes:
 
@@ -129,7 +138,9 @@ All scripts below are defined in `package.json`.
 - `npm run build:analysis`
   - Prints minified bundle size analysis for `dist/penpal.min.js`.
 - `npm run examples:build`
-  - Builds Penpal and all local examples.
+  - Builds Penpal and all local browser examples.
+- `npm run examples:node`
+  - Builds Penpal and runs the Node.js worker example in `examples/node-worker`.
 - `npm run examples:dev`
   - Builds and serves the local examples at `http://127.0.0.1:4173`.
 - `npm run examples:serve`
@@ -143,7 +154,7 @@ All scripts below are defined in `package.json`.
 - `npm run format:check`
   - Checks formatting without modifying files, suitable for CI.
 - `npm test`
-  - Runs unit tests, then Chromium browser + file-protocol tests.
+  - Runs unit tests, Node.js worker integration tests, then Chromium browser + file-protocol tests.
 - `npm run test:watch`
   - Alias for `npm run test:watch:chromium`.
 - `npm run prepublishOnly`
@@ -177,14 +188,19 @@ All scripts below are defined in `package.json`.
 - `npm run test:edge`
   - Runs Edge browser suite and Edge file-protocol tests.
 - `npm run test:examples`
-  - Builds and smoke-tests every local example in Chromium.
+  - Builds and smoke-tests the browser examples in Chromium, then runs the Node.js worker example.
 - `npm run test:webkit`
   - Runs WebKit browser suite and WebKit file-protocol tests.
 - `npm run test:all-browsers`
   - Runs Chromium, Firefox, Edge, and WebKit full test commands.
 - `npm run test:unit`
   - Runs fast Node-based unit tests in `test/unit`.
+- `npm run test:node`
+  - Builds the package and tests real Node.js workers against its ESM and CJS exports in `test/node`.
 - `npm run test:types`
   - Runs type checks.
+- `npm run test:types:package`
+  - Builds the package and checks its declarations in browser-only, worker-only, Node-only, and mixed browser/Node projects.
+  - Browser-only and worker-only checks load their respective browser API type declarations without Node typings. Node-only checks load JavaScript and Node.js type declarations without DOM or Web Worker declarations. This verifies that consumers only need typings for their own environment. Mixed checks load both browser and Node typings.
 - `npm run test:types:examples`
   - Checks the example source against its TypeScript configuration.

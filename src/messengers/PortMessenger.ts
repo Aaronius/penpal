@@ -1,4 +1,9 @@
-import type { Message } from '../types.js';
+import type {
+  Message,
+  MessageEventLike,
+  MessagePortLike,
+  PenpalTransferable,
+} from '../types.js';
 import type Messenger from './Messenger.js';
 import type {
   InitializeMessengerOptions,
@@ -10,14 +15,14 @@ type Options = {
   /**
    * The port used to communicate to the other port of the port pair.
    */
-  port: MessagePort;
+  port: MessagePortLike;
 };
 
 /**
  * Handles the details of communicating on a MessagePort.
  */
 class PortMessenger implements Messenger {
-  #port: MessagePort;
+  #port: MessagePortLike;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
   #messageCallbacks = new Set<MessageHandler>();
 
@@ -37,10 +42,11 @@ class PortMessenger implements Messenger {
     this.#port.start();
   };
 
-  sendMessage = (message: Message, transferables?: Transferable[]): void => {
-    this.#port?.postMessage(message, {
-      ...(transferables === undefined ? {} : { transfer: transferables }),
-    });
+  sendMessage = (
+    message: Message,
+    transferables?: PenpalTransferable[],
+  ): void => {
+    this.#port.postMessage(message, transferables);
   };
 
   addMessageHandler = (callback: MessageHandler): void => {
@@ -57,7 +63,7 @@ class PortMessenger implements Messenger {
     this.#messageCallbacks.clear();
   };
 
-  #handleMessage = ({ data }: MessageEvent): void => {
+  #handleMessage = ({ data }: MessageEventLike): void => {
     if (!this.#validateReceivedMessage?.(data)) {
       return;
     }

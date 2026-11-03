@@ -3,7 +3,7 @@ importScripts('/penpal.js');
 console.log('worker origin', self.origin);
 
 const channelBParentPromise = Penpal.connect({
-  messenger: new Penpal.WorkerMessenger({
+  messenger: new Penpal.WebWorkerMessenger({
     worker: self,
   }),
   channel: 'B',
@@ -19,7 +19,7 @@ const channelBParentPromise = Penpal.connect({
 }).promise;
 
 const channelAParentPromise = Penpal.connect({
-  messenger: new Penpal.WorkerMessenger({
+  messenger: new Penpal.WebWorkerMessenger({
     worker: self,
   }),
   channel: 'A',

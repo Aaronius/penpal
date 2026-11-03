@@ -188,7 +188,7 @@ console.log(additionResult); // 8
 
 </details>
 
-## Usage with a Worker
+## Usage with a Web Worker
 
 <details>
     <summary>Expand Details</summary>
@@ -196,11 +196,11 @@ console.log(additionResult); // 8
 ### Window
 
 ```javascript
-import { WorkerMessenger, connect } from 'penpal';
+import { WebWorkerMessenger, connect } from 'penpal';
 
 const worker = new Worker('worker.js');
 
-const messenger = new WorkerMessenger({
+const messenger = new WebWorkerMessenger({
   worker,
 });
 
@@ -225,9 +225,9 @@ console.log(divisionResult); // 3
 ### Worker
 
 ```javascript
-import { WorkerMessenger, connect } from 'penpal';
+import { WebWorkerMessenger, connect } from 'penpal';
 
-const messenger = new WorkerMessenger({
+const messenger = new WebWorkerMessenger({
   worker: self,
 });
 
@@ -253,6 +253,63 @@ const remote = await connection.promise;
 // Calling a remote method will always return a promise.
 const additionResult = await remote.add(2, 6);
 console.log(additionResult); // 8
+```
+
+</details>
+
+## Usage with a Node.js Worker
+
+<details>
+    <summary>Expand Details</summary>
+
+### Parent Thread (`parent.js`)
+
+```javascript
+import { Worker } from 'node:worker_threads';
+import { NodeWorkerMessenger, connect } from 'penpal';
+
+const worker = new Worker(new URL('./worker.js', import.meta.url));
+const connection = connect({
+  messenger: new NodeWorkerMessenger({ worker }),
+  methods: {
+    add(num1, num2) {
+      return num1 + num2;
+    },
+  },
+});
+
+try {
+  const remote = await connection.promise;
+  console.log(await remote.multiply(2, 6)); // 12
+  console.log(await remote.divide(12, 4)); // 3
+  console.log(await remote.addInParent(2, 6)); // 8
+} finally {
+  connection.destroy();
+  await worker.terminate();
+}
+```
+
+### Worker Thread (`worker.js`)
+
+```javascript
+import { parentPort } from 'node:worker_threads';
+import { PortMessenger, connect } from 'penpal';
+
+const connection = connect({
+  messenger: new PortMessenger({ port: parentPort }),
+  methods: {
+    multiply(num1, num2) {
+      return num1 * num2;
+    },
+    async divide(num1, num2) {
+      return num1 / num2;
+    },
+    async addInParent(num1, num2) {
+      const remote = await connection.promise;
+      return remote.add(num1, num2);
+    },
+  },
+});
 ```
 
 </details>
@@ -689,7 +746,7 @@ const connectionB = connect({
 });
 ```
 
-Although we're using `WindowMessenger` here to connect between a parent window and an iframe window, channels would similarly need to be used when using `WorkerMessenger` to make parallel connections to a worker. When using `PortMessenger`, channels are only needed when establishing parallel connections over a single pair of ports.
+Although we're using `WindowMessenger` here to connect between a parent window and an iframe window, channels would similarly need to be used when using `WebWorkerMessenger` or `NodeWorkerMessenger` to make parallel connections to a worker. When using `PortMessenger`, channels are only needed when establishing parallel connections over a single pair of ports.
 
 ## Errors
 
@@ -742,7 +799,7 @@ If you omit the type argument, you can still call remote methods by name, but ea
 ### Window Connecting to a Worker
 
 ```typescript
-import { WorkerMessenger, connect } from 'penpal';
+import { WebWorkerMessenger, connect } from 'penpal';
 
 // This interface could be in a module imported by both the window and worker.
 interface WorkerMethods {
@@ -751,7 +808,7 @@ interface WorkerMethods {
 
 const worker = new Worker('worker.js');
 
-const messenger = new WorkerMessenger({
+const messenger = new WebWorkerMessenger({
   worker,
 });
 
@@ -772,7 +829,7 @@ const methods: WorkerMethods = {
   },
 };
 
-connect({ messenger: new WorkerMessenger({ worker: self }), methods });
+connect({ messenger: new WebWorkerMessenger({ worker: self }), methods });
 ```
 
 When creating a worker, it's highly recommended that you add the following line of code at the top of your worker script depending on which type of worker you're creating:
@@ -833,7 +890,7 @@ Penpal is designed to run successfully on the most recent versions of Chrome, Fi
 
 `messenger: Messenger` (required)
 
-A messenger instance. Messengers handle the technical details of transmitting messages. The current available messengers are `WindowMessenger`, `WorkerMessenger`, and `PortMessenger`, though any object that complies with the Messenger interface may be used. Details related to building custom messengers are forthcoming.
+A messenger instance. Messengers handle the technical details of transmitting messages. The current available messengers are `WindowMessenger`, `WebWorkerMessenger`, `NodeWorkerMessenger`, and `PortMessenger`, though any object that complies with the Messenger interface may be used. `WorkerMessenger` is an alias for `WebWorkerMessenger` for backward compatibility. Details related to building custom messengers are forthcoming.
 
 `methods: object` (optional)
 
@@ -885,9 +942,11 @@ Regardless of how you configure `allowedOrigins`, communication will always be r
 
 ---
 
-### `WorkerMessenger`
+### `WebWorkerMessenger`
 
-This messenger supports communication with a [Worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker) (also known as a dedicated worker). See [Usage with a Worker](#usage-with-a-worker) for an example. This cannot be used for shared workers or service workers, which use the [PortMessenger](#portmessenger) instead.
+This messenger supports communication with a [Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker) (also known as a dedicated worker). See [Usage with a Web Worker](#usage-with-a-web-worker) for an example. This cannot be used for shared workers or service workers, which use the [PortMessenger](#portmessenger) instead.
+
+`WorkerMessenger` is an alias for `WebWorkerMessenger` for backward compatibility. Both exports reference the same class.
 
 #### Constructor Options
 
@@ -897,9 +956,27 @@ A reference to the worker. When connecting from a window, you would specify the 
 
 ---
 
+### `WorkerMessenger`
+
+`WorkerMessenger` is an alias of [`WebWorkerMessenger`](#webworkermessenger) for backward compatibility and will be removed in a future major version.
+
+---
+
+### `NodeWorkerMessenger`
+
+This messenger supports communication with a Node.js `Worker` from `node:worker_threads`. See [Usage with a Node.js Worker](#usage-with-a-nodejs-worker) for an example. Inside the worker, use `PortMessenger` with `parentPort`.
+
+#### Constructor Options
+
+`worker: Worker` (from `node:worker_threads`)
+
+A reference to the Node.js worker. Handshake and RPC messages use the worker's existing message channel. Destroying the connection removes the messenger's listener without calling `worker.terminate()`.
+
+---
+
 ### `PortMessenger`
 
-This messenger supports communication between a pair of [MessagePorts](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort). This is particularly useful when establishing a connection with a [SharedWorker](https://developer.mozilla.org/en-US/docs/Web/API/SharedWorker) or [ServiceWorker](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorker). See [Usage with a Shared Worker](#usage-with-a-shared-worker) and [Usage with a Service Worker](#usage-with-a-service-worker) for examples.
+This messenger supports communication between a pair of browser or Node.js [MessagePorts](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort). See the [Shared Worker](#usage-with-a-shared-worker), [Service Worker](#usage-with-a-service-worker), and [Node.js Worker](#usage-with-a-nodejs-worker) examples, including use of a Node.js worker's `parentPort`.
 
 #### Constructor Options
 

@@ -1,10 +1,10 @@
-import { connect, debug, WorkerMessenger } from 'penpal';
+import { connect, debug, WebWorkerMessenger } from 'penpal';
 
 type WindowMethods = {
   add: (num1: number, num2: number) => number;
 };
 
-const messenger = new WorkerMessenger({ worker: globalThis });
+const messenger = new WebWorkerMessenger({ worker: globalThis });
 const connection = connect<WindowMethods>({
   messenger,
   log: debug('dedicated worker'),

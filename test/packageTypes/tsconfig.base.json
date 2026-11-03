@@ -7,7 +7,6 @@
     "exactOptionalPropertyTypes": true,
     "noEmit": true,
     "skipLibCheck": false,
-    "lib": ["es2024", "webworker"]
-  },
-  "include": ["test/packageTypes/workerOnly.ts"]
+    "types": []
+  }
 }

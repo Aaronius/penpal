@@ -1,5 +1,9 @@
 import { CHILD_SERVER } from './constants.js';
-import { connect, WorkerMessenger, WindowMessenger } from '../../src/index.js';
+import {
+  connect,
+  WebWorkerMessenger,
+  WindowMessenger,
+} from '../../src/index.js';
 import type FixtureMethods from './fixtures/types/FixtureMethods.js';
 import { expectConnectionToTimeout, getWorkerFixtureUrl } from './utils.js';
 
@@ -98,7 +102,7 @@ it('connects and calls a function on the child worker when src is set to data UR
     `data:application/javascript,${encodeURIComponent(code)}`,
   );
 
-  const messenger = new WorkerMessenger({
+  const messenger = new WebWorkerMessenger({
     worker,
   });
 
@@ -150,7 +154,7 @@ it('connects and calls a function on the child worker when src is set to an obje
 
   const worker = new Worker(blobUrl);
 
-  const messenger = new WorkerMessenger({
+  const messenger = new WebWorkerMessenger({
     worker,
   });
 

@@ -6,7 +6,7 @@ console.log('worker origin', self.origin);
 let parentReturnValue;
 let parentApiPromise;
 
-const messenger = new Penpal.WorkerMessenger({
+const messenger = new Penpal.WebWorkerMessenger({
   worker: self,
 });
 

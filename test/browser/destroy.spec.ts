@@ -14,7 +14,7 @@ import {
   WindowMessenger,
 } from '../../src/index.js';
 import type FixtureMethods from './fixtures/types/FixtureMethods.js';
-import WorkerMessenger from '../../src/messengers/WorkerMessenger.js';
+import WebWorkerMessenger from '../../src/messengers/WebWorkerMessenger.js';
 
 describe('parent calling destroy()', () => {
   const variants = [
@@ -105,7 +105,7 @@ describe('parent calling destroy()', () => {
     const addEventListenerSpy = vi.spyOn(worker, 'addEventListener');
     const removeEventListenerSpy = vi.spyOn(worker, 'removeEventListener');
 
-    const messenger = new WorkerMessenger({
+    const messenger = new WebWorkerMessenger({
       worker,
     });
 

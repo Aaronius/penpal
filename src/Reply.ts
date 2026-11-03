@@ -1,8 +1,10 @@
+import type { PenpalTransferable } from './types.js';
+
 const brand: unique symbol = Symbol('Reply');
 
 class Reply<T = unknown> {
   readonly value: T;
-  readonly transferables: Transferable[] | undefined;
+  readonly transferables: PenpalTransferable[] | undefined;
 
   // Allows TypeScript to distinguish between an actual instance of this
   // class versus an object that looks structurally similar.
@@ -12,7 +14,7 @@ class Reply<T = unknown> {
   constructor(
     value: T,
     options?: {
-      transferables?: Transferable[] | undefined;
+      transferables?: PenpalTransferable[] | undefined;
     },
   ) {
     this.value = value;

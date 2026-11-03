@@ -1,4 +1,4 @@
-import { connect, debug, WorkerMessenger } from 'penpal';
+import { connect, debug, WebWorkerMessenger } from 'penpal';
 import { createExampleUi } from '../shared/ui.js';
 
 type WorkerMethods = {
@@ -12,7 +12,7 @@ const run = async (): Promise<void> => {
   const worker = new Worker(new URL('./worker.js', import.meta.url), {
     type: 'module',
   });
-  const messenger = new WorkerMessenger({ worker });
+  const messenger = new WebWorkerMessenger({ worker });
   const connection = connect<WorkerMethods>({
     messenger,
     log: debug('window'),
