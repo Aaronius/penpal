@@ -12,7 +12,7 @@ describe('connection management: timeout behavior across messengers', () => {
   const timeoutCases = [
     {
       name: 'times out for non-responsive iframe targets',
-      createConnection(timeout) {
+      createConnection(timeout: number) {
         return createIframeConnection({
           url: `${CHILD_SERVER}/never-respond`,
           timeout,
@@ -21,7 +21,7 @@ describe('connection management: timeout behavior across messengers', () => {
     },
     {
       name: 'times out for non-responsive worker targets',
-      createConnection(timeout) {
+      createConnection(timeout: number) {
         return createWorkerAndConnection({
           workerName: 'neverRespondWorker',
           timeout,
@@ -30,7 +30,7 @@ describe('connection management: timeout behavior across messengers', () => {
     },
     {
       name: 'times out for message ports without a remote participant',
-      createConnection(timeout) {
+      createConnection(timeout: number) {
         const { port1 } = new MessageChannel();
 
         return connect({
@@ -48,8 +48,9 @@ describe('connection management: timeout behavior across messengers', () => {
 
     it(name, async () => {
       const connection = createConnection(timeoutMs);
-      const error = await expectConnectionToTimeout(connection);
-      expect(error.message).toBe(`Connection timed out after ${timeoutMs}ms`);
+      await expectConnectionToTimeout(connection, {
+        message: `Connection timed out after ${timeoutMs}ms`,
+      });
     });
   }
 });

@@ -11,8 +11,8 @@ type GlobalState = {
   // Track active setup users so we only tear down once the last worker exits.
   refs: number;
   // Deduplicate concurrent setup calls in the same process.
-  setupPromise?: Promise<void>;
-  fixtureServer?: Server;
+  setupPromise?: Promise<void> | undefined;
+  fixtureServer?: Server | undefined;
   // Only close the server when this process started it.
   ownsFixtureServer: boolean;
 };

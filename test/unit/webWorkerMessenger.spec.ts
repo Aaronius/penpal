@@ -4,7 +4,6 @@ import PenpalError from '../../src/PenpalError.js';
 import namespace from '../../src/namespace.js';
 import type { Message } from '../../src/types.js';
 
-type WorkerMessageListener = (event: MessageEvent) => void;
 type FakeMessagePort = MessagePort & {
   addEventListener: ReturnType<typeof vi.fn>;
   removeEventListener: ReturnType<typeof vi.fn>;
@@ -13,17 +12,24 @@ type FakeMessagePort = MessagePort & {
 };
 
 class FakeWorker {
-  #listener: WorkerMessageListener | undefined;
+  #listener: EventListenerOrEventListenerObject | undefined;
   readonly postMessage = vi.fn();
 
-  addEventListener = (_eventType: string, listener: WorkerMessageListener) => {
+  addEventListener = (
+    _eventType: string,
+    listener: EventListenerOrEventListenerObject,
+  ) => {
     this.#listener = listener;
   };
 
   removeEventListener = vi.fn();
 
   emit = (event: MessageEvent) => {
-    this.#listener?.(event);
+    if (typeof this.#listener === 'function') {
+      this.#listener(event);
+    } else {
+      this.#listener?.handleEvent(event);
+    }
   };
 }
 

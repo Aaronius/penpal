@@ -127,38 +127,29 @@ export const runCommunicationContract = ({
 
     it('handles promises rejected with error instances', async () => {
       await withConnection(createConnection, async (child) => {
-        const error = await child
-          .getPromiseRejectedWithError()
-          .catch((caughtError) => {
-            return caughtError as Error;
-          });
-
-        expect(error).toEqual(expect.any(Error));
-        expect(error.name).toBe('TypeError');
-        expect(error.message).toBe('test error object');
-        expect(error.stack).toEqual(expect.any(String));
+        const pending = child.getPromiseRejectedWithError();
+        await expect(pending).rejects.toBeInstanceOf(Error);
+        await expect(pending).rejects.toMatchObject({
+          name: 'TypeError',
+          message: 'test error object',
+          stack: expect.any(String),
+        });
       });
     });
 
     it('handles thrown errors', async () => {
       await withConnection(createConnection, async (child) => {
-        const error = await child.throwError().catch((caughtError) => {
-          return caughtError as Error;
-        });
-
-        expect(error).toEqual(expect.any(Error));
-        expect(error.message).toBe('Oh nos!');
+        const pending = child.throwError();
+        await expect(pending).rejects.toBeInstanceOf(Error);
+        await expect(pending).rejects.toMatchObject({ message: 'Oh nos!' });
       });
     });
 
     it('handles unclonable values', async () => {
       await withConnection(createConnection, async (child) => {
-        const error = await child.getUnclonableValue().catch((caughtError) => {
-          return caughtError as Error;
-        });
-
-        expect(error).toEqual(expect.any(Error));
-        expect(error.name).toBe('DataCloneError');
+        const pending = child.getUnclonableValue();
+        await expect(pending).rejects.toBeInstanceOf(Error);
+        await expect(pending).rejects.toMatchObject({ name: 'DataCloneError' });
       });
     });
 

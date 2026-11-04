@@ -46,10 +46,9 @@ describe('PortMessenger', () => {
     await vi.waitFor(() => {
       expect(callback).toHaveBeenCalledTimes(1);
     });
-    expect(callback.mock.calls[0][0]).toMatchObject({
-      type: 'SYN',
-      participantId: 'participant',
-    });
+    expect(callback).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'SYN', participantId: 'participant' }),
+    );
 
     messenger.destroy();
   });

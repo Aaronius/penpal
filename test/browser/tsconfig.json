@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
     "rootDir": "../..",
     "isolatedDeclarations": false,
     "types": ["vitest/globals", "node"]

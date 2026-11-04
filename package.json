@@ -81,7 +81,9 @@
     "test:all-browsers": "npm-run-all test:chromium test:firefox test:edge test:webkit",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:node": "npm run build && node --test test/node/*.spec.js",
-    "test:types": "npm-run-all test:types:source test:types:package test:types:examples",
+    "test:types": "npm-run-all test:types:source test:types:package test:types:examples test:types:unit test:types:browser",
+    "test:types:unit": "tsc --noEmit -p test/unit",
+    "test:types:browser": "tsc --noEmit -p test/browser",
     "test:types:examples": "tsc --noEmit -p examples/tsconfig.json",
     "test:types:source": "tsc --noEmit -p test/types",
     "test:types:package": "npm run build && tsc --noEmit -p test/packageTypes/worker && tsc --noEmit -p test/packageTypes/browser && tsc --noEmit -p test/packageTypes/node && tsc --noEmit -p test/packageTypes/mixed"

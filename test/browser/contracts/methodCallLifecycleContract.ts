@@ -21,15 +21,11 @@ export const runMethodCallLifecycleContract = ({
           }),
         );
 
-        const error = await promise.catch((caughtError) => {
-          return caughtError as PenpalError;
+        await expect(promise).rejects.toBeInstanceOf(PenpalError);
+        await expect(promise).rejects.toMatchObject({
+          code: 'METHOD_CALL_TIMEOUT',
+          message: 'Method call neverResolve() timed out after 0ms',
         });
-
-        expect(error).toEqual(expect.any(PenpalError));
-        expect(error.message).toBe(
-          'Method call neverResolve() timed out after 0ms',
-        );
-        expect(error.code).toBe('METHOD_CALL_TIMEOUT');
       });
     });
 
@@ -39,15 +35,12 @@ export const runMethodCallLifecycleContract = ({
 
         connection.destroy();
 
-        const error = await pending.catch((caughtError) => {
-          return caughtError as PenpalError;
+        await expect(pending).rejects.toBeInstanceOf(PenpalError);
+        await expect(pending).rejects.toMatchObject({
+          code: 'CONNECTION_DESTROYED',
+          message:
+            'Method call neverResolve() failed due to destroyed connection',
         });
-
-        expect(error).toEqual(expect.any(PenpalError));
-        expect(error.message).toBe(
-          'Method call neverResolve() failed due to destroyed connection',
-        );
-        expect(error.code).toBe('CONNECTION_DESTROYED');
       });
     });
   });

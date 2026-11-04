@@ -111,15 +111,11 @@ describe('connectRemoteProxy', () => {
 
     const resultPromise = proxy.neverResolve(new CallOptions({ timeout: 0 }));
 
-    const error = await resultPromise.catch((caughtError) => {
-      return caughtError as PenpalError;
+    await expect(resultPromise).rejects.toBeInstanceOf(PenpalError);
+    await expect(resultPromise).rejects.toMatchObject({
+      code: 'METHOD_CALL_TIMEOUT',
+      message: 'Method call neverResolve() timed out after 0ms',
     });
-
-    expect(error).toEqual(expect.any(PenpalError));
-    expect(error.code).toBe('METHOD_CALL_TIMEOUT');
-    expect(error.message).toBe(
-      'Method call neverResolve() timed out after 0ms',
-    );
 
     destroy();
   });
@@ -144,13 +140,11 @@ describe('connectRemoteProxy', () => {
       new CallOptions({ timeout: 1000 }),
     );
 
-    const error = await resultPromise.catch((caughtError) => {
-      return caughtError as PenpalError;
+    await expect(resultPromise).rejects.toBeInstanceOf(PenpalError);
+    await expect(resultPromise).rejects.toMatchObject({
+      code: 'TRANSMISSION_FAILED',
+      message: sendError.message,
     });
-
-    expect(error).toEqual(expect.any(PenpalError));
-    expect(error.code).toBe('TRANSMISSION_FAILED');
-    expect(error.message).toBe(sendError.message);
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
 
     destroy();
@@ -209,15 +203,11 @@ describe('connectRemoteProxy', () => {
 
     destroy();
 
-    const error = await resultPromise.catch((caughtError) => {
-      return caughtError as PenpalError;
+    await expect(resultPromise).rejects.toBeInstanceOf(PenpalError);
+    await expect(resultPromise).rejects.toMatchObject({
+      code: 'CONNECTION_DESTROYED',
+      message: 'Method call neverResolve() failed due to destroyed connection',
     });
-
-    expect(error).toEqual(expect.any(PenpalError));
-    expect(error.code).toBe('CONNECTION_DESTROYED');
-    expect(error.message).toBe(
-      'Method call neverResolve() failed due to destroyed connection',
-    );
   });
 
   it('clears method call timeout after receiving REPLY', async () => {

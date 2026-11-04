@@ -1,6 +1,5 @@
 import type { UnspecifiedRemoteMethods } from '../../src/types.js';
 import {
-  type Connection,
   PenpalError,
   Reply,
   connect,
@@ -162,15 +161,15 @@ export const getWorkerFixtureUrl = (workerName: string) => {
   return `/workers/${workerName}.js`;
 };
 
-export const expectConnectionToTimeout = async (connection: Connection) => {
-  const error = await connection.promise.catch((caughtError) => {
-    return caughtError as PenpalError;
+export const expectConnectionToTimeout = async (
+  connection: { promise: Promise<unknown>; destroy: () => void },
+  expected: { message?: string } = {},
+) => {
+  await expect(connection.promise).rejects.toBeInstanceOf(PenpalError);
+  await expect(connection.promise).rejects.toMatchObject({
+    code: 'CONNECTION_TIMEOUT',
+    ...expected,
   });
 
-  expect(error).toEqual(expect.any(PenpalError));
-  expect(error.code).toBe('CONNECTION_TIMEOUT');
-
   connection.destroy();
-
-  return error;
 };

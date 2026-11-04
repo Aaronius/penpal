@@ -1,6 +1,7 @@
 import { CHILD_SERVER } from './constants.js';
 import { waitForMessageFromSource } from './asyncUtils.js';
 import { createIframeConnection } from './connectionManagementHelpers.js';
+import type FixtureMethods from './fixtures/types/FixtureMethods.js';
 import { PenpalError } from '../../src/index.js';
 import {
   isAck1Message,
@@ -15,7 +16,7 @@ const escapeRegExp = (value: string) => {
 
 describe('connection management: reconnect', () => {
   it('reconnects after child reloads with a stateful allowed-origin regex', async () => {
-    const { iframe, connection } = createIframeConnection({
+    const { iframe, connection } = createIframeConnection<FixtureMethods>({
       allowedOrigins: [new RegExp(`^${escapeRegExp(CHILD_SERVER)}$`, 'g')],
     });
     const child = await connection.promise;
@@ -39,7 +40,7 @@ describe('connection management: reconnect', () => {
   });
 
   it('reconnects after child navigates to a page with a different method set', async () => {
-    const { iframe, connection } = createIframeConnection();
+    const { iframe, connection } = createIframeConnection<FixtureMethods>();
     const child = await connection.promise;
 
     const ackPromise = waitForMessageFromSource({
@@ -57,18 +58,15 @@ describe('connection management: reconnect', () => {
     await ackPromise;
 
     await expect(child.methodNotInGeneralPage()).resolves.toBe('success');
-    const error = await child.multiply(2, 4).catch((caughtError) => {
-      return caughtError as PenpalError;
-    });
-
-    expect(error).toEqual(expect.any(PenpalError));
-    expect(error.code).toBe('METHOD_NOT_FOUND');
+    const pending = child.multiply(2, 4);
+    await expect(pending).rejects.toBeInstanceOf(PenpalError);
+    await expect(pending).rejects.toMatchObject({ code: 'METHOD_NOT_FOUND' });
 
     connection.destroy();
   });
 
   it('rejects method calls during reconnect with transmission error', async () => {
-    const { iframe, connection } = createIframeConnection();
+    const { iframe, connection } = createIframeConnection<FixtureMethods>();
     const child = await connection.promise;
 
     const synPromise = waitForMessageFromSource({
@@ -82,15 +80,14 @@ describe('connection management: reconnect', () => {
     void child.reload();
     await synPromise;
 
-    const result = await child.multiply(2, 4).then(
-      (value) => value,
-      (error) => error,
-    );
-
-    expect(result).toEqual(expect.any(PenpalError));
-    expect((result as PenpalError).code).toBe('TRANSMISSION_FAILED');
-    expect((result as Error).message).not.toContain(
-      "You've hit a bug in Penpal",
+    const pending = child.multiply(2, 4);
+    await expect(pending).rejects.toBeInstanceOf(PenpalError);
+    await expect(pending).rejects.toMatchObject({
+      code: 'TRANSMISSION_FAILED',
+    });
+    await expect(pending).rejects.not.toHaveProperty(
+      'message',
+      expect.stringContaining("You've hit a bug in Penpal"),
     );
 
     connection.destroy();

@@ -64,7 +64,7 @@ const createMessenger = (): TestMessenger => {
 };
 
 const createPendingPromise = () => {
-  return new Promise(() => {
+  return new Promise<never>(() => {
     // Intentionally left pending.
   });
 };

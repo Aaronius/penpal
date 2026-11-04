@@ -7,7 +7,7 @@ import type FixtureMethods from './fixtures/types/FixtureMethods.js';
 
 type CreateWindowConnectionOptions = {
   remoteWindow: Window;
-  allowedOrigins?: (string | RegExp)[];
+  allowedOrigins?: (string | RegExp)[] | undefined;
   methods?: object;
   timeout?: number;
   channel?: string;

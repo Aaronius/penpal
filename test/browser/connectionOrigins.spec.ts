@@ -7,7 +7,7 @@ import type FixtureMethods from './fixtures/types/FixtureMethods.js';
 import { expectConnectionToTimeout } from './utils.js';
 
 type ScenarioOptions = {
-  allowedOrigins?: (string | RegExp)[];
+  allowedOrigins?: (string | RegExp)[] | undefined;
   timeout?: number;
   fixturePage?: string;
   url?: string;
