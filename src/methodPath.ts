@@ -1,20 +1,17 @@
-import type { MethodPath, Methods } from './types.js';
+import type { MethodPath } from './types.js';
 import { isFunction, isObject } from './guards.js';
 
 export const getMethodAtMethodPath = (
   methodPath: MethodPath,
-  methods: Methods,
+  methods: object,
 ): Function | undefined => {
-  const result = methodPath.reduce<Methods | Function | undefined>(
-    (acc, pathSegment) => {
-      if (!isObject(acc) || !Object.hasOwn(acc, pathSegment)) {
-        return undefined;
-      }
+  const result = methodPath.reduce<unknown>((acc, pathSegment) => {
+    if (!isObject(acc) || !Object.hasOwn(acc, pathSegment)) {
+      return undefined;
+    }
 
-      return acc[pathSegment];
-    },
-    methods,
-  );
+    return acc[pathSegment];
+  }, methods);
 
   return isFunction(result) ? result : undefined;
 };

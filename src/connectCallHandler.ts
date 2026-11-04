@@ -1,5 +1,5 @@
 import { serializeError } from './errorSerialization.js';
-import type { Message, ReplyMessage, Methods, Log } from './types.js';
+import type { Message, ReplyMessage, Log } from './types.js';
 import Reply from './Reply.js';
 import type Messenger from './messengers/Messenger.js';
 import PenpalError from './PenpalError.js';
@@ -28,7 +28,7 @@ const createErrorReplyMessage = (
  */
 const connectCallHandler = (
   messenger: Messenger,
-  methods: Methods,
+  methods: object,
   channel: string | undefined,
   log: Log | undefined,
 ): (() => void) => {

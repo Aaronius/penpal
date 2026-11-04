@@ -4,7 +4,8 @@ import { formatMethodPath } from './methodPath.js';
 import type {
   Message,
   RemoteProxy,
-  Methods,
+  MethodsShape,
+  UnspecifiedRemoteMethods,
   MethodPath,
   CallMessage,
   Log,
@@ -22,8 +23,12 @@ type ReplyHandler = {
   timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
 };
 
-type ConnectedRemoteProxy<TMethods extends Methods> = {
-  remoteProxy: RemoteProxy<TMethods>;
+type ConnectedRemoteProxy<
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods,
+> = {
+  remoteProxy: RemoteProxy<TRemoteMethods>;
   destroy: () => void;
 };
 
@@ -33,7 +38,7 @@ const createRemoteProxy = (
   callback: (path: MethodPath, args: unknown[]) => Promise<unknown>,
   log: Log | undefined,
   path: MethodPath = [],
-): Methods => {
+): object => {
   return new Proxy(
     path.length
       ? () => {
@@ -94,11 +99,15 @@ const getDestroyedConnectionMethodCallError = (methodPath: MethodPath) => {
  * be sent to the remote, the remote's corresponding method will be
  * executed, and the method's return value will be returned via a message.
  */
-const connectRemoteProxy = <TMethods extends Methods>(
+const connectRemoteProxy = <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods,
+>(
   messenger: Messenger,
   channel: string | undefined,
   log: Log | undefined,
-): ConnectedRemoteProxy<TMethods> => {
+): ConnectedRemoteProxy<TRemoteMethods> => {
   let isDestroyed = false;
   const replyHandlers = new Map<string, ReplyHandler>();
 
@@ -181,7 +190,7 @@ const connectRemoteProxy = <TMethods extends Methods>(
         );
       }
     });
-  }, log) as RemoteProxy<TMethods>;
+  }, log) as RemoteProxy<TRemoteMethods>;
 
   const destroy = () => {
     isDestroyed = true;

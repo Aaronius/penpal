@@ -1,7 +1,8 @@
 import type Messenger from './messengers/Messenger.js';
 import type {
   Ack2Message,
-  Methods,
+  MethodsShape,
+  UnspecifiedRemoteMethods,
   Message,
   RemoteProxy,
   Ack1Message,
@@ -17,14 +18,18 @@ import namespace from './namespace.js';
 
 type Options = {
   messenger: Messenger;
-  methods: Methods;
+  methods: object;
   timeout: number | undefined;
   channel: string | undefined;
   log: Log | undefined;
 };
 
-type Handshake<TMethods extends Methods> = {
-  promise: Promise<RemoteProxy<TMethods>>;
+type Handshake<
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods,
+> = {
+  promise: Promise<RemoteProxy<TRemoteMethods>>;
   destroy: () => void;
 };
 
@@ -89,13 +94,17 @@ type Handshake<TMethods extends Methods> = {
  * 6. At this point, both participants know the other is receiving messages
  *    and the handshake is complete.
  */
-const shakeHands = <TMethods extends Methods>({
+const shakeHands = <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods,
+>({
   messenger,
   methods,
   timeout,
   channel,
   log,
-}: Options): Handshake<TMethods> => {
+}: Options): Handshake<TRemoteMethods> => {
   const participantId = generateId();
   let remoteParticipantId: string;
   const destroyHandlers: (() => void)[] = [];
@@ -103,7 +112,7 @@ const shakeHands = <TMethods extends Methods>({
   let isDestroyed = false;
 
   const { promise, resolve, reject } =
-    Promise.withResolvers<RemoteProxy<TMethods>>();
+    Promise.withResolvers<RemoteProxy<TRemoteMethods>>();
 
   const timeoutId =
     timeout !== undefined
@@ -151,7 +160,7 @@ const shakeHands = <TMethods extends Methods>({
     destroyHandlers.push(connectCallHandler(messenger, methods, channel, log));
 
     const { remoteProxy, destroy: destroyMethodProxies } =
-      connectRemoteProxy<TMethods>(messenger, channel, log);
+      connectRemoteProxy<TRemoteMethods>(messenger, channel, log);
 
     destroyHandlers.push(destroyMethodProxies);
 

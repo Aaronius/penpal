@@ -735,7 +735,9 @@ import { ErrorCode } from 'penpal';
 
 ## TypeScript
 
-Penpal is built in TypeScript and provides full TypeScript support. When calling `connect()`, it's recommended you pass a generic type argument that describes the methods the remote will be exposing. This will be used to type the `remote` object that `connection.promise` is resolved with. This is better explained in code:
+Penpal is built in TypeScript and provides full TypeScript support. When calling `connect()`, we recommend passing an interface or type alias as a type argument to describe the methods the remote exposes. Penpal uses this type for the `remote` object that `connection.promise` resolves to.
+
+If you omit the type argument, you can still call remote methods by name, but each call returns `Promise<unknown>`. Here's an example with a type argument.
 
 ### Window Connecting to a Worker
 
@@ -743,7 +745,7 @@ Penpal is built in TypeScript and provides full TypeScript support. When calling
 import { WorkerMessenger, connect } from 'penpal';
 
 // This interface could be in a module imported by both the window and worker.
-interface WorkerApi {
+interface WorkerMethods {
   multiply(...args: number[]): number;
 }
 
@@ -753,8 +755,7 @@ const messenger = new WorkerMessenger({
   worker,
 });
 
-// Note we're passing in WorkerApi as a generic type argument.
-const connection = connect<WorkerApi>({
+const connection = connect<WorkerMethods>({
   messenger,
 });
 
@@ -762,6 +763,16 @@ const connection = connect<WorkerApi>({
 const remote = await connection.promise;
 // This `multiplicationResult` constant will be properly typed as a number.
 const multiplicationResult = await remote.multiply(2, 6);
+```
+
+```typescript
+const methods: WorkerMethods = {
+  multiply(...args) {
+    return args.reduce((product, value) => product * value, 1);
+  },
+};
+
+connect({ messenger: new WorkerMessenger({ worker: self }), methods });
 ```
 
 When creating a worker, it's highly recommended that you add the following line of code at the top of your worker script depending on which type of worker you're creating:
@@ -777,22 +788,34 @@ This lets TypeScript know which type of worker you're creating, and you'll run i
 Penpal exports several types for your usage. Import types as follows:
 
 ```typescript
-import type { Connection, Methods, RemoteProxy } from 'penpal';
+import type { Connection, MethodsShape, RemoteProxy } from 'penpal';
 ```
 
 The types are described as follows:
 
 #### `Connection`
 
-The connection object returned from `connect()` is typed as `Connection`.
+`connect<TRemoteMethods>()` returns a `Connection<TRemoteMethods>`. Its `promise` resolves to a `RemoteProxy<TRemoteMethods>`.
 
-#### `Methods`
+#### `MethodsShape<T>`
 
-The object you provide for the `methods` option when calling `connect()` must be compatible with the `Methods` type. The generic type argument you pass when calling `connect()` must also be compatible with the `Methods` type.
+The constraint Penpal uses to check that the type passed to `connect<T>()` describes only methods and nested groups of methods. Use it when writing a generic wrapper around `connect`:
+
+```typescript
+import { connect, type Messenger, type MethodsShape } from 'penpal';
+
+function connectToWorker<TRemoteMethods extends MethodsShape<TRemoteMethods>>(
+  messenger: Messenger,
+) {
+  return connect<TRemoteMethods>({ messenger });
+}
+```
 
 #### `RemoteProxy`
 
-The object that `connection.promise` resolves to will be of type `RemoteProxy`. More specifically, it will be of type `RemoteProxy<TMethods>`, where `TMethods` is the type you pass as a generic type argument when calling `connect()` as described above.
+The object that `connection.promise` resolves to is a `RemoteProxy<TRemoteMethods>`, where `TRemoteMethods` is the type you pass as a type argument when calling `connect<TRemoteMethods>()`, as described above. You can call the methods declared in `TRemoteMethods` on that proxy, and each call returns a promise.
+
+`RemoteProxy` without a type argument allows any method name and returns `Promise<unknown>` from each call.
 
 ## React
 
@@ -812,9 +835,9 @@ Penpal is designed to run successfully on the most recent versions of Chrome, Fi
 
 A messenger instance. Messengers handle the technical details of transmitting messages. The current available messengers are `WindowMessenger`, `WorkerMessenger`, and `PortMessenger`, though any object that complies with the Messenger interface may be used. Details related to building custom messengers are forthcoming.
 
-`methods: Object` (optional)
+`methods: object` (optional)
 
-An object containing methods which should be exposed for the remote to call. The keys of the object are the method names and the values are the functions. Nested objects with function values are recursively included. If a function requires asynchronous processing to determine its return value, make the function immediately return a promise and resolve the promise once the value has been determined.
+An object containing methods for the remote to call. The keys are method names and the values are functions. You can also group methods in nested objects. If a method needs to do asynchronous work, return a promise that resolves when the result is ready.
 
 `timeout: number` (optional)
 

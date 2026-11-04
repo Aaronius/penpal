@@ -3,7 +3,6 @@ import {
   formatMethodPath,
   getMethodAtMethodPath,
 } from '../../src/methodPath.js';
-import type { Methods } from '../../src/types.js';
 
 describe('method path', () => {
   it('gets method at method path', () => {
@@ -32,9 +31,18 @@ describe('method path', () => {
       }
     }
 
-    const methods = new MethodApi() as Methods;
+    const methods = new MethodApi();
 
     expect(getMethodAtMethodPath(['inheritedMethod'], methods)).toBeUndefined();
+  });
+
+  it('only resolves callable properties in an implementation object', () => {
+    const add = (a: number, b: number) => a + b;
+    const methods = { math: { add, label: 'calculator' }, version: 1 };
+
+    expect(getMethodAtMethodPath(['math', 'add'], methods)).toBe(add);
+    expect(getMethodAtMethodPath(['math', 'label'], methods)).toBeUndefined();
+    expect(getMethodAtMethodPath(['version'], methods)).toBeUndefined();
   });
 
   it('does not get nested methods from the prototype chain', () => {
@@ -43,7 +51,7 @@ describe('method path', () => {
     };
     const nested = Object.create({
       inheritedMethod,
-    }) as Methods;
+    });
     const methods = {
       nested,
     };

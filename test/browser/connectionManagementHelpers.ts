@@ -1,13 +1,14 @@
+import type { UnspecifiedRemoteMethods } from '../../src/types.js';
 import { CHILD_SERVER } from './constants.js';
 import { createAndAddIframe, getPageFixtureUrl } from './utils.js';
 import { connect, WindowMessenger } from '../../src/index.js';
-import type { Methods, RemoteProxy } from '../../src/index.js';
+import type { MethodsShape, RemoteProxy } from '../../src/index.js';
 import type FixtureMethods from './fixtures/types/FixtureMethods.js';
 
 type CreateWindowConnectionOptions = {
   remoteWindow: Window;
   allowedOrigins?: (string | RegExp)[];
-  methods?: Methods;
+  methods?: object;
   timeout?: number;
   channel?: string;
 };
@@ -25,7 +26,11 @@ type ChannelChildMethods = Pick<
   'getChannel' | 'getChannelFromParent'
 >;
 
-export const createWindowConnection = <TMethods extends Methods>({
+export const createWindowConnection = <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+>({
   remoteWindow,
   allowedOrigins,
   methods,
@@ -37,7 +42,7 @@ export const createWindowConnection = <TMethods extends Methods>({
     ...(allowedOrigins === undefined ? {} : { allowedOrigins }),
   });
 
-  return connect<TMethods>({
+  return connect<TRemoteMethods>({
     messenger,
     ...(methods === undefined ? {} : { methods }),
     ...(timeout === undefined ? {} : { timeout }),
@@ -45,9 +50,11 @@ export const createWindowConnection = <TMethods extends Methods>({
   });
 };
 
-export const createIframeConnection = <TMethods extends Methods>({
-  ...options
-}: CreateIframeConnectionOptions = {}) => {
+export const createIframeConnection = <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+>({ ...options }: CreateIframeConnectionOptions = {}) => {
   const { pageName = 'general', url, methods, timeout, channel } = options;
   const hasAllowedOriginsOption = Object.prototype.hasOwnProperty.call(
     options,
@@ -59,7 +66,7 @@ export const createIframeConnection = <TMethods extends Methods>({
 
   const iframe = createAndAddIframe(url ?? getPageFixtureUrl(pageName));
 
-  const connection = createWindowConnection<TMethods>({
+  const connection = createWindowConnection<TRemoteMethods>({
     remoteWindow: iframe.contentWindow!,
     ...(allowedOrigins === undefined ? {} : { allowedOrigins }),
     ...(methods === undefined ? {} : { methods }),

@@ -6,47 +6,66 @@ import ErrorCodeObj from './ErrorCodeObj.js';
 type ExtractValueFromReply<R> = R extends Reply ? Awaited<R['value']> : R;
 
 /**
- * An object representing methods exposed by the remote but that can be called
- * locally.
+ * Checks the properties declared in a methods type. Each must be a callable
+ * method or a nested group of methods. Method paths use string keys; numeric
+ * property names are also allowed because JavaScript treats them as strings.
  */
-export type RemoteProxy<TMethods extends Methods = Methods> = {
-  [K in keyof TMethods]: TMethods[K] extends (...args: infer A) => infer R
-    ? (
-        ...args: [...A, CallOptions?]
-      ) => Promise<ExtractValueFromReply<Awaited<R>>>
-    : TMethods[K] extends Methods
-      ? RemoteProxy<TMethods[K]>
-      : never;
+export type MethodsShape<T> = object & {
+  [K in keyof T]-?: K extends string | number
+    ? ((...args: never[]) => unknown) | MethodsShape<T[K]>
+    : never;
 };
 
-/**
- * An object representing the connection as a result of calling connect().
- */
-export type Connection<TMethods extends Methods = Methods> = {
-  /**
-   * A promise which will be resolved once the connection has been established.
-   */
-  promise: Promise<RemoteProxy<TMethods>>;
-  /**
-   * A method that, when called, will disconnect any communication.
-   * You may call this even before a connection has been established.
-   */
+// Distinguishes an omitted remote methods type from an explicitly empty one.
+export type UnspecifiedRemoteMethods = undefined;
+
+// Without a remote methods type, each member can be called or used to reach
+// another member. The result is unknown because no return type was supplied.
+type UntypedRemoteMember = {
+  (...args: unknown[]): Promise<unknown>;
+  [name: string]: UntypedRemoteMember;
+};
+
+// With no declared remote methods, allow any string as a top-level method name
+// or group name.
+type UntypedRemoteProxy = Record<string, UntypedRemoteMember>;
+
+// Preserve the method's arguments and allow trailing call options. Await the
+// result before unwrapping Reply so both Reply and Promise<Reply> work.
+type RemoteMember<T> = T extends (...args: infer A) => infer R
+  ? (
+      ...args: [...A, CallOptions?]
+    ) => Promise<ExtractValueFromReply<Awaited<R>>>
+  : TypedRemoteProxy<T>;
+
+// Preserve the declared keys and map each one to an async method or a nested
+// proxy, depending on what the remote methods type declares for that key.
+type TypedRemoteProxy<T> = {
+  [K in keyof T]: RemoteMember<T[K]>;
+};
+
+/** The proxy for the declared remote methods, or an untyped proxy if no type is supplied. */
+export type RemoteProxy<
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+> = TRemoteMethods extends UnspecifiedRemoteMethods
+  ? UntypedRemoteProxy
+  : TypedRemoteProxy<TRemoteMethods>;
+
+/** The connection returned by connect(). */
+export type Connection<
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+> = {
+  /** Resolves with the remote proxy once the connection is established. */
+  promise: Promise<RemoteProxy<TRemoteMethods>>;
+  /** Disconnects communication, even before the connection is established. */
   destroy: () => void;
 };
 
-/**
- * Methods to expose to the remote window. May contain nested objects
- * with methods as well.
- */
-export type Methods = {
-  [index: string]: Methods | Function;
-};
-
-/**
- * An array of path segments (object property keys) to use to find a method
- * within a Methods object. We avoid using a period-delimited string because
- * property names can have periods in them which could cause issues.
- */
+/** A path to a method, kept as segments because names can contain periods. */
 export type MethodPath = string[];
 
 export type ErrorCode = (typeof ErrorCodeObj)[keyof typeof ErrorCodeObj];

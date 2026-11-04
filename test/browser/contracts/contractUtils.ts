@@ -1,19 +1,30 @@
-import type { Connection, Methods, RemoteProxy } from '../../../src/index.js';
+import type { UnspecifiedRemoteMethods } from '../../../src/types.js';
+import type {
+  Connection,
+  MethodsShape,
+  RemoteProxy,
+} from '../../../src/index.js';
 
 type ConnectionOptions = {
-  methods?: Methods;
+  methods?: object;
   timeout?: number;
 };
 
-export type CreateConnection<TMethods extends Methods> = (
-  options?: ConnectionOptions,
-) => Connection<TMethods>;
+export type CreateConnection<
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+> = (options?: ConnectionOptions) => Connection<TRemoteMethods>;
 
-export const withConnection = async <TMethods extends Methods>(
-  createConnection: CreateConnection<TMethods>,
+export const withConnection = async <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+>(
+  createConnection: CreateConnection<TRemoteMethods>,
   fn: (
-    child: RemoteProxy<TMethods>,
-    connection: Connection<TMethods>,
+    child: RemoteProxy<TRemoteMethods>,
+    connection: Connection<TRemoteMethods>,
   ) => Promise<void> | void,
   options?: ConnectionOptions,
 ) => {

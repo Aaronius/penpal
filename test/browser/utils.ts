@@ -1,9 +1,10 @@
+import type { UnspecifiedRemoteMethods } from '../../src/types.js';
 import {
   type Connection,
   PenpalError,
   Reply,
   connect,
-  type Methods,
+  type MethodsShape,
   PortMessenger,
   WindowMessenger,
 } from '../../src/index.js';
@@ -17,12 +18,16 @@ export const createAndAddIframe = (url: string) => {
   return iframe!;
 };
 
-export const createIframeAndConnection = <TMethods extends Methods>({
+export const createIframeAndConnection = <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+>({
   methods = {},
   pageName = 'general',
   timeout,
 }: {
-  methods?: Methods;
+  methods?: object;
   pageName?: string;
   timeout?: number;
 } = {}) => {
@@ -34,7 +39,7 @@ export const createIframeAndConnection = <TMethods extends Methods>({
     remoteWindow: iframe.contentWindow!,
     allowedOrigins: [CHILD_SERVER],
   });
-  const connection = connect<TMethods>({
+  const connection = connect<TRemoteMethods>({
     messenger,
     methods,
     ...(timeout === undefined ? {} : { timeout }),
@@ -43,12 +48,16 @@ export const createIframeAndConnection = <TMethods extends Methods>({
   return connection;
 };
 
-export const createWorkerAndConnection = <TMethods extends Methods>({
+export const createWorkerAndConnection = <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+>({
   methods = {},
   workerName = 'webWorkerGeneral',
   timeout,
 }: {
-  methods?: Methods;
+  methods?: object;
   workerName?: string;
   timeout?: number;
 } = {}) => {
@@ -58,7 +67,7 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   const messenger = new WorkerMessenger({
     worker,
   });
-  const connection = connect<TMethods>({
+  const connection = connect<TRemoteMethods>({
     messenger,
     methods,
     ...(timeout === undefined ? {} : { timeout }),
@@ -67,11 +76,15 @@ export const createWorkerAndConnection = <TMethods extends Methods>({
   return connection;
 };
 
-export const createPortAndConnection = <TMethods extends Methods>({
+export const createPortAndConnection = <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+>({
   methods = {},
   timeout,
 }: {
-  methods?: Methods;
+  methods?: object;
   timeout?: number;
 } = {}) => {
   if (!window.PenpalGeneralFixtureMethods) {
@@ -109,7 +122,7 @@ export const createPortAndConnection = <TMethods extends Methods>({
     },
   );
 
-  const remoteConnection = connect<Methods>({
+  const remoteConnection = connect({
     messenger: new PortMessenger({
       port: port2,
     }),
@@ -124,7 +137,7 @@ export const createPortAndConnection = <TMethods extends Methods>({
     Record<string, unknown>
   >;
 
-  const connection = connect<TMethods>({
+  const connection = connect<TRemoteMethods>({
     messenger: new PortMessenger({
       port: port1,
     }),

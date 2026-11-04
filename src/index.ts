@@ -7,7 +7,7 @@ export { default as Reply } from './Reply.js';
 export { default as PenpalError } from './PenpalError.js';
 export { default as ErrorCode } from './ErrorCodeObj.js';
 export { default as debug } from './debug.js';
-export type { Connection, RemoteProxy, Methods } from './types.js';
+export type { Connection, RemoteProxy, MethodsShape } from './types.js';
 
 // For building custom messengers
 export type { default as Messenger } from './messengers/Messenger.js';

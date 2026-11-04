@@ -3,7 +3,8 @@ import type {
   Connection,
   Log,
   Message,
-  Methods,
+  MethodsShape,
+  UnspecifiedRemoteMethods,
   RemoteProxy,
 } from './types.js';
 import PenpalError from './PenpalError.js';
@@ -21,7 +22,7 @@ type Options = {
   /**
    * Methods that may be called by the remote.
    */
-  methods?: Methods | undefined;
+  methods?: object | undefined;
   /**
    * The amount of time, in milliseconds, Penpal should wait
    * for a connection to be established before rejecting the connection promise.
@@ -49,13 +50,17 @@ const getConnectionDestroyedError = () => {
 /**
  * Attempts to establish communication with the remote.
  */
-const connect = <TMethods extends Methods>({
+const connect = <
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
+>({
   messenger,
   methods = {},
   timeout,
   channel,
   log,
-}: Options): Connection<TMethods> => {
+}: Options): Connection<TRemoteMethods> => {
   if (!messenger) {
     throw new PenpalError('INVALID_ARGUMENT', 'messenger must be defined');
   }
@@ -69,7 +74,8 @@ const connect = <TMethods extends Methods>({
 
   usedMessengers.add(messenger);
 
-  const connectionPromise = Promise.withResolvers<RemoteProxy<TMethods>>();
+  const connectionPromise =
+    Promise.withResolvers<RemoteProxy<TRemoteMethods>>();
   let isConnectionDestroyed = false;
   let destroyHandshake: (() => void) | undefined;
 
@@ -123,7 +129,7 @@ const connect = <TMethods extends Methods>({
         }
       });
 
-      const handshake = shakeHands<TMethods>({
+      const handshake = shakeHands<TRemoteMethods>({
         messenger,
         methods,
         timeout,
