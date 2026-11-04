@@ -17,7 +17,7 @@ type NodeWorkerLike = {
   removeListener(event: 'message', listener: (value: unknown) => void): unknown;
 };
 
-type Options = {
+type NodeWorkerMessengerOptions = {
   /**
    * The Node.js worker receiving/sending communication from/to this thread.
    * Within the worker, use PortMessenger with parentPort instead.
@@ -33,7 +33,7 @@ class NodeWorkerMessenger implements Messenger {
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
   #messageCallbacks = new Set<MessageHandler>();
 
-  constructor({ worker }: Options) {
+  constructor({ worker }: NodeWorkerMessengerOptions) {
     if (!worker) {
       throw new PenpalError('INVALID_ARGUMENT', 'worker must be defined');
     }

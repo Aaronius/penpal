@@ -43,7 +43,7 @@ type WorkerLike = Pick<
   'postMessage' | 'addEventListener' | 'removeEventListener'
 >;
 
-type Options = {
+type WebWorkerMessengerOptions = {
   /**
    * The web worker receiving/sending communication from/to the parent window.
    * If this messenger is being used within the worker, `worker` should
@@ -62,7 +62,7 @@ class WebWorkerMessenger implements Messenger {
   #messageCallbacks = new Set<MessageHandler>();
   #port: MessagePortLike | undefined;
 
-  constructor({ worker }: Options) {
+  constructor({ worker }: WebWorkerMessengerOptions) {
     if (!worker) {
       throw new PenpalError('INVALID_ARGUMENT', 'worker must be defined');
     }

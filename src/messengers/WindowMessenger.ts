@@ -27,7 +27,7 @@ type WindowLike = {
   ) => void;
 };
 
-type Options = {
+type WindowMessengerOptions = {
   /**
    * The window with which the current window will communicate.
    */
@@ -54,7 +54,7 @@ class WindowMessenger implements Messenger {
   #messageCallbacks = new Set<MessageHandler>();
   #port: MessagePortLike | undefined;
 
-  constructor({ remoteWindow, allowedOrigins }: Options) {
+  constructor({ remoteWindow, allowedOrigins }: WindowMessengerOptions) {
     if (!remoteWindow) {
       throw new PenpalError('INVALID_ARGUMENT', 'remoteWindow must be defined');
     }

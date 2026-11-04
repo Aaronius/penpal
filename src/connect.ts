@@ -14,7 +14,7 @@ import { isDestroyMessage, isMessage } from './guards.js';
 import once from './once.js';
 import namespace from './namespace.js';
 
-type Options = {
+type ConnectOptions = {
   /**
    * Messenger in charge of handling communication with the remote.
    */
@@ -60,7 +60,7 @@ const connect = <
   timeout,
   channel,
   log,
-}: Options): Connection<TRemoteMethods> => {
+}: ConnectOptions): Connection<TRemoteMethods> => {
   if (!messenger) {
     throw new PenpalError('INVALID_ARGUMENT', 'messenger must be defined');
   }

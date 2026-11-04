@@ -11,7 +11,7 @@ import type {
 } from './Messenger.js';
 import PenpalError from '../PenpalError.js';
 
-type Options = {
+type PortMessengerOptions = {
   /**
    * The port used to communicate to the other port of the port pair.
    */
@@ -26,7 +26,7 @@ class PortMessenger implements Messenger {
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
   #messageCallbacks = new Set<MessageHandler>();
 
-  constructor({ port }: Options) {
+  constructor({ port }: PortMessengerOptions) {
     if (!port) {
       throw new PenpalError('INVALID_ARGUMENT', 'port must be defined');
     }

@@ -16,7 +16,7 @@ import { isAck2Message, isAck1Message, isSynMessage } from './guards.js';
 import generateId from './generateId.js';
 import namespace from './namespace.js';
 
-type Options = {
+type HandshakeOptions = {
   messenger: Messenger;
   methods: object;
   timeout: number | undefined;
@@ -104,7 +104,7 @@ const shakeHands = <
   timeout,
   channel,
   log,
-}: Options): Handshake<TRemoteMethods> => {
+}: HandshakeOptions): Handshake<TRemoteMethods> => {
   const participantId = generateId();
   let remoteParticipantId: string;
   const destroyHandlers: (() => void)[] = [];
