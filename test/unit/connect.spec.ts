@@ -250,6 +250,78 @@ describe('connect', () => {
     expect(messenger.destroySpy).toHaveBeenCalledTimes(1);
   });
 
+  it('skips the handshake if the messenger disconnects during initialization', async () => {
+    const messenger = createMessenger();
+    messenger.initialize = ({ onDisconnect }) => {
+      onDisconnect?.();
+    };
+
+    const connection = connect({ messenger });
+
+    await expect(connection.promise).rejects.toMatchObject({
+      code: 'CONNECTION_DESTROYED',
+    });
+    expect(shakeHandsMock).not.toHaveBeenCalled();
+    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.sentMessages).toHaveLength(0);
+  });
+
+  it('cleans up a handshake if the messenger disconnects while starting it', async () => {
+    const messenger = createMessenger();
+    const { promise, reject } = Promise.withResolvers<never>();
+    const handshakeDestroy = vi.fn(() => {
+      reject(new Error('Handshake destroyed'));
+    });
+    shakeHandsMock.mockImplementation(() => {
+      messenger.initializeOptions?.onDisconnect?.();
+      return createHandshake({ promise, destroy: handshakeDestroy });
+    });
+
+    const connection = connect({ messenger });
+
+    await expect(connection.promise).rejects.toMatchObject({
+      code: 'CONNECTION_DESTROYED',
+    });
+    expect(handshakeDestroy).toHaveBeenCalledTimes(1);
+    expect(messenger.sentMessages).toHaveLength(0);
+  });
+
+  it('skips the handshake if the messenger disconnects while registering the destroy handler', async () => {
+    const messenger = createMessenger();
+    messenger.addMessageHandler = (handler) => {
+      messenger.handlers.add(handler);
+      messenger.initializeOptions?.onDisconnect?.();
+    };
+    shakeHandsMock.mockReturnValue(createHandshake());
+
+    const connection = connect({ messenger });
+
+    await expect(connection.promise).rejects.toMatchObject({
+      code: 'CONNECTION_DESTROYED',
+    });
+    expect(shakeHandsMock).not.toHaveBeenCalled();
+    expect(messenger.sentMessages).toHaveLength(0);
+  });
+
+  it('rejects if the messenger disconnects after the handshake resolves but before connect resumes', async () => {
+    const messenger = createMessenger();
+    const { promise, resolve } = Promise.withResolvers<object>();
+    const handshakeDestroy = vi.fn();
+    shakeHandsMock.mockReturnValue(
+      createHandshake({ promise, destroy: handshakeDestroy }),
+    );
+    const connection = connect({ messenger });
+
+    resolve({});
+    messenger.initializeOptions?.onDisconnect?.();
+
+    await expect(connection.promise).rejects.toMatchObject({
+      code: 'CONNECTION_DESTROYED',
+    });
+    expect(handshakeDestroy).toHaveBeenCalledTimes(1);
+    expect(messenger.sentMessages).toHaveLength(0);
+  });
+
   it('tears down connection state if handshake fails', async () => {
     const messenger = createMessenger();
 

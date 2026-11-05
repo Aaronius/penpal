@@ -13,8 +13,14 @@ type NodeWorkerLike = {
     value: unknown,
     transferList?: readonly PenpalTransferable[],
   ): void;
-  addListener(event: 'message', listener: (value: unknown) => void): unknown;
-  removeListener(event: 'message', listener: (value: unknown) => void): unknown;
+  addListener(
+    event: 'message' | 'exit',
+    listener: (value: unknown) => void,
+  ): unknown;
+  removeListener(
+    event: 'message' | 'exit',
+    listener: (value: unknown) => void,
+  ): unknown;
 };
 
 type NodeWorkerMessengerOptions = {
@@ -31,6 +37,7 @@ type NodeWorkerMessengerOptions = {
 class NodeWorkerMessenger implements Messenger {
   #worker: NodeWorkerLike;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
+  #onDisconnect: (() => void) | undefined;
   #messageCallbacks = new Set<MessageHandler>();
 
   constructor({ worker }: NodeWorkerMessengerOptions) {
@@ -43,9 +50,14 @@ class NodeWorkerMessenger implements Messenger {
 
   initialize = ({
     validateReceivedMessage,
+    onDisconnect,
   }: InitializeMessengerOptions): void => {
     this.#validateReceivedMessage = validateReceivedMessage;
+    this.#onDisconnect = onDisconnect;
     this.#worker.addListener('message', this.#handleMessage);
+    if (onDisconnect) {
+      this.#worker.addListener('exit', onDisconnect);
+    }
   };
 
   sendMessage = (
@@ -65,6 +77,10 @@ class NodeWorkerMessenger implements Messenger {
 
   destroy = (): void => {
     this.#worker.removeListener('message', this.#handleMessage);
+    if (this.#onDisconnect) {
+      this.#worker.removeListener('exit', this.#onDisconnect);
+      this.#onDisconnect = undefined;
+    }
     this.#messageCallbacks.clear();
   };
 

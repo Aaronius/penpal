@@ -119,18 +119,55 @@ for (const format of ['esm', 'cjs']) {
       );
     });
 
-    void it('removes its listener and rejects pending calls on destruction', async (t) => {
+    void it('removes its listeners and rejects pending calls on destruction', async (t) => {
       const worker = startWorker(t);
-      const baseline = worker.listenerCount('message');
+      const messageListeners = worker.listenerCount('message');
+      const exitListeners = worker.listenerCount('exit');
       const connection = startConnection(t, worker);
       const remote = await connection.promise;
-      assert.equal(worker.listenerCount('message'), baseline + 1);
+      assert.equal(worker.listenerCount('message'), messageListeners + 1);
+      assert.equal(worker.listenerCount('exit'), exitListeners + 1);
       const pending = assert.rejects(remote.neverResolve(), {
         code: 'CONNECTION_DESTROYED',
       });
       connection.destroy();
       await pending;
-      assert.equal(worker.listenerCount('message'), baseline);
+      assert.equal(worker.listenerCount('message'), messageListeners);
+      assert.equal(worker.listenerCount('exit'), exitListeners);
+      assert.throws(() => remote.multiply(2, 6), {
+        code: 'CONNECTION_DESTROYED',
+      });
+    });
+
+    void it('rejects the pending connection when the worker exits before the handshake completes', async (t) => {
+      const worker = new Worker('', { eval: true });
+      t.after(() => worker.terminate());
+      const connection = connect({
+        messenger: new NodeWorkerMessenger({ worker }),
+      });
+
+      await assert.rejects(connection.promise, {
+        code: 'CONNECTION_DESTROYED',
+      });
+      assert.equal(worker.listenerCount('message'), 0);
+      assert.equal(worker.listenerCount('exit'), 0);
+    });
+
+    void it('rejects pending calls locally when the worker is terminated', async (t) => {
+      const worker = startWorker(t);
+      const connection = startConnection(t, worker);
+      const remote = await connection.promise;
+      const pending = assert.rejects(remote.neverResolve(), {
+        code: 'CONNECTION_DESTROYED',
+      });
+      const postMessage = t.mock.method(worker, 'postMessage');
+
+      await worker.terminate();
+      await pending;
+
+      assert.equal(postMessage.mock.callCount(), 0);
+      assert.equal(worker.listenerCount('message'), 0);
+      assert.equal(worker.listenerCount('exit'), 0);
       assert.throws(() => remote.multiply(2, 6), {
         code: 'CONNECTION_DESTROYED',
       });
@@ -146,6 +183,7 @@ for (const format of ['esm', 'cjs']) {
       await remote.disconnect();
       await pending;
       assert.equal(worker.listenerCount('message'), 0);
+      assert.equal(worker.listenerCount('exit'), 0);
     });
 
     void it('times out when no matching channel connects', async (t) => {
@@ -157,6 +195,7 @@ for (const format of ['esm', 'cjs']) {
       });
       await assert.rejects(connection.promise, { code: 'CONNECTION_TIMEOUT' });
       assert.equal(worker.listenerCount('message'), 0);
+      assert.equal(worker.listenerCount('exit'), 0);
     });
 
     void it('filters invalid payloads and unregisters individual handlers', async (t) => {

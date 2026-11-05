@@ -970,7 +970,9 @@ This messenger supports communication with a Node.js `Worker` from `node:worker_
 
 `worker: Worker` (from `node:worker_threads`)
 
-A reference to the Node.js worker. Handshake and RPC messages use the worker's existing message channel. Destroying the connection removes the messenger's listener without calling `worker.terminate()`.
+A reference to the Node.js worker. Penpal uses the worker's existing message channel to establish the connection and send method calls and replies. If the worker exits, Penpal closes the connection and rejects any pending handshake or method calls with `CONNECTION_DESTROYED`.
+
+Calling `connection.destroy()` stops Penpal from listening to the worker and leaves the worker running.
 
 ---
 

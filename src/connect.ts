@@ -120,14 +120,35 @@ const connect = <
     return isMessage(data) && data.channel === channel;
   };
 
+  const destroyConnectionLocally = () => {
+    destroyConnection(getConnectionDestroyedError(), false);
+  };
+
   void (async () => {
     try {
-      messenger.initialize({ log, validateReceivedMessage });
+      messenger.initialize({
+        log,
+        validateReceivedMessage,
+        onDisconnect: destroyConnectionLocally,
+      });
+
+      // initialize() may call onDisconnect synchronously if the transport is
+      // already unavailable. In that case, skip setting up the handshake.
+      if (isConnectionDestroyed) {
+        return;
+      }
+
       messenger.addMessageHandler((message) => {
         if (isDestroyMessage(message)) {
-          destroyConnection(getConnectionDestroyedError(), false);
+          destroyConnectionLocally();
         }
       });
+
+      // Registering the handler may synchronously report a disconnect,
+      // so check again before starting the handshake.
+      if (isConnectionDestroyed) {
+        return;
+      }
 
       const handshake = shakeHands<TRemoteMethods>({
         messenger,
@@ -139,10 +160,15 @@ const connect = <
 
       destroyHandshake = handshake.destroy;
 
+      // A messenger can disconnect while shakeHands() is sending its first
+      // message, before destroyConnection() has access to the handshake.
+      if (isConnectionDestroyed) {
+        handshake.destroy();
+      }
+
       const remoteProxy = await handshake.promise;
 
       if (isConnectionDestroyed) {
-        handshake.destroy();
         return;
       }
 
