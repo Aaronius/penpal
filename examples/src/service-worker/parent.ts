@@ -1,10 +1,10 @@
 import { connect, debug, PortMessenger } from 'penpal';
 import { createExampleUi } from '../shared/ui.js';
 
-type ServiceWorkerMethods = {
-  multiply: (num1: number, num2: number) => number;
-  divide: (num1: number, num2: number) => Promise<number>;
-};
+interface ServiceWorkerMethods {
+  multiply(num1: number, num2: number): number;
+  divide(num1: number, num2: number): Promise<number>;
+}
 
 const ui = createExampleUi();
 

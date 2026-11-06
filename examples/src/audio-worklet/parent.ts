@@ -2,9 +2,9 @@ import { CallOptions, PortMessenger, connect } from 'penpal';
 import type { Connection } from 'penpal';
 import { createExampleUi, getRequiredElement } from '../shared/ui.js';
 
-type ProcessorMethods = {
-  setMuted: (muted: boolean) => boolean;
-};
+interface ProcessorMethods {
+  setMuted(muted: boolean): boolean;
+}
 
 const ui = createExampleUi();
 const startButton = getRequiredElement<HTMLButtonElement>('[data-start]');

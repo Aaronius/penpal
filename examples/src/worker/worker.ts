@@ -1,8 +1,8 @@
 import { connect, debug, WebWorkerMessenger } from 'penpal';
 
-type WindowMethods = {
-  add: (num1: number, num2: number) => number;
-};
+interface WindowMethods {
+  add(num1: number, num2: number): number;
+}
 
 const messenger = new WebWorkerMessenger({ worker: globalThis });
 const connection = connect<WindowMethods>({

@@ -1,9 +1,9 @@
 import { connect, debug, WindowMessenger } from 'penpal';
 import { setEndpointState } from '../shared/ui.js';
 
-type ParentMethods = {
-  add: (num1: number, num2: number) => number;
-};
+interface ParentMethods {
+  add(num1: number, num2: number): number;
+}
 
 if (!window.opener) {
   throw new Error('This page must be opened by the parent example.');

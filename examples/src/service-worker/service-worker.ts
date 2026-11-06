@@ -1,8 +1,8 @@
 import { connect, debug, PortMessenger } from 'penpal';
 
-type WindowMethods = {
-  add: (num1: number, num2: number) => number;
-};
+interface WindowMethods {
+  add(num1: number, num2: number): number;
+}
 
 const workerGlobal = globalThis as unknown as ServiceWorkerGlobalScope;
 

@@ -1,10 +1,10 @@
 import { connect, debug, WindowMessenger } from 'penpal';
 import { createExampleUi, getRequiredElement } from '../shared/ui.js';
 
-type IframeMethods = {
-  multiply: (num1: number, num2: number) => number;
-  divide: (num1: number, num2: number) => Promise<number>;
-};
+interface IframeMethods {
+  multiply(num1: number, num2: number): number;
+  divide(num1: number, num2: number): Promise<number>;
+}
 
 const ui = createExampleUi();
 
