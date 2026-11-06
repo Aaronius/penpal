@@ -15,6 +15,7 @@ import connectRemoteProxy from './connectRemoteProxy.js';
 import { isAck2Message, isAck1Message, isSynMessage } from './guards.js';
 import generateId from './generateId.js';
 import namespace from './namespace.js';
+import scheduleTimeout from './scheduleTimeout.js';
 
 type HandshakeOptions = {
   messenger: Messenger;
@@ -114,20 +115,17 @@ const shakeHands = <
   const { promise, resolve, reject } =
     Promise.withResolvers<RemoteProxy<TRemoteMethods>>();
 
-  const timeoutId =
-    timeout !== undefined
-      ? setTimeout(() => {
-          rejectAndCleanUp(
-            new PenpalError(
-              'CONNECTION_TIMEOUT',
-              `Connection timed out after ${timeout}ms`,
-            ),
-          );
-        }, timeout)
-      : undefined;
+  const cancelTimeout = scheduleTimeout(() => {
+    rejectAndCleanUp(
+      new PenpalError(
+        'CONNECTION_TIMEOUT',
+        `Connection timed out after ${timeout}ms`,
+      ),
+    );
+  }, timeout);
 
   const cleanUp = () => {
-    clearTimeout(timeoutId);
+    cancelTimeout?.();
 
     for (const destroyHandler of destroyHandlers.splice(0)) {
       destroyHandler();
@@ -164,7 +162,7 @@ const shakeHands = <
 
     destroyHandlers.push(destroyMethodProxies);
 
-    clearTimeout(timeoutId);
+    cancelTimeout?.();
     isComplete = true;
 
     resolve(remoteProxy);

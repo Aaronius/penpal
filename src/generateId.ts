@@ -1,9 +1,9 @@
 /**
  * @return A unique ID
  */
-// crypto.randomUUID is not available in insecure contexts.
+// randomUUID is unavailable in insecure contexts, and worklets may lack crypto.
 const generateId: () => string =
-  crypto.randomUUID?.bind(crypto) ??
+  globalThis.crypto?.randomUUID?.bind(globalThis.crypto) ??
   (() =>
     new Array(4)
       .fill(0)

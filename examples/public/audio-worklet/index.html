@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AudioWorklet | Penpal Examples</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <header class="example-header">
+      <a href="../index.html">Penpal examples</a>
+      <span class="status" data-status data-state="ready" role="status"
+        >Ready</span
+      >
+    </header>
+    <main class="example-layout">
+      <section>
+        <h1>Window and AudioWorklet</h1>
+        <p>
+          Start a quiet tone, then use Penpal to mute or unmute it in the audio
+          processor.
+        </p>
+        <div class="example-action">
+          <button type="button" data-start>Start</button>
+          <button type="button" data-mute disabled>Mute</button>
+          <button type="button" data-stop disabled>Stop</button>
+        </div>
+        <p>Tone: <output data-tone>Stopped</output></p>
+      </section>
+    </main>
+    <script type="module" src="./parent.js"></script>
+  </body>
+</html>

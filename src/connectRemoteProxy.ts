@@ -15,12 +15,13 @@ import type Messenger from './messengers/Messenger.js';
 import PenpalError from './PenpalError.js';
 import { isReplyMessage } from './guards.js';
 import namespace from './namespace.js';
+import scheduleTimeout from './scheduleTimeout.js';
 
 type ReplyHandler = {
   methodPath: MethodPath;
   resolve: (value: unknown) => void;
   reject: (reason: unknown) => void;
-  timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+  cancelTimeout: (() => void) | undefined;
 };
 
 type ConnectedRemoteProxy<
@@ -124,7 +125,7 @@ const connectRemoteProxy = <
     }
 
     replyHandlers.delete(callId);
-    clearTimeout(replyHandler.timeoutId);
+    replyHandler.cancelTimeout?.();
     log?.(
       `Received ${formatMethodPath(replyHandler.methodPath)}() reply`,
       message,
@@ -153,23 +154,19 @@ const connectRemoteProxy = <
     const argsWithoutOptions = lastArgIsOptions ? args.slice(0, -1) : args;
 
     return new Promise((resolve, reject) => {
-      // Use globalThis so this works in both window and worker contexts.
-      const timeoutId =
-        timeout !== undefined
-          ? globalThis.setTimeout(() => {
-              replyHandlers.delete(callId);
-              reject(
-                new PenpalError(
-                  'METHOD_CALL_TIMEOUT',
-                  `Method call ${formatMethodPath(
-                    methodPath,
-                  )}() timed out after ${timeout}ms`,
-                ),
-              );
-            }, timeout)
-          : undefined;
+      const cancelTimeout = scheduleTimeout(() => {
+        replyHandlers.delete(callId);
+        reject(
+          new PenpalError(
+            'METHOD_CALL_TIMEOUT',
+            `Method call ${formatMethodPath(
+              methodPath,
+            )}() timed out after ${timeout}ms`,
+          ),
+        );
+      }, timeout);
 
-      replyHandlers.set(callId, { methodPath, resolve, reject, timeoutId });
+      replyHandlers.set(callId, { methodPath, resolve, reject, cancelTimeout });
 
       try {
         const callMessage: CallMessage = {
@@ -184,7 +181,7 @@ const connectRemoteProxy = <
         messenger.sendMessage(callMessage, transferables);
       } catch (error) {
         replyHandlers.delete(callId);
-        clearTimeout(timeoutId);
+        cancelTimeout?.();
         reject(
           new PenpalError('TRANSMISSION_FAILED', (error as Error).message),
         );
@@ -196,8 +193,12 @@ const connectRemoteProxy = <
     isDestroyed = true;
     messenger.removeMessageHandler(handleMessage);
 
-    for (const { methodPath, reject, timeoutId } of replyHandlers.values()) {
-      clearTimeout(timeoutId);
+    for (const {
+      methodPath,
+      reject,
+      cancelTimeout,
+    } of replyHandlers.values()) {
+      cancelTimeout?.();
       reject(getDestroyedConnectionMethodCallError(methodPath));
     }
 

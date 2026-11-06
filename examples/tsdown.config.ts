@@ -33,6 +33,8 @@ export default defineConfig({
   },
   dts: false,
   entry: {
+    'audio-worklet/parent': 'src/audio-worklet/parent.ts',
+    'audio-worklet/processor': 'src/audio-worklet/processor.ts',
     'iframe/child': 'src/iframe/child.ts',
     'iframe/parent': 'src/iframe/parent.ts',
     'opened-window/child': 'src/opened-window/child.ts',

@@ -314,6 +314,72 @@ const connection = connect({
 
 </details>
 
+## Usage with an AudioWorklet
+
+<details>
+    <summary>Expand Details</summary>
+
+Use `PortMessenger` with `AudioWorkletNode.port` in the window and `this.port` in the processor. Run the window code from a user action such as a click on a secure page.
+
+### Window
+
+```javascript
+import { PortMessenger, connect } from 'penpal';
+
+const context = new AudioContext();
+let connection;
+
+try {
+  await context.resume();
+  await context.audioWorklet.addModule('/processor.js');
+  const node = new AudioWorkletNode(context, 'processor-info');
+  node.connect(context.destination);
+
+  connection = connect({
+    messenger: new PortMessenger({ port: node.port }),
+    timeout: 5000,
+  });
+
+  const processor = await connection.promise;
+  console.log(await processor.getSampleRate());
+} finally {
+  connection?.destroy();
+  await context.close();
+}
+```
+
+### Processor (`processor.js`)
+
+Serve Penpal's ES module at `/penpal.mjs` for this example, or bundle Penpal into the processor module.
+
+```javascript
+import { PortMessenger, connect } from '/penpal.mjs';
+
+class InfoProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    connect({
+      messenger: new PortMessenger({ port: this.port }),
+      methods: {
+        getSampleRate() {
+          return sampleRate;
+        },
+      },
+    });
+  }
+
+  process() {
+    return true;
+  }
+}
+
+registerProcessor('processor-info', InfoProcessor);
+```
+
+Set connection and method call timeouts on the window side. AudioWorklet processors lack timers, so timeout requests from the processor reject with `INVALID_ARGUMENT`.
+
+</details>
+
 ## Usage with a Shared Worker
 
 <details>
@@ -497,6 +563,7 @@ supported communication target:
 - [dedicated worker](./examples/src/worker)
 - [shared worker](./examples/src/shared-worker)
 - [service worker](./examples/src/service-worker)
+- [AudioWorklet](./examples/src/audio-worklet)
 
 To run the examples locally, build Penpal and the examples, then start the
 example server:
@@ -978,7 +1045,7 @@ Calling `connection.destroy()` stops Penpal from listening to the worker and lea
 
 ### `PortMessenger`
 
-This messenger supports communication between a pair of browser or Node.js [MessagePorts](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort). See the [Shared Worker](#usage-with-a-shared-worker), [Service Worker](#usage-with-a-service-worker), and [Node.js Worker](#usage-with-a-nodejs-worker) examples, including use of a Node.js worker's `parentPort`.
+This messenger supports communication between a pair of browser or Node.js [MessagePorts](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort). See the [AudioWorklet](#usage-with-an-audioworklet), [Shared Worker](#usage-with-a-shared-worker), [Service Worker](#usage-with-a-service-worker), and [Node.js Worker](#usage-with-a-nodejs-worker) examples, including use of a Node.js worker's `parentPort`.
 
 #### Constructor Options
 

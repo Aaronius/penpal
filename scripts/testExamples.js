@@ -14,12 +14,42 @@ const scenarios = [
   { name: 'dedicated worker', path: '/worker/index.html' },
   { name: 'shared worker', path: '/shared-worker/index.html' },
   { name: 'service worker', path: '/service-worker/index.html' },
+  {
+    action: async (page) => {
+      await page.getByRole('button', { name: 'Start', exact: true }).click();
+    },
+    check: async (page) => {
+      const tone = page.locator('[data-tone]');
+      await tone.filter({ hasText: /^Playing$/ }).waitFor();
+      await page.getByRole('button', { name: 'Mute', exact: true }).click();
+      await tone.filter({ hasText: /^Muted$/ }).waitFor();
+      await page.getByRole('button', { name: 'Unmute', exact: true }).click();
+      await tone.filter({ hasText: /^Playing$/ }).waitFor();
+      await page.getByRole('button', { name: 'Stop', exact: true }).click();
+      await tone.filter({ hasText: /^Stopped$/ }).waitFor();
+    },
+    name: 'AudioWorklet',
+    path: '/audio-worklet/index.html',
+  },
 ];
 
 const expectedResults = {
   add: '8',
   divide: '3',
   multiply: '12',
+};
+
+const checkArithmeticResults = async (page, name) => {
+  for (const [key, expectedValue] of Object.entries(expectedResults)) {
+    const output = page.locator(`[data-result="${key}"][data-ready="true"]`);
+    await output.waitFor({ timeout: 15000 });
+    const value = await output.evaluate((element) => element.value);
+    assert.equal(
+      value,
+      expectedValue,
+      `${name} returned an unexpected ${key} result.`,
+    );
+  }
 };
 
 const server = await startExamplesServer({ port: 0 });
@@ -69,18 +99,8 @@ try {
         .locator('[data-status][data-state="connected"]')
         .waitFor({ timeout: 15000 });
 
-      for (const [key, expectedValue] of Object.entries(expectedResults)) {
-        const output = page.locator(
-          `[data-result="${key}"][data-ready="true"]`,
-        );
-        await output.waitFor({ timeout: 15000 });
-        const value = await output.evaluate((element) => element.value);
-        assert.equal(
-          value,
-          expectedValue,
-          `${scenario.name} returned an unexpected ${key} result.`,
-        );
-      }
+      const check = scenario.check ?? checkArithmeticResults;
+      await check(page, scenario.name);
 
       assert.deepEqual(
         browserErrors,

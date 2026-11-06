@@ -80,7 +80,7 @@ export default async function globalSetup() {
       await build({
         config: 'tsdown.config.ts',
         dts: false,
-        format: 'iife',
+        format: ['iife', 'esm'],
         clean: false,
       });
 
