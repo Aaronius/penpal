@@ -16,8 +16,14 @@ export type MethodsShape<T> = object & {
     : never;
 };
 
-// Distinguishes an omitted remote methods type from an explicitly empty one.
-export type UnspecifiedRemoteMethods = undefined;
+// When the caller omits the methods type, the string index gives the proxy a
+// key for any method name. The call signature distinguishes this default from
+// an explicit Record<string, never>, which has no callable methods.
+//
+// RemoteProxy maps property keys, so the call signature stays on this input
+// type. TypeScript can also spell out this structural type in the .d.ts file
+// of a consumer that exports an inferred connection or proxy.
+export type UnspecifiedRemoteMethods = Record<string, never> & (() => never);
 
 // Without a remote methods type, each member can be called or used to reach
 // another member. The result is unknown because no return type was supplied.
@@ -26,32 +32,31 @@ type UntypedRemoteMember = {
   [name: string]: UntypedRemoteMember;
 };
 
-// With no declared remote methods, allow any string as a top-level method name
-// or group name.
-type UntypedRemoteProxy = Record<string, UntypedRemoteMember>;
-
-// Preserve the method's arguments and allow trailing call options. Await the
-// result before unwrapping Reply so both Reply and Promise<Reply> work.
+// Keep the method's argument types and allow a trailing CallOptions argument.
+// Await the result first so both Reply and Promise<Reply> can be unwrapped.
+// For a nested group, check its shape before reusing RemoteProxy so its hover
+// shows the same public type name as the top-level proxy.
 type RemoteMember<T> = T extends (...args: infer A) => infer R
   ? (
       ...args: [...A, CallOptions?]
     ) => Promise<ExtractValueFromReply<Awaited<R>>>
-  : TypedRemoteProxy<T>;
-
-// Preserve the declared keys and map each one to an async method or a nested
-// proxy, depending on what the remote methods type declares for that key.
-type TypedRemoteProxy<T> = {
-  [K in keyof T]: RemoteMember<T[K]>;
-};
+  : T extends MethodsShape<T>
+    ? RemoteProxy<T>
+    : never;
 
 /** The proxy for the declared remote methods, or an untyped proxy if no type is supplied. */
 export type RemoteProxy<
   TRemoteMethods extends
     | MethodsShape<TRemoteMethods>
     | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
-> = TRemoteMethods extends UnspecifiedRemoteMethods
-  ? UntypedRemoteProxy
-  : TypedRemoteProxy<TRemoteMethods>;
+> = {
+  // Map the original keys directly so a generic helper can use proxy[key]
+  // when key is known to belong to TRemoteMethods. Choose the typed or untyped
+  // member inside the map so the result keeps the RemoteProxy name in hovers.
+  [K in keyof TRemoteMethods]: TRemoteMethods extends UnspecifiedRemoteMethods
+    ? UntypedRemoteMember
+    : RemoteMember<TRemoteMethods[K]>;
+};
 
 /** The connection returned by connect(). */
 export type Connection<

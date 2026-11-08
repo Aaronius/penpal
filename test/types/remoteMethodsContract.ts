@@ -54,9 +54,24 @@ expectTypeOf(connectToWorker<WorkerMethods>(messenger)).toEqualTypeOf<
   Connection<WorkerMethods>
 >();
 
+function getRemoteMember<T extends MethodsShape<T>, K extends keyof T>(
+  proxy: RemoteProxy<T>,
+  key: K,
+): RemoteProxy<T>[K] {
+  return proxy[key];
+}
+
+expectTypeOf(
+  getRemoteMember<WorkerMethods, 'math'>(remote, 'math'),
+).toEqualTypeOf<RemoteProxy<Calculator>>();
+
 const unspecified = connect({ messenger, methods });
 expectTypeOf(unspecified).toEqualTypeOf<Connection>();
 const untyped = await unspecified.promise;
+// A string index signature is sufficient for the untyped proxy.
+expectTypeOf<Record<string, RemoteProxy[string]>>().toExtend<RemoteProxy>();
+// @ts-expect-error The proxy itself is an object. Its members are callable.
+void untyped();
 // noUncheckedIndexedAccess treats arbitrary indexed names as possibly absent.
 expectTypeOf(await untyped.multiply!(2, 6)).toEqualTypeOf<unknown>();
 expectTypeOf(untyped.math!.multiply!(2, 6, new CallOptions())).toEqualTypeOf<
@@ -66,6 +81,8 @@ expectTypeOf(untyped.math!.multiply!(2, 6, new CallOptions())).toEqualTypeOf<
 const empty = await connect<Record<never, never>>({ messenger }).promise;
 // @ts-expect-error An explicitly empty methods type has no declared methods.
 void empty.multiply(2, 6);
+
+expectTypeOf<RemoteProxy<Record<string, never>>['lookup']>().toBeNever();
 
 declare const indexed: RemoteProxy<Record<string, (value: number) => string>>;
 expectTypeOf(indexed.lookup!(1)).toEqualTypeOf<Promise<string>>();

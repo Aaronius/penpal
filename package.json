@@ -86,7 +86,7 @@
     "test:types:browser": "tsc --noEmit -p test/browser",
     "test:types:examples": "tsc --noEmit -p examples/tsconfig.json",
     "test:types:source": "tsc --noEmit -p test/types",
-    "test:types:package": "npm run build && tsc --noEmit -p test/packageTypes/worker && tsc --noEmit -p test/packageTypes/browser && tsc --noEmit -p test/packageTypes/node && tsc --noEmit -p test/packageTypes/mixed"
+    "test:types:package": "npm run build && tsc --noEmit -p test/packageTypes/worker && tsc -p test/packageTypes/browser && tsc -p test/packageTypes/node && tsc --noEmit -p test/packageTypes/mixed"
   },
   "lint-staged": {
     "**/*.{js,cjs,mjs,ts,cts,mts}": [

@@ -939,6 +939,16 @@ function connectToWorker<TRemoteMethods extends MethodsShape<TRemoteMethods>>(
 
 The object that `connection.promise` resolves to is a `RemoteProxy<TRemoteMethods>`, where `TRemoteMethods` is the type you pass as a type argument when calling `connect<TRemoteMethods>()`, as described above. You can call the methods declared in `TRemoteMethods` on that proxy, and each call returns a promise.
 
+```typescript
+import type { RemoteProxy } from 'penpal';
+
+async function logProduct(workerMethods: RemoteProxy<YourRemoteMethods>) {
+  console.log(await workerMethods.multiply(2, 6));
+}
+
+await logProduct(remote);
+```
+
 `RemoteProxy` without a type argument allows any method name and returns `Promise<unknown>` from each call.
 
 ## React

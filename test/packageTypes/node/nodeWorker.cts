@@ -9,7 +9,11 @@ import {
 } from 'penpal';
 
 declare const worker: Worker;
-void connect({ messenger: new NodeWorkerMessenger({ worker }) });
+// Leave these types inferred to check that a CommonJS consumer can emit them.
+export const connectToWorker = () =>
+  connect({ messenger: new NodeWorkerMessenger({ worker }) });
+export const remotePromise = connectToWorker().promise;
+
 const { port1, port2 } = new MessageChannel();
 void new CallOptions({ transferables: [port1] });
 void new Reply(port2, { transferables: [port2] });

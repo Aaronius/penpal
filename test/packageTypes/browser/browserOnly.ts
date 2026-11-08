@@ -13,7 +13,12 @@ declare const image: ImageBitmap;
 declare const canvas: OffscreenCanvas;
 declare const video: VideoFrame;
 
-void connect({ messenger: new WebWorkerMessenger({ worker }) });
+// Leave these types inferred so the compiler must write them into the consumer's declarations.
+export const connectToWorker = () =>
+  connect({ messenger: new WebWorkerMessenger({ worker }) });
+export const remotePromise = connectToWorker().promise;
+export const remote = await remotePromise;
+
 void connect({
   messenger: new WindowMessenger({ remoteWindow: window.parent }),
 });

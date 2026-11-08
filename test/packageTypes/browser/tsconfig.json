@@ -2,7 +2,11 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["es2024", "dom"],
-    "types": []
+    "types": [],
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "../../../node_modules/.cache/penpal-package-types"
   },
   "include": ["./**/*.ts", "./**/*.cts"]
 }
