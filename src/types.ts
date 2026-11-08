@@ -16,13 +16,20 @@ export type MethodsShape<T> = object & {
     : never;
 };
 
-// When the caller omits the methods type, the string index gives the proxy a
-// key for any method name. The call signature distinguishes this default from
-// an explicit Record<string, never>, which has no callable methods.
+// Penpal uses this default when someone calls connect({ messenger }). The
+// Record<string, never> part gives RemoteProxy a key for any string, so names
+// like add and multiply can become methods that return Promise<unknown>.
 //
-// RemoteProxy maps property keys, so the call signature stays on this input
-// type. TypeScript can also spell out this structural type in the .d.ts file
-// of a consumer that exports an inferred connection or proxy.
+// A shared type or helper could supply Record<string, never> to describe an
+// empty dictionary. Using that same type as the default would turn every
+// name in that dictionary into a callable method. A string index also leaves
+// symbol keys unchecked, so a type with only symbol keys could match it.
+//
+// The extra () => never signature gives the default a distinct shape.
+// RemoteProxy copies property keys, so the signature stays on this input type.
+//
+// The signature uses a plain function type that TypeScript can write into
+// a library's generated .d.ts file when it exports an inferred connection.
 export type UnspecifiedRemoteMethods = Record<string, never> & (() => never);
 
 // Without a remote methods type, each member can be called or used to reach
