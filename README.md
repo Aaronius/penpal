@@ -1041,7 +1041,7 @@ A reference to the worker. When connecting from a window, you would specify the 
 
 ### `NodeWorkerMessenger`
 
-This messenger supports communication with a Node.js `Worker` from `node:worker_threads`. See [Usage with a Node.js Worker](#usage-with-a-nodejs-worker) for an example. Inside the worker, use `PortMessenger` with `parentPort`.
+This messenger supports communication with a Node.js `Worker` from `node:worker_threads`. Inside the worker, use `PortMessenger` with `parentPort`. See [Usage with a Node.js Worker](#usage-with-a-nodejs-worker) for an example.
 
 #### Constructor Options
 
@@ -1049,7 +1049,7 @@ This messenger supports communication with a Node.js `Worker` from `node:worker_
 
 A reference to the Node.js worker. Penpal uses the worker's existing message channel to establish the connection and send method calls and replies. If the worker exits, Penpal closes the connection and rejects any pending handshake or method calls with `CONNECTION_DESTROYED`.
 
-Calling `connection.destroy()` stops Penpal from listening to the worker and leaves the worker running.
+Calling `connection.destroy()` stops Penpal from listening to the worker. If you also want to stop the worker, call `worker.terminate()`.
 
 ---
 
@@ -1062,6 +1062,8 @@ This messenger supports communication between a pair of browser or Node.js [Mess
 `port: MessagePort`
 
 A reference to the port. Each of the two participants in a Penpal connection will have its own [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort).
+
+Destroying a connection removes Penpal's listener and leaves the port open. The application can reuse the port or close it when it is finished with it.
 
 ---
 

@@ -77,6 +77,23 @@ const mockMessageChannels = (
 };
 
 describe('WebWorkerMessenger', () => {
+  it('ignores a late handshake message after destroy', () => {
+    const worker = new FakeWorker();
+    const messenger = new WebWorkerMessenger({ worker });
+    const port = createFakePort();
+
+    messenger.initialize({ validateReceivedMessage });
+    messenger.destroy();
+
+    // The fake can still invoke the listener after it has been removed.
+    worker.emit({
+      data: { namespace, channel: undefined, type: 'ACK2' },
+      ports: [port],
+    } as unknown as MessageEvent);
+
+    expect(port.start).not.toHaveBeenCalled();
+  });
+
   it('keeps port disconnected when ACK2 has no MessagePort', () => {
     const worker = new FakeWorker();
     const messenger = new WebWorkerMessenger({

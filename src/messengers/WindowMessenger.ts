@@ -136,6 +136,7 @@ class WindowMessenger implements Messenger {
   };
 
   destroy = (): void => {
+    this.#validateReceivedMessage = undefined;
     window.removeEventListener('message', this.#handleMessageFromRemoteWindow);
     this.#destroyPort();
     this.#messageCallbacks.clear();

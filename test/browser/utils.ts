@@ -149,6 +149,8 @@ export const createPortAndConnection = <
     destroy() {
       connection.destroy();
       remoteConnection.destroy();
+      port1.close();
+      port2.close();
     },
   };
 };

@@ -11,18 +11,19 @@ const validateReceivedMessage = (data: unknown): data is Message => {
   );
 };
 
-const waitForTick = async () => {
-  await new Promise((resolve) => {
-    setTimeout(resolve, 0);
-  });
-};
-
 describe('PortMessenger', () => {
-  it('forwards only validated messages to handlers', async () => {
+  it('forwards only validated messages to handlers', async ({
+    onTestFinished,
+  }) => {
     const { port1, port2 } = new MessageChannel();
 
     const messenger = new PortMessenger({
       port: port1,
+    });
+    onTestFinished(() => {
+      messenger.destroy();
+      port1.close();
+      port2.close();
     });
 
     const callback = vi.fn();
@@ -49,30 +50,37 @@ describe('PortMessenger', () => {
     expect(callback).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'SYN', participantId: 'participant' }),
     );
-
-    messenger.destroy();
   });
 
-  it('stops forwarding incoming messages after destroy and can send messages', async () => {
+  it('ignores queued and later messages after destroy while leaving the port usable', async ({
+    onTestFinished,
+  }) => {
     const { port1, port2 } = new MessageChannel();
 
     const messenger = new PortMessenger({
       port: port1,
     });
+    onTestFinished(() => {
+      messenger.destroy();
+      port1.close();
+      port2.close();
+    });
 
     const callback = vi.fn();
+    const validate = vi.fn();
+    const applicationListener = vi.fn();
+    const peerListener = vi.fn();
+    port1.addEventListener('message', ({ data }) => applicationListener(data));
+    port2.addEventListener('message', ({ data }) => peerListener(data));
+    port2.start();
 
     messenger.initialize({
-      validateReceivedMessage,
+      validateReceivedMessage(data): data is Message {
+        validate(data);
+        return validateReceivedMessage(data);
+      },
     });
     messenger.addMessageHandler(callback);
-
-    const sentMessagePromise = new Promise<Message>((resolve) => {
-      port2.addEventListener('message', ({ data }) => {
-        resolve(data as Message);
-      });
-      port2.start();
-    });
 
     messenger.sendMessage({
       namespace,
@@ -80,22 +88,26 @@ describe('PortMessenger', () => {
       type: 'DESTROY',
     });
 
-    await expect(sentMessagePromise).resolves.toMatchObject({
-      type: 'DESTROY',
-      namespace,
+    await vi.waitFor(() => {
+      expect(peerListener).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'DESTROY', namespace }),
+      );
     });
 
-    messenger.destroy();
-
-    port2.postMessage({
+    const message = {
       namespace,
       channel: undefined,
       type: 'SYN',
       participantId: 'participant',
+    };
+    port2.postMessage(message);
+    messenger.destroy();
+    port2.postMessage(message);
+
+    await vi.waitFor(() => {
+      expect(applicationListener).toHaveBeenCalledTimes(2);
     });
-
-    await waitForTick();
-
+    expect(validate).not.toHaveBeenCalled();
     expect(callback).not.toHaveBeenCalled();
   });
 });

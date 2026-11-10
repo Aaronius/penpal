@@ -22,7 +22,7 @@ type PortMessengerOptions = {
  * Handles the details of communicating on a MessagePort.
  */
 class PortMessenger implements Messenger {
-  #port: MessagePortLike;
+  #port: MessagePortLike | undefined;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
   #messageCallbacks = new Set<MessageHandler>();
 
@@ -38,14 +38,18 @@ class PortMessenger implements Messenger {
     validateReceivedMessage,
   }: InitializeMessengerOptions): void => {
     this.#validateReceivedMessage = validateReceivedMessage;
-    this.#port.addEventListener('message', this.#handleMessage);
-    this.#port.start();
+    this.#port?.addEventListener('message', this.#handleMessage);
+    this.#port?.start();
   };
 
   sendMessage = (
     message: Message,
     transferables?: PenpalTransferable[],
   ): void => {
+    if (!this.#port) {
+      throw new PenpalError('CONNECTION_DESTROYED', 'Connection destroyed');
+    }
+
     this.#port.postMessage(message, transferables);
   };
 
@@ -58,9 +62,12 @@ class PortMessenger implements Messenger {
   };
 
   destroy = (): void => {
-    this.#port.removeEventListener('message', this.#handleMessage);
-    this.#port.close();
+    const port = this.#port;
+    // Release the caller's port and stop dispatch before removing the listener.
+    this.#port = undefined;
+    this.#validateReceivedMessage = undefined;
     this.#messageCallbacks.clear();
+    port?.removeEventListener('message', this.#handleMessage);
   };
 
   #handleMessage = ({ data }: MessageEventLike): void => {

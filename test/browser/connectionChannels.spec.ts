@@ -8,6 +8,7 @@ import {
   expectParallelChannelResults,
 } from './connectionManagementHelpers.js';
 import {
+  CallOptions,
   connect,
   PenpalError,
   PortMessenger,
@@ -98,7 +99,7 @@ describe('connection management: channels', () => {
     channelBConnection.destroy();
   });
 
-  it('connects through message ports in parallel with separate channels', async () => {
+  it('keeps a connection working after another on the same ports is destroyed', async () => {
     const { port1, port2 } = new MessageChannel();
 
     const channelAParentConnection = connect<ChannelChildMethods>({
@@ -162,22 +163,29 @@ describe('connection management: channels', () => {
       },
     });
 
-    await Promise.all([
-      channelAChildConnection.promise,
-      channelBChildConnection.promise,
-    ]);
+    try {
+      const [channelAChild, channelBChild, , channelBParent] =
+        await Promise.all([
+          channelAParentConnection.promise,
+          channelBParentConnection.promise,
+          channelAChildConnection.promise,
+          channelBChildConnection.promise,
+        ]);
 
-    const [channelAChild, channelBChild] = await Promise.all([
-      channelAParentConnection.promise,
-      channelBParentConnection.promise,
-    ]);
+      await expectParallelChannelResults(channelAChild, channelBChild);
 
-    await expectParallelChannelResults(channelAChild, channelBChild);
-
-    channelAParentConnection.destroy();
-    channelBParentConnection.destroy();
-    channelAChildConnection.destroy();
-    channelBChildConnection.destroy();
+      channelAParentConnection.destroy();
+      const options = new CallOptions({ timeout: 1000 });
+      await expect(channelBChild.getChannel(options)).resolves.toBe('B');
+      await expect(channelBParent.getChannel(options)).resolves.toBe('B');
+    } finally {
+      channelAParentConnection.destroy();
+      channelBParentConnection.destroy();
+      channelAChildConnection.destroy();
+      channelBChildConnection.destroy();
+      port1.close();
+      port2.close();
+    }
   });
 
   it('throws error when messenger is re-used', async () => {

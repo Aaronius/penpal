@@ -117,6 +117,12 @@ for (const format of ['esm', 'cjs']) {
         await Promise.all([firstRemote.identify(), secondRemote.identify()]),
         ['first', 'second'],
       );
+
+      first.destroy();
+      assert.equal(
+        await secondRemote.identify(new CallOptions({ timeout: 1000 })),
+        'second',
+      );
     });
 
     void it('removes its listeners and rejects pending calls on destruction', async (t) => {

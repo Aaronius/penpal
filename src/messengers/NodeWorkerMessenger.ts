@@ -76,6 +76,7 @@ class NodeWorkerMessenger implements Messenger {
   };
 
   destroy = (): void => {
+    this.#validateReceivedMessage = undefined;
     this.#worker.removeListener('message', this.#handleMessage);
     if (this.#onDisconnect) {
       this.#worker.removeListener('exit', this.#onDisconnect);

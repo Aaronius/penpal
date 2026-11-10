@@ -127,6 +127,7 @@ class WebWorkerMessenger implements Messenger {
   };
 
   destroy = (): void => {
+    this.#validateReceivedMessage = undefined;
     this.#worker.removeEventListener('message', this.#handleMessage);
     this.#destroyPort();
     this.#messageCallbacks.clear();
