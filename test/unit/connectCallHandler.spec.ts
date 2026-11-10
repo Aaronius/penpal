@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import Reply from '../../src/Reply.js';
 import connectCallHandler from '../../src/connectCallHandler.js';
 import namespace from '../../src/namespace.js';
 import type { Message } from '../../src/types.js';
@@ -63,6 +64,52 @@ describe('connectCallHandler', () => {
     });
 
     dispose();
+  });
+
+  it('keeps the buffer attached when a Reply value rejects', async () => {
+    const messenger = new MockMessenger();
+    const buffer = new ArrayBuffer(8);
+
+    messenger.sendMessageImpl = (message, transferables) => {
+      structuredClone(message, { transfer: transferables ?? [] });
+    };
+
+    const dispose = connectCallHandler(
+      messenger,
+      {
+        getData() {
+          return new Reply(Promise.reject(new Error('Access denied')), {
+            transferables: [buffer],
+          });
+        },
+      },
+      undefined,
+      undefined,
+    );
+
+    try {
+      await messenger.emit({
+        namespace,
+        channel: undefined,
+        type: 'CALL',
+        id: '1',
+        methodPath: ['getData'],
+        args: [],
+      });
+
+      await vi.waitFor(() => {
+        expect(messenger.sentMessages).toHaveLength(1);
+      });
+      expect(messenger.sentMessages[0]).toMatchObject({
+        type: 'REPLY',
+        callId: '1',
+        isError: true,
+        value: { message: 'Access denied' },
+      });
+      expect(buffer.byteLength).toBe(8);
+    } finally {
+      dispose();
+    }
   });
 
   it('replies with METHOD_NOT_FOUND when method path does not exist', async () => {

@@ -72,8 +72,9 @@ const connectCallHandler = (
       let value: unknown = await method(...args);
 
       if (value instanceof Reply) {
-        transferables = value.transferables;
-        value = await value.value;
+        const reply = value;
+        value = await reply.value;
+        transferables = reply.transferables;
       }
 
       replyMessage = {
