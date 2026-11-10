@@ -1,5 +1,12 @@
 # Repository Instructions
 
+## Defensive code
+
+- Avoid adding guards or recovery branches for states or message sequences that
+  Penpal cannot produce in supported use. Trace the actual code path first.
+- Before adding a defensive check, identify the realistic scenario or public
+  contract that requires it.
+
 ## Releases
 
 - Treat the Release Workflow section in `CONTRIBUTING.md` as authoritative.

@@ -5,12 +5,6 @@ import PenpalError from '../../src/PenpalError.js';
 import type { Message } from '../../src/types.js';
 
 type MessageListener = (event: MessageEvent) => void;
-type FakeMessagePort = MessagePort & {
-  addEventListener: ReturnType<typeof vi.fn>;
-  removeEventListener: ReturnType<typeof vi.fn>;
-  start: ReturnType<typeof vi.fn>;
-  close: ReturnType<typeof vi.fn>;
-};
 
 class FakeHostWindow {
   origin = 'http://parent.test';
@@ -41,41 +35,6 @@ const validateReceivedMessage = (data: unknown): data is Message => {
     data !== null &&
     (data as Message).namespace === namespace
   );
-};
-
-const createFakePort = (): FakeMessagePort =>
-  ({
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    start: vi.fn(),
-    close: vi.fn(),
-  }) as unknown as FakeMessagePort;
-
-const mockMessageChannels = (
-  channels: { port1: MessagePort; port2: MessagePort }[],
-) => {
-  const originalMessageChannel = globalThis.MessageChannel;
-  let channelIndex = 0;
-
-  globalThis.MessageChannel = class {
-    readonly port1: MessagePort;
-    readonly port2: MessagePort;
-
-    constructor() {
-      const channel = channels[channelIndex++];
-
-      if (!channel) {
-        throw new Error('Unexpected MessageChannel creation');
-      }
-
-      this.port1 = channel.port1;
-      this.port2 = channel.port2;
-    }
-  } as typeof MessageChannel;
-
-  return () => {
-    globalThis.MessageChannel = originalMessageChannel;
-  };
 };
 
 describe('WindowMessenger', () => {
@@ -317,7 +276,7 @@ describe('WindowMessenger', () => {
     messenger.destroy();
   });
 
-  it('closes previous inbound MessagePort when ACK2 includes a replacement port', async () => {
+  it('closes the old port when the remote starts reconnecting', async () => {
     const remoteWindow = {
       postMessage: vi.fn(),
     } as unknown as Window;
@@ -373,12 +332,24 @@ describe('WindowMessenger', () => {
       data: {
         namespace,
         channel: undefined,
+        type: 'SYN',
+        participantId: 'def',
+      },
+      ports: [],
+    });
+
+    expect(firstCloseSpy).toHaveBeenCalledTimes(1);
+
+    fakeWindow.dispatch({
+      source: remoteWindow,
+      origin: 'http://remote.test',
+      data: {
+        namespace,
+        channel: undefined,
         type: 'ACK2',
       },
       ports: [secondMessengerPort],
     });
-
-    expect(firstCloseSpy).toHaveBeenCalledTimes(1);
 
     messenger.sendMessage({
       namespace,
@@ -473,57 +444,5 @@ describe('WindowMessenger', () => {
 
     remotePort.close();
     messenger.destroy();
-  });
-
-  it('closes previous outbound MessagePort when sending duplicate ACK2', () => {
-    const firstPort = createFakePort();
-    const secondPort = createFakePort();
-    const restoreMessageChannel = mockMessageChannels([
-      { port1: firstPort, port2: createFakePort() },
-      { port1: secondPort, port2: createFakePort() },
-    ]);
-    const remoteWindow = {
-      postMessage: vi.fn(),
-    } as unknown as Window;
-    const messenger = new WindowMessenger({
-      remoteWindow,
-      allowedOrigins: ['*'],
-    });
-
-    try {
-      messenger.initialize({
-        validateReceivedMessage,
-      });
-
-      fakeWindow.dispatch({
-        source: remoteWindow,
-        origin: 'http://remote.test',
-        data: {
-          namespace,
-          channel: undefined,
-          type: 'SYN',
-          participantId: 'abc',
-        },
-        ports: [],
-      });
-
-      messenger.sendMessage({
-        namespace,
-        channel: undefined,
-        type: 'ACK2',
-      });
-      messenger.sendMessage({
-        namespace,
-        channel: undefined,
-        type: 'ACK2',
-      });
-
-      expect(firstPort.removeEventListener).toHaveBeenCalledTimes(1);
-      expect(firstPort.close).toHaveBeenCalledTimes(1);
-      expect(secondPort.close).not.toHaveBeenCalled();
-    } finally {
-      messenger.destroy();
-      restoreMessageChannel();
-    }
   });
 });

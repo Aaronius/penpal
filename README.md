@@ -1017,6 +1017,8 @@ In some [scenarios](https://github.com/Aaronius/penpal/issues/73), you may want 
 
 Regardless of how you configure `allowedOrigins`, communication will always be restricted to the window with which you are connecting.
 
+If an iframe or opened window reloads or navigates to another page that calls `connect()`, Penpal establishes a new message channel with that page. The new page must be from an allowed origin. Once it reconnects, you can keep using the same remote proxy. Calls still waiting for a reply from the previous page reject with `TRANSMISSION_FAILED`.
+
 ---
 
 ### `WebWorkerMessenger`

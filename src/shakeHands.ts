@@ -12,6 +12,7 @@ import type {
 import PenpalError from './PenpalError.js';
 import connectCallHandler from './connectCallHandler.js';
 import connectRemoteProxy from './connectRemoteProxy.js';
+import type { RemoteProxyController } from './connectRemoteProxy.js';
 import { isAck2Message, isAck1Message, isSynMessage } from './guards.js';
 import generateId from './generateId.js';
 import namespace from './namespace.js';
@@ -107,9 +108,9 @@ const shakeHands = <
   log,
 }: HandshakeOptions): Handshake<TRemoteMethods> => {
   const participantId = generateId();
-  let remoteParticipantId: string;
-  const destroyHandlers: (() => void)[] = [];
-  let isComplete = false;
+  let remoteParticipantId: string | undefined;
+  let destroyCallHandler: (() => void) | undefined;
+  let remoteProxyController: RemoteProxyController<TRemoteMethods> | undefined;
   let isDestroyed = false;
 
   const { promise, resolve, reject } =
@@ -126,10 +127,9 @@ const shakeHands = <
 
   const cleanUp = () => {
     cancelTimeout?.();
-
-    for (const destroyHandler of destroyHandlers.splice(0)) {
-      destroyHandler();
-    }
+    messenger.removeMessageHandler(handleMessage);
+    destroyCallHandler?.();
+    remoteProxyController?.destroy();
   };
 
   const rejectAndCleanUp = (error: PenpalError) => {
@@ -149,23 +149,28 @@ const shakeHands = <
   };
 
   const completeHandshake = () => {
-    if (isDestroyed || isComplete) {
-      // Ignore messages after cleanup, and keep completion idempotent when
-      // the remote attempts to re-connect.
+    // connectCallHandler() installs the handler and returns its cleanup
+    // function. If destroyCallHandler is set, we've already installed a
+    // handler for this handshake. When the remote sends a SYN with a new ID
+    // (for example, after an iframe reload), we clear it so the new handshake
+    // can install its own handler.
+    if (isDestroyed || destroyCallHandler) {
       return;
     }
 
-    destroyHandlers.push(connectCallHandler(messenger, methods, channel, log));
+    destroyCallHandler = connectCallHandler(messenger, methods, channel, log);
 
-    const { remoteProxy, destroy: destroyMethodProxies } =
-      connectRemoteProxy<TRemoteMethods>(messenger, channel, log);
-
-    destroyHandlers.push(destroyMethodProxies);
-
-    cancelTimeout?.();
-    isComplete = true;
-
-    resolve(remoteProxy);
+    // The first handshake gives the app a proxy through connection.promise.
+    // When the remote reconnects, the app can keep using that same proxy.
+    if (!remoteProxyController) {
+      remoteProxyController = connectRemoteProxy<TRemoteMethods>(
+        messenger,
+        channel,
+        log,
+      );
+      cancelTimeout?.();
+      resolve(remoteProxyController.remoteProxy);
+    }
   };
 
   const sendHandshakeMessage = (
@@ -207,6 +212,15 @@ const shakeHands = <
     }
 
     remoteParticipantId = message.participantId;
+
+    // The old remote may have called a method that is still running here.
+    // Shut down its call handler so a late reply can't go to the new remote.
+    destroyCallHandler?.();
+    destroyCallHandler = undefined;
+
+    // Reject any calls still waiting for a reply from the old remote.
+    // The new remote never received those calls.
+    remoteProxyController?.rejectCallsOnReconnect();
 
     // We send another SYN message in case the other participant was not ready
     // when we sent the first SYN message.
@@ -264,7 +278,6 @@ const shakeHands = <
   };
 
   messenger.addMessageHandler(handleMessage);
-  destroyHandlers.push(() => messenger.removeMessageHandler(handleMessage));
 
   sendSynMessage();
 

@@ -24,12 +24,13 @@ type ReplyHandler = {
   cancelTimeout: (() => void) | undefined;
 };
 
-type ConnectedRemoteProxy<
+export type RemoteProxyController<
   TRemoteMethods extends
     | MethodsShape<TRemoteMethods>
     | UnspecifiedRemoteMethods,
 > = {
   remoteProxy: RemoteProxy<TRemoteMethods>;
+  rejectCallsOnReconnect: () => void;
   destroy: () => void;
 };
 
@@ -108,7 +109,7 @@ const connectRemoteProxy = <
   messenger: Messenger,
   channel: string | undefined,
   log: Log | undefined,
-): ConnectedRemoteProxy<TRemoteMethods> => {
+): RemoteProxyController<TRemoteMethods> => {
   let isDestroyed = false;
   const replyHandlers = new Map<string, ReplyHandler>();
 
@@ -189,17 +190,14 @@ const connectRemoteProxy = <
     });
   }, log) as RemoteProxy<TRemoteMethods>;
 
-  const destroy = () => {
-    isDestroyed = true;
-    messenger.removeMessageHandler(handleMessage);
-
+  const rejectPendingCalls = (getError: (path: MethodPath) => PenpalError) => {
     for (const {
       methodPath,
       reject,
       cancelTimeout,
     } of replyHandlers.values()) {
       cancelTimeout?.();
-      reject(getDestroyedConnectionMethodCallError(methodPath));
+      reject(getError(methodPath));
     }
 
     replyHandlers.clear();
@@ -207,7 +205,20 @@ const connectRemoteProxy = <
 
   return {
     remoteProxy,
-    destroy,
+    rejectCallsOnReconnect: () => {
+      rejectPendingCalls(
+        (methodPath) =>
+          new PenpalError(
+            'TRANSMISSION_FAILED',
+            `Method call ${formatMethodPath(methodPath)}() failed because the remote reconnected before replying`,
+          ),
+      );
+    },
+    destroy: () => {
+      isDestroyed = true;
+      messenger.removeMessageHandler(handleMessage);
+      rejectPendingCalls(getDestroyedConnectionMethodCallError);
+    },
   };
 };
 

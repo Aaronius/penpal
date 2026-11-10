@@ -97,10 +97,10 @@ class WindowMessenger implements Messenger {
     }
 
     if (isAck2Message(message)) {
+      const originForSending = this.#getOriginForSendingMessage(message);
       const { port1, port2 } = new MessageChannel();
       this.#setPort(port1);
       const transferablesToSend = [port2, ...(transferables || [])];
-      const originForSending = this.#getOriginForSendingMessage(message);
 
       try {
         this.#remoteWindow.postMessage(message, {
@@ -193,7 +193,6 @@ class WindowMessenger implements Messenger {
   };
 
   #setPort = (port: MessagePortLike) => {
-    this.#destroyPort();
     this.#port = port;
     this.#port.addEventListener('message', this.#handleMessageFromPort);
     this.#port.start();

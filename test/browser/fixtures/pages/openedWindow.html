@@ -4,5 +4,10 @@
   PenpalFixture.connect({
     remoteWindow: window.opener,
     allowedOrigins: ['*'],
+    methods: {
+      getSearch() {
+        return window.location.search;
+      },
+    },
   });
 </script>
