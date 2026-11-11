@@ -9,8 +9,8 @@ import type {
 } from './types.js';
 import PenpalError from './PenpalError.js';
 import type Messenger from './messengers/Messenger.js';
-import shakeHands from './shakeHands.js';
-import type { HandshakeMessage } from './shakeHands.js';
+import createHandshake from './createHandshake.js';
+import type { HandshakeMessage } from './createHandshake.js';
 import connectCallHandler from './connectCallHandler.js';
 import type { CallHandler } from './connectCallHandler.js';
 import connectRemoteProxy from './connectRemoteProxy.js';
@@ -82,6 +82,7 @@ const connect = <
   const connectionPromise =
     Promise.withResolvers<RemoteProxy<TRemoteMethods>>();
   let isConnectionDestroyed = false;
+  let hasStartedInitializingMessenger = false;
   let cancelConnectionTimeout: (() => void) | undefined;
   let callHandler: CallHandler | undefined;
   let remoteProxyController: RemoteProxyController<TRemoteMethods> | undefined;
@@ -114,12 +115,16 @@ const connect = <
     // only runs once.
     isConnectionDestroyed = true;
 
-    if (notifyOtherParticipant) {
-      sendDestroyMessage();
-    }
-
     cancelConnectionTimeout?.();
-    messenger.destroy();
+    // Skip messenger cleanup if startup fails before initialize() starts.
+    // An uninitialized messenger could throw during cleanup and hide the
+    // original error.
+    if (hasStartedInitializingMessenger) {
+      if (notifyOtherParticipant) {
+        sendDestroyMessage();
+      }
+      messenger.destroy();
+    }
     callHandler?.destroy();
     remoteProxyController?.destroy();
     connectionPromise.reject(reason);
@@ -212,38 +217,32 @@ const connect = <
   };
 
   try {
+    cancelConnectionTimeout = scheduleTimeout(() => {
+      destroyConnection(
+        new PenpalError(
+          'CONNECTION_TIMEOUT',
+          `Connection timed out after ${timeout}ms`,
+        ),
+        true,
+      );
+    }, timeout);
+
+    const handshake = createHandshake({
+      channel,
+      sendMessage: sendHandshakeMessage,
+      onNewParticipant: retirePreviousParticipant,
+      onComplete: completeHandshake,
+    });
+
+    // initialize() can call onDisconnect() or throw after attaching listeners.
+    // Enable messenger cleanup before calling it so either path can remove them.
+    hasStartedInitializingMessenger = true;
     messenger.initialize({
       log,
       validateReceivedMessage: (data): data is Message =>
         isMessage(data) && data.channel === channel,
       onDisconnect: destroyConnectionLocally,
-    });
-
-    // If the transport is already unavailable, initialize() can call
-    // onDisconnect() and destroy the connection before it returns. Skip
-    // listener registration and the handshake in that case.
-    if (!isConnectionDestroyed) {
-      const handshake = shakeHands({
-        channel,
-        sendMessage: sendHandshakeMessage,
-        onNewParticipant: retirePreviousParticipant,
-        onComplete: completeHandshake,
-      });
-
-      cancelConnectionTimeout = scheduleTimeout(() => {
-        destroyConnection(
-          new PenpalError(
-            'CONNECTION_TIMEOUT',
-            `Connection timed out after ${timeout}ms`,
-          ),
-          true,
-        );
-      }, timeout);
-
-      // Register the listener before sending our first SYN. A custom
-      // messenger can deliver the remote's handshake response before
-      // sendMessage() returns.
-      messenger.addMessageHandler((message) => {
+      onMessage: (message) => {
         if (isConnectionDestroyed) {
           return;
         }
@@ -266,8 +265,12 @@ const connect = <
             remoteProxyController?.handleMessage(message);
             break;
         }
-      });
+      },
+    });
 
+    // initialize() can call onDisconnect(), which closes the connection
+    // before initialize() returns. Start the handshake only if it's open.
+    if (!isConnectionDestroyed) {
       handshake.start();
     }
   } catch (error) {

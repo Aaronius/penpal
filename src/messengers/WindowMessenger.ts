@@ -51,7 +51,7 @@ class WindowMessenger implements Messenger {
   #log: Log | undefined;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
   #concreteRemoteOrigin: string | undefined;
-  #messageCallbacks = new Set<MessageHandler>();
+  #onMessage: MessageHandler | undefined;
   #port: MessagePortLike | undefined;
 
   constructor({ remoteWindow, allowedOrigins }: WindowMessengerOptions) {
@@ -68,9 +68,11 @@ class WindowMessenger implements Messenger {
   initialize = ({
     log,
     validateReceivedMessage,
+    onMessage,
   }: InitializeMessengerOptions): void => {
     this.#log = log;
     this.#validateReceivedMessage = validateReceivedMessage;
+    this.#onMessage = onMessage;
     window.addEventListener('message', this.#handleMessageFromRemoteWindow);
   };
 
@@ -127,19 +129,11 @@ class WindowMessenger implements Messenger {
     );
   };
 
-  addMessageHandler = (callback: MessageHandler): void => {
-    this.#messageCallbacks.add(callback);
-  };
-
-  removeMessageHandler = (callback: MessageHandler): void => {
-    this.#messageCallbacks.delete(callback);
-  };
-
   destroy = (): void => {
     this.#validateReceivedMessage = undefined;
+    this.#onMessage = undefined;
     window.removeEventListener('message', this.#handleMessageFromRemoteWindow);
     this.#destroyPort();
-    this.#messageCallbacks.clear();
   };
 
   #isAllowedOrigin = (origin: string) => {
@@ -239,9 +233,7 @@ class WindowMessenger implements Messenger {
       this.#setPort(port);
     }
 
-    for (const callback of this.#messageCallbacks) {
-      callback(data);
-    }
+    this.#onMessage?.(data);
   };
 
   #handleMessageFromPort = ({ data }: MessageEventLike): void => {
@@ -249,9 +241,7 @@ class WindowMessenger implements Messenger {
       return;
     }
 
-    for (const callback of this.#messageCallbacks) {
-      callback(data);
-    }
+    this.#onMessage?.(data);
   };
 }
 

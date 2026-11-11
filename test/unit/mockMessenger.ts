@@ -1,17 +1,13 @@
 import type { Message } from '../../src/types.js';
 import type Messenger from '../../src/messengers/Messenger.js';
-import type {
-  InitializeMessengerOptions,
-  MessageHandler,
-} from '../../src/messengers/Messenger.js';
+import type { InitializeMessengerOptions } from '../../src/messengers/Messenger.js';
 
 export class MockMessenger implements Messenger {
   readonly sentMessages: Message[] = [];
-  readonly handlers = new Set<MessageHandler>();
   initializeOptions: InitializeMessengerOptions | undefined;
 
   destroy = () => {
-    this.handlers.clear();
+    this.initializeOptions = undefined;
   };
 
   sendMessageImpl: (message: Message, transferables?: Transferable[]) => void =
@@ -28,21 +24,9 @@ export class MockMessenger implements Messenger {
     this.sendMessageImpl(message, transferables);
   };
 
-  addMessageHandler = (callback: MessageHandler) => {
-    this.handlers.add(callback);
-  };
-
-  removeMessageHandler = (callback: MessageHandler) => {
-    this.handlers.delete(callback);
-  };
-
   emit = (message: unknown): void => {
-    if (!this.initializeOptions?.validateReceivedMessage(message)) {
-      return;
-    }
-
-    for (const handler of this.handlers) {
-      handler(message);
+    if (this.initializeOptions?.validateReceivedMessage(message)) {
+      this.initializeOptions.onMessage(message);
     }
   };
 }

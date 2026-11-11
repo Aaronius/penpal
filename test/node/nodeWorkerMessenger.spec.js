@@ -204,34 +204,33 @@ for (const format of ['esm', 'cjs']) {
       assert.equal(worker.listenerCount('exit'), 0);
     });
 
-    void it('filters invalid payloads and unregisters individual handlers', async (t) => {
+    void it('delivers valid messages until the messenger is destroyed', async (t) => {
       const worker = new Worker(new URL('./fixtures/echo.js', import.meta.url));
       t.after(() => worker.terminate());
       const messenger = new NodeWorkerMessenger({ worker });
       t.after(() => messenger.destroy());
+      const received = [];
+      const accepted = Promise.withResolvers();
       messenger.initialize({
         validateReceivedMessage: (value) => value?.type === 'DESTROY',
+        onMessage: (message) => {
+          received.push(message);
+          accepted.resolve();
+        },
       });
-      const received = [];
-      const handler = (message) => received.push(message);
-      messenger.addMessageHandler(handler);
-      const accepted = new Promise((resolve) =>
-        messenger.addMessageHandler(resolve),
-      );
       // Worker messages from one endpoint arrive in order, so the DESTROY
       // payload provides a barrier after the invalid payloads.
       worker.postMessage(null);
       worker.postMessage({ unrelated: true });
       messenger.sendMessage({ type: 'DESTROY' });
-      await accepted;
+      await accepted.promise;
       assert.deepEqual(received, [{ type: 'DESTROY' }]);
-      messenger.removeMessageHandler(handler);
-      const ignored = once(worker, 'message');
-      messenger.sendMessage({ type: 'DESTROY' });
-      await ignored;
-      assert.equal(received.length, 1);
       messenger.destroy();
       assert.equal(worker.listenerCount('message'), 0);
+      const ignored = once(worker, 'message');
+      worker.postMessage({ type: 'DESTROY' });
+      await ignored;
+      assert.equal(received.length, 1);
     });
   });
 }

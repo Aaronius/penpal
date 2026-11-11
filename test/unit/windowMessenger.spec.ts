@@ -70,8 +70,8 @@ describe('WindowMessenger', () => {
 
     messenger.initialize({
       validateReceivedMessage,
+      onMessage: callback,
     });
-    messenger.addMessageHandler(callback);
 
     fakeWindow.dispatch({
       source: remoteWindow,
@@ -131,8 +131,7 @@ describe('WindowMessenger', () => {
         participantId: 'abc',
       } as const;
 
-      messenger.initialize({ validateReceivedMessage });
-      messenger.addMessageHandler(callback);
+      messenger.initialize({ validateReceivedMessage, onMessage: callback });
 
       fakeWindow.dispatch({
         source: remoteWindow,
@@ -169,8 +168,8 @@ describe('WindowMessenger', () => {
     messenger.initialize({
       validateReceivedMessage,
       log,
+      onMessage: callback,
     });
-    messenger.addMessageHandler(callback);
 
     fakeWindow.dispatch({
       source: remoteWindow,
@@ -228,6 +227,7 @@ describe('WindowMessenger', () => {
 
     messenger.initialize({
       validateReceivedMessage,
+      onMessage: vi.fn(),
     });
 
     fakeWindow.dispatch({
@@ -288,6 +288,7 @@ describe('WindowMessenger', () => {
 
     messenger.initialize({
       validateReceivedMessage,
+      onMessage: vi.fn(),
     });
 
     fakeWindow.dispatch({
@@ -380,6 +381,7 @@ describe('WindowMessenger', () => {
 
     messenger.initialize({
       validateReceivedMessage,
+      onMessage: vi.fn(),
       log,
     });
 

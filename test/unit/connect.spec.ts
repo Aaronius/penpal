@@ -62,7 +62,7 @@ describe('connect', () => {
       type: 'DESTROY',
     });
     expect(destroySpy).toHaveBeenCalledTimes(1);
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
     await expect(pendingCall).rejects.toMatchObject({
       code: 'CONNECTION_DESTROYED',
     });
@@ -88,7 +88,7 @@ describe('connect', () => {
       ...messageBase,
       type: 'DESTROY',
     });
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -105,7 +105,7 @@ describe('connect', () => {
     connection.destroy();
 
     expect(destroySpy).toHaveBeenCalledTimes(1);
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
     expect(messenger.sentMessages).toHaveLength(numberOfMessages);
   });
 
@@ -121,38 +121,47 @@ describe('connect', () => {
     expect(messenger.sentMessages).toEqual([
       expect.objectContaining({ type: 'SYN' }),
     ]);
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
   });
 
   it('skips the handshake if the messenger disconnects during initialization', async () => {
     const messenger = new MockMessenger();
-    messenger.initialize = ({ onDisconnect }) => {
-      onDisconnect?.();
+    vi.useFakeTimers();
+    const initialize = messenger.initialize;
+    messenger.initialize = (options) => {
+      initialize(options);
+      options.onDisconnect?.();
     };
 
-    const connection = connect({ messenger });
+    const connection = connect({ messenger, timeout: 50 });
 
     await expect(connection.promise).rejects.toMatchObject({
       code: 'CONNECTION_DESTROYED',
     });
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
     expect(messenger.sentMessages).toHaveLength(0);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('skips the handshake if the messenger disconnects while registering the listener', async () => {
+  it('can finish the handshake during initialization and cancel the timeout', async () => {
+    vi.useFakeTimers();
     const messenger = new MockMessenger();
-    messenger.addMessageHandler = (handler) => {
-      messenger.handlers.add(handler);
-      messenger.initializeOptions?.onDisconnect?.();
+    const initialize = messenger.initialize;
+    messenger.initialize = (options) => {
+      initialize(options);
+      completeHandshake(messenger);
     };
 
-    const connection = connect({ messenger });
-
-    await expect(connection.promise).rejects.toMatchObject({
-      code: 'CONNECTION_DESTROYED',
+    const connection = connect({
+      messenger,
+      channel: messageBase.channel,
+      timeout: 50,
     });
-    expect(messenger.handlers.size).toBe(0);
-    expect(messenger.sentMessages).toHaveLength(0);
+
+    await expect(connection.promise).resolves.toBeDefined();
+    expect(messenger.sentMessages.map(({ type }) => type)).toContain('ACK2');
+    expect(vi.getTimerCount()).toBe(0);
+    connection.destroy();
   });
 
   it('cleans up when the messenger disconnects while sending the first SYN', async () => {
@@ -166,7 +175,7 @@ describe('connect', () => {
     await expect(connection.promise).rejects.toMatchObject({
       code: 'CONNECTION_DESTROYED',
     });
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
     expect(messenger.sentMessages).toEqual([
       expect.objectContaining({ type: 'SYN' }),
     ]);
@@ -200,7 +209,7 @@ describe('connect', () => {
     await expect(connection.promise).rejects.toMatchObject({
       code: 'CONNECTION_DESTROYED',
     });
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
   });
 
   it.each(['SYN', 'ACK2'])(
@@ -227,7 +236,7 @@ describe('connect', () => {
         ...messageBase,
         type: 'DESTROY',
       });
-      expect(messenger.handlers.size).toBe(0);
+      expect(messenger.initializeOptions).toBeUndefined();
     },
   );
 
@@ -253,10 +262,35 @@ describe('connect', () => {
       code: 'TRANSMISSION_FAILED',
     });
     expect(destroySpy).toHaveBeenCalledTimes(1);
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
     expect(() => remote.ping()).toThrow(
       expect.objectContaining({ code: 'CONNECTION_DESTROYED' }),
     );
+  });
+
+  it('preserves the startup error when messenger cleanup would throw', async () => {
+    const messenger = new MockMessenger();
+    const initialize = vi.spyOn(messenger, 'initialize');
+    const destroy = vi.spyOn(messenger, 'destroy').mockImplementation(() => {
+      throw new Error('Cannot destroy an uninitialized messenger');
+    });
+
+    vi.stubGlobal('setTimeout', undefined);
+    try {
+      const connection = connect({ messenger, timeout: 50 });
+
+      await expect(connection.promise).rejects.toMatchObject({
+        code: 'INVALID_ARGUMENT',
+        message: 'Timeouts are unavailable in this environment',
+      });
+      connection.destroy();
+
+      expect(initialize).not.toHaveBeenCalled();
+      expect(destroy).not.toHaveBeenCalled();
+      expect(messenger.sentMessages).toHaveLength(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('rejects with CONNECTION_TIMEOUT when the first handshake takes too long', async () => {
@@ -270,7 +304,7 @@ describe('connect', () => {
 
     await vi.advanceTimersByTimeAsync(50);
     await rejection;
-    expect(messenger.handlers.size).toBe(0);
+    expect(messenger.initializeOptions).toBeUndefined();
   });
 
   it('cancels the connection timeout after the first handshake', async () => {

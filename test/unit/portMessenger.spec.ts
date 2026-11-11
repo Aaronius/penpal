@@ -12,7 +12,7 @@ const validateReceivedMessage = (data: unknown): data is Message => {
 };
 
 describe('PortMessenger', () => {
-  it('forwards only validated messages to handlers', async ({
+  it('forwards only validated messages to onMessage', async ({
     onTestFinished,
   }) => {
     const { port1, port2 } = new MessageChannel();
@@ -29,9 +29,9 @@ describe('PortMessenger', () => {
     const callback = vi.fn();
 
     messenger.initialize({
+      onMessage: callback,
       validateReceivedMessage,
     });
-    messenger.addMessageHandler(callback);
 
     port2.postMessage({
       random: 'payload',
@@ -75,12 +75,12 @@ describe('PortMessenger', () => {
     port2.start();
 
     messenger.initialize({
+      onMessage: callback,
       validateReceivedMessage(data): data is Message {
         validate(data);
         return validateReceivedMessage(data);
       },
     });
-    messenger.addMessageHandler(callback);
 
     messenger.sendMessage({
       namespace,

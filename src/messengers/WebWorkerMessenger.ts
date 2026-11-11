@@ -59,7 +59,7 @@ class WebWorkerMessenger implements Messenger {
   #worker: WorkerEndpoint;
   #log: Log | undefined;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
-  #messageCallbacks = new Set<MessageHandler>();
+  #onMessage: MessageHandler | undefined;
   #port: MessagePortLike | undefined;
 
   constructor({ worker }: WebWorkerMessengerOptions) {
@@ -73,9 +73,11 @@ class WebWorkerMessenger implements Messenger {
   initialize = ({
     log,
     validateReceivedMessage,
+    onMessage,
   }: InitializeMessengerOptions): void => {
     this.#log = log;
     this.#validateReceivedMessage = validateReceivedMessage;
+    this.#onMessage = onMessage;
     this.#worker.addEventListener('message', this.#handleMessage);
   };
 
@@ -118,19 +120,11 @@ class WebWorkerMessenger implements Messenger {
     );
   };
 
-  addMessageHandler = (callback: MessageHandler): void => {
-    this.#messageCallbacks.add(callback);
-  };
-
-  removeMessageHandler = (callback: MessageHandler): void => {
-    this.#messageCallbacks.delete(callback);
-  };
-
   destroy = (): void => {
     this.#validateReceivedMessage = undefined;
+    this.#onMessage = undefined;
     this.#worker.removeEventListener('message', this.#handleMessage);
     this.#destroyPort();
-    this.#messageCallbacks.clear();
   };
 
   #destroyPort = () => {
@@ -169,9 +163,7 @@ class WebWorkerMessenger implements Messenger {
       this.#setPort(port);
     }
 
-    for (const callback of this.#messageCallbacks) {
-      callback(data);
-    }
+    this.#onMessage?.(data);
   };
 }
 

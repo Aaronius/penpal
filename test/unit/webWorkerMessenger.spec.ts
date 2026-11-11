@@ -82,7 +82,7 @@ describe('WebWorkerMessenger', () => {
     const messenger = new WebWorkerMessenger({ worker });
     const port = createFakePort();
 
-    messenger.initialize({ validateReceivedMessage });
+    messenger.initialize({ validateReceivedMessage, onMessage: vi.fn() });
     messenger.destroy();
 
     // The fake can still invoke the listener after it has been removed.
@@ -102,6 +102,7 @@ describe('WebWorkerMessenger', () => {
 
     messenger.initialize({
       validateReceivedMessage,
+      onMessage: vi.fn(),
     });
 
     worker.emit({
@@ -142,6 +143,7 @@ describe('WebWorkerMessenger', () => {
 
     messenger.initialize({
       validateReceivedMessage,
+      onMessage: vi.fn(),
     });
 
     const { port1, port2 } = new MessageChannel();
@@ -184,6 +186,7 @@ describe('WebWorkerMessenger', () => {
 
     messenger.initialize({
       validateReceivedMessage,
+      onMessage: vi.fn(),
     });
 
     const { port1: firstRemotePort, port2: firstMessengerPort } =
@@ -244,6 +247,7 @@ describe('WebWorkerMessenger', () => {
 
     messenger.initialize({
       validateReceivedMessage,
+      onMessage: vi.fn(),
       log,
     });
 
@@ -309,6 +313,7 @@ describe('WebWorkerMessenger', () => {
     try {
       messenger.initialize({
         validateReceivedMessage,
+        onMessage: vi.fn(),
       });
 
       messenger.sendMessage({

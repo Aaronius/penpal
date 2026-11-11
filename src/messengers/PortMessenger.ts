@@ -24,7 +24,7 @@ type PortMessengerOptions = {
 class PortMessenger implements Messenger {
   #port: MessagePortLike | undefined;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
-  #messageCallbacks = new Set<MessageHandler>();
+  #onMessage: MessageHandler | undefined;
 
   constructor({ port }: PortMessengerOptions) {
     if (!port) {
@@ -36,8 +36,10 @@ class PortMessenger implements Messenger {
 
   initialize = ({
     validateReceivedMessage,
+    onMessage,
   }: InitializeMessengerOptions): void => {
     this.#validateReceivedMessage = validateReceivedMessage;
+    this.#onMessage = onMessage;
     this.#port?.addEventListener('message', this.#handleMessage);
     this.#port?.start();
   };
@@ -53,20 +55,12 @@ class PortMessenger implements Messenger {
     this.#port.postMessage(message, transferables);
   };
 
-  addMessageHandler = (callback: MessageHandler): void => {
-    this.#messageCallbacks.add(callback);
-  };
-
-  removeMessageHandler = (callback: MessageHandler): void => {
-    this.#messageCallbacks.delete(callback);
-  };
-
   destroy = (): void => {
     const port = this.#port;
     // Release the caller's port and stop dispatch before removing the listener.
     this.#port = undefined;
     this.#validateReceivedMessage = undefined;
-    this.#messageCallbacks.clear();
+    this.#onMessage = undefined;
     port?.removeEventListener('message', this.#handleMessage);
   };
 
@@ -75,9 +69,7 @@ class PortMessenger implements Messenger {
       return;
     }
 
-    for (const callback of this.#messageCallbacks) {
-      callback(data);
-    }
+    this.#onMessage?.(data);
   };
 }
 

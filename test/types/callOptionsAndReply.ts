@@ -35,6 +35,7 @@ type ChildMethods = {
 
 declare const messenger: WindowMessenger;
 declare const remoteWindow: Window;
+declare const onMessage: (message: Message) => void;
 declare const windowLike: {
   postMessage: (
     message: unknown,
@@ -57,10 +58,12 @@ const validateReceivedMessage = (data: unknown): data is Message =>
   Boolean(data);
 const initializeOptionsWithoutLog: InitializeMessengerOptions = {
   validateReceivedMessage,
+  onMessage,
 };
 const initializeOptionsWithUndefinedLog: InitializeMessengerOptions = {
   log: undefined,
   validateReceivedMessage,
+  onMessage,
 };
 void initializeOptionsWithoutLog;
 void initializeOptionsWithUndefinedLog;

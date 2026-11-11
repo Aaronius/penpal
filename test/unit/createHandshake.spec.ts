@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import namespace from '../../src/namespace.js';
-import shakeHands from '../../src/shakeHands.js';
+import createHandshake from '../../src/createHandshake.js';
 
 vi.mock('../../src/generateId.js', () => ({
   default: () => 'local',
@@ -8,11 +8,11 @@ vi.mock('../../src/generateId.js', () => ({
 
 const messageBase = { namespace, channel: 'test-channel' };
 
-const createHandshake = () => {
+const setupHandshake = () => {
   const sendMessage = vi.fn(() => true);
   const onNewParticipant = vi.fn();
   const onComplete = vi.fn();
-  const handshake = shakeHands({
+  const handshake = createHandshake({
     channel: messageBase.channel,
     sendMessage,
     onNewParticipant,
@@ -22,9 +22,9 @@ const createHandshake = () => {
   return { handshake, sendMessage, onNewParticipant, onComplete };
 };
 
-describe('shakeHands', () => {
+describe('createHandshake', () => {
   it('sends SYN on start and after hearing from a new participant', () => {
-    const { handshake, sendMessage, onNewParticipant } = createHandshake();
+    const { handshake, sendMessage, onNewParticipant } = setupHandshake();
     const syn = { ...messageBase, type: 'SYN', participantId: 'local' };
 
     expect(sendMessage).not.toHaveBeenCalled();
@@ -42,7 +42,7 @@ describe('shakeHands', () => {
   });
 
   it('ignores a repeated SYN and responds when the participant ID changes', () => {
-    const { handshake, sendMessage, onNewParticipant } = createHandshake();
+    const { handshake, sendMessage, onNewParticipant } = setupHandshake();
     const syn = {
       ...messageBase,
       type: 'SYN',
@@ -60,7 +60,7 @@ describe('shakeHands', () => {
   });
 
   it('sends ACK1 as the leader and completes on ACK2', () => {
-    const { handshake, sendMessage, onComplete } = createHandshake();
+    const { handshake, sendMessage, onComplete } = setupHandshake();
 
     handshake.handleMessage({
       ...messageBase,
@@ -78,7 +78,7 @@ describe('shakeHands', () => {
   });
 
   it('sends ACK2 before reporting completion on the other side', () => {
-    const { handshake, sendMessage, onComplete } = createHandshake();
+    const { handshake, sendMessage, onComplete } = setupHandshake();
 
     handshake.handleMessage({ ...messageBase, type: 'ACK1' });
 
@@ -87,7 +87,7 @@ describe('shakeHands', () => {
   });
 
   it('does not complete when ACK2 cannot be sent', () => {
-    const { handshake, sendMessage, onComplete } = createHandshake();
+    const { handshake, sendMessage, onComplete } = setupHandshake();
     sendMessage.mockReturnValue(false);
 
     handshake.handleMessage({ ...messageBase, type: 'ACK1' });

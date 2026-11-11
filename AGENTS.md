@@ -7,7 +7,7 @@
   Give enough context to understand any protocol terms the comment relies on.
 - Explain why the code is needed and connect the trigger to its consequence.
   For example, say that `initialize()` can call `onDisconnect()`, which closes
-  the connection before listener registration.
+  the connection before Penpal sends its initial handshake message.
 - State the general behavior first. Use concrete examples when they help, and
   make clear that they illustrate a broader rule.
 - Before finishing, reread each new or edited comment alongside the nearby

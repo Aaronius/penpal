@@ -65,19 +65,20 @@ type Handshake = {
  *    to receive a SYN message, so it will send another SYN message in case
  *    the other participant did not receive the first SYN message. This
  *    ultimately results in each participant sending two SYN messages.
- * 4. Each participant now should have received at least one SYN message from
- *    the other participant. Each participant compares their own ID with the
- *    other participant's ID. Whichever participant has the higher ID
- *    (using a simple string comparison) is considered the handshake leader
- *    and will send an ACK1 message to the other participant.
+ * 4. After sending its SYN response successfully, each participant compares
+ *    its own ID with the ID in the SYN it just received. If its own ID is
+ *    higher using a string comparison, it is the handshake leader and
+ *    immediately sends ACK1.
  * 5. At this point, the handshake leader does not know whether the other
  *    participant is actually receiving messages. The participant receiving
  *    the ACK1 message will respond with an ACK2, informing the handshake
  *    leader that it is indeed receiving messages.
- * 6. At this point, both participants know the other is receiving messages
- *    and the handshake is complete.
+ * 6. The participant that sends ACK2 considers the handshake complete once
+ *    its send succeeds. The handshake leader considers the handshake complete
+ *    when it receives ACK2. At that point, both participants know the other
+ *    is receiving their messages.
  */
-const shakeHands = ({
+const createHandshake = ({
   channel,
   sendMessage,
   onNewParticipant,
@@ -127,4 +128,4 @@ const shakeHands = ({
   return { start: sendSyn, handleMessage };
 };
 
-export default shakeHands;
+export default createHandshake;

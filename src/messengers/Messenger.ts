@@ -8,9 +8,11 @@ export type InitializeMessengerOptions = {
   log?: Log | undefined;
   /**
    * Checks whether a received value is a Penpal message for this connection.
-   * Pass the value to registered message handlers only if this returns true.
+   * Pass the value to onMessage only if this returns true.
    */
   validateReceivedMessage: (data: unknown) => data is Message;
+  /** Call synchronously for each incoming message that passes validation. */
+  onMessage: MessageHandler;
   /**
    * Call when the remote has permanently stopped, such as when a Node worker
    * exits. Penpal closes the connection and rejects pending calls. This can
@@ -28,19 +30,12 @@ export default interface Messenger {
    */
   sendMessage: (message: Message, transferables?: PenpalTransferable[]) => void;
   /**
-   * Registers a handler for incoming messages. When a message passes validation,
-   * call each registered handler synchronously with that message.
-   */
-  addMessageHandler: (callback: MessageHandler) => void;
-  /** Stops delivering incoming messages to the specified handler. */
-  removeMessageHandler: (callback: MessageHandler) => void;
-  /**
    * Saves the callbacks supplied by Penpal and starts listening for messages.
    * connect() calls this before starting the handshake.
    */
   initialize: (options: InitializeMessengerOptions) => void;
   /**
-   * Removes listeners and registered handlers and releases messaging resources
+   * Removes listeners, clears callbacks, and releases messaging resources
    * owned by this messenger. Penpal calls this when the connection closes.
    */
   destroy: () => void;

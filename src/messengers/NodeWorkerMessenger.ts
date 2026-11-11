@@ -38,7 +38,7 @@ class NodeWorkerMessenger implements Messenger {
   #worker: NodeWorkerLike;
   #validateReceivedMessage: ((data: unknown) => data is Message) | undefined;
   #onDisconnect: (() => void) | undefined;
-  #messageCallbacks = new Set<MessageHandler>();
+  #onMessage: MessageHandler | undefined;
 
   constructor({ worker }: NodeWorkerMessengerOptions) {
     if (!worker) {
@@ -50,9 +50,11 @@ class NodeWorkerMessenger implements Messenger {
 
   initialize = ({
     validateReceivedMessage,
+    onMessage,
     onDisconnect,
   }: InitializeMessengerOptions): void => {
     this.#validateReceivedMessage = validateReceivedMessage;
+    this.#onMessage = onMessage;
     this.#onDisconnect = onDisconnect;
     this.#worker.addListener('message', this.#handleMessage);
     if (onDisconnect) {
@@ -67,22 +69,14 @@ class NodeWorkerMessenger implements Messenger {
     this.#worker.postMessage(message, transferables);
   };
 
-  addMessageHandler = (callback: MessageHandler): void => {
-    this.#messageCallbacks.add(callback);
-  };
-
-  removeMessageHandler = (callback: MessageHandler): void => {
-    this.#messageCallbacks.delete(callback);
-  };
-
   destroy = (): void => {
     this.#validateReceivedMessage = undefined;
+    this.#onMessage = undefined;
     this.#worker.removeListener('message', this.#handleMessage);
     if (this.#onDisconnect) {
       this.#worker.removeListener('exit', this.#onDisconnect);
       this.#onDisconnect = undefined;
     }
-    this.#messageCallbacks.clear();
   };
 
   #handleMessage = (data: unknown): void => {
@@ -90,9 +84,7 @@ class NodeWorkerMessenger implements Messenger {
       return;
     }
 
-    for (const callback of this.#messageCallbacks) {
-      callback(data);
-    }
+    this.#onMessage?.(data);
   };
 }
 
