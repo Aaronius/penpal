@@ -1,13 +1,5 @@
 import namespace from './namespace.js';
-import type {
-  Ack2Message,
-  CallMessage,
-  Message,
-  ReplyMessage,
-  Ack1Message,
-  SynMessage,
-  DestroyMessage,
-} from './types.js';
+import type { Ack2Message, Message, Ack1Message, SynMessage } from './types.js';
 
 export const isObject = (
   value: unknown,
@@ -33,18 +25,4 @@ export const isAck1Message = (message: Message): message is Ack1Message => {
 
 export const isAck2Message = (message: Message): message is Ack2Message => {
   return message.type === 'ACK2';
-};
-
-export const isCallMessage = (message: Message): message is CallMessage => {
-  return message.type === 'CALL';
-};
-
-export const isReplyMessage = (message: Message): message is ReplyMessage => {
-  return message.type === 'REPLY';
-};
-
-export const isDestroyMessage = (
-  message: Message,
-): message is DestroyMessage => {
-  return message.type === 'DESTROY';
 };

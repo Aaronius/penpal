@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import Reply from '../../src/Reply.js';
 import connectCallHandler from '../../src/connectCallHandler.js';
 import namespace from '../../src/namespace.js';
-import type { Message } from '../../src/types.js';
 import { MockMessenger } from './mockMessenger.js';
 
 describe('connectCallHandler', () => {
@@ -27,7 +26,7 @@ describe('connectCallHandler', () => {
       }
     };
 
-    const dispose = connectCallHandler(
+    const { handleMessage, destroy } = connectCallHandler(
       messenger,
       {
         getUnclonableValue() {
@@ -38,7 +37,7 @@ describe('connectCallHandler', () => {
       undefined,
     );
 
-    await messenger.emit({
+    handleMessage({
       namespace,
       channel: undefined,
       type: 'CALL',
@@ -63,7 +62,7 @@ describe('connectCallHandler', () => {
       isSerializedErrorInstance: true,
     });
 
-    dispose();
+    destroy();
   });
 
   it('keeps the buffer attached when a Reply value rejects', async () => {
@@ -74,7 +73,7 @@ describe('connectCallHandler', () => {
       structuredClone(message, { transfer: transferables ?? [] });
     };
 
-    const dispose = connectCallHandler(
+    const { handleMessage, destroy } = connectCallHandler(
       messenger,
       {
         getData() {
@@ -88,7 +87,7 @@ describe('connectCallHandler', () => {
     );
 
     try {
-      await messenger.emit({
+      handleMessage({
         namespace,
         channel: undefined,
         type: 'CALL',
@@ -108,16 +107,21 @@ describe('connectCallHandler', () => {
       });
       expect(buffer.byteLength).toBe(8);
     } finally {
-      dispose();
+      destroy();
     }
   });
 
   it('replies with METHOD_NOT_FOUND when method path does not exist', async () => {
     const messenger = new MockMessenger();
 
-    const dispose = connectCallHandler(messenger, {}, undefined, undefined);
+    const { handleMessage, destroy } = connectCallHandler(
+      messenger,
+      {},
+      undefined,
+      undefined,
+    );
 
-    await messenger.emit({
+    handleMessage({
       namespace,
       channel: undefined,
       type: 'CALL',
@@ -140,7 +144,7 @@ describe('connectCallHandler', () => {
       },
     });
 
-    dispose();
+    destroy();
   });
 
   it('reports non-DataCloneError send failures', async () => {
@@ -153,7 +157,7 @@ describe('connectCallHandler', () => {
       throw new Error('send failed');
     };
 
-    const dispose = connectCallHandler(
+    const { handleMessage, destroy } = connectCallHandler(
       messenger,
       {
         ping() {
@@ -164,7 +168,7 @@ describe('connectCallHandler', () => {
       undefined,
     );
 
-    await messenger.emit({
+    handleMessage({
       namespace,
       channel: undefined,
       type: 'CALL',
@@ -179,29 +183,6 @@ describe('connectCallHandler', () => {
       );
     });
 
-    dispose();
-  });
-
-  it('ignores non-call messages', async () => {
-    const messenger = new MockMessenger();
-    const dispose = connectCallHandler(
-      messenger,
-      {
-        ping() {
-          return 'pong';
-        },
-      },
-      undefined,
-      undefined,
-    );
-
-    await messenger.emit({
-      namespace,
-      channel: undefined,
-      type: 'ACK2',
-    } as Message);
-
-    expect(messenger.sentMessages).toHaveLength(0);
-    dispose();
+    destroy();
   });
 });

@@ -2,18 +2,17 @@ import generateId from './generateId.js';
 import { deserializeError } from './errorSerialization.js';
 import { formatMethodPath } from './methodPath.js';
 import type {
-  Message,
   RemoteProxy,
   MethodsShape,
   UnspecifiedRemoteMethods,
   MethodPath,
   CallMessage,
+  ReplyMessage,
   Log,
 } from './types.js';
 import CallOptions from './CallOptions.js';
 import type Messenger from './messengers/Messenger.js';
 import PenpalError from './PenpalError.js';
-import { isReplyMessage } from './guards.js';
 import namespace from './namespace.js';
 import scheduleTimeout from './scheduleTimeout.js';
 
@@ -30,6 +29,7 @@ export type RemoteProxyController<
     | UnspecifiedRemoteMethods,
 > = {
   remoteProxy: RemoteProxy<TRemoteMethods>;
+  handleMessage: (message: ReplyMessage) => void;
   rejectCallsOnReconnect: () => void;
   destroy: () => void;
 };
@@ -97,9 +97,10 @@ const getDestroyedConnectionMethodCallError = (methodPath: MethodPath) => {
 };
 
 /**
- * Creates a proxy. When methods are called on the proxy, a "call" message will
- * be sent to the remote, the remote's corresponding method will be
- * executed, and the method's return value will be returned via a message.
+ * Creates the proxy the app uses to call remote methods. Each call sends a
+ * message and returns a promise. A matching reply resolves or rejects it.
+ * The controller can reject pending calls when the remote reconnects while
+ * keeping the same proxy available for future calls.
  */
 const connectRemoteProxy = <
   TRemoteMethods extends
@@ -113,11 +114,7 @@ const connectRemoteProxy = <
   let isDestroyed = false;
   const replyHandlers = new Map<string, ReplyHandler>();
 
-  const handleMessage = (message: Message) => {
-    if (!isReplyMessage(message)) {
-      return;
-    }
-
+  const handleMessage = (message: ReplyMessage) => {
     const { callId, value, isError, isSerializedErrorInstance } = message;
     const replyHandler = replyHandlers.get(callId);
 
@@ -140,8 +137,6 @@ const connectRemoteProxy = <
       replyHandler.resolve(value);
     }
   };
-
-  messenger.addMessageHandler(handleMessage);
 
   const remoteProxy = createRemoteProxy((methodPath, args) => {
     if (isDestroyed) {
@@ -205,6 +200,7 @@ const connectRemoteProxy = <
 
   return {
     remoteProxy,
+    handleMessage,
     rejectCallsOnReconnect: () => {
       rejectPendingCalls(
         (methodPath) =>
@@ -216,7 +212,6 @@ const connectRemoteProxy = <
     },
     destroy: () => {
       isDestroyed = true;
-      messenger.removeMessageHandler(handleMessage);
       rejectPendingCalls(getDestroyedConnectionMethodCallError);
     },
   };

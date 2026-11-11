@@ -28,7 +28,7 @@ describe('connectRemoteProxy', () => {
     const messenger = new MockMessenger();
     const log = vi.fn();
 
-    const { remoteProxy, destroy } = connectRemoteProxy(
+    const { remoteProxy, handleMessage, destroy } = connectRemoteProxy(
       messenger,
       undefined,
       log,
@@ -53,7 +53,7 @@ describe('connectRemoteProxy', () => {
       value: 6,
     };
 
-    await messenger.emit(replyMessage);
+    handleMessage(replyMessage);
 
     await expect(resultPromise).resolves.toBe(6);
     expect(log).toHaveBeenLastCalledWith(
@@ -71,7 +71,7 @@ describe('connectRemoteProxy', () => {
       capturedTransferables = transferables;
     };
 
-    const { remoteProxy, destroy } = connectRemoteProxy(
+    const { remoteProxy, handleMessage, destroy } = connectRemoteProxy(
       messenger,
       undefined,
       undefined,
@@ -87,7 +87,7 @@ describe('connectRemoteProxy', () => {
     const callMessage = getLastCallMessage(messenger);
     expect(capturedTransferables).toEqual([buffer]);
 
-    await messenger.emit({
+    handleMessage({
       namespace,
       channel: undefined,
       type: 'REPLY',
@@ -157,7 +157,7 @@ describe('connectRemoteProxy', () => {
   it('rejects with deserialized Error when REPLY includes serialized error', async () => {
     const messenger = new MockMessenger();
 
-    const { remoteProxy, destroy } = connectRemoteProxy(
+    const { remoteProxy, handleMessage, destroy } = connectRemoteProxy(
       messenger,
       undefined,
       undefined,
@@ -168,7 +168,7 @@ describe('connectRemoteProxy', () => {
 
     const callMessage = getLastCallMessage(messenger);
 
-    await messenger.emit({
+    handleMessage({
       namespace,
       channel: undefined,
       type: 'REPLY',
@@ -214,7 +214,7 @@ describe('connectRemoteProxy', () => {
     const messenger = new MockMessenger();
     const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
 
-    const { remoteProxy, destroy } = connectRemoteProxy(
+    const { remoteProxy, handleMessage, destroy } = connectRemoteProxy(
       messenger,
       undefined,
       undefined,
@@ -226,7 +226,7 @@ describe('connectRemoteProxy', () => {
     );
     const callMessage = getLastCallMessage(messenger);
 
-    await messenger.emit({
+    handleMessage({
       namespace,
       channel: undefined,
       type: 'REPLY',

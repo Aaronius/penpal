@@ -8,17 +8,19 @@ import type {
 export class MockMessenger implements Messenger {
   readonly sentMessages: Message[] = [];
   readonly handlers = new Set<MessageHandler>();
-  readonly initializeCalls: InitializeMessengerOptions[] = [];
-  readonly destroy = () => {
-    // no-op for tests
+  initializeOptions: InitializeMessengerOptions | undefined;
+
+  destroy = () => {
+    this.handlers.clear();
   };
+
   sendMessageImpl: (message: Message, transferables?: Transferable[]) => void =
     () => {
       // no-op for tests
     };
 
   initialize = (options: InitializeMessengerOptions) => {
-    this.initializeCalls.push(options);
+    this.initializeOptions = options;
   };
 
   sendMessage = (message: Message, transferables?: Transferable[]) => {
@@ -34,11 +36,13 @@ export class MockMessenger implements Messenger {
     this.handlers.delete(callback);
   };
 
-  emit = (message: Message): Promise<void> => {
+  emit = (message: unknown): void => {
+    if (!this.initializeOptions?.validateReceivedMessage(message)) {
+      return;
+    }
+
     for (const handler of this.handlers) {
       handler(message);
     }
-
-    return Promise.resolve();
   };
 }

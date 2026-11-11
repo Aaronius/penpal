@@ -10,8 +10,13 @@ import type {
 import PenpalError from './PenpalError.js';
 import type Messenger from './messengers/Messenger.js';
 import shakeHands from './shakeHands.js';
-import { isDestroyMessage, isMessage } from './guards.js';
-import once from './once.js';
+import type { HandshakeMessage } from './shakeHands.js';
+import connectCallHandler from './connectCallHandler.js';
+import type { CallHandler } from './connectCallHandler.js';
+import connectRemoteProxy from './connectRemoteProxy.js';
+import type { RemoteProxyController } from './connectRemoteProxy.js';
+import { isMessage } from './guards.js';
+import scheduleTimeout from './scheduleTimeout.js';
 import namespace from './namespace.js';
 
 type ConnectOptions = {
@@ -77,7 +82,9 @@ const connect = <
   const connectionPromise =
     Promise.withResolvers<RemoteProxy<TRemoteMethods>>();
   let isConnectionDestroyed = false;
-  let destroyHandshake: (() => void) | undefined;
+  let cancelConnectionTimeout: (() => void) | undefined;
+  let callHandler: CallHandler | undefined;
+  let remoteProxyController: RemoteProxyController<TRemoteMethods> | undefined;
 
   const sendDestroyMessage = () => {
     const destroyMessage: DestroyMessage = {
@@ -89,94 +96,183 @@ const connect = <
     try {
       messenger.sendMessage(destroyMessage);
     } catch (_) {
-      // We do our best to notify the other participant of the connection,
-      // but if there's an error in doing so (e.g., maybe the handshake
-      // hasn't completed and a messenger can't send the message), it's
-      // probably not worth bothering the consumer with an error.
+      // A messenger may be unable to send DESTROY before the handshake
+      // sets up its message port. Finish closing our side either way.
     }
   };
 
-  const destroyConnection = once(
-    (
-      connectionPromiseRejection: PenpalError,
-      notifyOtherParticipant: boolean,
-    ) => {
-      isConnectionDestroyed = true;
+  const destroyConnection = (
+    reason: PenpalError,
+    notifyOtherParticipant: boolean,
+  ) => {
+    if (isConnectionDestroyed) {
+      return;
+    }
 
-      if (notifyOtherParticipant) {
-        sendDestroyMessage();
-      }
+    // Sending DESTROY can cause a custom messenger to call onDisconnect(),
+    // which calls destroyConnection() again. Set the flag first so cleanup
+    // only runs once.
+    isConnectionDestroyed = true;
 
-      messenger.destroy();
-      destroyHandshake?.();
+    if (notifyOtherParticipant) {
+      sendDestroyMessage();
+    }
 
-      connectionPromise.reject(connectionPromiseRejection);
+    cancelConnectionTimeout?.();
+    messenger.destroy();
+    callHandler?.destroy();
+    remoteProxyController?.destroy();
+    connectionPromise.reject(reason);
 
-      log?.('Connection destroyed');
-    },
-  );
-
-  const validateReceivedMessage = (data: unknown): data is Message => {
-    return isMessage(data) && data.channel === channel;
+    log?.('Connection destroyed');
   };
 
   const destroyConnectionLocally = () => {
+    // The remote already sent DESTROY or the messenger can no longer reach it.
     destroyConnection(getConnectionDestroyedError(), false);
   };
 
-  void (async () => {
+  // Return true when the messenger sends without throwing. Return false if
+  // the connection is already closed or the send fails, so the handshake
+  // can stop instead of sending the next message or reporting completion.
+  const sendHandshakeMessage = (message: HandshakeMessage) => {
+    if (isConnectionDestroyed) {
+      return false;
+    }
+
+    log?.(`Sending handshake ${message.type}`, message);
+
     try {
-      messenger.initialize({
-        log,
-        validateReceivedMessage,
-        onDisconnect: destroyConnectionLocally,
+      messenger.sendMessage(message);
+      return true;
+    } catch (error) {
+      // If a reconnect fails after connection.promise has resolved,
+      // rejecting the promise has no effect. Close the connection to
+      // release the messenger.
+      destroyConnection(
+        new PenpalError('TRANSMISSION_FAILED', (error as Error).message),
+        true,
+      );
+      return false;
+    }
+  };
+
+  /**
+   * When the remote side calls connect() again, its first handshake message
+   * carries a new ID. This can happen after an iframe or opened window
+   * reloads. Clear the old remote's call state so the app can keep using
+   * the same proxy once the new handshake finishes.
+   * This also runs on the first handshake, when there is no previous remote
+   * to clean up.
+   */
+  const retirePreviousParticipant = () => {
+    // A local method called by the previous remote may still be running.
+    // Disable its handler so any late reply can't reach the new remote.
+    callHandler?.destroy();
+    callHandler = undefined;
+
+    // Reject any calls we sent to the previous remote that are still waiting
+    // for a reply. The new remote never received them.
+    remoteProxyController?.rejectCallsOnReconnect();
+  };
+
+  const completeHandshake = () => {
+    // We create a call handler when a handshake finishes, so an existing
+    // handler means we've already completed this handshake.
+    // retirePreviousParticipant() clears it when the remote reconnects.
+    if (isConnectionDestroyed || callHandler) {
+      return;
+    }
+
+    callHandler = connectCallHandler(messenger, methods, channel, log);
+
+    // The app may have saved the proxy from the first handshake. Keep using
+    // it when the remote reconnects so the app can keep making calls.
+    if (remoteProxyController) {
+      return;
+    }
+
+    const controller = connectRemoteProxy<TRemoteMethods>(
+      messenger,
+      channel,
+      log,
+    );
+    remoteProxyController = controller;
+    cancelConnectionTimeout?.();
+    cancelConnectionTimeout = undefined;
+
+    // The call handler can now run methods requested by the remote, and the
+    // proxy controller can match incoming replies to the app's pending calls.
+    // Resolve connection.promise after the messenger returns from delivering
+    // the final handshake message. If the messenger calls onDisconnect()
+    // before returning, teardown can reject the promise first.
+    void Promise.resolve().then(() => {
+      connectionPromise.resolve(controller.remoteProxy);
+    });
+  };
+
+  try {
+    messenger.initialize({
+      log,
+      validateReceivedMessage: (data): data is Message =>
+        isMessage(data) && data.channel === channel,
+      onDisconnect: destroyConnectionLocally,
+    });
+
+    // If the transport is already unavailable, initialize() can call
+    // onDisconnect() and destroy the connection before it returns. Skip
+    // listener registration and the handshake in that case.
+    if (!isConnectionDestroyed) {
+      const handshake = shakeHands({
+        channel,
+        sendMessage: sendHandshakeMessage,
+        onNewParticipant: retirePreviousParticipant,
+        onComplete: completeHandshake,
       });
 
-      // initialize() may call onDisconnect synchronously if the transport is
-      // already unavailable. In that case, skip setting up the handshake.
-      if (isConnectionDestroyed) {
-        return;
-      }
+      cancelConnectionTimeout = scheduleTimeout(() => {
+        destroyConnection(
+          new PenpalError(
+            'CONNECTION_TIMEOUT',
+            `Connection timed out after ${timeout}ms`,
+          ),
+          true,
+        );
+      }, timeout);
 
+      // Register the listener before sending our first SYN. A custom
+      // messenger can deliver the remote's handshake response before
+      // sendMessage() returns.
       messenger.addMessageHandler((message) => {
-        if (isDestroyMessage(message)) {
-          destroyConnectionLocally();
+        if (isConnectionDestroyed) {
+          return;
+        }
+
+        switch (message.type) {
+          case 'DESTROY':
+            destroyConnectionLocally();
+            break;
+          case 'SYN':
+          case 'ACK1':
+          case 'ACK2':
+            log?.(`Received handshake ${message.type}`, message);
+            handshake.handleMessage(message);
+            break;
+          case 'CALL':
+            // Ignore incoming calls until the handshake creates a handler.
+            callHandler?.handleMessage(message);
+            break;
+          case 'REPLY':
+            remoteProxyController?.handleMessage(message);
+            break;
         }
       });
 
-      // Registering the handler may synchronously report a disconnect,
-      // so check again before starting the handshake.
-      if (isConnectionDestroyed) {
-        return;
-      }
-
-      const handshake = shakeHands<TRemoteMethods>({
-        messenger,
-        methods,
-        timeout,
-        channel,
-        log,
-      });
-
-      destroyHandshake = handshake.destroy;
-
-      // A messenger can disconnect while shakeHands() is sending its first
-      // message, before destroyConnection() has access to the handshake.
-      if (isConnectionDestroyed) {
-        handshake.destroy();
-      }
-
-      const remoteProxy = await handshake.promise;
-
-      if (isConnectionDestroyed) {
-        return;
-      }
-
-      connectionPromise.resolve(remoteProxy);
-    } catch (error) {
-      destroyConnection(error as PenpalError, true);
+      handshake.start();
     }
-  })();
+  } catch (error) {
+    destroyConnection(error as PenpalError, true);
+  }
 
   return {
     promise: connectionPromise.promise,

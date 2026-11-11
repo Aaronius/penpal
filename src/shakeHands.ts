@@ -1,38 +1,19 @@
-import type Messenger from './messengers/Messenger.js';
-import type {
-  Ack2Message,
-  MethodsShape,
-  UnspecifiedRemoteMethods,
-  Message,
-  RemoteProxy,
-  Ack1Message,
-  SynMessage,
-  Log,
-} from './types.js';
-import PenpalError from './PenpalError.js';
-import connectCallHandler from './connectCallHandler.js';
-import connectRemoteProxy from './connectRemoteProxy.js';
-import type { RemoteProxyController } from './connectRemoteProxy.js';
-import { isAck2Message, isAck1Message, isSynMessage } from './guards.js';
+import type { Ack1Message, Ack2Message, SynMessage } from './types.js';
 import generateId from './generateId.js';
 import namespace from './namespace.js';
-import scheduleTimeout from './scheduleTimeout.js';
+
+export type HandshakeMessage = SynMessage | Ack1Message | Ack2Message;
 
 type HandshakeOptions = {
-  messenger: Messenger;
-  methods: object;
-  timeout: number | undefined;
   channel: string | undefined;
-  log: Log | undefined;
+  sendMessage: (message: HandshakeMessage) => boolean;
+  onNewParticipant: () => void;
+  onComplete: () => void;
 };
 
-type Handshake<
-  TRemoteMethods extends
-    | MethodsShape<TRemoteMethods>
-    | UnspecifiedRemoteMethods,
-> = {
-  promise: Promise<RemoteProxy<TRemoteMethods>>;
-  destroy: () => void;
+type Handshake = {
+  start: () => void;
+  handleMessage: (message: HandshakeMessage) => void;
 };
 
 /**
@@ -96,195 +77,54 @@ type Handshake<
  * 6. At this point, both participants know the other is receiving messages
  *    and the handshake is complete.
  */
-const shakeHands = <
-  TRemoteMethods extends
-    | MethodsShape<TRemoteMethods>
-    | UnspecifiedRemoteMethods,
->({
-  messenger,
-  methods,
-  timeout,
+const shakeHands = ({
   channel,
-  log,
-}: HandshakeOptions): Handshake<TRemoteMethods> => {
+  sendMessage,
+  onNewParticipant,
+  onComplete,
+}: HandshakeOptions): Handshake => {
   const participantId = generateId();
   let remoteParticipantId: string | undefined;
-  let destroyCallHandler: (() => void) | undefined;
-  let remoteProxyController: RemoteProxyController<TRemoteMethods> | undefined;
-  let isDestroyed = false;
 
-  const { promise, resolve, reject } =
-    Promise.withResolvers<RemoteProxy<TRemoteMethods>>();
-
-  const cancelTimeout = scheduleTimeout(() => {
-    rejectAndCleanUp(
-      new PenpalError(
-        'CONNECTION_TIMEOUT',
-        `Connection timed out after ${timeout}ms`,
-      ),
-    );
-  }, timeout);
-
-  const cleanUp = () => {
-    cancelTimeout?.();
-    messenger.removeMessageHandler(handleMessage);
-    destroyCallHandler?.();
-    remoteProxyController?.destroy();
+  const sendSyn = () => {
+    return sendMessage({ namespace, channel, type: 'SYN', participantId });
   };
 
-  const rejectAndCleanUp = (error: PenpalError) => {
-    if (isDestroyed) {
-      return;
-    }
-
-    isDestroyed = true;
-    cleanUp();
-    reject(error);
-  };
-
-  const destroy = () => {
-    rejectAndCleanUp(
-      new PenpalError('CONNECTION_DESTROYED', 'Connection destroyed'),
-    );
-  };
-
-  const completeHandshake = () => {
-    // connectCallHandler() installs the handler and returns its cleanup
-    // function. If destroyCallHandler is set, we've already installed a
-    // handler for this handshake. When the remote sends a SYN with a new ID
-    // (for example, after an iframe reload), we clear it so the new handshake
-    // can install its own handler.
-    if (isDestroyed || destroyCallHandler) {
-      return;
-    }
-
-    destroyCallHandler = connectCallHandler(messenger, methods, channel, log);
-
-    // The first handshake gives the app a proxy through connection.promise.
-    // When the remote reconnects, the app can keep using that same proxy.
-    if (!remoteProxyController) {
-      remoteProxyController = connectRemoteProxy<TRemoteMethods>(
-        messenger,
-        channel,
-        log,
-      );
-      cancelTimeout?.();
-      resolve(remoteProxyController.remoteProxy);
-    }
-  };
-
-  const sendHandshakeMessage = (
-    message: SynMessage | Ack1Message | Ack2Message,
-  ) => {
-    if (isDestroyed) {
-      return false;
-    }
-
-    log?.(`Sending handshake ${message.type}`, message);
-
-    try {
-      messenger.sendMessage(message);
-      return true;
-    } catch (error) {
-      rejectAndCleanUp(
-        new PenpalError('TRANSMISSION_FAILED', (error as Error).message),
-      );
-      return false;
-    }
-  };
-
-  const sendSynMessage = () => {
-    const synMessage: SynMessage = {
-      namespace,
-      type: 'SYN',
-      channel,
-      participantId: participantId,
-    };
-
-    return sendHandshakeMessage(synMessage);
-  };
-
-  const handleSynMessage = (message: SynMessage) => {
-    log?.(`Received handshake SYN`, message);
-
+  const handleSyn = (message: SynMessage) => {
+    // Each side can send two SYNs during one handshake. Ignore the repeated
+    // ID so the second SYN from the same participant can't restart it.
     if (message.participantId === remoteParticipantId) {
       return;
     }
 
     remoteParticipantId = message.participantId;
+    onNewParticipant();
 
-    // The old remote may have called a method that is still running here.
-    // Shut down its call handler so a late reply can't go to the new remote.
-    destroyCallHandler?.();
-    destroyCallHandler = undefined;
-
-    // Reject any calls still waiting for a reply from the old remote.
-    // The new remote never received those calls.
-    remoteProxyController?.rejectCallsOnReconnect();
-
-    // We send another SYN message in case the other participant was not ready
-    // when we sent the first SYN message.
-    if (!sendSynMessage()) {
-      return;
-    }
-
-    const isHandshakeLeader = participantId > remoteParticipantId;
-
-    if (!isHandshakeLeader) {
-      return;
-    }
-
-    const ack1Message: Ack1Message = {
-      namespace,
-      channel,
-      type: 'ACK1',
-    };
-
-    if (!sendHandshakeMessage(ack1Message)) {
-      return;
+    if (sendSyn() && participantId > message.participantId) {
+      sendMessage({ namespace, channel, type: 'ACK1' });
     }
   };
 
-  const handleAck1Message = (message: Ack1Message) => {
-    log?.(`Received handshake ACK1`, message);
-    const ack2Message: Ack2Message = {
-      namespace,
-      channel,
-      type: 'ACK2',
-    };
-
-    if (sendHandshakeMessage(ack2Message)) {
-      completeHandshake();
+  const handleMessage = (message: HandshakeMessage) => {
+    switch (message.type) {
+      case 'SYN':
+        handleSyn(message);
+        break;
+      case 'ACK1':
+        // Sending ACK2 lets WindowMessenger and WebWorkerMessenger transfer
+        // the port for method calls and replies. Finish the handshake only
+        // after the send succeeds.
+        if (sendMessage({ namespace, channel, type: 'ACK2' })) {
+          onComplete();
+        }
+        break;
+      case 'ACK2':
+        onComplete();
+        break;
     }
   };
 
-  const handleAck2Message = (message: Ack2Message) => {
-    log?.(`Received handshake ACK2`, message);
-    completeHandshake();
-  };
-
-  const handleMessage = (message: Message) => {
-    if (isDestroyed) {
-      return;
-    }
-
-    if (isSynMessage(message)) {
-      handleSynMessage(message);
-    } else if (isAck1Message(message)) {
-      handleAck1Message(message);
-    } else if (isAck2Message(message)) {
-      handleAck2Message(message);
-    }
-  };
-
-  messenger.addMessageHandler(handleMessage);
-
-  sendSynMessage();
-
-  return {
-    promise,
-    destroy,
-  };
+  return { start: sendSyn, handleMessage };
 };
 
 export default shakeHands;
