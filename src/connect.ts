@@ -82,6 +82,7 @@ const connect = <
   const connectionPromise =
     Promise.withResolvers<RemoteProxy<TRemoteMethods>>();
   let isConnectionDestroyed = false;
+  let hasReceivedSyn = false;
   let hasStartedInitializingMessenger = false;
   let cancelConnectionTimeout: (() => void) | undefined;
   let callHandler: CallHandler | undefined;
@@ -171,6 +172,11 @@ const connect = <
    * to clean up.
    */
   const retirePreviousParticipant = () => {
+    // The handshake calls onNewParticipant() when it receives the remote
+    // side's first SYN. Record it here so a later DESTROY can close this
+    // connection even if the handshake is still in progress.
+    hasReceivedSyn = true;
+
     // A local method called by the previous remote may still be running.
     // Disable its handler so any late reply can't reach the new remote.
     callHandler?.destroy();
@@ -249,7 +255,13 @@ const connect = <
 
         switch (message.type) {
           case 'DESTROY':
-            destroyConnectionLocally();
+            // Only honor DESTROY after receiving a SYN, the message the remote
+            // side sends to start the handshake. If the app reuses a MessagePort,
+            // a DESTROY queued by the previous connection arrives before the new
+            // remote's SYN. Ignoring that early DESTROY keeps this connection open.
+            if (hasReceivedSyn) {
+              destroyConnectionLocally();
+            }
             break;
           case 'SYN':
           case 'ACK1':

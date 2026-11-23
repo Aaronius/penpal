@@ -3,6 +3,7 @@ import type Messenger from '../../src/messengers/Messenger.js';
 import PenpalError from '../../src/PenpalError.js';
 import namespace from '../../src/namespace.js';
 import connect from '../../src/connect.js';
+import PortMessenger from '../../src/messengers/PortMessenger.js';
 import { MockMessenger } from './mockMessenger.js';
 
 const messageBase = { namespace, channel: 'test-channel' };
@@ -109,10 +110,11 @@ describe('connect', () => {
     expect(messenger.sentMessages).toHaveLength(numberOfMessages);
   });
 
-  it('rejects pending connection promise when remote sends DESTROY first', async () => {
+  it('rejects the pending handshake when the remote sends SYN then DESTROY', async () => {
     const messenger = new MockMessenger();
     const connection = connect({ messenger, channel: messageBase.channel });
 
+    messenger.emit(remoteSyn);
     messenger.emit({ ...messageBase, type: 'DESTROY' });
 
     await expect(connection.promise).rejects.toMatchObject({
@@ -120,8 +122,57 @@ describe('connect', () => {
     });
     expect(messenger.sentMessages).toEqual([
       expect.objectContaining({ type: 'SYN' }),
+      expect.objectContaining({ type: 'SYN' }),
     ]);
     expect(messenger.initializeOptions).toBeUndefined();
+  });
+
+  it('ignores an old DESTROY before the replacement peer sends SYN', async () => {
+    const messenger = new MockMessenger();
+    const connection = connect({ messenger, channel: messageBase.channel });
+
+    messenger.emit({ ...messageBase, type: 'DESTROY' });
+    completeHandshake(messenger);
+
+    await expect(connection.promise).resolves.toBeDefined();
+    connection.destroy();
+  });
+
+  it('reconnects immediately on the same ports and channel', async ({
+    onTestFinished,
+  }) => {
+    const { port1, port2 } = new MessageChannel();
+    const connections: ReturnType<typeof connect>[] = [];
+    onTestFinished(() => {
+      connections.forEach((connection) => connection.destroy());
+      port1.close();
+      port2.close();
+    });
+
+    for (let generation = 0; generation < 3; generation++) {
+      const left = connect<{ generation(): number }>({
+        messenger: new PortMessenger({ port: port1 }),
+        channel: messageBase.channel,
+        timeout: 1000,
+        methods: { generation: () => generation },
+      });
+      const right = connect<{ generation(): number }>({
+        messenger: new PortMessenger({ port: port2 }),
+        channel: messageBase.channel,
+        timeout: 1000,
+        methods: { generation: () => generation },
+      });
+      connections.push(left, right);
+
+      const [remoteRight, remoteLeft] = await Promise.all([
+        left.promise,
+        right.promise,
+      ]);
+      await expect(remoteRight.generation()).resolves.toBe(generation);
+      await expect(remoteLeft.generation()).resolves.toBe(generation);
+      left.destroy();
+      right.destroy();
+    }
   });
 
   it('skips the handshake if the messenger disconnects during initialization', async () => {
