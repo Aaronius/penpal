@@ -144,6 +144,7 @@ describe('connectRemoteProxy', () => {
     await expect(resultPromise).rejects.toMatchObject({
       code: 'TRANSMISSION_FAILED',
       message: sendError.message,
+      cause: sendError,
     });
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
 

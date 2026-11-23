@@ -140,7 +140,7 @@ for (const format of ['esm', 'cjs']) {
       await pending;
       assert.equal(worker.listenerCount('message'), messageListeners);
       assert.equal(worker.listenerCount('exit'), exitListeners);
-      assert.throws(() => remote.multiply(2, 6), {
+      await assert.rejects(remote.multiply(2, 6), {
         code: 'CONNECTION_DESTROYED',
       });
     });
@@ -174,7 +174,7 @@ for (const format of ['esm', 'cjs']) {
       assert.equal(postMessage.mock.callCount(), 0);
       assert.equal(worker.listenerCount('message'), 0);
       assert.equal(worker.listenerCount('exit'), 0);
-      assert.throws(() => remote.multiply(2, 6), {
+      await assert.rejects(remote.multiply(2, 6), {
         code: 'CONNECTION_DESTROYED',
       });
     });

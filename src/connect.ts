@@ -7,8 +7,9 @@ import type {
   UnspecifiedRemoteMethods,
   RemoteProxy,
 } from './types.js';
-import PenpalError from './PenpalError.js';
+import PenpalError, { wrapError } from './PenpalError.js';
 import type Messenger from './messengers/Messenger.js';
+import type { InitializeMessengerOptions } from './messengers/Messenger.js';
 import createHandshake from './createHandshake.js';
 import type { HandshakeMessage } from './createHandshake.js';
 import connectCallHandler from './connectCallHandler.js';
@@ -64,7 +65,7 @@ const connect = <
   methods = {},
   timeout,
   channel,
-  log,
+  log: logger,
 }: ConnectOptions): Connection<TRemoteMethods> => {
   if (!messenger) {
     throw new PenpalError('INVALID_ARGUMENT', 'messenger must be defined');
@@ -78,6 +79,18 @@ const connect = <
   }
 
   usedMessengers.add(messenger);
+
+  // Penpal and the messenger log while handling messages. Catch errors from
+  // the app's logger so it cannot interrupt a handshake or leave a call pending.
+  const log: Log | undefined = logger
+    ? (...args) => {
+        try {
+          logger(...args);
+        } catch (error) {
+          console.error('Penpal logger threw', error);
+        }
+      }
+    : undefined;
 
   const connectionPromise =
     Promise.withResolvers<RemoteProxy<TRemoteMethods>>();
@@ -117,18 +130,25 @@ const connect = <
     isConnectionDestroyed = true;
 
     cancelConnectionTimeout?.();
-    // Skip messenger cleanup if startup fails before initialize() starts.
-    // An uninitialized messenger could throw during cleanup and hide the
-    // original error.
+    // Settle local promises before calling the messenger. If a custom
+    // messenger throws while removing its listeners, the app still receives
+    // the error that closed the connection.
+    callHandler?.destroy();
+    remoteProxyController?.destroy();
+    connectionPromise.reject(reason);
+
+    // The messenger has no connection resources to release if startup fails
+    // before Penpal calls initialize().
     if (hasStartedInitializingMessenger) {
       if (notifyOtherParticipant) {
         sendDestroyMessage();
       }
-      messenger.destroy();
+      try {
+        messenger.destroy();
+      } catch (error) {
+        console.error('Penpal messenger cleanup failed', error);
+      }
     }
-    callHandler?.destroy();
-    remoteProxyController?.destroy();
-    connectionPromise.reject(reason);
 
     log?.('Connection destroyed');
   };
@@ -155,10 +175,7 @@ const connect = <
       // If a reconnect fails after connection.promise has resolved,
       // rejecting the promise has no effect. Close the connection to
       // release the messenger.
-      destroyConnection(
-        new PenpalError('TRANSMISSION_FAILED', (error as Error).message),
-        true,
-      );
+      destroyConnection(wrapError('TRANSMISSION_FAILED', error), true);
       return false;
     }
   };
@@ -222,6 +239,13 @@ const connect = <
     });
   };
 
+  const connection: Connection<TRemoteMethods> = {
+    promise: connectionPromise.promise,
+    destroy: () => {
+      destroyConnection(getConnectionDestroyedError(), true);
+    },
+  };
+
   try {
     cancelConnectionTimeout = scheduleTimeout(() => {
       destroyConnection(
@@ -232,69 +256,79 @@ const connect = <
         true,
       );
     }, timeout);
-
-    const handshake = createHandshake({
-      channel,
-      sendMessage: sendHandshakeMessage,
-      onNewParticipant: retirePreviousParticipant,
-      onComplete: completeHandshake,
-    });
-
-    // initialize() can call onDisconnect() or throw after attaching listeners.
-    // Enable messenger cleanup before calling it so either path can remove them.
-    hasStartedInitializingMessenger = true;
-    messenger.initialize({
-      log,
-      validateReceivedMessage: (data): data is Message =>
-        isMessage(data) && data.channel === channel,
-      onDisconnect: destroyConnectionLocally,
-      onMessage: (message) => {
-        if (isConnectionDestroyed) {
-          return;
-        }
-
-        switch (message.type) {
-          case 'DESTROY':
-            // Only honor DESTROY after receiving a SYN, the message the remote
-            // side sends to start the handshake. If the app reuses a MessagePort,
-            // a DESTROY queued by the previous connection arrives before the new
-            // remote's SYN. Ignoring that early DESTROY keeps this connection open.
-            if (hasReceivedSyn) {
-              destroyConnectionLocally();
-            }
-            break;
-          case 'SYN':
-          case 'ACK1':
-          case 'ACK2':
-            log?.(`Received handshake ${message.type}`, message);
-            handshake.handleMessage(message);
-            break;
-          case 'CALL':
-            // Ignore incoming calls until the handshake creates a handler.
-            callHandler?.handleMessage(message);
-            break;
-          case 'REPLY':
-            remoteProxyController?.handleMessage(message);
-            break;
-        }
-      },
-    });
-
-    // initialize() can call onDisconnect(), which closes the connection
-    // before initialize() returns. Start the handshake only if it's open.
-    if (!isConnectionDestroyed) {
-      handshake.start();
-    }
   } catch (error) {
-    destroyConnection(error as PenpalError, true);
+    const reason =
+      error instanceof PenpalError
+        ? error
+        : wrapError('INVALID_ARGUMENT', error);
+    destroyConnection(reason, false);
+    return connection;
   }
 
-  return {
-    promise: connectionPromise.promise,
-    destroy: () => {
-      destroyConnection(getConnectionDestroyedError(), true);
+  const handshake = createHandshake({
+    channel,
+    sendMessage: sendHandshakeMessage,
+    onNewParticipant: retirePreviousParticipant,
+    onComplete: completeHandshake,
+  });
+
+  const initializeOptions: InitializeMessengerOptions = {
+    log,
+    validateReceivedMessage: (data): data is Message =>
+      isMessage(data) && data.channel === channel,
+    onDisconnect: destroyConnectionLocally,
+    onMessage: (message) => {
+      if (isConnectionDestroyed) {
+        return;
+      }
+
+      switch (message.type) {
+        case 'DESTROY':
+          // Only honor DESTROY after receiving a SYN, the message the remote
+          // side sends to start the handshake. If the app reuses a MessagePort,
+          // a DESTROY queued by the previous connection arrives before the new
+          // remote's SYN. Ignoring that early DESTROY keeps this connection open.
+          if (hasReceivedSyn) {
+            destroyConnectionLocally();
+          }
+          break;
+        case 'SYN':
+        case 'ACK1':
+        case 'ACK2':
+          log?.(`Received handshake ${message.type}`, message);
+          handshake.handleMessage(message);
+          break;
+        case 'CALL':
+          // Ignore incoming calls until the handshake creates a handler.
+          callHandler?.handleMessage(message);
+          break;
+        case 'REPLY':
+          remoteProxyController?.handleMessage(message);
+          break;
+      }
     },
   };
+
+  // initialize() can call onDisconnect() or throw after attaching listeners.
+  // Enable messenger cleanup before calling it so either path can remove them.
+  hasStartedInitializingMessenger = true;
+  try {
+    messenger.initialize(initializeOptions);
+  } catch (error) {
+    destroyConnection(
+      wrapError('CONNECTION_INITIALIZATION_FAILED', error),
+      true,
+    );
+    return connection;
+  }
+
+  // initialize() can call onDisconnect(), which closes the connection
+  // before initialize() returns. Start the handshake only if it's open.
+  if (!isConnectionDestroyed) {
+    handshake.start();
+  }
+
+  return connection;
 };
 
 export default connect;

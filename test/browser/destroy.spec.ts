@@ -59,17 +59,12 @@ describe('parent calling destroy()', () => {
         const child = await connection.promise;
         connection.destroy();
 
-        let error;
-        try {
-          void child.multiply(2, 3);
-        } catch (e) {
-          error = e;
-        }
-        expect(error).toEqual(expect.any(PenpalError));
-        expect((error as Error).message).toBe(
-          'Method call multiply() failed due to destroyed connection',
-        );
-        expect((error as PenpalError).code).toBe('CONNECTION_DESTROYED');
+        const pending = child.multiply(2, 3);
+        await expect(pending).rejects.toBeInstanceOf(PenpalError);
+        await expect(pending).rejects.toMatchObject({
+          code: 'CONNECTION_DESTROYED',
+          message: 'Method call multiply() failed due to destroyed connection',
+        });
       });
     });
   }

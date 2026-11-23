@@ -12,7 +12,7 @@ import type {
 } from './types.js';
 import CallOptions from './CallOptions.js';
 import type Messenger from './messengers/Messenger.js';
-import PenpalError from './PenpalError.js';
+import PenpalError, { wrapError } from './PenpalError.js';
 import namespace from './namespace.js';
 import scheduleTimeout from './scheduleTimeout.js';
 
@@ -140,7 +140,7 @@ const connectRemoteProxy = <
 
   const remoteProxy = createRemoteProxy((methodPath, args) => {
     if (isDestroyed) {
-      throw getDestroyedConnectionMethodCallError(methodPath);
+      return Promise.reject(getDestroyedConnectionMethodCallError(methodPath));
     }
 
     const callId = generateId();
@@ -178,9 +178,7 @@ const connectRemoteProxy = <
       } catch (error) {
         replyHandlers.delete(callId);
         cancelTimeout?.();
-        reject(
-          new PenpalError('TRANSMISSION_FAILED', (error as Error).message),
-        );
+        reject(wrapError('TRANSMISSION_FAILED', error));
       }
     });
   }, log) as RemoteProxy<TRemoteMethods>;

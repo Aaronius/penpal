@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type Messenger from '../../src/messengers/Messenger.js';
+import CallOptions from '../../src/CallOptions.js';
 import PenpalError from '../../src/PenpalError.js';
 import namespace from '../../src/namespace.js';
 import connect from '../../src/connect.js';
@@ -22,6 +23,7 @@ const completeHandshake = (messenger: MockMessenger) => {
 
 describe('connect', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.useRealTimers();
   });
 
@@ -267,9 +269,10 @@ describe('connect', () => {
     'tears down the connection if sending %s fails',
     async (type) => {
       const messenger = new MockMessenger();
+      const sendError = new Error('send failed');
       messenger.sendMessageImpl = (message) => {
         if (message.type === type) {
-          throw new Error('send failed');
+          throw sendError;
         }
       };
       const connection = connect({ messenger, channel: messageBase.channel });
@@ -281,7 +284,8 @@ describe('connect', () => {
       await expect(connection.promise).rejects.toBeInstanceOf(PenpalError);
       await expect(connection.promise).rejects.toMatchObject({
         code: 'TRANSMISSION_FAILED',
-        message: 'send failed',
+        message: sendError.message,
+        cause: sendError,
       });
       expect(messenger.sentMessages.at(-1)).toEqual({
         ...messageBase,
@@ -314,12 +318,118 @@ describe('connect', () => {
     });
     expect(destroySpy).toHaveBeenCalledTimes(1);
     expect(messenger.initializeOptions).toBeUndefined();
-    expect(() => remote.ping()).toThrow(
-      expect.objectContaining({ code: 'CONNECTION_DESTROYED' }),
-    );
+    await expect(remote.ping()).rejects.toMatchObject({
+      code: 'CONNECTION_DESTROYED',
+    });
   });
 
-  it('preserves the startup error when messenger cleanup would throw', async () => {
+  it('wraps the initialization error even when messenger cleanup also throws', async () => {
+    const messenger = new MockMessenger();
+    const initializationError = new Error('Could not open the transport');
+    const cleanupError = new Error('Could not remove the listener');
+    vi.spyOn(messenger, 'initialize').mockImplementation(() => {
+      throw initializationError;
+    });
+    vi.spyOn(messenger, 'destroy').mockImplementation(() => {
+      throw cleanupError;
+    });
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+
+    const connection = connect({ messenger });
+
+    await expect(connection.promise).rejects.toBeInstanceOf(PenpalError);
+    await expect(connection.promise).rejects.toMatchObject({
+      code: 'CONNECTION_INITIALIZATION_FAILED',
+      message: initializationError.message,
+      cause: initializationError,
+    });
+    expect(consoleError).toHaveBeenCalledWith(expect.any(String), cleanupError);
+  });
+
+  it('wraps a PenpalError thrown by messenger initialization', async () => {
+    const messenger = new MockMessenger();
+    const initializationError = new PenpalError(
+      'INVALID_ARGUMENT',
+      'Cannot initialize this messenger',
+    );
+    vi.spyOn(messenger, 'initialize').mockImplementation(() => {
+      throw initializationError;
+    });
+
+    const connection = connect({ messenger });
+
+    await expect(connection.promise).rejects.toBeInstanceOf(PenpalError);
+    await expect(connection.promise).rejects.toMatchObject({
+      code: 'CONNECTION_INITIALIZATION_FAILED',
+      message: initializationError.message,
+      cause: initializationError,
+    });
+  });
+
+  it('rejects pending calls when messenger cleanup throws', async () => {
+    const messenger = new MockMessenger();
+    const cleanupError = new Error('Could not remove the listener');
+    vi.spyOn(messenger, 'destroy').mockImplementation(() => {
+      throw cleanupError;
+    });
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const connection = connect<{ ping(): string }>({
+      messenger,
+      channel: messageBase.channel,
+    });
+    completeHandshake(messenger);
+    const remote = await connection.promise;
+    const pending = remote.ping();
+
+    connection.destroy();
+
+    await expect(pending).rejects.toMatchObject({
+      code: 'CONNECTION_DESTROYED',
+    });
+    expect(consoleError).toHaveBeenCalledWith(expect.any(String), cleanupError);
+  });
+
+  it('completes the handshake and settles a call when the logger throws', async () => {
+    const messenger = new MockMessenger();
+    const logError = new Error('Logger unavailable');
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const log = vi.fn(() => {
+      throw logError;
+    });
+    const connection = connect<{ ping(): string }>({
+      messenger,
+      channel: messageBase.channel,
+      log,
+    });
+    completeHandshake(messenger);
+    const remote = await connection.promise;
+    const pending = remote.ping(new CallOptions({ timeout: 1000 }));
+    const call = messenger.sentMessages.at(-1);
+    if (call?.type !== 'CALL') {
+      throw new Error('Expected a CALL message');
+    }
+    const reply = {
+      ...messageBase,
+      type: 'REPLY',
+      callId: call.id,
+      value: 'pong',
+    };
+
+    messenger.emit(reply);
+
+    await expect(pending).resolves.toBe('pong');
+    expect(log).toHaveBeenCalledWith('Received ping() reply', reply);
+    expect(consoleError).toHaveBeenCalledWith(expect.any(String), logError);
+    connection.destroy();
+  });
+
+  it('skips messenger cleanup when startup fails before initialization', async () => {
     const messenger = new MockMessenger();
     const initialize = vi.spyOn(messenger, 'initialize');
     const destroy = vi.spyOn(messenger, 'destroy').mockImplementation(() => {

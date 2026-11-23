@@ -821,7 +821,11 @@ Penpal will throw or reject promises with errors in certain situations. Each err
 
 `CONNECTION_DESTROYED`
 
-This error will be thrown when attempting to call a method and the connection was previously destroyed. The promise found at `connection.promise` will also be rejected with this error if the connection is destroyed before it has been established.
+A remote method call rejects with this error if the connection is destroyed before the reply arrives or if the call is made after the connection has been destroyed. The promise found at `connection.promise` will also be rejected with this error if the connection is destroyed before it has been established.
+
+`CONNECTION_INITIALIZATION_FAILED`
+
+`connection.promise` rejects with this error if the messenger fails to initialize. The original error is available as `error.cause`.
 
 `CONNECTION_TIMEOUT`
 
@@ -850,6 +854,7 @@ For your convenience, the above error codes can be imported and referenced as fo
 ```
 import { ErrorCode } from 'penpal';
 // ErrorCode.ConnectionDestroyed
+// ErrorCode.ConnectionInitializationFailed
 // ErrorCode.ConnectionTimeout
 // ErrorCode.InvalidArgument
 // ErrorCode.MethodCallTimeout
