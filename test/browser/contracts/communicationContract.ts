@@ -149,7 +149,9 @@ export const runCommunicationContract = ({
       await withConnection(createConnection, async (child) => {
         const pending = child.getUnclonableValue();
         await expect(pending).rejects.toBeInstanceOf(Error);
-        await expect(pending).rejects.toMatchObject({ name: 'DataCloneError' });
+        await expect(pending).rejects.toMatchObject({
+          code: 'TRANSMISSION_FAILED',
+        });
       });
     });
 

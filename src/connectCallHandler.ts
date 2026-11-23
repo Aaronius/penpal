@@ -87,20 +87,27 @@ const connectCallHandler = (
       return;
     }
 
+    const methodName = formatMethodPath(methodPath);
+    log?.(`Sending ${methodName}() reply`, replyMessage);
     try {
-      log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
       messenger.sendMessage(replyMessage, transferables);
     } catch (error) {
-      // If the return value can't be cloned (for example, it's a Window),
-      // send an error reply so the caller's promise can reject.
-      if ((error as Error).name === 'DataCloneError') {
-        replyMessage = createErrorReplyMessage(channel, callId, error as Error);
-        log?.(`Sending ${formatMethodPath(methodPath)}() reply`, replyMessage);
-        messenger.sendMessage(replyMessage);
-        // Throw below so handleMessage() also logs the error where the
-        // method ran.
-      }
+      // If sending the original reply throws, try once to send an error
+      // reply so the caller's promise can reject. Use a PenpalError with
+      // a known message and omit the original payload and transferables
+      // because they may have caused the send to fail.
+      const errorReply = createErrorReplyMessage(
+        channel,
+        callId,
+        new PenpalError(
+          'TRANSMISSION_FAILED',
+          `Could not send reply for ${methodName}()`,
+        ),
+      );
+      log?.(`Sending ${methodName}() error reply`, errorReply);
+      messenger.sendMessage(errorReply);
 
+      // Keep the original send error visible where the method ran.
       throw error;
     }
   };

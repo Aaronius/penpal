@@ -9,28 +9,30 @@ describe('connectCallHandler', () => {
     vi.restoreAllMocks();
   });
 
-  it('sends serialized error reply when sending unclonable value throws DataCloneError', async () => {
+  it('sends a cloneable transmission error when a reply getter throws during cloning', async () => {
     const messenger = new MockMessenger();
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {
       // Suppress the expected error in test output.
     });
-    let sendCount = 0;
-
-    messenger.sendMessageImpl = () => {
-      sendCount += 1;
-
-      if (sendCount === 1) {
-        const error = new Error('Cannot clone value');
-        error.name = 'DataCloneError';
-        throw error;
-      }
+    const cloneError = new Error('Reading the reply failed');
+    const buffer = new ArrayBuffer(8);
+    const send = vi.spyOn(messenger, 'sendMessage');
+    messenger.sendMessageImpl = (message, transferables) => {
+      structuredClone(message, { transfer: transferables ?? [] });
     };
 
     const { handleMessage, destroy } = connectCallHandler(
       messenger,
       {
-        getUnclonableValue() {
-          return globalThis;
+        getData() {
+          return new Reply(
+            {
+              get buffer() {
+                throw cloneError;
+              },
+            },
+            { transferables: [buffer] },
+          );
         },
       },
       undefined,
@@ -42,25 +44,25 @@ describe('connectCallHandler', () => {
       channel: undefined,
       type: 'CALL',
       id: '1',
-      methodPath: ['getUnclonableValue'],
+      methodPath: ['getData'],
       args: [],
     });
 
     await vi.waitFor(() => {
-      expect(consoleError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'DataCloneError',
-          message: 'Cannot clone value',
-        }),
-      );
+      expect(consoleError).toHaveBeenCalledWith(cloneError);
     });
-    expect(sendCount).toBe(2);
-    expect(messenger.sentMessages[1]).toMatchObject({
-      type: 'REPLY',
-      callId: '1',
-      isError: true,
-      isSerializedErrorInstance: true,
-    });
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        type: 'REPLY',
+        callId: '1',
+        isError: true,
+        isSerializedErrorInstance: true,
+        value: expect.objectContaining({ penpalCode: 'TRANSMISSION_FAILED' }),
+      }),
+    );
+    expect(buffer.byteLength).toBe(8);
 
     destroy();
   });
@@ -147,14 +149,14 @@ describe('connectCallHandler', () => {
     destroy();
   });
 
-  it('reports non-DataCloneError send failures', async () => {
+  it('reports a failed fallback without attempting another reply', async () => {
     const messenger = new MockMessenger();
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {
       // Suppress the expected error in test output.
     });
 
     messenger.sendMessageImpl = () => {
-      throw new Error('send failed');
+      throw new Error(`Send ${messenger.sentMessages.length} failed`);
     };
 
     const { handleMessage, destroy } = connectCallHandler(
@@ -179,9 +181,10 @@ describe('connectCallHandler', () => {
 
     await vi.waitFor(() => {
       expect(consoleError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'send failed' }),
+        expect.objectContaining({ message: 'Send 2 failed' }),
       );
     });
+    expect(messenger.sentMessages).toHaveLength(2);
 
     destroy();
   });

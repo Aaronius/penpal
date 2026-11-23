@@ -841,7 +841,7 @@ The promise returned from a method call will be rejected with this error if the 
 
 `TRANSMISSION_FAILED`
 
-When a connection is being established, the promise found at `connection.promise` will be rejected with this error if a message cannot be transmitted. When a method call is being made, the promise returned from the method call will be rejected with this error if a message cannot be transmitted.
+When a connection is being established, the promise found at `connection.promise` will be rejected with this error if a handshake message cannot be transmitted. A method call also rejects with this error if Penpal cannot send the request or if the remote reports that it could not send the reply.
 
 ### Referencing Error Codes
 
