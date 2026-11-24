@@ -341,7 +341,7 @@ describe('connect', () => {
 
     await expect(connection.promise).rejects.toBeInstanceOf(PenpalError);
     await expect(connection.promise).rejects.toMatchObject({
-      code: 'CONNECTION_INITIALIZATION_FAILED',
+      code: 'MESSENGER_INITIALIZATION_FAILED',
       message: initializationError.message,
       cause: initializationError,
     });
@@ -362,7 +362,7 @@ describe('connect', () => {
 
     await expect(connection.promise).rejects.toBeInstanceOf(PenpalError);
     await expect(connection.promise).rejects.toMatchObject({
-      code: 'CONNECTION_INITIALIZATION_FAILED',
+      code: 'MESSENGER_INITIALIZATION_FAILED',
       message: initializationError.message,
       cause: initializationError,
     });

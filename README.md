@@ -376,7 +376,7 @@ class InfoProcessor extends AudioWorkletProcessor {
 registerProcessor('processor-info', InfoProcessor);
 ```
 
-Set connection and method call timeouts on the window side. AudioWorklet processors lack timers, so timeout requests from the processor reject with `INVALID_ARGUMENT`.
+AudioWorklet processors lack timers, so configuring connection or method call timeouts from the processor will result in an `INVALID_ARGUMENT` error. You can still set connection and method call timeouts on the window side.
 
 </details>
 
@@ -823,10 +823,6 @@ Penpal will throw or reject promises with errors in certain situations. Each err
 
 A remote method call rejects with this error if the connection is destroyed before the reply arrives or if the call is made after the connection has been destroyed. The promise found at `connection.promise` will also be rejected with this error if the connection is destroyed before it has been established.
 
-`CONNECTION_INITIALIZATION_FAILED`
-
-`connection.promise` rejects with this error if the messenger fails to initialize. The original error is available as `error.cause`.
-
 `CONNECTION_TIMEOUT`
 
 The promise found at `connection.promise` will be rejected with this error after the configured [connection timeout](#connection-timeouts) duration has elapsed and a connection has not been established.
@@ -834,6 +830,10 @@ The promise found at `connection.promise` will be rejected with this error after
 `INVALID_ARGUMENT`
 
 This error will be thrown when an invalid argument is passed to Penpal.
+
+`MESSENGER_INITIALIZATION_FAILED`
+
+`connection.promise` rejects with this error if the local messenger throws while setting up communication. The original error is available as `error.cause`.
 
 `METHOD_CALL_TIMEOUT`
 
@@ -854,9 +854,9 @@ For your convenience, the above error codes can be imported and referenced as fo
 ```
 import { ErrorCode } from 'penpal';
 // ErrorCode.ConnectionDestroyed
-// ErrorCode.ConnectionInitializationFailed
 // ErrorCode.ConnectionTimeout
 // ErrorCode.InvalidArgument
+// ErrorCode.MessengerInitializationFailed
 // ErrorCode.MethodCallTimeout
 // ErrorCode.MethodNotFound
 // ErrorCode.TransmissionFailed
@@ -1048,7 +1048,7 @@ This messenger supports communication with a Node.js `Worker` from `node:worker_
 
 A reference to the Node.js worker. Penpal uses the worker's existing message channel to establish the connection and send method calls and replies. If the worker exits, Penpal closes the connection and rejects any pending handshake or method calls with `CONNECTION_DESTROYED`.
 
-Calling `connection.destroy()` stops Penpal from listening to the worker. If you also want to stop the worker, call `worker.terminate()`.
+Calling `connection.destroy()` from the parent thread stops Penpal from listening to the worker. If you also want to stop the worker, call `worker.terminate()`.
 
 ---
 

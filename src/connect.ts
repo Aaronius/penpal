@@ -316,7 +316,7 @@ const connect = <
     messenger.initialize(initializeOptions);
   } catch (error) {
     destroyConnection(
-      wrapError('CONNECTION_INITIALIZATION_FAILED', error),
+      wrapError('MESSENGER_INITIALIZATION_FAILED', error),
       true,
     );
     return connection;

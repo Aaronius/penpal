@@ -3,9 +3,9 @@
 // it from the ErrorCode string union.
 const ErrorCodeObj = {
   ConnectionDestroyed: 'CONNECTION_DESTROYED',
-  ConnectionInitializationFailed: 'CONNECTION_INITIALIZATION_FAILED',
   ConnectionTimeout: 'CONNECTION_TIMEOUT',
   InvalidArgument: 'INVALID_ARGUMENT',
+  MessengerInitializationFailed: 'MESSENGER_INITIALIZATION_FAILED',
   MethodCallTimeout: 'METHOD_CALL_TIMEOUT',
   MethodNotFound: 'METHOD_NOT_FOUND',
   TransmissionFailed: 'TRANSMISSION_FAILED',
