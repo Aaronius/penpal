@@ -16,16 +16,6 @@ export default defineConfig({
       to: 'dist',
       flatten: false,
     },
-    {
-      from: '../.github/assets/readme-banner-black.png',
-      to: 'dist/assets',
-      rename: 'penpal-black.png',
-    },
-    {
-      from: '../.github/assets/readme-banner-white.png',
-      to: 'dist/assets',
-      rename: 'penpal-white.png',
-    },
   ],
   cwd: examplesRoot,
   deps: {
