@@ -144,7 +144,7 @@ describe('connect', () => {
     onTestFinished,
   }) => {
     const { port1, port2 } = new MessageChannel();
-    const connections: ReturnType<typeof connect>[] = [];
+    const connections: Pick<ReturnType<typeof connect>, 'destroy'>[] = [];
     onTestFinished(() => {
       connections.forEach((connection) => connection.destroy());
       port1.close();

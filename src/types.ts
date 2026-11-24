@@ -32,38 +32,77 @@ export type MethodsShape<T> = object & {
 // a library's generated .d.ts file when it exports an inferred connection.
 export type UnspecifiedRemoteMethods = Record<string, never> & (() => never);
 
-// Without a remote methods type, each member can be called or used to reach
-// another member. The result is unknown because no return type was supplied.
+type InspectionHook = 'then' | 'toJSON';
+type NativeFunctionHelper = 'apply' | 'call' | 'bind';
+
+// Without a methods type, TypeScript lets each name act as a method or a
+// group. For example, both remote.files() and remote.files.save() return
+// Promise<unknown> because the app did not declare their result types.
+// The JavaScript proxy is a function at each member, so use native function
+// types for its helpers. For example, remote.save.bind(null) returns a function.
 type UntypedRemoteMember = {
   (...args: unknown[]): Promise<unknown>;
   [name: string]: UntypedRemoteMember;
-};
+} & Pick<Function, NativeFunctionHelper>;
 
-// Keep the method's argument types and allow a trailing CallOptions argument.
-// Await the result first so both Reply and Promise<Reply> can be unwrapped.
-// For a nested group, check its shape before reusing RemoteProxy so its hover
-// shows the same public type name as the top-level proxy.
+// Penpal reads CallOptions only from the last argument. If A['length'] can
+// be any number, the method has an open-ended rest parameter. Accept the
+// original arguments or the original arguments followed by CallOptions.
+// These two lists prevent a call like sum(1, options, 2) when sum takes
+// only numbers. A single list with an optional slot would allow that call.
+// When the method has a fixed maximum number of arguments, append an optional
+// parameter so the IDE displays names such as a and b in multiply(a, b).
+type RemoteMethod<A extends unknown[], R> = number extends A['length']
+  ? (...args: A | [...A, options: CallOptions]) => R
+  : (...args: [...A, options?: CallOptions]) => R;
+
+// The proxy turns a declared method into a function that returns a promise.
+// If the method returns a Reply, directly or in a promise, the caller's
+// promise resolves to the value inside the Reply. For a group such as
+// remote.files, apply the proxy rules to each method in the group.
 type RemoteMember<T> = T extends (...args: infer A) => infer R
-  ? (
-      ...args: [...A, CallOptions?]
-    ) => Promise<ExtractValueFromReply<Awaited<R>>>
+  ? RemoteMethod<A, Promise<ExtractValueFromReply<Awaited<R>>>>
   : T extends MethodsShape<T>
-    ? RemoteProxy<T>
+    ? RemoteProxyAtDepth<T, true>
     : never;
+
+// The JavaScript proxy returns undefined for then and toJSON. That prevents
+// await and JSON.stringify() from accidentally calling a remote method.
+// TypeScript marks those names as undefined if the app declares them. For a
+// dictionary with arbitrary string keys, leave them out of IDE suggestions.
+//
+// The root can expose a remote method named call, apply, or bind. A nested
+// member uses the native function helpers for those names, so use never to
+// stop TypeScript from treating them as remote methods. A dictionary such as
+// Record<string, () => void> has one broad key type, string. The & below
+// blocks those three names explicitly for nested dictionaries.
+type RemoteProxyAtDepth<
+  TRemoteMethods extends
+    | MethodsShape<TRemoteMethods>
+    | UnspecifiedRemoteMethods,
+  Nested extends boolean,
+> = {
+  // Keep the declared keys so a generic helper can read proxy[key] when key
+  // is known to be a key of the remote methods type.
+  [K in keyof TRemoteMethods]: K extends InspectionHook
+    ? undefined
+    : K extends (Nested extends true ? NativeFunctionHelper : never)
+      ? never
+      : TRemoteMethods extends UnspecifiedRemoteMethods
+        ? UntypedRemoteMember
+        : RemoteMember<TRemoteMethods[K]>;
+} & (Nested extends true
+  ? string extends keyof TRemoteMethods
+    ? Partial<Record<NativeFunctionHelper, never>>
+    : unknown
+  : unknown);
 
 /** The proxy for the declared remote methods, or an untyped proxy if no type is supplied. */
 export type RemoteProxy<
   TRemoteMethods extends
     | MethodsShape<TRemoteMethods>
     | UnspecifiedRemoteMethods = UnspecifiedRemoteMethods,
-> = {
-  // Map the original keys directly so a generic helper can use proxy[key]
-  // when key is known to belong to TRemoteMethods. Choose the typed or untyped
-  // member inside the map so the result keeps the RemoteProxy name in hovers.
-  [K in keyof TRemoteMethods]: TRemoteMethods extends UnspecifiedRemoteMethods
-    ? UntypedRemoteMember
-    : RemoteMember<TRemoteMethods[K]>;
-};
+> = RemoteProxyAtDepth<TRemoteMethods, false>;
 
 /** The connection returned by connect(). */
 export type Connection<

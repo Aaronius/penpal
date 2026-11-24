@@ -24,6 +24,22 @@ const getLastCallMessage = (messenger: MockMessenger): CallMessage => {
 };
 
 describe('connectRemoteProxy', () => {
+  it('ignores inspection hooks without sending a remote call', async () => {
+    const messenger = new MockMessenger();
+    const { remoteProxy } = connectRemoteProxy<{ nested(): void }>(
+      messenger,
+      undefined,
+      undefined,
+    );
+
+    expect(await Promise.resolve(remoteProxy)).toBe(remoteProxy);
+    expect(JSON.stringify(remoteProxy)).toBe('{}');
+    expect(JSON.stringify({ nested: remoteProxy.nested })).toBe('{}');
+    expect(Reflect.get(remoteProxy, Symbol.iterator)).toBeUndefined();
+    expect(Reflect.get(remoteProxy.nested, Symbol.iterator)).toBeUndefined();
+    expect(messenger.sentMessages).toHaveLength(0);
+  });
+
   it('sends CALL and resolves when receiving REPLY', async () => {
     const messenger = new MockMessenger();
     const log = vi.fn();

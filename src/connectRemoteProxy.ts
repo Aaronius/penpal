@@ -38,7 +38,6 @@ const methodsToTreatAsNative = new Set(['apply', 'call', 'bind']);
 
 const createRemoteProxy = (
   callback: (path: MethodPath, args: unknown[]) => Promise<unknown>,
-  log: Log | undefined,
   path: MethodPath = [],
 ): object => {
   return new Proxy(
@@ -48,14 +47,11 @@ const createRemoteProxy = (
         }
       : Object.create(null),
     {
-      get(target, prop: string) {
-        // If a promise is resolved with this proxy object, the JavaScript
-        // runtime will look for a `then` property on this object to determine
-        // if it should be treated as a promise (to support promise chaining).
-        // If we don't return undefined here, the JavaScript runtime will treat
-        // this object as a promise and attempt to call `then`, which will
-        // then send a call message to the remote. This is not what we want.
-        if (prop === 'then') {
+      get(target, prop) {
+        // Promise resolution reads then, JSON.stringify reads toJSON, and
+        // JavaScript uses symbols for hooks such as iteration. Return undefined
+        // so these operations cannot turn a property lookup into a remote call.
+        if (typeof prop === 'symbol' || prop === 'then' || prop === 'toJSON') {
           return;
         }
 
@@ -78,7 +74,7 @@ const createRemoteProxy = (
           return Reflect.get(target, prop);
         }
 
-        return createRemoteProxy(callback, log, [...path, prop]);
+        return createRemoteProxy(callback, [...path, prop]);
       },
       apply(target, _thisArg, args) {
         return callback(path, args);
@@ -181,7 +177,7 @@ const connectRemoteProxy = <
         reject(wrapError('TRANSMISSION_FAILED', error));
       }
     });
-  }, log) as RemoteProxy<TRemoteMethods>;
+  }) as RemoteProxy<TRemoteMethods>;
 
   const rejectPendingCalls = (getError: (path: MethodPath) => PenpalError) => {
     for (const {
