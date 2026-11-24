@@ -972,7 +972,7 @@ Penpal is designed to run successfully on the most recent versions of Chrome, Fi
 
 `messenger: Messenger` (required)
 
-A messenger instance. Messengers handle the technical details of transmitting messages. The current available messengers are `WindowMessenger`, `WebWorkerMessenger`, `NodeWorkerMessenger`, and `PortMessenger`, though any object that complies with the Messenger interface may be used. `WorkerMessenger` is an alias for `WebWorkerMessenger` for backward compatibility. Details related to building custom messengers are forthcoming.
+A messenger instance. Messengers handle the technical details of transmitting messages. The current available messengers are `WindowMessenger`, `WebWorkerMessenger`, `NodeWorkerMessenger`, and `PortMessenger`, though any object that complies with the Messenger interface may be used. Details related to building custom messengers are forthcoming.
 
 `methods: object` (optional)
 
@@ -1030,19 +1030,11 @@ If an iframe or opened window reloads or navigates to another page that calls `c
 
 This messenger supports communication with a [Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker) (also known as a dedicated worker). See [Usage with a Web Worker](#usage-with-a-web-worker) for an example. This cannot be used for shared workers or service workers, which use the [PortMessenger](#portmessenger) instead.
 
-`WorkerMessenger` is an alias for `WebWorkerMessenger` for backward compatibility. Both exports reference the same class.
-
 #### Constructor Options
 
 `worker: Worker | DedicatedWorkerGlobalScope`
 
 A reference to the worker. When connecting from a window, you would specify the instantiated worker object. When connecting from the worker, you would specify `self`.
-
----
-
-### `WorkerMessenger`
-
-`WorkerMessenger` is an alias of [`WebWorkerMessenger`](#webworkermessenger) for backward compatibility and will be removed in a future major version.
 
 ---
 

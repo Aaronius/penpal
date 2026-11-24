@@ -5,13 +5,7 @@ import { describe, it } from 'node:test';
 import { MessageChannel, Worker } from 'node:worker_threads';
 
 for (const format of ['esm', 'cjs']) {
-  const {
-    CallOptions,
-    NodeWorkerMessenger,
-    WebWorkerMessenger,
-    WorkerMessenger,
-    connect,
-  } =
+  const { CallOptions, NodeWorkerMessenger, connect } =
     format === 'cjs'
       ? createRequire(import.meta.url)('penpal')
       : await import('penpal');
@@ -43,10 +37,6 @@ for (const format of ['esm', 'cjs']) {
   };
 
   void describe(`NodeWorkerMessenger (${format})`, { timeout: 10000 }, () => {
-    void it('retains WorkerMessenger as the same class as WebWorkerMessenger', () => {
-      assert.equal(WorkerMessenger, WebWorkerMessenger);
-    });
-
     void it('rejects a missing worker', () => {
       assert.throws(() => new NodeWorkerMessenger({ worker: undefined }), {
         code: 'INVALID_ARGUMENT',

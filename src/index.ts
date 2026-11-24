@@ -1,7 +1,6 @@
 export { default as connect } from './connect.js';
 export { default as WindowMessenger } from './messengers/WindowMessenger.js';
 export { default as WebWorkerMessenger } from './messengers/WebWorkerMessenger.js';
-export { default as WorkerMessenger } from './messengers/WebWorkerMessenger.js';
 export { default as NodeWorkerMessenger } from './messengers/NodeWorkerMessenger.js';
 export { default as PortMessenger } from './messengers/PortMessenger.js';
 export { default as CallOptions } from './CallOptions.js';
